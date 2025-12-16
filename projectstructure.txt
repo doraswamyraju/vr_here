@@ -1,0 +1,10 @@
+Folder PATH listing for volume New Volume
+Volume serial number is 5AB4-B1B3
+C:.
+¦   projectstructure.txt
+¦   
++---admin
++---api
++---client
++---employee
++---frontend

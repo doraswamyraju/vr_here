@@ -1,0 +1,19 @@
+# ------------------------------------------------------------------
+# CRITICAL SECURITY: Exclude files that should NEVER be committed.
+# ------------------------------------------------------------------
+
+# 1. Database/Credential Files
+# Prevents accidental sharing of credentials (db_connect.php)
+api/db_connect.php
+
+# 2. Local Configuration Files
+.vscode/
+.env*
+.DS_Store
+
+# 3. Frontend Dependencies
+# The node_modules folder is huge and should be generated on the server.
+/frontend/node_modules
+/frontend/package-lock.json
+
+# NOTE: /frontend/build is NO LONGER IGNORED, so it will be pushed!
