@@ -161,7 +161,7 @@ const PrivateLimitedPage = () => {
       <header className={`sticky top-0 z-50 transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg py-2' : 'bg-white border-b border-slate-100 py-4'}`}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center relative">
-            <div className="flex items-center flex-shrink-0 group cursor-pointer" onClick={() => window.location.reload()}>
+            <a href="/" className="flex items-center flex-shrink-0 group cursor-pointer">
               <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center mr-3 shadow-lg group-hover:bg-red-600 transition duration-300 relative overflow-hidden transform group-hover:scale-105">
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition duration-300"></div>
                 <span className="text-white font-black text-xl tracking-tighter">VR</span>
@@ -170,7 +170,7 @@ const PrivateLimitedPage = () => {
                 <span className="text-2xl font-extrabold text-black leading-none tracking-tight group-hover:text-red-600 transition-colors">VR HERE</span>
                 <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-0.5">Business Solutions</span>
               </div>
-            </div>
+            </a>
 
             <nav className="hidden lg:flex items-center space-x-1">
               <a href="/" className="px-4 py-2 text-sm font-bold text-slate-700 hover:text-red-600 rounded-full hover:bg-red-50 transition-all duration-300 hover:scale-105">Home</a>

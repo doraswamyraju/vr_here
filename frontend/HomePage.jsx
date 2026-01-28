@@ -3,7 +3,7 @@ import {
   Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
   Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
   Building2, Mail, MapPin, CheckCircle, Smartphone, ShieldCheck, RefreshCw,
-  CreditCard, Loader2, MessageSquare, Users
+  CreditCard, Loader2, MessageSquare, Users, Star, Quote, HelpCircle, ChevronUp
 } from 'lucide-react';
 
 /* --- DATA FOR HEADER MENU (From PrivateLimitedPage) --- */
@@ -64,7 +64,7 @@ const SERVICES_GRID_DATA = [
     id: 'registration',
     title: 'Start Business',
     icon: Briefcase,
-    color: 'bg-blue-50 text-blue-600',
+    color: 'bg-red-50 text-red-600',
     description: 'Pvt Ltd, LLP, OPC, Section 8, Partnership',
     link: '/pvt-ltd-registration'
   },
@@ -72,35 +72,35 @@ const SERVICES_GRID_DATA = [
     id: 'accounting',
     title: 'Tax & Compliance',
     icon: Calculator,
-    color: 'bg-green-50 text-green-600',
+    color: 'bg-slate-100 text-slate-700',
     description: 'GST, Income Tax, Audits, RoC Filings'
   },
   {
     id: 'machinery',
     title: 'Industrial Setup',
     icon: Factory,
-    color: 'bg-orange-50 text-orange-600',
+    color: 'bg-slate-100 text-slate-700',
     description: 'Machinery Sourcing, Factory Licenses, Turnkey Projects'
   },
   {
     id: 'msme',
     title: 'Loans & Funding',
     icon: IndianRupee,
-    color: 'bg-indigo-50 text-indigo-600',
+    color: 'bg-slate-100 text-slate-700',
     description: 'Project Reports, MSME Loans, Subsidies'
   },
   {
     id: 'iso',
     title: 'Certifications',
     icon: Stamp,
-    color: 'bg-purple-50 text-purple-600',
+    color: 'bg-slate-100 text-slate-700',
     description: 'ISO 9001, FDA, CE, BIS, Halal'
   },
   {
     id: 'govt',
     title: 'Govt Portals',
     icon: Globe,
-    color: 'bg-red-50 text-red-600',
+    color: 'bg-slate-100 text-slate-700',
     description: 'GeM Registration, TReDS, Import Export Code'
   }
 ];
@@ -118,6 +118,48 @@ const PACKAGES = [
   }
 ];
 
+/* --- FAQ DATA --- */
+const FAQS = [
+  {
+    question: "Do I need to visit your office?",
+    answer: "Not at all. VR HERE is a 100% digital platform. We collect documents online, file applications on your behalf, and deliver certificates via email/courier. You can focus on your business while we handle the paperwork."
+  },
+  {
+    question: "How long does company registration take?",
+    answer: "Typically, a Private Limited Company is registered in 7-10 working days, subject to ROC processing time. We ensure all documents are perfect to avoid rejections and delays."
+  },
+  {
+    question: "Can you help with Industrial Loans?",
+    answer: "Yes, we specialize in MSME and Industrial loans. We prepare detailed Project Reports (DPR) and guide you through schemes like CGTMSE and PMEGP for collateral-free loans."
+  },
+  {
+    question: "What is the 'Consultation Fee Adjustment'?",
+    answer: "If you book a consultation for ₹499, this amount is credited to your wallet. When you purchase any major service (like Company Registration) within 30 days, we deduct ₹499 from the final bill."
+  }
+];
+
+/* --- TESTIMONIALS DATA --- */
+const TESTIMONIALS = [
+  {
+    name: "Rajesh Kumar",
+    role: "MD, TechnoPlast Industries",
+    content: "VR HERE helped us setup our manufacturing unit in Jeedimetla. From company registration to machinery sourcing and bank loan, they handled everything. A true single-window solution.",
+    rating: 5
+  },
+  {
+    name: "Sneha Reddy",
+    role: "Founder, GreenEarth Organics",
+    content: "I didn't know anything about compliances. The team at VR HERE explained everything clearly and got my Pvt Ltd registered in just 8 days. Highly recommended for new entrepreneurs!",
+    rating: 5
+  },
+  {
+    name: "Anil Gupta",
+    role: "Director, Gupta Logistics",
+    content: "Their knowledge of Industrial Subsidies is excellent. They helped us get a significant subsidy on our new warehouse project. Professional and transparent service.",
+    rating: 5
+  }
+];
+
 const HomePage = () => {
   // --- STATE ---
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -128,6 +170,7 @@ const HomePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeAccordion, setActiveAccordion] = useState(null); // For FAQs
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -159,6 +202,10 @@ const HomePage = () => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
   };
 
+  const toggleAccordion = (index) => {
+    setActiveAccordion(activeAccordion === index ? null : index);
+  };
+
   // --- COMPONENTS ---
 
   const Header = () => (
@@ -180,7 +227,7 @@ const HomePage = () => {
       <header className={`sticky top-0 z-50 transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg py-2' : 'bg-white border-b border-slate-100 py-4'}`}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center relative">
-            {/* UPDATED LOGO LINK: Points to / (Home) */}
+            {/* LOGO: Points to / (Home) */}
             <a href="/" className="flex items-center flex-shrink-0 group cursor-pointer">
               <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center mr-3 shadow-lg group-hover:bg-red-600 transition duration-300 relative overflow-hidden transform group-hover:scale-105">
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition duration-300"></div>
@@ -347,22 +394,21 @@ const HomePage = () => {
       <QuoteModal />
       <FloatingButtons />
 
-      {/* HERO SECTION (PRESERVED FROM HOMEPAGE) */}
-      <section className="relative bg-slate-900 pb-32 pt-20 lg:pt-32 overflow-hidden -mt-[90px]">
-        {/* Abstract Background */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-0 right-0 w-[60%] h-[80%] bg-blue-600/20 rounded-full blur-[120px] translate-x-1/4 -translate-y-1/4"></div>
-          <div className="absolute bottom-0 left-0 w-[40%] h-[60%] bg-red-600/10 rounded-full blur-[100px] -translate-x-1/4 translate-y-1/4"></div>
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+      {/* HERO SECTION - RED/DARK THEME */}
+      <section className="relative bg-[#0f172a] pb-32 pt-20 lg:pt-32 overflow-hidden -mt-[0px]">
+        {/* Background Elements */}
+        <div className="absolute inset-0 z-0 opacity-20">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600 rounded-full blur-[120px] -translate-x-1/2 translate-y-1/2"></div>
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-          <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/80 text-xs font-bold mb-8 uppercase tracking-widest">
-            Trusted by 5000+ Businesses
+          <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/80 text-xs font-bold mb-8 uppercase tracking-widest animate-fade-in">
+            <span className="text-red-500 mr-2">●</span> Trusted by 5000+ Businesses
           </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-8">
             Build Your Business.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-red-400">Run It Smarter.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Run It Smarter.</span>
           </h1>
           <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
             India's only platform combining <span className="text-white font-bold">Legal Compliance</span> with <span className="text-white font-bold">Industrial Setup</span> & <span className="text-white font-bold">Funding</span>.
@@ -370,7 +416,7 @@ const HomePage = () => {
 
           {/* SEARCH BAR */}
           <div className="max-w-3xl mx-auto relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-red-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
             <div className="relative bg-white rounded-xl shadow-2xl p-2 flex items-center">
               <div className="pl-4 pr-2 text-slate-400">
                 <Search className="w-6 h-6" />
@@ -397,14 +443,25 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* TRUST SIGNALS */}
-      <div className="bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 py-8 flex flex-wrap justify-center md:justify-between items-center gap-8 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition duration-500">
-          <div className="font-black text-xl text-slate-300">HDFC BANK</div>
-          <div className="font-black text-xl text-slate-300">ICICI Verified</div>
-          <div className="font-black text-xl text-slate-300">ISO 9001</div>
-          <div className="font-black text-xl text-slate-300">Startup India</div>
-          <div className="font-black text-xl text-slate-300">MSME Databank</div>
+      {/* STATS STRIP */}
+      <div className="bg-black border-y border-slate-800 relative z-20">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-800 text-center">
+          <div className="py-6">
+            <div className="text-red-500 text-3xl font-black">5000+</div>
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Clients Served</div>
+          </div>
+          <div className="py-6">
+            <div className="text-red-500 text-3xl font-black">₹100Cr+</div>
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Loans Facilitated</div>
+          </div>
+          <div className="py-6">
+            <div className="text-red-500 text-3xl font-black">150+</div>
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Experts Team</div>
+          </div>
+          <div className="py-6">
+            <div className="text-red-500 text-3xl font-black">4.9/5</div>
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Google Rating</div>
+          </div>
         </div>
       </div>
 
@@ -418,7 +475,7 @@ const HomePage = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {SERVICES_GRID_DATA.map((service) => (
-              <a href={service.link || '#'} key={service.id} className="bg-white p-8 rounded-2xl border border-slate-100 hover:border-red-100 shadow-sm hover:shadow-2xl hover:shadow-red-600/10 transition-all duration-300 group relative overflow-hidden">
+              <a href={service.link || '#'} key={service.id} className="bg-white p-8 rounded-2xl border border-slate-100 hover:border-red-200 shadow-sm hover:shadow-xl hover:shadow-red-600/5 transition-all duration-300 group relative overflow-hidden">
                 <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110`}>
                   <service.icon className="w-24 h-24 text-slate-900" />
                 </div>
@@ -428,7 +485,7 @@ const HomePage = () => {
                 <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-red-600 transition-colors">{service.title}</h3>
                 <p className="text-slate-500 text-sm mb-6 leading-relaxed">{service.description}</p>
                 <div className="flex items-center text-sm font-bold text-slate-900 group-hover:text-red-600 transition-colors">
-                  Explore Services <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  Explore <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </div>
               </a>
             ))}
@@ -436,43 +493,132 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-black text-slate-900 mb-4">How It Works</h2>
+            <p className="text-lg text-slate-600">Get your business sorted in 3 simple steps.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 relative">
+            <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-slate-100 -z-10"></div>
+            {[
+              { title: "Book Consultation", desc: "Pay ₹499 to speak with our expert. We analyze your needs and explain the process." },
+              { title: "Submit Documents", desc: "Upload basic documents securely on our 100% digital dashboard." },
+              { title: "Service Delivered", desc: "We file everything. You receive your Certificates or Approvals via email." }
+            ].map((step, i) => (
+              <div key={i} className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100 text-center hover:-translate-y-2 transition-transform duration-300">
+                <div className="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-md border-4 border-white">{i + 1}</div>
+                <h3 className="font-bold text-xl text-slate-900 mb-3">{step.title}</h3>
+                <p className="text-slate-600 text-sm leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* WHY CHOOSE US */}
-      <section className="py-24 bg-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-16">
+      <section className="py-24 bg-slate-900 relative overflow-hidden text-white">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-16 relative z-10">
           <div className="md:w-1/2">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-tr from-red-600 to-orange-600 rounded-3xl blur opacity-20"></div>
-              <div className="relative bg-slate-900 p-8 rounded-3xl text-white">
-                <div className="flex items-center space-x-4 mb-8">
-                  <div className="p-3 bg-red-600 rounded-lg">
-                    <ShieldCheck className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-lg">One-Stop Solution</div>
-                    <div className="text-slate-400 text-sm">No need to hire 10 different vendors.</div>
-                  </div>
+            <div className="inline-block px-3 py-1 bg-red-600 rounded text-xs font-bold mb-4 uppercase tracking-wider">Why VR HERE?</div>
+            <h2 className="text-4xl font-black mb-6">We bridge the gap between <span className="text-red-500">Office</span> and <span className="text-blue-500">Factory</span>.</h2>
+            <p className="text-lg text-slate-400 mb-8 max-w-lg leading-relaxed">
+              Most consultants only handle paper. We handle paper AND metal. From incorporating your company to sourcing your first machine, VR HERE is your end-to-end partner.
+            </p>
+            <div className="space-y-4">
+              {[
+                "Single Point of Contact for 100+ Services",
+                "Transparent Pricing - No Hidden Costs",
+                "Real-time Status Tracking Dashboard",
+                "Expert Team of CAs, CSs, and Engineers"
+              ].map((item, i) => (
+                <div key={i} className="flex items-center">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 mr-3" />
+                  <span className="font-medium text-slate-200">{item}</span>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex items-center p-3 bg-white/5 rounded-xl border border-white/10">
-                    <CheckCircle2 className="w-5 h-5 text-green-400 mr-3" /> <span>Legal & Compliance</span>
-                  </div>
-                  <div className="flex items-center p-3 bg-white/5 rounded-xl border border-white/10">
-                    <CheckCircle2 className="w-5 h-5 text-green-400 mr-3" /> <span>Industrial Machinery</span>
-                  </div>
-                  <div className="flex items-center p-3 bg-white/5 rounded-xl border border-white/10">
-                    <CheckCircle2 className="w-5 h-5 text-green-400 mr-3" /> <span>Bank Loans & DPR</span>
-                  </div>
+              ))}
+            </div>
+          </div>
+          <div className="md:w-1/2 relative">
+            <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
+              <div className="flex items-start mb-6">
+                <Quote className="w-10 h-10 text-red-600 opacity-50" />
+              </div>
+              <p className="text-xl font-medium italic mb-6 text-slate-300">"We were struggling with factory licenses for months. VR HERE stepped in and got everything cleared in 2 weeks. Their industrial knowledge is unmatched."</p>
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-gray-500 rounded-full mr-4 overflow-hidden">
+                  <img src="https://ui-avatars.com/api/?name=Suresh+R&background=random" alt="Client" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Suresh Reddy</div>
+                  <div className="text-sm text-slate-400">Director, InfraTech Pvt Ltd</div>
                 </div>
               </div>
             </div>
+            {/* Decorative dots */}
+            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-red-600/20 rounded-full blur-xl"></div>
           </div>
-          <div className="md:w-1/2">
-            <h2 className="text-4xl font-black text-slate-900 mb-6">We bridge the gap between <span className="text-red-600">office</span> and <span className="text-red-600">factory</span>.</h2>
-            <p className="text-lg text-slate-600 mb-8 max-w-lg leading-relaxed">
-              Most consultants only handle paper. We handle paper AND metal. From incorporating your company to sourcing your first machine, VR HERE is your end-to-end partner.
-            </p>
-            <button className="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-black transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
-              About Our Company
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="py-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-3xl font-black text-center text-slate-900 mb-12">Success Stories</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {TESTIMONIALS.map((t, i) => (
+              <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-all">
+                <div className="flex text-yellow-400 mb-4">
+                  {[...Array(t.rating)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                </div>
+                <p className="text-slate-600 mb-6 text-sm leading-relaxed">"{t.content}"</p>
+                <div>
+                  <div className="font-bold text-slate-900">{t.name}</div>
+                  <div className="text-xs text-slate-500">{t.role}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ SECTION */}
+      <section className="py-20 bg-white border-t border-slate-100">
+        <div className="max-w-3xl mx-auto px-4">
+          <h2 className="text-3xl font-black text-center text-slate-900 mb-12">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            {FAQS.map((faq, i) => (
+              <div key={i} className="border border-slate-200 rounded-xl overflow-hidden transition-all hover:border-red-200">
+                <button onClick={() => toggleAccordion(i)} className="w-full flex justify-between items-center p-5 text-left bg-slate-50 hover:bg-white transition-colors">
+                  <span className="font-bold text-slate-800">{faq.question}</span>
+                  {activeAccordion === i ? <ChevronUp className="w-5 h-5 text-red-600" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                </button>
+                {activeAccordion === i && (
+                  <div className="p-5 bg-white text-slate-600 text-sm leading-relaxed border-t border-slate-100 animate-fade-in">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA SECTION */}
+      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+          <h2 className="text-3xl lg:text-5xl font-black mb-6">Ready to Start?</h2>
+          <p className="text-xl text-slate-400 mb-10">
+            Talk to our experts before you commit. Pay a small booking fee now, and we will deduct it from your final bill.
+          </p>
+          <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/10 inline-block w-full max-w-md">
+            <div className="text-sm font-bold text-red-400 uppercase tracking-widest mb-2">Consultation Offer</div>
+            <div className="text-5xl font-black mb-2">₹499</div>
+            <p className="text-slate-300 text-sm mb-6">Fully adjustable against registration fees</p>
+            <button onClick={handleConsultationBook} className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-600/30 flex items-center justify-center">
+              Book Now <ArrowRight className="ml-2 w-5 h-5" />
             </button>
           </div>
         </div>
@@ -515,9 +661,6 @@ const HomePage = () => {
                 </a>
                 <a href="#" className="p-2 bg-slate-800 rounded-full hover:bg-red-600 hover:text-white transition transform hover:scale-110 hover:-translate-y-1">
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-                </a>
-                <a href="#" className="p-2 bg-slate-800 rounded-full hover:bg-red-600 hover:text-white transition transform hover:scale-110 hover:-translate-y-1">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg>
                 </a>
               </div>
             </div>
