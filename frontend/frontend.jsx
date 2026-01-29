@@ -4,6 +4,7 @@ import PrivateLimitedPage from './PrivateLimited';
 import AdminPage from './admin';
 import CustomerPage from './customer';
 import EmployeePage from './employee';
+import ContactUsPage from './ContactUs';
 
 const App = () => {
   // Simple "Router" based on URL path
@@ -20,6 +21,9 @@ const App = () => {
   }
   if (path.includes('employee')) {
     return <EmployeePage />;
+  }
+  if (path.includes('contact')) {
+    return <ContactUsPage />;
   }
 
   // Default route

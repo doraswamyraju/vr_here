@@ -160,6 +160,23 @@ const TESTIMONIALS = [
   }
 ];
 
+/* --- SEARCH DATA --- */
+const ALL_SERVICES = [
+  { name: 'Private Limited Registration', link: '/pvt-ltd-registration', type: 'page' },
+  { name: 'LLP Registration', link: '/contact?service=LLP Registration', type: 'inquiry' },
+  { name: 'One Person Company (OPC)', link: '/contact?service=OPC Registration', type: 'inquiry' },
+  { name: 'Section 8 Company (NGO)', link: '/contact?service=Section 8 NGO', type: 'inquiry' },
+  { name: 'GST Registration', link: '/contact?service=GST Registration', type: 'inquiry' },
+  { name: 'GST Filing', link: '/contact?service=GST Filing', type: 'inquiry' },
+  { name: 'Trademark Registration', link: '/contact?service=Trademark', type: 'inquiry' },
+  { name: 'ISO Certification', link: '/contact?service=ISO Certification', type: 'inquiry' },
+  { name: 'MSME Loan / Project Report', link: '/contact?service=MSME Loan', type: 'inquiry' },
+  { name: 'Factory License', link: '/contact?service=Factory License', type: 'inquiry' },
+  { name: 'Import Export Code (IEC)', link: '/contact?service=IEC Code', type: 'inquiry' },
+  { name: 'Digital Signature (DSC)', link: '/contact?service=DSC', type: 'inquiry' },
+  { name: 'Accounting Services', link: '/contact?service=Accounting', type: 'inquiry' },
+];
+
 const HomePage = () => {
   // --- STATE ---
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -170,6 +187,7 @@ const HomePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]); // Search Suggestions
   const [activeAccordion, setActiveAccordion] = useState(null); // For FAQs
 
   // --- EFFECTS ---
@@ -414,8 +432,9 @@ const HomePage = () => {
             India's only platform combining <span className="text-white font-bold">Legal Compliance</span> with <span className="text-white font-bold">Industrial Setup</span> & <span className="text-white font-bold">Funding</span>.
           </p>
 
+
           {/* SEARCH BAR */}
-          <div className="max-w-3xl mx-auto relative group">
+          <div className="max-w-3xl mx-auto relative z-50">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
             <div className="relative bg-white rounded-xl shadow-2xl p-2 flex items-center">
               <div className="pl-4 pr-2 text-slate-400">
@@ -423,22 +442,55 @@ const HomePage = () => {
               </div>
               <input
                 type="text"
-                placeholder="Try 'Private Limited', 'ISO Certification', 'Factory Loan'..."
+                placeholder="Search for 'Private Limited', 'GST', 'Loans'..."
                 className="flex-1 p-3 text-lg font-medium text-slate-900 placeholder:text-slate-400 outline-none bg-transparent"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (e.target.value.length > 1) {
+                    const filtered = ALL_SERVICES.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase()));
+                    setSuggestions(filtered);
+                  } else {
+                    setSuggestions([]);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (suggestions.length > 0) {
+                      window.location.href = suggestions[0].link;
+                    } else {
+                      window.location.href = `/contact?service=${searchTerm}`;
+                    }
+                  }
+                }}
               />
-              <button className="hidden sm:block bg-black text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-slate-800 transition transform hover:-translate-y-0.5">
-                Get Started
+              <button
+                onClick={() => {
+                  if (suggestions.length > 0) {
+                    window.location.href = suggestions[0].link;
+                  } else {
+                    window.location.href = `/contact?service=${searchTerm}`;
+                  }
+                }}
+                className="hidden sm:block bg-black text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-slate-800 transition transform hover:-translate-y-0.5"
+              >
+                Go
               </button>
             </div>
-            {/* Popular Searches */}
-            <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm text-slate-400 font-medium">
-              <span>Popular:</span>
-              {['Pvt Ltd Registration', 'Trademark', 'GST Filing', 'Project Report'].map(tag => (
-                <span key={tag} className="px-3 py-1 bg-white/5 rounded-full hover:bg-white/10 hover:text-white cursor-pointer transition border border-white/5">{tag}</span>
-              ))}
-            </div>
+
+            {/* SEARCH SUGGESTIONS DROPDOWN */}
+            {suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden text-left animate-fade-in max-h-60 overflow-y-auto z-50">
+                {suggestions.map((s, i) => (
+                  <a href={s.link} key={i} className="flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors group">
+                    <span className="font-bold text-slate-700 group-hover:text-red-600">{s.name}</span>
+                    <span className="text-xs text-slate-400 uppercase tracking-wider group-hover:text-red-400">
+                      {s.type === 'page' ? 'View Page' : 'Inquire'}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
