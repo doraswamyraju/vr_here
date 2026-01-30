@@ -594,9 +594,14 @@ const PartnershipFirmPage = () => {
                             <div>
                                 <h3 className="text-red-500 font-bold text-sm uppercase tracking-wider mb-6">Start a Business</h3>
                                 <ul className="space-y-3 text-sm">
-                                    {['Private Limited Company', 'Limited Liability Partnership', 'One Person Company', 'Section 8 Company', 'Partnership Firm', 'Proprietorship', 'Nidhi Company', 'Producer Company'].map(item => (
-                                        <li key={item}><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">{item}</a></li>
-                                    ))}
+                                    <li><a href="/pvt-ltd-registration" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Private Limited Company</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Limited Liability Partnership</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">One Person Company</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Section 8 Company</a></li>
+                                    <li><a href="/partnership-firm" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Partnership Firm</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Proprietorship</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Nidhi Company</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Producer Company</a></li>
                                 </ul>
                             </div>
                             <div>
