@@ -418,8 +418,9 @@ const HomePage = () => {
       <section className="relative bg-[#0f172a] pb-32 pt-20 lg:pt-32 overflow-hidden -mt-[0px]">
         {/* Background Elements */}
         <div className="absolute inset-0 z-0 opacity-20">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600 rounded-full blur-[120px] -translate-x-1/2 translate-y-1/2"></div>
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2 animate-blob opacity-40 mix-blend-multiply filter"></div>
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600 rounded-full blur-[120px] -translate-x-1/2 translate-y-1/2 animate-blob animation-delay-2000 opacity-40 mix-blend-multiply filter"></div>
+          <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-purple-600 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 animate-blob animation-delay-4000 opacity-30 mix-blend-multiply filter"></div>
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
