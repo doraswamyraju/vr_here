@@ -607,9 +607,11 @@ const PrivateLimitedPage = () => {
               <div>
                 <h3 className="text-red-500 font-bold text-sm uppercase tracking-wider mb-6">Grow & Manage</h3>
                 <ul className="space-y-3 text-sm">
-                  {['GST Filing', 'Accounting Services', 'MSME Loans', 'GeM Registration', 'ISO Certification'].map(item => (
-                    <li key={item}><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">{item}</a></li>
-                  ))}
+                  <li><a href="/gst-registration" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">GST Registration</a></li>
+                  <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Accounting Services</a></li>
+                  <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">MSME Loans</a></li>
+                  <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">GeM Registration</a></li>
+                  <li><a href="#" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">ISO Certification</a></li>
                 </ul>
               </div>
               <div>

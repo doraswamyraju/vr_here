@@ -4,7 +4,7 @@ import {
     Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
     Building2, Mail, MapPin, CheckCircle, FileText, Star, Users, Check, HelpCircle,
     MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
-    ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw
+    ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw, BadgePercent
 } from 'lucide-react';
 
 /* --- SHARED DATA --- */
@@ -67,37 +67,37 @@ const PACKAGES = [
         price: 499,
         isAdjustable: true,
         description: 'Start here if you are unsure. Fee fully adjusted against registration.',
-        features: ['30 Mins CA/CS Call', 'Business Structure Advice', 'Name Availability Check', 'Capital Structure Guidance', 'Compliance Roadmap'],
+        features: ['30 Mins CA/CS Call', 'Eligibility Check', 'Documents List Review', 'State-Specific Rules', 'Compliance Roadmap'],
         buttonText: 'Book Consultation'
     },
     {
         id: 'basic',
         name: 'Basic',
-        price: 4899,
-        description: 'Essential registration for partnership firms.',
-        features: ['Partnership Deed Drafting', 'PAN & TAN Applications', 'Firm Registration', 'Legal Advice on Clause', 'Notary & Stamp Assistance'],
+        price: 2569,
+        description: 'Essential GST registration package.',
+        features: ['New GST Registration', 'Updating Bank Account', '1st Month GST Return'],
         buttonText: 'Select Basic'
     },
     {
         id: 'advance',
         name: 'Advance',
-        price: 8221,
+        price: 4929,
         isPopular: true,
-        description: 'Registration plus core compliance setup.',
-        features: ['Everything in Basic', 'GST Registration', 'MSME (Udyam) Registration', 'Current Account Assistance', 'Business Commencement Setup'],
+        description: 'Registration plus setup tools.',
+        features: ['Everything in Basic', 'MSME Registration', 'Prof. Tax Guidance', 'GST Invoice Template', 'E-Way Bill Activation'],
         buttonText: 'Select Advance'
     },
     {
         id: 'expert',
         name: 'Expert',
-        price: 10209,
-        description: 'Comprehensive package with import/export code.',
-        features: ['Everything in Advance', 'Import Export Code (IEC)', '2 Months GST Filing', 'Post-registration Guidance', 'Dedicated Relationship Manager'],
+        price: 9059,
+        description: 'Complete tax compliance suite.',
+        features: ['Everything in Advance', 'IEC Code Application', '2 Months GST Returns', 'ITC Ledger Review', 'LUT Filing', 'Priority Support'],
         buttonText: 'Select Expert'
     }
 ];
 
-const PartnershipFirmPage = () => {
+const GSTRegistrationPage = () => {
     // --- STATE ---
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeMobileCategory, setActiveMobileCategory] = useState(null);
@@ -351,7 +351,7 @@ const PartnershipFirmPage = () => {
             <QuoteModal />
             <FloatingButtons />
 
-            {/* LANDING CONTENT: PARTNERSHIP FIRM REGISTRATION */}
+            {/* LANDING CONTENT: GST REGISTRATION */}
             <div className="animate-fade-in">
 
                 {/* 1. Hero Section */}
@@ -361,13 +361,13 @@ const PartnershipFirmPage = () => {
                         <div className="lg:w-1/2">
                             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-sm font-bold text-slate-600 mb-6">
                                 <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                                India's #1 Registration Platform
+                                Instant Filling & Acknowledgement
                             </div>
                             <h1 className="text-4xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6">
-                                Register Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">Partnership Firm</span> Online.
+                                Get <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">GST Registered</span> in 3 Days.
                             </h1>
                             <p className="text-xl text-slate-600 leading-relaxed mb-8">
-                                Start your journey with a valid Partnership Deed, PAN, and Registration. Fastest processing with expert legal drafting.
+                                Avoid penalties and unlock business growth. Only valid documents. 100% Online process with expert verification.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -386,22 +386,22 @@ const PartnershipFirmPage = () => {
                             <div className="relative z-10 bg-white p-8 rounded-2xl shadow-2xl border border-slate-100 transform rotate-2 hover:rotate-0 transition duration-500">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
-                                        <h3 className="text-xl font-bold text-slate-900">Partnership Package</h3>
-                                        <p className="text-slate-500 text-sm">All-inclusive starting at ₹4,899</p>
+                                        <h3 className="text-xl font-bold text-slate-900">New GST Registration</h3>
+                                        <p className="text-slate-500 text-sm">Professional Verification</p>
                                     </div>
-                                    <div className="bg-green-100 text-green-700 font-bold px-3 py-1 rounded text-xs">VERIFIED</div>
+                                    <div className="bg-green-100 text-green-700 font-bold px-3 py-1 rounded text-xs">AUTHORIZED</div>
                                 </div>
                                 <div className="space-y-4">
-                                    {['Partnership Deed Drafting', 'Firm Registration', 'PAN & TAN Applications', 'Notary & Stamp Paper Support', 'Business Setup Advice'].map((item, i) => (
+                                    {['TRN Generation in 24 Hrs', 'Bank Account Validation', 'Application Tracking', 'Handling Clarifications', 'Final Certificate Download'].map((item, i) => (
                                         <div key={i} className="flex items-center p-3 bg-slate-50 rounded-lg">
-                                            <CheckCircle className="w-5 h-5 text-red-600 mr-3" />
+                                            <BadgePercent className="w-5 h-5 text-red-600 mr-3" />
                                             <span className="font-medium text-slate-700">{item}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                             {/* Abstract Blob */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-red-100 to-orange-100 rounded-full blur-3xl -z-10 opacity-60"></div>
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-blue-100 to-red-100 rounded-full blur-3xl -z-10 opacity-60"></div>
                         </div>
                     </div>
                 </div>
@@ -409,10 +409,10 @@ const PartnershipFirmPage = () => {
                 {/* 2. Stats & Trust */}
                 <div className="bg-black py-12 border-t-4 border-red-600">
                     <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-slate-800">
-                        <div className="group hover:bg-slate-900/50 p-2 rounded transition"><div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-red-500 transition-colors">4 Days</div><div className="text-red-500 text-sm uppercase tracking-wide font-bold group-hover:text-white transition-colors">Avg. Turnaround</div></div>
-                        <div className="group hover:bg-slate-900/50 p-2 rounded transition"><div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-red-500 transition-colors">2000+</div><div className="text-red-500 text-sm uppercase tracking-wide font-bold group-hover:text-white transition-colors">Partnerships</div></div>
-                        <div className="group hover:bg-slate-900/50 p-2 rounded transition"><div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-red-500 transition-colors">4.8/5</div><div className="text-red-500 text-sm uppercase tracking-wide font-bold group-hover:text-white transition-colors">Google Rating</div></div>
-                        <div className="group hover:bg-slate-900/50 p-2 rounded transition"><div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-red-500 transition-colors">100%</div><div className="text-red-500 text-sm uppercase tracking-wide font-bold group-hover:text-white transition-colors">Transparency</div></div>
+                        <div className="group hover:bg-slate-900/50 p-2 rounded transition"><div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-red-500 transition-colors">3-7 Days</div><div className="text-red-500 text-sm uppercase tracking-wide font-bold group-hover:text-white transition-colors">Time to Certificate</div></div>
+                        <div className="group hover:bg-slate-900/50 p-2 rounded transition"><div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-red-500 transition-colors">5000+</div><div className="text-red-500 text-sm uppercase tracking-wide font-bold group-hover:text-white transition-colors">GST Filings</div></div>
+                        <div className="group hover:bg-slate-900/50 p-2 rounded transition"><div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-red-500 transition-colors">No Errors</div><div className="text-red-500 text-sm uppercase tracking-wide font-bold group-hover:text-white transition-colors">Zero Rejections</div></div>
+                        <div className="group hover:bg-slate-900/50 p-2 rounded transition"><div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-red-500 transition-colors">Expert</div><div className="text-red-500 text-sm uppercase tracking-wide font-bold group-hover:text-white transition-colors">Legal Support</div></div>
                     </div>
                 </div>
 
@@ -420,15 +420,15 @@ const PartnershipFirmPage = () => {
                 <section className="py-20 bg-white">
                     <div className="max-w-6xl mx-auto px-4">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl font-black text-slate-900 mb-4">How It Works</h2>
-                            <p className="text-lg text-slate-600">Form your partnership in 3 simple steps.</p>
+                            <h2 className="text-3xl font-black text-slate-900 mb-4">Registration Process</h2>
+                            <p className="text-lg text-slate-600">3-Step simple online process.</p>
                         </div>
                         <div className="grid md:grid-cols-3 gap-8 relative">
                             <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-slate-100 -z-10"></div>
                             {[
-                                { title: "Share Details", desc: "Fill our simple form and expert consultation to draft the best deed." },
-                                { title: "Drafting & Review", desc: "We draft the Partnership Deed and send it for your approval and signature." },
-                                { title: "Registration", desc: "We apply for PAN, TAN and register the firm with the authorities." }
+                                { title: "Upload Docs", desc: "Submit PAN, Aadhar, Photo, and Address Proof on our portal." },
+                                { title: "Application Filing", desc: "Our experts verify and file the application on the GST Portal." },
+                                { title: "Certificate Issue", desc: "Get ARN instantly and Final Certificate once approved by officer." }
                             ].map((step, i) => (
                                 <div key={i} className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100 text-center hover:-translate-y-2 transition-transform duration-300">
                                     <div className="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-md border-4 border-white">{i + 1}</div>
@@ -440,20 +440,20 @@ const PartnershipFirmPage = () => {
                     </div>
                 </section>
 
-                {/* 4. Why Partnership? */}
+                {/* 4. Who Needs GST? */}
                 <section className="py-20 bg-slate-50">
                     <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-12 items-center">
                         <div className="md:w-1/2">
-                            <h2 className="text-3xl font-black text-slate-900 mb-6">Why Register a Partnership Firm?</h2>
+                            <h2 className="text-3xl font-black text-slate-900 mb-6">Who needs mandatory GST?</h2>
                             <p className="text-slate-600 mb-8 leading-relaxed">
-                                Partnerships are ideal for small businesses with multiple owners. They offer flexibility in operations and shared responsibilities.
+                                As per the GST Act, the following businesses must get registered to avoid heavy penalties and seizure of goods.
                             </p>
                             <div className="grid grid-cols-1 gap-4">
                                 {[
-                                    { t: "Easy Formation", d: "Simpler and cheaper to start compared to LLP or Pvt Ltd." },
-                                    { t: "Shared Responsibility", d: "Partners share duties, profits, and liabilities." },
-                                    { t: "Less Compliance", d: "Fewer annual filings and statutory audits required." },
-                                    { t: "Flexibility", d: "Decision making is faster and deed can be changed easily." }
+                                    { t: "Turnover Limit", d: "Turnover > ₹40L (Goods) or ₹20L (Services)." },
+                                    { t: "Inter-state Sale", d: "Selling goods from one state to another." },
+                                    { t: "E-commerce", d: "Selling online (Amazon, Flipkart, Own Website)." },
+                                    { t: "Voluntary", d: "To claim Input Tax Credit on purchases." }
                                 ].map((item, i) => (
                                     <div key={i} className="flex items-start p-4 bg-white rounded-xl border border-slate-200">
                                         <CheckCircle2 className="w-6 h-6 text-green-500 mr-4 flex-shrink-0" />
@@ -467,16 +467,17 @@ const PartnershipFirmPage = () => {
                         </div>
                         <div className="md:w-1/2">
                             <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                                <h3 className="text-xl font-black text-slate-900 mb-6 text-center">Minimum Requirements</h3>
+                                <h3 className="text-xl font-black text-slate-900 mb-6 text-center">Required Documents</h3>
                                 <ul className="space-y-4">
                                     {[
-                                        "Minimum 2 Partners",
-                                        "A Partnership Deed",
-                                        "Business Place Address Proof",
-                                        "Identity Proof of Partners"
+                                        "PAN Card of Business / Applicant",
+                                        "Aadhar Card of Applicant",
+                                        "Passport Size Photo",
+                                        "Business Address Proof (Elec. Bill / Rent Agreement)",
+                                        "Bank Statement / Cancelled Cheque"
                                     ].map((req, i) => (
                                         <li key={i} className="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg">
-                                            <Users className="w-5 h-5 text-red-600 mr-3" /> {req}
+                                            <FileCheck className="w-5 h-5 text-red-600 mr-3" /> {req}
                                         </li>
                                     ))}
                                 </ul>
@@ -528,9 +529,9 @@ const PartnershipFirmPage = () => {
                 <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
                     <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
                     <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-                        <h2 className="text-3xl lg:text-5xl font-black mb-6">Need clarity on Partnerships?</h2>
+                        <h2 className="text-3xl lg:text-5xl font-black mb-6">Confused about GST?</h2>
                         <p className="text-xl text-slate-400 mb-10">
-                            Speak with our legal experts. We help you draft the perfect Deed to avoid future disputes.
+                            Not sure if you need GST or which state to register in? Talk to our experts.
                         </p>
                         <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/10 inline-block w-full max-w-md">
                             <div className="text-sm font-bold text-red-400 uppercase tracking-widest mb-2">Consultation Offer</div>
@@ -545,7 +546,7 @@ const PartnershipFirmPage = () => {
 
             </div>
 
-            {/* RICH FOOTER SECTION (Kept Same) */}
+            {/* RICH FOOTER SECTION */}
             <footer className="bg-[#0f172a] text-slate-300 pt-16 pb-8 border-t border-slate-800 font-sans">
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
@@ -637,4 +638,4 @@ const PartnershipFirmPage = () => {
     );
 };
 
-export default PartnershipFirmPage;
+export default GSTRegistrationPage;

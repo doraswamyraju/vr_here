@@ -6,6 +6,7 @@ import CustomerPage from './customer';
 import EmployeePage from './employee';
 import ContactUsPage from './ContactUs';
 import PartnershipFirmPage from './PartnershipFirm';
+import GSTRegistrationPage from './GSTRegistration';
 
 const App = () => {
   // Simple "Router" based on URL path
@@ -16,6 +17,9 @@ const App = () => {
   }
   if (path.includes('partnership-firm')) {
     return <PartnershipFirmPage />;
+  }
+  if (path.includes('gst-registration')) {
+    return <GSTRegistrationPage />;
   }
   if (path.includes('admin')) {
     return <AdminPage />;
