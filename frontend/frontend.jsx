@@ -5,6 +5,7 @@ import AdminPage from './admin';
 import CustomerPage from './customer';
 import EmployeePage from './employee';
 import ContactUsPage from './ContactUs';
+import PartnershipFirmPage from './PartnershipFirm';
 
 const App = () => {
   // Simple "Router" based on URL path
@@ -12,6 +13,9 @@ const App = () => {
 
   if (path.includes('pvt-ltd-registration')) {
     return <PrivateLimitedPage />;
+  }
+  if (path.includes('partnership-firm')) {
+    return <PartnershipFirmPage />;
   }
   if (path.includes('admin')) {
     return <AdminPage />;
