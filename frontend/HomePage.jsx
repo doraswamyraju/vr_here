@@ -164,10 +164,11 @@ const TESTIMONIALS = [
 /* --- SEARCH DATA --- */
 const ALL_SERVICES = [
   { name: 'Private Limited Registration', link: '/pvt-ltd-registration', type: 'page' },
+  { name: 'Partnership Firm Registration', link: '/partnership-firm', type: 'page' },
+  { name: 'GST Registration', link: '/gst-registration', type: 'page' },
   { name: 'LLP Registration', link: '/contact?service=LLP Registration', type: 'inquiry' },
   { name: 'One Person Company (OPC)', link: '/contact?service=OPC Registration', type: 'inquiry' },
   { name: 'Section 8 Company (NGO)', link: '/contact?service=Section 8 NGO', type: 'inquiry' },
-  { name: 'GST Registration', link: '/contact?service=GST Registration', type: 'inquiry' },
   { name: 'GST Filing', link: '/contact?service=GST Filing', type: 'inquiry' },
   { name: 'Trademark Registration', link: '/contact?service=Trademark', type: 'inquiry' },
   { name: 'ISO Certification', link: '/contact?service=ISO Certification', type: 'inquiry' },
