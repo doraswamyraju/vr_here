@@ -71,21 +71,29 @@ const PACKAGES = [
     buttonText: 'Book Consultation'
   },
   {
-    id: 'standard',
-    name: 'Pvt Ltd Registration',
-    price: 6499,
-    description: 'Complete incorporation package for startups.',
-    features: ['2 DSC & 2 DIN', 'Name Approval (RUN)', 'MOA & AOA Drafting', 'Certificate of Incorporation', 'PAN & TAN Allocation'],
-    buttonText: 'Start Registration'
+    id: 'basic',
+    name: 'Basic',
+    price: 5499,
+    description: 'Essential registration for verified startups.',
+    features: ['Name Approval (RUN)', 'Certificate of Incorporation', 'PAN & TAN', 'MOA & AOA', '2 DIN & 2 DSC', 'PF & ESI Registration', 'MSME Registration', '1 Month Accounts Support'],
+    buttonText: 'Select Basic'
   },
   {
-    id: 'comprehensive',
-    name: 'Launchpad (Reg + Tax)',
-    price: 14999,
+    id: 'advance',
+    name: 'Advance',
+    price: 11399,
     isPopular: true,
-    description: 'Registration plus essential tax & labor compliances.',
-    features: ['Everything in Standard', 'GST Registration', 'MSME (Udyam) Registration', 'PF & ESIC Registration', 'Bank Account Support', '1 Year Support'],
-    buttonText: 'Get Started'
+    description: 'Complete compliance & web presence.',
+    features: ['Everything in Basic', 'GST Registration', 'Import Export Code (IEC)', 'ISO Certification', 'GST Returns (2 Months)', 'Auditor Appointment', 'Business Commencement', 'Professional Website', '1 Yr Domain & Hosting'],
+    buttonText: 'Select Advance'
+  },
+  {
+    id: 'expert',
+    name: 'Expert',
+    price: 17699,
+    description: 'Comprehensive package with IT filing.',
+    features: ['Everything in Advance', 'Individual IT Filing', 'Google Analytics', 'Web Mails', 'Basic On-page SEO', 'Website Support (1 Yr)', 'Dedicated Relationship Mgr'],
+    buttonText: 'Select Expert'
   }
 ];
 
@@ -489,8 +497,8 @@ const PrivateLimitedPage = () => {
                   <h3 className="text-xl font-bold text-slate-900 mb-2">{pkg.name}</h3>
                   <div className="text-4xl font-black text-slate-900 mb-6">
                     {formatCurrency(pkg.price)}
-                    <span className="text-sm font-normal text-slate-500 ml-1">
-                      {pkg.isAdjustable ? '' : '+ Govt Fees'}
+                    <span className="text-[10px] font-bold text-slate-500 ml-1 block mt-1">
+                      {pkg.isAdjustable ? '(Fully Adjustable)' : '+ Govt Fees & GST'}
                     </span>
                   </div>
 

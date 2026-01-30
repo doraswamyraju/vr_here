@@ -1,3 +1,4 @@
+// Force verify build update
 import React, { useState, useEffect } from 'react';
 import {
   Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
@@ -474,7 +475,7 @@ const HomePage = () => {
                 }}
                 className="hidden sm:block bg-black text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-slate-800 transition transform hover:-translate-y-0.5"
               >
-                Go
+                Search
               </button>
             </div>
 
