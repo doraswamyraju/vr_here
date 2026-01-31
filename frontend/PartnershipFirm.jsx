@@ -136,12 +136,37 @@ const PartnershipFirmPage = () => {
     const handleFormSubmit = (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        setTimeout(() => {
+
+        const options = {
+            key: "rzp_test_YourKeyHere",
+            amount: (selectedPlan.price || 499) * 100,
+            currency: "INR",
+            name: "VR HERE Business Solutions",
+            description: `Payment for ${selectedPlan.name}`,
+            image: "https://vrhere.in/logo.png",
+            handler: function (response) {
+                alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
+                setIsSubmitting(false);
+                setIsModalOpen(false);
+            },
+            prefill: {
+                name: "Customer Name",
+                email: "email@example.com",
+                contact: "9999999999"
+            },
+            theme: {
+                color: "#DC2626"
+            }
+        };
+
+        const rzp1 = new window.Razorpay(options);
+        rzp1.on('payment.failed', function (response) {
+            alert(`Payment Failed: ${response.error.description}`);
             setIsSubmitting(false);
-            setIsModalOpen(false);
-            // alert(`Proceeding to payment for ${selectedPlan?.name}: ₹${selectedPlan?.price}`);
-        }, 1500);
-    }
+        });
+
+        rzp1.open();
+    };
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
