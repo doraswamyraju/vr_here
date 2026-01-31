@@ -105,6 +105,21 @@ const RegisterPage = () => {
                         </div>
                     </div>
 
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Account Type</label>
+                        <div className="relative">
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full pl-4 pr-10 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-red-600 outline-none transition-all appearance-none bg-white"
+                            >
+                                <option value="client">Client (Business Owner)</option>
+                                <option value="employee">Employee</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <button
                         type="submit"
                         disabled={loading}
