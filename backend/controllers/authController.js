@@ -46,6 +46,18 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (user) {
+        // Send Welcome Email
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Welcome to VR HERE Business Solutions',
+                message: `<h1>Welcome ${user.name}!</h1><p>Thank you for registering with VR HERE. We are excited to have you on board.</p>`
+            });
+        } catch (error) {
+            console.error('Email send failure:', error);
+            // Don't fail registration if email fails
+        }
+
         res.status(201).json({
             _id: user._id,
             name: user.name,
@@ -57,6 +69,93 @@ const registerUser = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error('Invalid user data');
     }
+});
+
+// @desc    Forgot Password
+// @route   POST /api/auth/forgotpassword
+// @access  Public
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    // Get Reset Token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+
+    // Hash token and set to resetPasswordToken field
+    user.resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+    // Set expire (10 minutes)
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    const resetUrl = `https://vrhere.in/reset-password/${resetToken}`;
+
+    const message = `
+        <h1>You have requested a password reset</h1>
+        <p>Please go to this link to reset your password:</p>
+        <a href=${resetUrl} clicktracking=off>${resetUrl}</a>
+    `;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'Password Reset Request',
+            message,
+        });
+
+        res.status(200).json({ success: true, data: 'Email sent' });
+    } catch (error) {
+        console.error(error);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save();
+
+        res.status(500);
+        throw new Error('Email could not be sent');
+    }
+});
+
+// @desc    Reset Password
+// @route   PUT /api/auth/resetpassword/:resetToken
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+    const resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(req.params.resetToken)
+        .digest('hex');
+
+    const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+        res.status(400);
+        throw new Error('Invalid token');
+    }
+
+    // Set new password
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.status(201).json({
+        success: true,
+        data: 'Password reset success',
+        token: generateToken(user._id),
+    });
 });
 
 // @desc    Get user profile
@@ -78,4 +177,4 @@ const getUserProfile = asyncHandler(async (req, res) => {
     }
 });
 
-export { authUser, registerUser, getUserProfile };
+export { authUser, registerUser, forgotPassword, resetPassword, getUserProfile };

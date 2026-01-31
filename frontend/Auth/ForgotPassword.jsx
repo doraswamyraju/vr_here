@@ -1,20 +1,23 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import axios from 'axios';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
+        setError('');
+        try {
+            await axios.post('/api/auth/forgotpassword', { email });
             setSubmitted(true);
-        }, 1500);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -61,6 +64,12 @@ const ForgotPassword = () => {
                                 <h1 className="text-4xl font-bold text-slate-900 mb-3">Forgot Password?</h1>
                                 <p className="text-slate-500">Enter your email address to reset your password.</p>
                             </div>
+
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center shadow-sm border border-red-100">
+                                    <span className="mr-3 text-lg">⚠️</span> {error}
+                                </div>
+                            )}
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>
