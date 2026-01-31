@@ -6,6 +6,7 @@ import { AuthContext } from './context/AuthContext';
 import HomePage from './HomePage';
 import LoginPage from './Auth/Login';
 import RegisterPage from './Auth/Register';
+import ForgotPassword from './Auth/ForgotPassword';
 import PrivateLimitedPage from './PrivateLimited';
 import PartnershipFirmPage from './PartnershipFirm';
 import GSTRegistrationPage from './GSTRegistration';
@@ -35,6 +36,7 @@ const App = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/pvt-ltd-registration" element={<PrivateLimitedPage />} />
       <Route path="/partnership-firm" element={<PartnershipFirmPage />} />
       <Route path="/gst-registration" element={<GSTRegistrationPage />} />
