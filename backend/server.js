@@ -14,6 +14,9 @@ connectDB();
 
 const app = express();
 
+// Trust proxy (required for Nginx)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json());
 app.use(cors());
@@ -25,7 +28,7 @@ app.use(
                 scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://checkout.razorpay.com"],
                 styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
                 imgSrc: ["'self'", "data:", "https://*"],
-                connectSrc: ["'self'", "https://api.razorpay.com"],
+                connectSrc: ["'self'", "https://api.razorpay.com", "http://localhost:5000", "http://localhost:5002", "http://147.93.107.21:5002"],
                 frameSrc: ["'self'", "https://api.razorpay.com"],
                 upgradeInsecureRequests: null, // Disable HTTPS upgrade for successful HTTP load
             },
