@@ -6,6 +6,7 @@ import {
   MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
   ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw
 } from 'lucide-react';
+import { RAZORPAY_KEY_ID } from './config';
 
 /* --- SHARED DATA --- */
 const SERVICES_DATA = [
@@ -138,7 +139,7 @@ const PrivateLimitedPage = () => {
     setIsSubmitting(true);
 
     const options = {
-      key: "rzp_test_YourKeyHere",
+      key: RAZORPAY_KEY_ID,
       amount: (selectedPlan.price || 499) * 100, // Amount in currency subunits
       currency: "INR",
       name: "VR HERE Business Solutions",

@@ -6,6 +6,7 @@ import {
     MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
     ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw, BadgePercent
 } from 'lucide-react';
+import { RAZORPAY_KEY_ID } from './config';
 
 /* --- SHARED DATA --- */
 const SERVICES_DATA = [
@@ -138,7 +139,7 @@ const GSTRegistrationPage = () => {
         setIsSubmitting(true);
 
         const options = {
-            key: "rzp_test_YourKeyHere", // Enter the Key ID generated from the Dashboard
+            key: RAZORPAY_KEY_ID, // Enter the Key ID generated from the Dashboard
             amount: (selectedPlan.price || 499) * 100, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
             currency: "INR",
             name: "VR HERE Business Solutions",

@@ -1,11 +1,11 @@
 // Force verify build update
 import React, { useState, useEffect } from 'react';
 import {
-  Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
   Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
   Building2, Mail, MapPin, CheckCircle, Smartphone, ShieldCheck, RefreshCw,
   CreditCard, Loader2, MessageSquare, Users, Star, Quote, HelpCircle, ChevronUp
 } from 'lucide-react';
+import { RAZORPAY_KEY_ID } from './config';
 
 /* --- DATA FOR HEADER MENU (From PrivateLimitedPage) --- */
 const MENU_DATA = [
@@ -213,7 +213,7 @@ const HomePage = () => {
     setIsSubmitting(true);
 
     const options = {
-      key: "rzp_test_YourKeyHere",
+      key: RAZORPAY_KEY_ID,
       amount: (selectedPlan.price || 499) * 100,
       currency: "INR",
       name: "VR HERE Business Solutions",
