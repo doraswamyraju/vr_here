@@ -138,6 +138,12 @@ const PartnershipFirmPage = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
+        if (!window.Razorpay) {
+            alert("Razorpay SDK failed to load. Please check your internet connection or disable ad-blockers.");
+            setIsSubmitting(false);
+            return;
+        }
+
         const options = {
             key: RAZORPAY_KEY_ID,
             amount: (selectedPlan.price || 499) * 100,
@@ -160,13 +166,18 @@ const PartnershipFirmPage = () => {
             }
         };
 
-        const rzp1 = new window.Razorpay(options);
-        rzp1.on('payment.failed', function (response) {
-            alert(`Payment Failed: ${response.error.description}`);
+        try {
+            const rzp1 = new window.Razorpay(options);
+            rzp1.on('payment.failed', function (response) {
+                alert(`Payment Failed: ${response.error.description}`);
+                setIsSubmitting(false);
+            });
+            rzp1.open();
+        } catch (error) {
+            console.error("Razorpay Error:", error);
+            alert("Something went wrong initializing payment. Please try again.");
             setIsSubmitting(false);
-        });
-
-        rzp1.open();
+        }
     };
 
     const formatCurrency = (amount) => {
