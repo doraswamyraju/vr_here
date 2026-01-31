@@ -15,7 +15,24 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(helmet()); // Security headers
+app.use(express.json());
+app.use(cors());
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://checkout.razorpay.com"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
+                imgSrc: ["'self'", "data:", "https://*"],
+                connectSrc: ["'self'", "https://api.razorpay.com"],
+                frameSrc: ["'self'", "https://api.razorpay.com"],
+                upgradeInsecureRequests: null, // Disable HTTPS upgrade for successful HTTP load
+            },
+        },
+        crossOriginEmbedderPolicy: false,
+    })
+);
 app.use(morgan('dev')); // Logging
 app.use(express.json()); // Body parser
 app.use(cors()); // Enable CORS
