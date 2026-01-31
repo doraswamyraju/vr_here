@@ -28,7 +28,7 @@ const authUser = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, role } = req.body;
 
     const userExists = await User.findOne({ email });
 
@@ -42,7 +42,7 @@ const registerUser = asyncHandler(async (req, res) => {
         email,
         password,
         phone,
-        role: 'client' // Default role
+        role: role || 'client'
     });
 
     if (user) {

@@ -36,10 +36,17 @@ export const AuthProvider = ({ children }) => {
         return data; // Return user data for redirect logic
     };
 
-    const register = async (name, email, phone, password) => {
-        const { data } = await axios.post('/api/auth/register', { name, email, phone, password });
-        localStorage.setItem('token', data.token);
-        setUser(data);
+    const register = async (name, email, phone, password, role) => {
+        try {
+            const config = { headers: { 'Content-Type': 'application/json' } };
+            const { data } = await axios.post('/api/auth/register', { name, email, phone, password, role }, config);
+            localStorage.setItem('token', data.token);
+            setUser(data);
+            return data;
+        } catch (error) {
+            console.error("Registration failed:", error.response ? error.response.data : error.message);
+            throw error; // Re-throw to allow calling component to handle
+        }
     };
 
     const logout = () => {

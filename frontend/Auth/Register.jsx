@@ -7,7 +7,9 @@ const RegisterPage = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
+    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('client');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -19,7 +21,7 @@ const RegisterPage = () => {
         setLoading(true);
         setError('');
         try {
-            await register(name, email, phone, password);
+            await register(name, email, phone, password, role);
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
