@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
                 const config = {
                     headers: { Authorization: `Bearer ${token}` }
                 };
-                const { data } = await axios.get('http://localhost:5000/api/auth/profile', config);
+                const { data } = await axios.get('/api/auth/profile', config);
                 setUser({ ...data, token });
             } catch (error) {
                 console.error("Session expired or invalid token");
@@ -30,14 +30,14 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+        const { data } = await axios.post('/api/auth/login', { email, password });
         localStorage.setItem('token', data.token);
         setUser(data);
         return data; // Return user data for redirect logic
     };
 
     const register = async (name, email, phone, password) => {
-        const { data } = await axios.post('http://localhost:5000/api/auth/register', { name, email, phone, password });
+        const { data } = await axios.post('/api/auth/register', { name, email, phone, password });
         localStorage.setItem('token', data.token);
         setUser(data);
     };
