@@ -204,6 +204,21 @@ const HomePage = () => {
   }, [isServicesHovered]);
 
   // --- ACTIONS ---
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleConsultationBook = () => {
     setSelectedPlan(PACKAGES[0]);
     setIsModalOpen(true);
@@ -232,9 +247,9 @@ const HomePage = () => {
         setIsModalOpen(false);
       },
       prefill: {
-        name: "Customer Name",
-        email: "email@example.com",
-        contact: "9999999999"
+        name: formData.name,
+        email: formData.email,
+        contact: formData.phone
       },
       theme: {
         color: "#DC2626"
@@ -418,9 +433,33 @@ const HomePage = () => {
               </div>
             </div>
             <form onSubmit={handleFormSubmit} className="space-y-4">
-              <input required type="text" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner" placeholder="Full Name" />
-              <input required type="tel" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner" placeholder="Mobile Number" />
-              <input required type="email" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner" placeholder="Email Address" />
+              <input
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                type="text"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
+                placeholder="Full Name"
+              />
+              <input
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                type="tel"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
+                placeholder="Mobile Number"
+              />
+              <input
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                type="email"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
+                placeholder="Email Address"
+              />
               <button disabled={isSubmitting} type="submit" className="w-full bg-red-600 text-white font-bold py-3.5 rounded-lg hover:bg-red-700 transition transform active:scale-95 flex items-center justify-center shadow-lg shadow-red-600/20">
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : `Pay ${selectedPlan ? formatCurrency(selectedPlan.price) : ''} & Proceed`}
               </button>
