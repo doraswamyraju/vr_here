@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { MENU_DATA, getServiceLink } from './components/SharedComponents';
 
-// --- UTILS: FLATTEN MENU DATA FOR SEARCH ---
+// --- UTILS ---
 const getAllServices = () => {
     let services = [];
     MENU_DATA.forEach(cat => {
@@ -21,7 +21,6 @@ const getAllServices = () => {
     services.push({ name: 'Trademark', category: 'Utility', link: '/contact?service=Trademark' });
     return services;
 };
-
 const ALL_SERVICES = getAllServices();
 
 // --- COMPONENTS ---
@@ -38,18 +37,15 @@ const Logo = ({ theme = 'dark', size = 'normal' }) => (
     </div>
 );
 
-// FIX: MegaMenu now expects to be in a full-width relative container
 const MegaMenu = ({ isOpen }) => {
     if (!isOpen) return null;
     return (
-        <div className="absolute top-full left-0 w-full pt-4 animate-fade-in z-[100]">
+        <div className="absolute top-full left-0 w-full pt-2 animate-fade-in z-[100]">
             <div className="bg-white rounded-b-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] border-t border-slate-100 overflow-hidden ring-1 ring-black/5 mx-6 md:mx-0">
                 <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row min-h-[400px]">
                     {/* SIDEBAR */}
                     <div className="w-full md:w-72 bg-slate-50 p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 relative overflow-hidden shrink-0">
-                        {/* Decorator */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-orange-500"></div>
-
                         <div>
                             <h3 className="text-2xl font-black text-slate-900 mb-2">Our Expertise</h3>
                             <p className="text-sm text-slate-500 mb-8 leading-relaxed">End-to-end business solutions from registration to industrial expansion.</p>
@@ -90,16 +86,58 @@ const MegaMenu = ({ isOpen }) => {
     );
 };
 
+// --- TYPEWRITER HOOK ---
+const useTypewriter = (words = ["GST Registration", "Company Setup", "Trademark", "Business Loans"], speed = 150, pause = 2000) => {
+    const [index, setIndex] = useState(0);
+    const [subIndex, setSubIndex] = useState(0);
+    const [reverse, setReverse] = useState(false);
+    const [blink, setBlink] = useState(true);
+
+    // Blinking cursor
+    useEffect(() => {
+        const timeout2 = setInterval(() => {
+            setBlink((prev) => !prev);
+        }, 500);
+        return () => clearInterval(timeout2);
+    }, []);
+
+    useEffect(() => {
+        if (subIndex === words[index].length + 1 && !reverse) {
+            setTimeout(() => setReverse(true), pause);
+            return;
+        }
+
+        if (subIndex === 0 && reverse) {
+            setReverse(false);
+            setIndex((prev) => (prev + 1) % words.length);
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            setSubIndex((prev) => prev + (reverse ? -1 : 1));
+        }, Math.max(reverse ? 75 : subIndex === words[index].length ? 1000 : speed, parseInt(Math.random() * 50)));
+
+        return () => clearTimeout(timeout);
+    }, [subIndex, index, reverse, words, speed, pause]);
+
+    return `${words[index].substring(0, subIndex)}${blink ? "|" : " "}`;
+};
+
+
 const FunctionalSearch = ({ variant = 'default' }) => {
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false); // For expanding variant
     const wrapperRef = useRef(null);
+    const inputRef = useRef(null);
+    const typewriterText = useTypewriter();
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
                 setIsOpen(false);
+                setIsExpanded(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -122,34 +160,59 @@ const FunctionalSearch = ({ variant = 'default' }) => {
         }
     };
 
-    const containerClasses = variant === 'dark'
-        ? "bg-slate-800/50 border-slate-700 text-white focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-red-500/50"
-        : variant === 'glass'
-            ? "bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/70 focus-within:bg-white/20 hover:bg-white/20"
-            : "bg-slate-100 border-slate-200 text-slate-900 focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 focus-within:border-red-500 shadow-inner";
+    const toggleExpand = () => {
+        setIsExpanded(true);
+        setTimeout(() => inputRef.current?.focus(), 100);
+    };
 
-    const inputClasses = (variant === 'dark' || variant === 'glass')
-        ? "text-white placeholder:text-white/50"
-        : "text-slate-900 placeholder:text-slate-500";
+    // --- STYLES ---
+    let containerClasses = "";
+    let inputClasses = "";
+    let iconClass = "";
+    let placeholderText = `Search for ${typewriterText}`;
 
-    const iconClass = (variant === 'dark' || variant === 'glass') ? "text-white/60" : "text-slate-500";
+    if (variant === 'dark') {
+        containerClasses = "bg-slate-800/50 border-slate-700 text-white focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-red-500/50";
+        inputClasses = "text-white placeholder:text-white/50";
+        iconClass = "text-white/60";
+    } else if (variant === 'glass') {
+        containerClasses = "bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/70 focus-within:bg-white/20 hover:bg-white/20";
+        inputClasses = "text-white placeholder:text-white/50";
+        iconClass = "text-white/60";
+    } else if (variant === 'expanding') {
+        // Starts small (icon only look) then expands
+        containerClasses = `bg-slate-100 border-slate-200 text-slate-900 transition-all duration-500 ease-out ${isExpanded ? 'w-[400px] border-red-500 ring-4 ring-red-50 shadow-lg bg-white' : 'w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 border-transparent cursor-pointer justify-center px-0'}`;
+        inputClasses = `text-slate-900 placeholder:text-slate-400 transition-all ${isExpanded ? 'w-full opacity-100 ml-2' : 'w-0 opacity-0'}`;
+        iconClass = "text-slate-500 shrink-0";
+        placeholderText = isExpanded ? `Search for ${typewriterText}` : "";
+    } else {
+        containerClasses = "bg-slate-100 border-slate-200 text-slate-900 focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 focus-within:border-red-500 shadow-inner";
+        inputClasses = "text-slate-900 placeholder:text-slate-500";
+        iconClass = "text-slate-500";
+    }
 
     return (
-        <div className="relative w-full z-[60]" ref={wrapperRef}>
-            <div className={`flex items-center px-4 py-3 rounded-full border transition-all duration-300 ${containerClasses}`}>
-                <Search className={`w-4 h-4 mr-3 ${iconClass}`} />
+        <div className={`relative z-[60] ${variant === 'expanding' ? 'flex justify-end' : 'w-full'}`} ref={wrapperRef}>
+            <div
+                className={`flex items-center rounded-full border ${variant !== 'expanding' && 'px-4 py-3'} ${variant === 'expanding' && isExpanded ? 'px-4 py-2.5' : ''} ${containerClasses}`}
+                onClick={variant === 'expanding' ? toggleExpand : undefined}
+            >
+                <Search className={`w-4 h-4 ${iconClass}`} />
                 <input
+                    ref={inputRef}
                     type="text"
-                    placeholder="Search for services..."
-                    className={`bg-transparent border-none outline-none w-full text-sm font-medium ${inputClasses}`}
+                    placeholder={placeholderText}
+                    className={`bg-transparent border-none outline-none text-sm font-medium ${inputClasses}`}
                     value={query}
                     onChange={handleSearch}
-                    onFocus={() => query.length > 1 && setIsOpen(true)}
+                    onFocus={() => { if (query.length > 1) setIsOpen(true); }}
                 />
-                {query && <X className={`w-4 h-4 cursor-pointer hover:text-red-500 ${iconClass}`} onClick={() => { setQuery(''); setIsOpen(false); }} />}
+                {query && isExpanded && <X className={`w-4 h-4 cursor-pointer hover:text-red-500 ${iconClass} ml-2`} onClick={(e) => { e.stopPropagation(); setQuery(''); setIsOpen(false); inputRef.current.focus(); }} />}
+                {/* Close expand on X if empty? No, X clears. Click outside closes. */}
             </div>
+
             {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden animate-fade-in origin-top transform transition-all ring-1 ring-black/5">
+                <div className={`absolute top-full mt-3 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden animate-fade-in origin-top transform transition-all ring-1 ring-black/5 ${variant === 'expanding' ? 'right-0 w-[400px]' : 'left-0 right-0'}`}>
                     {suggestions.length > 0 ? (
                         <>
                             <div className="bg-slate-50/50 px-4 py-2 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -183,7 +246,7 @@ const FunctionalSearch = ({ variant = 'default' }) => {
                                     <h4 className="text-lg font-bold mb-1">Couldn't find "{query}"</h4>
                                     <p className="text-xs text-slate-300 mb-5 max-w-[200px] mx-auto">Don't worry, we offer custom solutions for almost everything.</p>
                                     <a href={`/contact?service=${encodeURIComponent(query)}`} className="inline-flex items-center justify-center w-full px-4 py-3 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-lg transition shadow-lg shadow-red-900/20 group">
-                                        <MessageCircle className="w-4 h-4 mr-2" /> Request Callback for "{query}"
+                                        <MessageCircle className="w-4 h-4 mr-2" /> Request Callback
                                     </a>
                                 </div>
                             </div>
@@ -225,49 +288,56 @@ const HeaderDesignOptions = () => {
     return (
         <div className="bg-slate-950 font-sans text-slate-800">
 
-            {/* --- HEADER 3: HYBRID SPLIT --- */}
+            {/* --- HEADER 3: HYBRID SPLIT (FIXED LAYOUT) --- */}
             <div className="relative h-[600px] overflow-y-auto overflow-x-hidden bg-white border-b-8 border-slate-900 group/container">
-                <span className="fixed top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded z-[200] opacity-50 group-hover/container:opacity-100 transition-opacity">Option 3: Hybrid Split</span>
+                <span className="fixed top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded z-[200] opacity-50 group-hover/container:opacity-100 transition-opacity">Option 3: Hybrid Split (Fixed)</span>
 
-                {/* Header Container - Relative for MegaMenu positioning */}
-                <div className="relative" onMouseLeave={() => setHover(0, false)}>
-                    <header className="bg-[#1e293b] text-white py-3 px-8 sticky top-0 z-50 shadow-2xl transition-all duration-300">
-                        <div className="max-w-[1400px] mx-auto flex justify-between items-center relative z-10">
-                            <div className="flex items-center gap-6">
+                <div className="relative isolate" onMouseLeave={() => setHover(0, false)}>
+                    <header className="bg-[#1e293b] text-white py-3 px-8 sticky top-0 z-[60] shadow-2xl transition-all duration-300">
+                        <div className="max-w-[1400px] mx-auto grid grid-cols-3 items-center">
+                            {/* Left */}
+                            <div className="flex items-center gap-6 justify-self-start">
                                 <div className="bg-white/10 p-2 rounded-lg cursor-pointer hover:bg-white/20 transition"><Menu className="w-5 h-5 text-white" /></div>
-                                {/* Hover Trigger - Logic on this, Menu rendered OUTSIDE */}
                                 <div className="relative h-12 flex items-center" onMouseEnter={() => setHover(0, true)}>
                                     <button className={`flex items-center gap-2 text-sm font-bold transition ${hoveredState[0] ? 'text-white' : 'text-slate-300'}`}>All Services <ChevronDown className="w-4 h-4 opacity-50" /></button>
                                 </div>
                             </div>
-                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2"><Logo theme="dark" /></div>
-                            <div className="flex items-center gap-5">
+                            {/* Center */}
+                            <div className="justify-self-center"><Logo theme="dark" /></div>
+                            {/* Right */}
+                            <div className="justify-self-end flex items-center gap-5">
                                 <button className="bg-white text-slate-900 px-5 py-2 rounded-lg font-bold text-xs hover:bg-slate-100 transition flex items-center gap-2"><span>Get Started</span> <ArrowRight className="w-3.5 h-3.5" /></button>
                             </div>
                         </div>
                     </header>
-                    {/* MOVED MEGA MENU HERE: Full Width relative to this container */}
                     <MegaMenu isOpen={hoveredState[0]} />
                 </div>
 
-                <div className="bg-slate-100 py-2.5 px-8 max-w-[1400px] mx-auto flex gap-6 text-[10px] font-bold uppercase tracking-wide text-slate-500 shadow-lg sticky top-[70px] z-40">
-                    <span className="hover:text-red-600 cursor-pointer">Startup Registration</span>
-                    <span className="hover:text-red-600 cursor-pointer">GST & Tax</span>
-                    <span className="hover:text-red-600 cursor-pointer">Industrial Setup</span>
+                <div className="bg-slate-100 py-2.5 px-8 flex justify-center sticky top-[72px] z-40 border-b border-slate-200">
+                    <div className="max-w-[1400px] w-full flex gap-8 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        <span className="hover:text-red-600 cursor-pointer">Startup Registration</span>
+                        <span className="hover:text-red-600 cursor-pointer">GST & Tax</span>
+                        <span className="hover:text-red-600 cursor-pointer">Industrial Setup</span>
+                    </div>
                 </div>
                 <PageContent label="Hybrid Split" />
             </div>
 
-            {/* --- HEADER 4: MINIMALIST WIDE --- */}
+            {/* --- HEADER 4: MINIMALIST (EXPANDING SEARCH) --- */}
             <div className="relative h-[600px] overflow-y-auto overflow-x-hidden bg-slate-50 border-b-8 border-slate-900 group/container">
-                <span className="fixed top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded z-[200] opacity-50 group-hover/container:opacity-100 transition-opacity">Option 4: Minimalist Wide</span>
+                <span className="fixed top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded z-[200] opacity-50 group-hover/container:opacity-100 transition-opacity">Option 4: Minimalist + Expanding Search</span>
 
-                <div className="relative" onMouseLeave={() => setHover(1, false)}>
-                    <header className="bg-white sticky top-0 z-50 border-b border-slate-100 shadow-sm transition-all hover:shadow-lg">
+                <div className="relative isolate" onMouseLeave={() => setHover(1, false)}>
+                    <header className="bg-white sticky top-0 z-[60] border-b border-slate-100 shadow-sm transition-all hover:shadow-lg">
                         <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between gap-8">
                             <Logo theme="dark" />
-                            <div className="flex-1 max-w-xl mx-auto hidden md:block"><FunctionalSearch /></div>
-                            <div className="flex items-center gap-4">
+
+                            {/* EXPANDING SEARCH HERE */}
+                            <div className="flex-1 flex justify-center">
+                                <FunctionalSearch variant="expanding" />
+                            </div>
+
+                            <div className="flex items-center gap-6">
                                 <div className="h-20 flex items-center relative" onMouseEnter={() => setHover(1, true)}>
                                     <button className={`px-4 py-2 flex items-center text-sm font-bold rounded-md transition-all ${hoveredState[1] ? 'bg-red-50 text-red-600' : 'text-slate-700 hover:text-slate-900'}`}>Services <ChevronDown className="ml-1 w-4 h-4" /></button>
                                 </div>
@@ -285,8 +355,8 @@ const HeaderDesignOptions = () => {
             <div className="relative h-[600px] overflow-y-auto overflow-x-hidden bg-slate-300 border-b-8 border-slate-900 group/container">
                 <span className="fixed top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded z-[200] opacity-50 group-hover/container:opacity-100 transition-opacity">Option 5: Dark Premium</span>
 
-                <div className="relative" onMouseLeave={() => setHover(2, false)}>
-                    <header className="bg-[#0f172a] text-white sticky top-0 z-50 shadow-2xl">
+                <div className="relative isolate" onMouseLeave={() => setHover(2, false)}>
+                    <header className="bg-[#0f172a] text-white sticky top-0 z-[60] shadow-2xl">
                         <div className="max-w-[1400px] mx-auto px-6 h-24 flex items-center justify-between">
                             <div className="flex items-center gap-12">
                                 <Logo theme="light" size="large" />
@@ -309,8 +379,8 @@ const HeaderDesignOptions = () => {
             <div className="relative h-[600px] overflow-y-auto overflow-x-hidden bg-white border-b-8 border-slate-900 group/container">
                 <span className="fixed top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded z-[200] opacity-50 group-hover/container:opacity-100 transition-opacity">Option 6: Centered Stack</span>
 
-                <div className="relative" onMouseLeave={() => setHover(3, false)}>
-                    <header className="bg-white pt-6 pb-0 sticky top-0 z-50 shadow-md">
+                <div className="relative isolate" onMouseLeave={() => setHover(3, false)}>
+                    <header className="bg-white pt-6 pb-0 sticky top-0 z-[60] shadow-md">
                         <div className="max-w-[1400px] mx-auto px-6 pb-6 flex items-center justify-between gap-12">
                             <Logo theme="dark" size="large" />
                             <div className="flex-1 max-w-2xl"><FunctionalSearch /></div>
@@ -326,7 +396,6 @@ const HeaderDesignOptions = () => {
                             </div>
                         </div>
                     </header>
-                    {/* Centered stack menu needs to be careful about z-index and width */}
                     <div className="relative max-w-[1400px] mx-auto">
                         <MegaMenu isOpen={hoveredState[3]} />
                     </div>
@@ -338,8 +407,8 @@ const HeaderDesignOptions = () => {
             <div className="relative h-[600px] overflow-y-auto overflow-x-hidden bg-slate-200 border-b-8 border-slate-900 group/container">
                 <span className="fixed top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded z-[200] opacity-50 group-hover/container:opacity-100 transition-opacity">Option 7: Dynamic Island</span>
 
-                <div className="relative" onMouseLeave={() => setHover(4, false)}>
-                    <div className="sticky top-6 z-50 px-4">
+                <div className="relative isolate" onMouseLeave={() => setHover(4, false)}>
+                    <div className="sticky top-6 z-[60] px-4">
                         <header className="bg-white/90 backdrop-blur-xl max-w-[1200px] mx-auto rounded-full shadow-2xl border border-white/50 p-2 pl-6 flex items-center justify-between transition-all hover:scale-[1.002]">
                             <div className="flex items-center gap-8">
                                 <Logo theme="dark" size="normal" />
@@ -370,8 +439,8 @@ const HeaderDesignOptions = () => {
 
                 <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-br from-indigo-900 via-slate-900 to-red-900 z-0"></div>
 
-                <div className="relative" onMouseLeave={() => setHover(5, false)}>
-                    <header className="sticky top-0 z-50 bg-white/5 backdrop-blur-xl border-b border-white/10 text-white shadow-2xl">
+                <div className="relative isolate" onMouseLeave={() => setHover(5, false)}>
+                    <header className="sticky top-0 z-[60] bg-white/5 backdrop-blur-xl border-b border-white/10 text-white shadow-2xl">
                         <div className="max-w-[1400px] mx-auto px-6 h-24 flex items-center justify-between">
                             <Logo theme="light" />
                             <div className="flex-1 max-w-xl mx-12"><FunctionalSearch variant="glass" /></div>
@@ -392,8 +461,8 @@ const HeaderDesignOptions = () => {
             <div className="relative h-[600px] overflow-y-auto overflow-x-hidden bg-white border-b-8 border-slate-900 group/container">
                 <span className="fixed top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded z-[200] opacity-50 group-hover/container:opacity-100 transition-opacity">Option 9: Power Search</span>
 
-                <div className="relative" onMouseLeave={() => setHover(6, false)}>
-                    <header className="sticky top-0 z-50 bg-white border-b-4 border-black shadow-lg">
+                <div className="relative isolate" onMouseLeave={() => setHover(6, false)}>
+                    <header className="sticky top-0 z-[60] bg-white border-b-4 border-black shadow-lg">
                         <div className="flex flex-col md:flex-row">
                             <div className="bg-black text-white p-6 md:w-64 flex-shrink-0 flex items-center justify-center"><Logo theme="light" /></div>
                             <div className="flex-1 flex flex-col">
