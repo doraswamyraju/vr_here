@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
-    ArrowRight, CheckCircle2, Star, Sparkles, MoveUpRight, Box, Hexagon, Layers
+    ArrowRight, CheckCircle2, Star, Sparkles, MoveUpRight, Box, Hexagon, Layers, ChevronDown
 } from 'lucide-react';
 import { MENU_DATA } from './components/SharedComponents';
 
