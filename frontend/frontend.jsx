@@ -15,6 +15,7 @@ import AdminPage from './admin';
 import CustomerPage from './customer';
 import EmployeePage from './employee';
 import ContactUsPage from './ContactUs';
+import HeaderDesignOptions from './HeaderDesignOptions';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -69,6 +70,9 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* TEMP: Design Previews */}
+      <Route path="/header-designs" element={<HeaderDesignOptions />} />
     </Routes>
   );
 };
