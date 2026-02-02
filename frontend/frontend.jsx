@@ -16,6 +16,7 @@ import CustomerPage from './customer';
 import EmployeePage from './employee';
 import ContactUsPage from './ContactUs';
 import HeaderDesignOptions from './HeaderDesignOptions';
+import ServiceCardDesignOptions from './ServiceCardDesignOptions';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -73,6 +74,7 @@ const App = () => {
 
       {/* TEMP: Design Previews */}
       <Route path="/header-designs" element={<HeaderDesignOptions />} />
+      <Route path="/service-designs" element={<ServiceCardDesignOptions />} />
     </Routes>
   );
 };
