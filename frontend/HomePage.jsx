@@ -18,48 +18,64 @@ const SERVICES_GRID_DATA = [
     title: 'Start Business',
     icon: Briefcase,
     color: 'bg-red-50 text-red-600',
-    description: 'Pvt Ltd, LLP, OPC, Section 8, Partnership',
+    description: 'Pvt Ltd, LLP, Section 8, FSSAI, Trade License',
     link: '/pvt-ltd-registration'
   },
   {
-    id: 'accounting',
-    title: 'Tax & Compliance',
-    icon: Calculator,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'GST, Income Tax, Audits, RoC Filings',
-    link: '/gst-registration'
-  },
-  {
     id: 'machinery',
-    title: 'Industrial Setup',
+    title: 'Machinery & Industrial',
     icon: Factory,
     color: 'bg-slate-100 text-slate-700',
-    description: 'Machinery Sourcing, Factory Licenses, Turnkey Projects',
-    link: '/contact?service=Industrial Setup'
-  },
-  {
-    id: 'msme',
-    title: 'Loans & Funding',
-    icon: IndianRupee,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'Project Reports, MSME Loans, Subsidies',
-    link: '/contact?service=Loans'
+    description: 'Sourcing, Vendor Verification, Turnkey Setup',
+    link: '/contact?service=Machinery'
   },
   {
     id: 'iso',
     title: 'Certifications',
     icon: Stamp,
     color: 'bg-slate-100 text-slate-700',
-    description: 'ISO 9001, FDA, CE, BIS, Halal',
+    description: 'ISO 9001, FDA, CE, BIS, HACCP, Halal',
     link: '/contact?service=ISO'
+  },
+  {
+    id: 'accounting',
+    title: 'Accounting & Tax',
+    icon: Calculator,
+    color: 'bg-slate-100 text-slate-700',
+    description: 'GST Returns, Income Tax, Audits, RoC Filings',
+    link: '/gst-registration'
   },
   {
     id: 'govt',
     title: 'Govt Portals',
     icon: Globe,
     color: 'bg-slate-100 text-slate-700',
-    description: 'GeM Registration, TReDS, Import Export Code',
+    description: 'GeM, TReDS, RERA, Import Export Code',
     link: '/contact?service=Govt Portals'
+  },
+  {
+    id: 'msme',
+    title: 'Industrial Consultancy',
+    icon: IndianRupee,
+    color: 'bg-slate-100 text-slate-700',
+    description: 'Project Reports (DPR), Loans, Subsidies',
+    link: '/contact?service=Loans'
+  },
+  {
+    id: 'branding',
+    title: 'Startup Support',
+    icon: Lightbulb,
+    color: 'bg-slate-100 text-slate-700',
+    description: 'Business Plans, Pitch Decks, Branding, IP',
+    link: '/contact?service=Startup Support'
+  },
+  {
+    id: 'utility',
+    title: 'Utility Services',
+    icon: MoreHorizontal,
+    color: 'bg-slate-100 text-slate-700',
+    description: 'Trademark, PAN/TAN, Insurance, Digital Marketing',
+    link: '/contact?service=Utility Services'
   }
 ];
 

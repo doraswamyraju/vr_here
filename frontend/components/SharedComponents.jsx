@@ -23,11 +23,11 @@ export const MENU_DATA = [
         id: 'machinery',
         title: 'Machinery & Industrial',
         icon: Factory,
-        items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Factory Setup', 'Technology Upgradation']
+        items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis']
     },
     {
         id: 'iso',
-        title: 'Certification & ISO',
+        title: 'Certification (ISO)',
         icon: Stamp,
         items: ['ISO 9001, 14001, 45001', 'ISO 27001 (Info Sec)', 'CE Marking & FDA', 'GMP / HACCP / Halal']
     },
@@ -41,31 +41,31 @@ export const MENU_DATA = [
         id: 'registration',
         title: 'Business Registration',
         icon: Briefcase,
-        items: ['Pvt Ltd / LLP / OPC', 'Section 8 (NGO)', 'Start-up India Reg', 'FSSAI & Trade License']
+        items: ['Pvt Ltd / LLP / OPC', 'Section 8 (NGO)', 'Udyam (MSME)', 'FSSAI & Trade License']
     },
     {
         id: 'govt',
         title: 'Govt. Portals',
         icon: Globe,
-        items: ['GeM Seller/OEM Reg', 'GeM Product Listing', 'TReDS', 'RERA Registration']
+        items: ['GeM Seller/OEM Reg', 'TReDS Registration', 'RERA Registration', 'Import Export Code']
     },
     {
         id: 'msme',
-        title: 'Ind. & MSME Loans',
+        title: 'Industrial Consultancy',
         icon: IndianRupee,
-        items: ['Project Reports (DPR)', 'Term Loans', 'CGTMSE & PMEGP', 'Subsidy Guidance']
+        items: ['Project Reports (DPR)', 'Term Loans & WC', 'CGTMSE & PMEGP', 'Subsidy Guidance']
     },
     {
         id: 'branding',
-        title: 'Branding & Startup',
+        title: 'Startup Support',
         icon: Lightbulb,
-        items: ['Business Plans', 'Website & Branding', 'Vendor Empanelment', 'HR Policy & SOPs']
+        items: ['Business Plans', 'Pitch Decks', 'Website & Branding', 'HR Policy & SOPs']
     },
     {
         id: 'utility',
         title: 'Utility Services',
         icon: MoreHorizontal,
-        items: ['Trademark & IP', 'PAN / TAN Apps', 'Digital Marketing', 'Digital Signatures']
+        items: ['Trademark & IP', 'PAN / TAN Apps', 'Insurance Services', 'Digital Marketing']
     }
 ];
 
