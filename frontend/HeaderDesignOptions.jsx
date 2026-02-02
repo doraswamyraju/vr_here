@@ -83,40 +83,42 @@ const MegaMenu = ({ isOpen }) => {
     );
 };
 
-// --- CANVA MENU DATA ---
+// --- HELPER WRAPPER ---
+function MegaphoneIconWrapper(props) { return <Sparkles {...props} /> }
+
+// --- CANVA MENU DATA (Enhanced with Icons & Colors) ---
 const CANVA_MENU_DATA = [
-    { title: "Industrial & Manufacturing", icon: Factory, items: ["Machinery sourcing", "Turnkey setup", "Tech upgradation", "Feasibility", "Consulting"] },
-    { title: "Certifications", icon: Stamp, items: ["ISO 9001, 14001, 45001", "GMP / HACCP", "CE, BIS, ISI", "FDA, BRCGS", "Halal & Kosher"] },
-    { title: "Business Setup", icon: Briefcase, items: ["Company / LLP / NGO", "Licenses & Statutory", "ROC Compliances", "Labour & Pollution", "DSC & Filings"] },
-    { title: "Accounting & Audit", icon: Calculator, items: ["Accounting Outsourcing", "GST & Income Tax", "Statutory Audits", "MIS & Compliance"] },
-    { title: "Finance & MSME", icon: IndianRupee, items: ["DPR & CMA Reports", "Bank Loans", "CGTMSE & PMEGP", "Subsidies", "NSIC & PMFME"] },
-    { title: "Govt Portals", icon: Globe, items: ["GeM Registration", "OEM Approvals", "TReDS, RERA", "NPCI Reg", "Single Window"] },
-    { title: "Branding & Digital", icon: MegaphoneIconWrapper, items: ["Identity Consulting", "Digital Marketing", "Website Design", "Landing Pages", "Startup Branding"] },
-    { title: "Software & Tech", icon: Layout, items: ["Custom Software", "Web Apps", "Automation Tools", "ERP / CRM", "Cloud Systems"] },
-    { title: "AI Products", icon: Sparkles, items: ["AI Development", "Chatbots", "Automation", "Analytics Tools", "Custom AI Solutions"] },
-    { title: "IP & Documentation", icon: ShieldCheck, items: ["Trademark & IP", "Business Docs", "HR Policies", "Loan Docs", "Insurance"] }
+    { title: "Industrial & Manufacturing", icon: Factory, color: "text-orange-600", bg: "bg-orange-50", items: ["Machinery sourcing", "Turnkey setup", "Tech upgradation", "Feasibility", "Consulting"] },
+    { title: "Certifications", icon: Stamp, color: "text-green-600", bg: "bg-green-50", items: ["ISO 9001, 14001", "GMP / HACCP", "CE, BIS, ISI", "FDA, BRCGS", "Halal & Kosher"] },
+    { title: "Business Setup", icon: Briefcase, color: "text-blue-600", bg: "bg-blue-50", items: ["Company / LLP", "Licenses", "ROC Compliances", "Labour & Pollution", "DSC & Filings"] },
+    { title: "Accounting", icon: Calculator, color: "text-indigo-600", bg: "bg-indigo-50", items: ["Outsourcing", "GST & Tax", "Statutory Audits", "MIS & Compliance"] },
+    { title: "Finance & MSME", icon: IndianRupee, color: "text-emerald-600", bg: "bg-emerald-50", items: ["DPR & CMA Reports", "Bank Loans", "CGTMSE / PMEGP", "Subsidies", "NSIC & PMFME"] },
+    { title: "Govt Portals", icon: Globe, color: "text-cyan-600", bg: "bg-cyan-50", items: ["GeM Registration", "OEM Approvals", "TReDS, RERA", "NPCI Reg", "Single Window"] },
+    { title: "Branding & Digital", icon: MegaphoneIconWrapper, color: "text-pink-600", bg: "bg-pink-50", items: ["Identity Consulting", "Digital Marketing", "Website Design", "Landing Pages", "Startup Branding"] },
+    { title: "Software & Tech", icon: Layout, color: "text-violet-600", bg: "bg-violet-50", items: ["Custom Software", "Web Apps", "Automation Tools", "ERP / CRM", "Cloud Systems"] },
+    { title: "AI Products", icon: Sparkles, color: "text-purple-600", bg: "bg-purple-50", items: ["AI Development", "Chatbots", "Automation", "Analytics Tools", "Custom AI"] },
+    { title: "IP & Support", icon: ShieldCheck, color: "text-red-600", bg: "bg-red-50", items: ["Trademark & IP", "Business Docs", "HR Policies", "Loan Docs", "Insurance"] }
 ];
 
-// Helper for icon because Lucide might not have Megaphone
-function MegaphoneIconWrapper(props) { return <Sparkles {...props} /> } // Fallback
-
-// --- CANVA MEGA MENU ---
+// --- CANVA MEGA MENU (Enhanced) ---
 const CanvaMegaMenu = ({ isOpen }) => {
     if (!isOpen) return null;
     return (
         <div className="absolute top-full left-0 w-full pt-2 animate-fade-in z-[100]">
-            <div className="bg-white rounded-lg shadow-2xl border border-slate-100 mx-4 mt-1 p-6 relative">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+            <div className="bg-white rounded-xl shadow-2xl border border-slate-100 mx-4 mt-2 p-8 relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-8 gap-y-10">
                     {CANVA_MENU_DATA.map((cat, i) => (
                         <div key={i} className="group/cat">
-                            <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-3 text-sm">
-                                {/* <cat.icon className="w-4 h-4 text-purple-600" />  Clean look, maybe no icon in title like Canva? Canva has simple titles. Keeping it text only for clean look or small icon. */}
-                                {cat.title}
-                            </h4>
-                            <ul className="space-y-2">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className={`w-8 h-8 rounded-lg ${cat.bg} ${cat.color} flex items-center justify-center shrink-0`}>
+                                    <cat.icon className="w-5 h-5" />
+                                </div>
+                                <h4 className="font-bold text-slate-900 text-sm">{cat.title}</h4>
+                            </div>
+                            <ul className="space-y-2 pl-11">
                                 {cat.items.map((item, j) => (
                                     <li key={j}>
-                                        <a href="#" className="text-xs text-slate-500 hover:text-purple-600 hover:bg-purple-50 px-2 py-1 -ml-2 rounded block transition-colors">
+                                        <a href="#" className="text-xs font-medium text-slate-500 hover:text-purple-600 hover:bg-purple-50 px-2 py-1 -ml-2 rounded block transition-colors">
                                             {item}
                                         </a>
                                     </li>
@@ -125,16 +127,111 @@ const CanvaMegaMenu = ({ isOpen }) => {
                         </div>
                     ))}
                 </div>
-                {/* Featured AI Section at bottom or side? User said "AI - This category positions you as future focused". Let's highlight it. */}
-                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between bg-gradient-to-r from-purple-50 to-white -mx-6 -mb-6 p-6 rounded-b-lg">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-purple-600 text-white p-3 rounded-full"><Sparkles className="w-5 h-5" /></div>
+                {/* Featured AI Section */}
+                <div className="mt-10 pt-6 border-t border-slate-100 flex items-center justify-between bg-gradient-to-r from-purple-50 via-white to-white -mx-8 -mb-8 p-8 rounded-b-xl">
+                    <div className="flex items-center gap-5">
+                        <div className="bg-purple-600 text-white p-4 rounded-xl shadow-lg shadow-purple-200"><Sparkles className="w-6 h-6" /></div>
                         <div>
-                            <div className="font-bold text-slate-900">Future-Ready AI Solutions</div>
-                            <div className="text-xs text-slate-500">Upgrade your business with intelligent automation.</div>
+                            <div className="font-black text-slate-900 text-lg">Future-Ready AI Solutions</div>
+                            <div className="text-sm text-slate-500">Upgrade your business with intelligent automation and analytics.</div>
                         </div>
                     </div>
-                    <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-purple-600 transition-colors">Explore AI Products</button>
+                    <button className="bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-purple-600 transition-colors shadow-lg">Explore AI Products</button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// --- VISME MENU DATA ---
+const VISME_PRODUCTS = [
+    { name: "Presentations", icon: Layout, desc: "Keep your audience engaged", color: "bg-blue-500" },
+    { name: "Documents", icon: Briefcase, desc: "Visual docs that inform", color: "bg-green-500" },
+    { name: "Charts & Graphs", icon: Calculator, desc: "Bring your data to life", color: "bg-orange-500" },
+    { name: "Infographics", icon: Grid, desc: "Share information visually", color: "bg-pink-500" },
+    { name: "Forms & Surveys", icon: CheckCircle, desc: "Visual forms that convert", color: "bg-indigo-500" },
+];
+
+const VISME_COLS = {
+    tools: { title: "Design Tools", items: ["Video Maker", "Timeline Maker", "eBook Creator", "GIF Maker", "Flowchart Maker", "Report Maker"] },
+    ai: { title: "VR AI >", items: ["AI Designer", "AI Presentation Maker", "AI Document Generator", "AI Brand Design Tools", "AI Image Generator"] },
+    graphics: { title: "Graphics & Assets", items: ["Data Visualization", "Photos", "Mockups", "Icons", "Animated Characters"] }
+};
+
+// --- VISME MEGA MENU ---
+const VismeMegaMenu = ({ isOpen }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="absolute top-full left-0 w-full pt-1 animate-fade-in z-[100]">
+            <div className="bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)] border-t border-slate-200 min-h-[500px]">
+                <div className="max-w-[1400px] mx-auto flex">
+
+                    {/* LEFT SIDEBAR - PRODUCTS */}
+                    <div className="w-72 bg-slate-50 p-8 border-r border-slate-100">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">Products</h4>
+                        <div className="space-y-4">
+                            {VISME_PRODUCTS.map((prod, i) => (
+                                <a href="#" key={i} className="flex items-start gap-4 group p-2 rounded-xl hover:bg-white hover:shadow-md transition-all">
+                                    <div className={`w-10 h-10 rounded-lg ${prod.color} text-white flex items-center justify-center shrink-0 shadow-sm shadow-${prod.color.replace('bg-', '')}/30`}>
+                                        <prod.icon className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors">{prod.name}</div>
+                                        <div className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">{prod.desc}</div>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* CENTER COLS */}
+                    <div className="flex-1 p-10 grid grid-cols-3 gap-12">
+                        <div>
+                            <h4 className="font-bold text-slate-900 mb-6">{VISME_COLS.tools.title}</h4>
+                            <ul className="space-y-3">
+                                {VISME_COLS.tools.items.map((item, i) => (
+                                    <li key={i}><a href="#" className="text-sm text-slate-600 hover:text-blue-600 font-medium transition-colors block">{item}</a></li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-blue-600 mb-6 flex items-center gap-1 cursor-pointer hover:underline">{VISME_COLS.ai.title}</h4>
+                            <ul className="space-y-3">
+                                {VISME_COLS.ai.items.map((item, i) => (
+                                    <li key={i}><a href="#" className="text-sm text-slate-600 hover:text-blue-600 font-medium transition-colors flex items-center gap-2"><Sparkles className="w-3 h-3 text-purple-500" /> {item}</a></li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-slate-900 mb-6">{VISME_COLS.graphics.title}</h4>
+                            <ul className="space-y-3">
+                                {VISME_COLS.graphics.items.map((item, i) => (
+                                    <li key={i}><a href="#" className="text-sm text-slate-600 hover:text-blue-600 font-medium transition-colors block">{item}</a></li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* RIGHT SIDEBAR - PROMO */}
+                    <div className="w-72 p-8 border-l border-slate-100 flex flex-col justify-between">
+                        <div>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">What's New</h4>
+                            <div className="bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden group cursor-pointer hover:shadow-xl transition-shadow aspect-square flex flex-col justify-end">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/30 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/30 rounded-full blur-2xl -ml-6 -mb-6"></div>
+                                <div className="relative z-10">
+                                    <div className="bg-white/20 backdrop-blur-md w-fit px-3 py-1 rounded-full text-[10px] font-bold mb-4 border border-white/20">NEW REPORT</div>
+                                    <h3 className="text-xl font-bold mb-2">2026 Strategy</h3>
+                                    <p className="text-xs text-slate-300 mb-6 line-clamp-3">Future of business compliance.</p>
+                                    <div className="text-xs font-bold text-blue-300 group-hover:text-white transition-colors flex items-center gap-2">Read Report <ArrowRight className="w-3 h-3" /></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-[10px] text-slate-400 text-center">
+                            &copy; 2026 VR HERE. All rights reserved.
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -332,7 +429,7 @@ const HeaderPreview = ({ title, children, color = "bg-white" }) => (
 
 // MAIN COMPONENT
 const HeaderDesignOptions = () => {
-    const [hoveredState, setHoveredState] = useState([false, false, false, false, false, false, false, false, false, false, false]);
+    const [hoveredState, setHoveredState] = useState([false, false, false, false, false, false, false, false, false, false, false, false]);
 
     const setHover = (index, val) => {
         const newState = [...hoveredState];
@@ -343,19 +440,53 @@ const HeaderDesignOptions = () => {
     return (
         <div className="bg-slate-100 font-sans text-slate-800 min-h-screen">
 
-            {/* --- NEW OPTION 10: CANVA STYLE --- */}
-            <HeaderPreview title="Option 10: Canva Style" color="bg-slate-50">
+            {/* --- NEW OPTION 11: VISME STYLE --- */}
+            <HeaderPreview title="Option 11: Visme Style (Structured)" color="bg-white">
+                <div className="relative isolate max-w-full mx-auto bg-white shadow-sm" onMouseLeave={() => setHover(10, false)}>
+                    <header className="bg-white px-8 h-20 flex items-center justify-between z-[60] relative border-b border-transparent hover:border-slate-100 transition-colors">
+                        <div className="flex items-center gap-10">
+                            <div className="flex items-center gap-2 cursor-pointer">
+                                {/* Visme Logo Style */}
+                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-black text-xs shadow-md">V</div>
+                                <div className="font-bold text-xl tracking-tight text-slate-900">visme</div>
+                            </div>
+
+                            <nav className="hidden xl:flex items-center gap-6 font-medium text-sm text-slate-600">
+                                <div className="relative h-20 flex items-center" onMouseEnter={() => setHover(10, true)}>
+                                    <button className={`flex items-center gap-1 transition-colors ${hoveredState[10] ? 'text-blue-600' : 'hover:text-blue-600'}`}>
+                                        Create <ChevronDown className={`w-3 h-3 transition-transform ${hoveredState[10] ? 'rotate-180' : ''}`} />
+                                    </button>
+                                </div>
+                                <a href="#" className="hover:text-blue-600 transition-colors flex items-center gap-1">Solutions <ChevronDown className="w-3 h-3" /></a>
+                                <a href="#" className="hover:text-blue-600 transition-colors flex items-center gap-1">Templates <ChevronDown className="w-3 h-3" /></a>
+                                <a href="#" className="hover:text-blue-600 transition-colors">Pricing</a>
+                            </nav>
+                        </div>
+
+                        <div className="flex items-center gap-6">
+                            <button className="text-slate-500 hover:text-slate-900 font-bold text-sm">Log in</button>
+                            <button className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">Sign Up Free</button>
+                        </div>
+                    </header>
+                    <div className="absolute left-0 w-full z-[80]"><VismeMegaMenu isOpen={hoveredState[10]} /></div>
+                </div>
+            </HeaderPreview>
+
+            {/* --- NEW OPTION 10: CANVA STYLE (UPDATED) --- */}
+            <HeaderPreview title="Option 10: Canva Style (Enhanced)" color="bg-slate-50">
                 <div className="relative isolate max-w-full mx-auto bg-white shadow-sm" onMouseLeave={() => setHover(9, false)}>
                     <header className="bg-white px-6 h-20 flex items-center justify-between z-[60] relative">
                         <div className="flex items-center gap-8">
                             <div className="flex items-center gap-2 cursor-pointer">
-                                {/* Simple Logo for Canva Style */}
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-black text-xl shadow-md">VR</div>
+                                {/* Canva ish Logo */}
+                                <div className="w-10 h-10 bg-gradient-to-br from-[#7D2AE8] to-[#00C4CC] rounded-lg flex items-center justify-center text-white font-black text-xl shadow-md">VR</div>
                                 <div className="font-bold text-lg tracking-tight text-slate-900">VR HERE</div>
                             </div>
 
                             <nav className="hidden xl:flex items-center gap-1 font-medium text-sm text-slate-600">
-                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">About</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Design Spotlight</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Business</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Education</a>
 
                                 <div className="relative h-20 flex items-center" onMouseEnter={() => setHover(9, true)}>
                                     <button className={`px-3 py-2 flex items-center gap-1 rounded-md transition-colors ${hoveredState[9] ? 'text-purple-600 bg-purple-50' : 'hover:bg-slate-100'}`}>
@@ -363,17 +494,14 @@ const HeaderDesignOptions = () => {
                                     </button>
                                 </div>
 
-                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Certifications</a>
-                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Finance & MSME</a>
-                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Digital & AI</a>
-                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Govt Portals</a>
-                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Resources</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Plans & Pricing</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Learn</a>
                             </nav>
                         </div>
 
                         <div className="flex items-center gap-4">
                             <div className="w-64"><FunctionalSearch variant="canva" /></div>
-                            <button className="bg-purple-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-md shadow-purple-200 hover:bg-purple-700 transition-colors">Get Started</button>
+                            <button className="bg-[#7D2AE8] text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-md shadow-purple-200 hover:bg-purple-700 transition-colors">Get Started</button>
                         </div>
                     </header>
                     <div className="absolute left-0 w-full z-[80]"><CanvaMegaMenu isOpen={hoveredState[9]} /></div>
