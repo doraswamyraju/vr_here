@@ -24,9 +24,6 @@ const ALL_SERVICES = getAllServices();
 
 // --- COMPONENTS ---
 
-// FIXED LOGO: Logic inverted? 
-// Theme 'dark' = For use on LIGHT background (Text is Dark)
-// Theme 'light' = For use on DARK background (Text is White)
 const Logo = ({ theme = 'dark', size = 'normal' }) => (
     <div className="flex items-center gap-3 cursor-pointer select-none group">
         <div className={`rounded-xl flex items-center justify-center font-black shadow-lg transition-transform group-hover:scale-110 duration-300 ${theme === 'dark' ? 'bg-black text-white' : 'bg-red-600 text-white'} ${size === 'large' ? 'w-12 h-12 text-2xl' : 'w-10 h-10 text-xl'}`}>
@@ -174,9 +171,6 @@ const FunctionalSearch = ({ variant = 'default' }) => {
     let containerClasses = "";
     let inputClasses = "";
     let iconClass = "";
-    // TYPEWRITER EFFECT IN PLACEHOLDER
-    // Note: Placeholder doesn't support rich HTML (cursor blink), so we pass raw text.
-    // The hook returns "Text|" where | is the cursor.
     let placeholderText = `Search for ${typewriterText.replace('|', '')}`;
 
     if (variant === 'dark') {
@@ -190,7 +184,7 @@ const FunctionalSearch = ({ variant = 'default' }) => {
     } else if (variant === 'expanding') {
         containerClasses = `bg-slate-100 border-slate-200 text-slate-900 transition-all duration-500 ease-out ${isExpanded ? 'w-[400px] border-red-500 ring-4 ring-red-50 shadow-lg bg-white' : 'w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 border-transparent cursor-pointer justify-center px-0'}`;
         inputClasses = `text-slate-900 placeholder:text-slate-400 transition-all ${isExpanded ? 'w-full opacity-100 ml-2' : 'w-0 opacity-0'}`;
-        iconClass = "text-slate-500 shrink-0 auto"; // fix shrink
+        iconClass = "text-slate-500 shrink-0 auto";
         placeholderText = isExpanded ? `Search for ${typewriterText.replace('|', '')}` : "";
     } else {
         containerClasses = "bg-slate-100 border-slate-200 text-slate-900 focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 focus-within:border-red-500 shadow-inner";
@@ -264,9 +258,9 @@ const FunctionalSearch = ({ variant = 'default' }) => {
     );
 };
 
-// STATIC WRAPPER TO SHOW HEADERS WITHOUT SCROLL
+// PREVIEW WRAPPER: Added min-h-[500px] to ensure dropdowns don't feel cramped/cutoff
 const HeaderPreview = ({ title, children, color = "bg-white" }) => (
-    <div className={`w-full ${color} py-16 border-b border-slate-200 relative group`}>
+    <div className={`w-full ${color} py-12 border-b border-slate-200 relative group min-h-[500px]`}>
         <div className="absolute top-4 left-4 z-20 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase rounded shadow-lg opacity-30 group-hover:opacity-100 transition-opacity">
             {title}
         </div>
@@ -288,8 +282,8 @@ const HeaderDesignOptions = () => {
         <div className="bg-slate-100 font-sans text-slate-800 min-h-screen">
 
             <HeaderPreview title="Option 3: Hybrid Split (Fixed)" color="bg-slate-50">
-                <div className="relative isolate max-w-[1400px] mx-auto shadow-2xl rounded-b-xl overflow-visible" onMouseLeave={() => setHover(0, false)}>
-                    <header className="bg-[#1e293b] text-white py-3 px-8 rounded-t-xl z-[60] relative">
+                <div className="relative isolate max-w-[1400px] mx-auto shadow-xl rounded-2xl overflow-visible bg-[#1e293b]" onMouseLeave={() => setHover(0, false)}>
+                    <header className="bg-[#1e293b] text-white py-3 px-8 rounded-t-2xl z-[60] relative">
                         <div className="grid grid-cols-3 items-center">
                             <div className="flex items-center gap-6 justify-self-start">
                                 <div className="bg-white/10 p-2 rounded-lg cursor-pointer hover:bg-white/20 transition"><Menu className="w-5 h-5 text-white" /></div>
@@ -297,7 +291,7 @@ const HeaderDesignOptions = () => {
                                     <button className={`flex items-center gap-2 text-sm font-bold transition ${hoveredState[0] ? 'text-white' : 'text-slate-300'}`}>All Services <ChevronDown className="w-4 h-4 opacity-50" /></button>
                                 </div>
                             </div>
-                            <div className="justify-self-center"><Logo theme="light" /></div> {/* FIXED: Theme 'light' (white text) for dark bg */}
+                            <div className="justify-self-center"><Logo theme="light" /></div>
                             <div className="justify-self-end flex items-center gap-5">
                                 <button className="bg-white text-slate-900 px-5 py-2 rounded-lg font-bold text-xs hover:bg-slate-100 transition flex items-center gap-2"><span>Get Started</span> <ArrowRight className="w-3.5 h-3.5" /></button>
                             </div>
@@ -305,7 +299,7 @@ const HeaderDesignOptions = () => {
                     </header>
                     <div className="absolute left-0 w-full z-[80]"><MegaMenu isOpen={hoveredState[0]} /></div>
 
-                    <div className="bg-white py-3 px-8 flex justify-center border-t border-slate-100 rounded-b-xl">
+                    <div className="bg-white py-3 px-8 flex justify-center border-t border-slate-100 rounded-b-2xl">
                         <div className="w-full flex justify-center gap-8 text-[10px] font-bold uppercase tracking-wide text-slate-500">
                             <span className="hover:text-red-600 cursor-pointer">Startup Registration</span>
                             <span className="hover:text-red-600 cursor-pointer">GST & Tax</span>
@@ -316,8 +310,8 @@ const HeaderDesignOptions = () => {
             </HeaderPreview>
 
             <HeaderPreview title="Option 4: Minimalist + Expanding Search">
-                <div className="relative isolate max-w-[1600px] mx-auto shadow-xl bg-white" onMouseLeave={() => setHover(1, false)}>
-                    <header className="bg-white border-b border-slate-100 z-[60] relative">
+                <div className="relative isolate max-w-[1600px] mx-auto shadow-xl bg-white rounded-2xl" onMouseLeave={() => setHover(1, false)}>
+                    <header className="bg-white border-b border-slate-100 z-[60] relative rounded-t-2xl">
                         <div className="px-6 h-20 flex items-center justify-between gap-8">
                             <Logo theme="dark" />
                             <div className="flex-1 flex justify-center"><FunctionalSearch variant="expanding" /></div>
@@ -331,6 +325,7 @@ const HeaderDesignOptions = () => {
                         </div>
                     </header>
                     <div className="absolute left-0 w-full z-[80]"><MegaMenu isOpen={hoveredState[1]} /></div>
+                    <div className="h-8 bg-white rounded-b-2xl"></div>
                 </div>
             </HeaderPreview>
 
@@ -380,7 +375,7 @@ const HeaderDesignOptions = () => {
             </HeaderPreview>
 
             <HeaderPreview title="Option 7: Dynamic Island" color="bg-slate-200">
-                <div className="relative isolate h-32 flex items-center justify-center" onMouseLeave={() => setHover(4, false)}>
+                <div className="relative isolate flex items-start justify-center pt-8" onMouseLeave={() => setHover(4, false)}>
                     <div className="z-[60] px-4 w-full">
                         <header className="bg-white/90 backdrop-blur-xl max-w-[1200px] mx-auto rounded-full shadow-2xl border border-white/50 p-2 pl-6 flex items-center justify-between transition-all">
                             <div className="flex items-center gap-8">
@@ -396,7 +391,7 @@ const HeaderDesignOptions = () => {
                                 <button className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-red-600 transition shadow-lg"><LogIn className="w-4 h-4" /></button>
                             </div>
                         </header>
-                        <div className="absolute top-20 left-0 w-full z-[80] flex justify-center">
+                        <div className="absolute top-24 left-0 w-full z-[80] flex justify-center">
                             <div className="max-w-[1200px] w-full"><MegaMenu isOpen={hoveredState[4]} /></div>
                         </div>
                     </div>
@@ -407,7 +402,7 @@ const HeaderDesignOptions = () => {
                 {/* Background Gradeint */}
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-slate-900 to-red-900 opacity-50"></div>
 
-                <div className="relative isolate max-w-[1400px] mx-auto" onMouseLeave={() => setHover(5, false)}>
+                <div className="relative isolate max-w-[1400px] mx-auto pt-8" onMouseLeave={() => setHover(5, false)}>
                     <header className="bg-white/5 backdrop-blur-xl border border-white/10 text-white shadow-2xl rounded-xl z-[60] relative">
                         <div className="px-6 h-24 flex items-center justify-between">
                             <Logo theme="light" />
@@ -425,12 +420,12 @@ const HeaderDesignOptions = () => {
             </HeaderPreview>
 
             <HeaderPreview title="Option 9: Power Search">
-                <div className="relative isolate max-w-[1400px] mx-auto shadow-2xl bg-white" onMouseLeave={() => setHover(6, false)}>
-                    <header className="bg-white border-b-4 border-black z-[60] relative">
+                <div className="relative isolate max-w-[1400px] mx-auto shadow-2xl bg-white rounded-xl" onMouseLeave={() => setHover(6, false)}>
+                    <header className="bg-white border-b-4 border-black z-[60] relative rounded-t-xl">
                         <div className="flex flex-col md:flex-row">
-                            <div className="bg-black text-white p-6 md:w-64 flex-shrink-0 flex items-center justify-center"><Logo theme="light" /></div>
+                            <div className="bg-black text-white p-6 md:w-64 flex-shrink-0 flex items-center justify-center rounded-tl-xl"><Logo theme="light" /></div>
                             <div className="flex-1 flex flex-col">
-                                <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
+                                <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50 text-slate-800 rounded-tr-xl">
                                     <div className="flex-1 max-w-2xl"><FunctionalSearch /></div>
                                     <div className="flex items-center gap-6 px-6">
                                         <button className="bg-red-600 text-white px-6 py-2 rounded-lg font-black text-xs uppercase tracking-wider hover:bg-black transition shadow-lg">Login</button>
@@ -445,6 +440,7 @@ const HeaderDesignOptions = () => {
                         </div>
                     </header>
                     <div className="absolute left-0 w-full z-[80]"><MegaMenu isOpen={hoveredState[6]} /></div>
+                    <div className="h-12 bg-white rounded-b-xl border-t border-slate-100"></div>
                 </div>
             </HeaderPreview>
 
