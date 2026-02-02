@@ -3,7 +3,7 @@ import {
     Phone, Search, ChevronDown, User, LogIn, Menu, X,
     MapPin, Mail, ArrowRight, ShieldCheck, Gem,
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
-    CheckCircle, Sparkles, MessageCircle, HelpCircle, ArrowUpRight
+    CheckCircle, Sparkles, MessageCircle, HelpCircle, ArrowUpRight, Grid, Layout
 } from 'lucide-react';
 import { MENU_DATA, getServiceLink } from './components/SharedComponents';
 
@@ -82,6 +82,64 @@ const MegaMenu = ({ isOpen }) => {
         </div>
     );
 };
+
+// --- CANVA MENU DATA ---
+const CANVA_MENU_DATA = [
+    { title: "Industrial & Manufacturing", icon: Factory, items: ["Machinery sourcing", "Turnkey setup", "Tech upgradation", "Feasibility", "Consulting"] },
+    { title: "Certifications", icon: Stamp, items: ["ISO 9001, 14001, 45001", "GMP / HACCP", "CE, BIS, ISI", "FDA, BRCGS", "Halal & Kosher"] },
+    { title: "Business Setup", icon: Briefcase, items: ["Company / LLP / NGO", "Licenses & Statutory", "ROC Compliances", "Labour & Pollution", "DSC & Filings"] },
+    { title: "Accounting & Audit", icon: Calculator, items: ["Accounting Outsourcing", "GST & Income Tax", "Statutory Audits", "MIS & Compliance"] },
+    { title: "Finance & MSME", icon: IndianRupee, items: ["DPR & CMA Reports", "Bank Loans", "CGTMSE & PMEGP", "Subsidies", "NSIC & PMFME"] },
+    { title: "Govt Portals", icon: Globe, items: ["GeM Registration", "OEM Approvals", "TReDS, RERA", "NPCI Reg", "Single Window"] },
+    { title: "Branding & Digital", icon: MegaphoneIconWrapper, items: ["Identity Consulting", "Digital Marketing", "Website Design", "Landing Pages", "Startup Branding"] },
+    { title: "Software & Tech", icon: Layout, items: ["Custom Software", "Web Apps", "Automation Tools", "ERP / CRM", "Cloud Systems"] },
+    { title: "AI Products", icon: Sparkles, items: ["AI Development", "Chatbots", "Automation", "Analytics Tools", "Custom AI Solutions"] },
+    { title: "IP & Documentation", icon: ShieldCheck, items: ["Trademark & IP", "Business Docs", "HR Policies", "Loan Docs", "Insurance"] }
+];
+
+// Helper for icon because Lucide might not have Megaphone
+function MegaphoneIconWrapper(props) { return <Sparkles {...props} /> } // Fallback
+
+// --- CANVA MEGA MENU ---
+const CanvaMegaMenu = ({ isOpen }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="absolute top-full left-0 w-full pt-2 animate-fade-in z-[100]">
+            <div className="bg-white rounded-lg shadow-2xl border border-slate-100 mx-4 mt-1 p-6 relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+                    {CANVA_MENU_DATA.map((cat, i) => (
+                        <div key={i} className="group/cat">
+                            <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-3 text-sm">
+                                {/* <cat.icon className="w-4 h-4 text-purple-600" />  Clean look, maybe no icon in title like Canva? Canva has simple titles. Keeping it text only for clean look or small icon. */}
+                                {cat.title}
+                            </h4>
+                            <ul className="space-y-2">
+                                {cat.items.map((item, j) => (
+                                    <li key={j}>
+                                        <a href="#" className="text-xs text-slate-500 hover:text-purple-600 hover:bg-purple-50 px-2 py-1 -ml-2 rounded block transition-colors">
+                                            {item}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+                {/* Featured AI Section at bottom or side? User said "AI - This category positions you as future focused". Let's highlight it. */}
+                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between bg-gradient-to-r from-purple-50 to-white -mx-6 -mb-6 p-6 rounded-b-lg">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-purple-600 text-white p-3 rounded-full"><Sparkles className="w-5 h-5" /></div>
+                        <div>
+                            <div className="font-bold text-slate-900">Future-Ready AI Solutions</div>
+                            <div className="text-xs text-slate-500">Upgrade your business with intelligent automation.</div>
+                        </div>
+                    </div>
+                    <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-purple-600 transition-colors">Explore AI Products</button>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 // --- SERVICES TO TYPE ---
 const TYPING_WORDS = [
@@ -186,6 +244,10 @@ const FunctionalSearch = ({ variant = 'default' }) => {
         inputClasses = `text-slate-900 placeholder:text-slate-400 transition-all ${isExpanded ? 'w-full opacity-100 ml-2' : 'w-0 opacity-0'}`;
         iconClass = "text-slate-500 shrink-0 auto";
         placeholderText = isExpanded ? `Search for ${typewriterText.replace('|', '')}` : "";
+    } else if (variant === 'canva') {
+        containerClasses = "bg-slate-100 hover:bg-white border-transparent text-slate-900 focus-within:bg-white focus-within:shadow-md transition-all";
+        inputClasses = "text-slate-900 placeholder:text-slate-500";
+        iconClass = "text-slate-500";
     } else {
         containerClasses = "bg-slate-100 border-slate-200 text-slate-900 focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 focus-within:border-red-500 shadow-inner";
         inputClasses = "text-slate-900 placeholder:text-slate-500";
@@ -270,7 +332,7 @@ const HeaderPreview = ({ title, children, color = "bg-white" }) => (
 
 // MAIN COMPONENT
 const HeaderDesignOptions = () => {
-    const [hoveredState, setHoveredState] = useState([false, false, false, false, false, false, false]);
+    const [hoveredState, setHoveredState] = useState([false, false, false, false, false, false, false, false, false, false, false]);
 
     const setHover = (index, val) => {
         const newState = [...hoveredState];
@@ -280,6 +342,43 @@ const HeaderDesignOptions = () => {
 
     return (
         <div className="bg-slate-100 font-sans text-slate-800 min-h-screen">
+
+            {/* --- NEW OPTION 10: CANVA STYLE --- */}
+            <HeaderPreview title="Option 10: Canva Style" color="bg-slate-50">
+                <div className="relative isolate max-w-full mx-auto bg-white shadow-sm" onMouseLeave={() => setHover(9, false)}>
+                    <header className="bg-white px-6 h-20 flex items-center justify-between z-[60] relative">
+                        <div className="flex items-center gap-8">
+                            <div className="flex items-center gap-2 cursor-pointer">
+                                {/* Simple Logo for Canva Style */}
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-black text-xl shadow-md">VR</div>
+                                <div className="font-bold text-lg tracking-tight text-slate-900">VR HERE</div>
+                            </div>
+
+                            <nav className="hidden xl:flex items-center gap-1 font-medium text-sm text-slate-600">
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">About</a>
+
+                                <div className="relative h-20 flex items-center" onMouseEnter={() => setHover(9, true)}>
+                                    <button className={`px-3 py-2 flex items-center gap-1 rounded-md transition-colors ${hoveredState[9] ? 'text-purple-600 bg-purple-50' : 'hover:bg-slate-100'}`}>
+                                        Services <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+                                    </button>
+                                </div>
+
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Certifications</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Finance & MSME</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Digital & AI</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Govt Portals</a>
+                                <a href="#" className="px-3 py-2 hover:bg-slate-100 rounded-md transition-colors">Resources</a>
+                            </nav>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <div className="w-64"><FunctionalSearch variant="canva" /></div>
+                            <button className="bg-purple-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-md shadow-purple-200 hover:bg-purple-700 transition-colors">Get Started</button>
+                        </div>
+                    </header>
+                    <div className="absolute left-0 w-full z-[80]"><CanvaMegaMenu isOpen={hoveredState[9]} /></div>
+                </div>
+            </HeaderPreview>
 
             <HeaderPreview title="Option 3: Hybrid Split (Fixed)" color="bg-slate-50">
                 <div className="relative isolate max-w-[1400px] mx-auto shadow-xl rounded-2xl overflow-visible bg-[#1e293b]" onMouseLeave={() => setHover(0, false)}>
