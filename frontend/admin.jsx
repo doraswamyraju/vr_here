@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, Users, FileText, CheckSquare, Shield, Settings, Bell, Search, 
-  Menu, ChevronDown, MoreVertical, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, 
-  AlertCircle, Briefcase, LogOut, Plus, Eye, EyeOff, Download, Trash2, Building2, 
-  User, CreditCard, MapPin, Phone, Mail, Calendar, ChevronRight, X, Kanban, List, 
-  ArrowRight, PieChart, ChevronLeft, Layers, FileInput, MessageSquare, Anchor, 
+import {
+  LayoutDashboard, Users, FileText, CheckSquare, Shield, Settings, Bell, Search,
+  Menu, ChevronDown, MoreVertical, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2,
+  AlertCircle, Briefcase, LogOut, Plus, Eye, EyeOff, Download, Trash2, Building2,
+  User, CreditCard, MapPin, Phone, Mail, Calendar, ChevronRight, X, Kanban, List,
+  ArrowRight, PieChart, ChevronLeft, Layers, FileInput, MessageSquare, Anchor,
   Globe, Factory, Stamp, HardHat, DollarSign, FolderOpen, BookOpen, Truck, BarChart,
   ChevronDown as ChevronDownIcon, ChevronRight as ChevronRightIcon, Landmark, Scale,
   Receipt, FileSpreadsheet, Percent, Database, UserCheck, Briefcase as ServiceIcon,
@@ -64,14 +64,14 @@ const INITIAL_PROJECTS = [
 
 // WBS
 const INITIAL_WBS = [
-  { 
+  {
     id: '1', sNo: '1', name: 'Planning & Risk Assessment', duration: '', start: '01 Apr 24', end: '10 Apr 24', progress: '100%', plannedStart: '-', plannedEnd: '-', dep: '', type: 'parent', expanded: true,
     children: [
       { id: '1-1', sNo: '', name: 'Engagement Letter Signing', duration: '1 day', start: '01 Apr 24', end: '01 Apr 24', progress: '100%', plannedStart: '01 Apr 24', plannedEnd: '01 Apr 24', dep: '-', type: 'child', assignee: 'Suresh (Partner)' },
       { id: '1-2', sNo: '', name: 'Internal Control Review', duration: '5 days', start: '02 Apr 24', end: '07 Apr 24', progress: '100%', plannedStart: '02 Apr 24', plannedEnd: '07 Apr 24', dep: '1-1', type: 'child', assignee: 'Rahul (Senior)' },
     ]
   },
-  { 
+  {
     id: '2', sNo: '2', name: 'Execution (Vouching & Verification)', duration: '', start: '11 Apr 24', end: '30 Apr 24', progress: '40%', plannedStart: '-', plannedEnd: '-', dep: '', type: 'parent', expanded: true,
     children: [
       { id: '2-1', sNo: '', name: 'Sales & Revenue Vouching', duration: '5 days', start: '11 Apr 24', end: '16 Apr 24', progress: '100%', plannedStart: '-', plannedEnd: '-', dep: '1-2', type: 'child', assignee: 'Arjun (Article)' },
@@ -144,8 +144,8 @@ const INITIAL_REPORTS = [
 // --- COMPONENTS ---
 
 const StatusBadge = ({ status }) => {
-  const styles = { 
-    'In Progress': 'bg-blue-50 text-blue-700', 
+  const styles = {
+    'In Progress': 'bg-blue-50 text-blue-700',
     'Completed': 'bg-emerald-50 text-emerald-700',
     'Paid': 'bg-emerald-50 text-emerald-700',
     'Received': 'bg-emerald-50 text-emerald-700',
@@ -172,19 +172,19 @@ const SidebarItem = ({ icon: Icon, label, active, onClick, collapsed }) => (
 const ProjectWizard = ({ onClose, onSave }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    title: '', client: '', service: 'Pvt Ltd Incorporation', 
+    title: '', client: '', service: 'Pvt Ltd Incorporation',
     maker: '', checker: '', checklist: CHECKLIST_TEMPLATES['Pvt Ltd Incorporation']
   });
 
   const handleServiceChange = (e) => {
     const service = e.target.value;
-    setFormData({ 
-      ...formData, 
-      service, 
-      checklist: CHECKLIST_TEMPLATES[service] || [] 
+    setFormData({
+      ...formData,
+      service,
+      checklist: CHECKLIST_TEMPLATES[service] || []
     });
   };
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white w-[900px] h-[650px] rounded-3xl shadow-2xl flex overflow-hidden animate-in zoom-in-95 duration-300">
@@ -200,7 +200,7 @@ const ProjectWizard = ({ onClose, onSave }) => {
             ))}
           </div>
         </div>
-        
+
         <div className="flex-1 p-10 flex flex-col bg-slate-50">
           <div className="flex-1 overflow-y-auto pr-2">
             {step === 1 && (
@@ -222,12 +222,12 @@ const ProjectWizard = ({ onClose, onSave }) => {
                 </div>
               </div>
             )}
-            
+
             {/* STEP 2: Team & Checklist (Updated) */}
             {step === 2 && (
               <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                 <h3 className="text-xl font-bold text-slate-800">Team & Workflow</h3>
-                
+
                 <div className="grid grid-cols-2 gap-5">
                   <div>
                     <label className="text-xs font-bold text-slate-500 uppercase">Assign Maker (Execution)</label>
@@ -246,12 +246,12 @@ const ProjectWizard = ({ onClose, onSave }) => {
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center"><CheckSquare size={16} className="mr-2"/> Task Checklist Preview</h4>
+                  <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center"><CheckSquare size={16} className="mr-2" /> Task Checklist Preview</h4>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {formData.checklist && formData.checklist.length > 0 ? (
                       formData.checklist.map((task, i) => (
                         <div key={i} className="flex items-center text-sm text-slate-600 bg-slate-50 p-2 rounded">
-                          <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mr-3">{i+1}</span>
+                          <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mr-3">{i + 1}</span>
                           {task}
                         </div>
                       ))
@@ -266,11 +266,11 @@ const ProjectWizard = ({ onClose, onSave }) => {
             {step === 3 && (
               <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                 <h3 className="text-xl font-bold text-slate-800">Fee Structure (Scope)</h3>
-                <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-sm text-indigo-800 mb-4 flex items-start"><AlertCircle size={16} className="mr-2 mt-0.5 shrink-0"/><span>Standard professional fees applied. Adjust as needed.</span></div>
+                <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-sm text-indigo-800 mb-4 flex items-start"><AlertCircle size={16} className="mr-2 mt-0.5 shrink-0" /><span>Standard professional fees applied. Adjust as needed.</span></div>
                 <div className="space-y-3">
-                   <div className="flex gap-2"><input className="flex-1 p-2 border rounded-lg bg-white" placeholder="Fee Description" /><input className="w-24 p-2 border rounded-lg bg-white" placeholder="Qty" /><input className="w-32 p-2 border rounded-lg bg-white" placeholder="Rate" /><button className="p-2 bg-indigo-600 text-white rounded-lg"><Plus size={18}/></button></div>
-                   <div className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg"><span className="text-sm font-medium">Professional Fees</span><span className="font-bold">₹ 50,000</span></div>
-                   <div className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg"><span className="text-sm font-medium">Filing Charges (Actuals)</span><span className="font-bold">₹ 5,000</span></div>
+                  <div className="flex gap-2"><input className="flex-1 p-2 border rounded-lg bg-white" placeholder="Fee Description" /><input className="w-24 p-2 border rounded-lg bg-white" placeholder="Qty" /><input className="w-32 p-2 border rounded-lg bg-white" placeholder="Rate" /><button className="p-2 bg-indigo-600 text-white rounded-lg"><Plus size={18} /></button></div>
+                  <div className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg"><span className="text-sm font-medium">Professional Fees</span><span className="font-bold">₹ 50,000</span></div>
+                  <div className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg"><span className="text-sm font-medium">Filing Charges (Actuals)</span><span className="font-bold">₹ 5,000</span></div>
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-slate-200"><span className="text-lg font-bold text-slate-600">Total Engagement Value</span><span className="text-2xl font-bold text-indigo-600">₹ 55,000</span></div>
               </div>
@@ -278,7 +278,7 @@ const ProjectWizard = ({ onClose, onSave }) => {
           </div>
           <div className="flex justify-between pt-6 mt-4 border-t border-slate-200">
             {step > 1 ? <button onClick={() => setStep(s => s - 1)} className="px-6 py-2 text-slate-500 font-medium hover:bg-slate-200 rounded-xl">Back</button> : <button onClick={onClose} className="px-6 py-2 text-slate-500 font-medium hover:bg-slate-200 rounded-xl">Cancel</button>}
-            {step < 3 ? <button onClick={() => setStep(s => s + 1)} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-colors">Continue</button> : <button onClick={() => {onSave(); onClose();}} className="px-6 py-2 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 transition-colors">Create Engagement</button>}
+            {step < 3 ? <button onClick={() => setStep(s => s + 1)} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-colors">Continue</button> : <button onClick={() => { onSave(); onClose(); }} className="px-6 py-2 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 transition-colors">Create Engagement</button>}
           </div>
         </div>
       </div>
@@ -299,15 +299,15 @@ const ProjectDetailView = ({ project, onBack }) => {
     <div className="h-full flex flex-col animate-in slide-in-from-right duration-300">
       <div className="bg-white p-6 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"><ChevronLeft size={24}/></button>
+          <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"><ChevronLeft size={24} /></button>
           <div>
             <h1 className="text-2xl font-bold text-slate-800">{project.title}</h1>
-            <p className="text-slate-500 text-sm flex items-center mt-1"><Building2 size={14} className="mr-1"/> {project.client} <span className="mx-2 text-slate-300">|</span> <span className="text-indigo-600 font-medium">Value: ₹ {project.budget.toLocaleString()}</span></p>
+            <p className="text-slate-500 text-sm flex items-center mt-1"><Building2 size={14} className="mr-1" /> {project.client} <span className="mx-2 text-slate-300">|</span> <span className="text-indigo-600 font-medium">Value: ₹ {project.budget.toLocaleString()}</span></p>
           </div>
         </div>
         <div className="flex gap-2">
-           <button className="px-4 py-2 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 text-sm flex items-center"><FileText size={16} className="mr-2"/> Audit Report</button>
-           <button className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 text-sm flex items-center"><Plus size={16} className="mr-2"/> New Invoice</button>
+          <button className="px-4 py-2 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 text-sm flex items-center"><FileText size={16} className="mr-2" /> Audit Report</button>
+          <button className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 text-sm flex items-center"><Plus size={16} className="mr-2" /> New Invoice</button>
         </div>
       </div>
 
@@ -325,172 +325,172 @@ const ProjectDetailView = ({ project, onBack }) => {
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
               <h3 className="font-bold text-slate-800 mb-6">Financial Summary</h3>
               <div className="flex items-center justify-around">
-                 <div className="text-center"><p className="text-xs text-slate-400 font-bold uppercase mb-1">Total Fees</p><p className="text-2xl font-bold text-slate-800">₹ {project.budget.toLocaleString()}</p></div>
-                 <div className="h-10 w-px bg-slate-200"></div>
-                 <div className="text-center"><p className="text-xs text-slate-400 font-bold uppercase mb-1">Invoiced</p><p className="text-2xl font-bold text-emerald-600">₹ {project.billed.toLocaleString()}</p></div>
-                 <div className="h-10 w-px bg-slate-200"></div>
-                 <div className="text-center"><p className="text-xs text-slate-400 font-bold uppercase mb-1">Received</p><p className="text-2xl font-bold text-indigo-600">₹ {project.received.toLocaleString()}</p></div>
+                <div className="text-center"><p className="text-xs text-slate-400 font-bold uppercase mb-1">Total Fees</p><p className="text-2xl font-bold text-slate-800">₹ {project.budget.toLocaleString()}</p></div>
+                <div className="h-10 w-px bg-slate-200"></div>
+                <div className="text-center"><p className="text-xs text-slate-400 font-bold uppercase mb-1">Invoiced</p><p className="text-2xl font-bold text-emerald-600">₹ {project.billed.toLocaleString()}</p></div>
+                <div className="h-10 w-px bg-slate-200"></div>
+                <div className="text-center"><p className="text-xs text-slate-400 font-bold uppercase mb-1">Received</p><p className="text-2xl font-bold text-indigo-600">₹ {project.received.toLocaleString()}</p></div>
               </div>
               <div className="mt-8">
-                 <div className="flex justify-between text-xs font-bold text-slate-500 mb-2"><span>Audit Completion</span><span>{project.progress}%</span></div>
-                 <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500" style={{width: `${project.progress}%`}}></div></div>
+                <div className="flex justify-between text-xs font-bold text-slate-500 mb-2"><span>Audit Completion</span><span>{project.progress}%</span></div>
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500" style={{ width: `${project.progress}%` }}></div></div>
               </div>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-               <h3 className="font-bold text-slate-800 mb-4">Team Utilization</h3>
-               <div className="space-y-4">
-                  {['Rahul (Senior)', 'Arjun (Article)', 'Priya (Article)'].map((staff, i) => (
-                     <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs text-slate-600">{staff.charAt(0)}</div><div><p className="text-sm font-semibold">{staff.split(' ')[0]}</p><p className="text-[10px] text-slate-400">{staff.split(' ')[1]}</p></div></div><span className="text-sm font-bold text-slate-700">12 hrs</span>
-                     </div>
-                  ))}
-               </div>
+              <h3 className="font-bold text-slate-800 mb-4">Team Utilization</h3>
+              <div className="space-y-4">
+                {['Rahul (Senior)', 'Arjun (Article)', 'Priya (Article)'].map((staff, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs text-slate-600">{staff.charAt(0)}</div><div><p className="text-sm font-semibold">{staff.split(' ')[0]}</p><p className="text-[10px] text-slate-400">{staff.split(' ')[1]}</p></div></div><span className="text-sm font-bold text-slate-700">12 hrs</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {activeTab === 'Task Management' && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                <div className="flex gap-3">
-                   <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50">
-                      <span className="text-xs font-bold text-slate-600">All Status</span><ChevronDown size={14} className="text-slate-400"/>
-                   </div>
-                   <button className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 flex items-center">Import Checklist</button>
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+              <div className="flex gap-3">
+                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50">
+                  <span className="text-xs font-bold text-slate-600">All Status</span><ChevronDown size={14} className="text-slate-400" />
                 </div>
-                <button className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center shadow-md"><Plus size={14} className="mr-1"/> Add Task</button>
-             </div>
-             
-             <div className="flex-1 overflow-auto">
-               <table className="w-full text-left border-collapse min-w-[1000px]">
-                  <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase sticky top-0 z-10 text-center">
-                     <tr>
-                        <th className="px-4 py-3 border-b border-r w-12">S.No</th>
-                        <th className="px-6 py-3 border-b border-r text-left w-64">Audit Procedure</th>
-                        <th className="px-4 py-3 border-b border-r">Duration</th>
-                        <th className="px-4 py-3 border-b border-r">Start Date</th>
-                        <th className="px-4 py-3 border-b border-r">End Date</th>
-                        <th className="px-4 py-3 border-b border-r">Progress</th>
-                        <th className="px-4 py-3 border-b border-r">Dep.</th>
-                        <th className="px-4 py-3 border-b">Action</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-xs">
-                     {tasks.map(task => (
-                        <React.Fragment key={task.id}>
-                           <tr className="bg-slate-50/50 hover:bg-slate-100 font-bold text-slate-700">
-                              <td className="px-4 py-3 border-r text-center">{task.sNo}</td>
-                              <td className="px-6 py-3 border-r flex items-center cursor-pointer" onClick={() => toggleExpand(task.id)}>
-                                 {task.children.length > 0 ? (task.expanded ? <ChevronDownIcon size={14} className="mr-2"/> : <ChevronRightIcon size={14} className="mr-2"/>) : <span className="w-5 mr-1"></span>}
-                                 {task.name}
-                              </td>
-                              <td className="px-4 py-3 border-r text-center text-slate-500">{task.duration}</td>
-                              <td className="px-4 py-3 border-r text-center">{task.start}</td>
-                              <td className="px-4 py-3 border-r text-center">{task.end}</td>
-                              <td className="px-4 py-3 border-r text-center">{task.progress}</td>
-                              <td className="px-4 py-3 border-r text-center text-slate-400"></td>
-                              <td className="px-4 py-3 text-center"><MoreVertical size={14} className="mx-auto text-slate-400"/></td>
-                           </tr>
-                           {task.expanded && task.children.map(child => (
-                              <tr key={child.id} className="hover:bg-indigo-50/30 transition-colors">
-                                 <td className="px-4 py-3 border-r text-center"></td>
-                                 <td className="px-6 py-3 border-r pl-10 flex items-center text-slate-600 font-medium">
-                                    <ArrowDownRight size={12} className="mr-2 text-slate-300"/> {child.name}
-                                    <span className="ml-2 text-[10px] text-slate-400 border px-1 rounded bg-white">By: {child.assignee}</span>
-                                 </td>
-                                 <td className="px-4 py-3 border-r text-center text-slate-500">{child.duration}</td>
-                                 <td className="px-4 py-3 border-r text-center">{child.start}</td>
-                                 <td className="px-4 py-3 border-r text-center">{child.end}</td>
-                                 <td className="px-4 py-3 border-r text-center text-indigo-600 font-bold">{child.progress}</td>
-                                 <td className="px-4 py-3 border-r text-center text-indigo-500 font-mono">{child.dep}</td>
-                                 <td className="px-4 py-3 text-center"><MoreVertical size={14} className="mx-auto text-slate-400"/></td>
-                              </tr>
-                           ))}
-                        </React.Fragment>
-                     ))}
-                  </tbody>
-               </table>
-             </div>
+                <button className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 flex items-center">Import Checklist</button>
+              </div>
+              <button className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center shadow-md"><Plus size={14} className="mr-1" /> Add Task</button>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              <table className="w-full text-left border-collapse min-w-[1000px]">
+                <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase sticky top-0 z-10 text-center">
+                  <tr>
+                    <th className="px-4 py-3 border-b border-r w-12">S.No</th>
+                    <th className="px-6 py-3 border-b border-r text-left w-64">Audit Procedure</th>
+                    <th className="px-4 py-3 border-b border-r">Duration</th>
+                    <th className="px-4 py-3 border-b border-r">Start Date</th>
+                    <th className="px-4 py-3 border-b border-r">End Date</th>
+                    <th className="px-4 py-3 border-b border-r">Progress</th>
+                    <th className="px-4 py-3 border-b border-r">Dep.</th>
+                    <th className="px-4 py-3 border-b">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {tasks.map(task => (
+                    <React.Fragment key={task.id}>
+                      <tr className="bg-slate-50/50 hover:bg-slate-100 font-bold text-slate-700">
+                        <td className="px-4 py-3 border-r text-center">{task.sNo}</td>
+                        <td className="px-6 py-3 border-r flex items-center cursor-pointer" onClick={() => toggleExpand(task.id)}>
+                          {task.children.length > 0 ? (task.expanded ? <ChevronDownIcon size={14} className="mr-2" /> : <ChevronRightIcon size={14} className="mr-2" />) : <span className="w-5 mr-1"></span>}
+                          {task.name}
+                        </td>
+                        <td className="px-4 py-3 border-r text-center text-slate-500">{task.duration}</td>
+                        <td className="px-4 py-3 border-r text-center">{task.start}</td>
+                        <td className="px-4 py-3 border-r text-center">{task.end}</td>
+                        <td className="px-4 py-3 border-r text-center">{task.progress}</td>
+                        <td className="px-4 py-3 border-r text-center text-slate-400"></td>
+                        <td className="px-4 py-3 text-center"><MoreVertical size={14} className="mx-auto text-slate-400" /></td>
+                      </tr>
+                      {task.expanded && task.children.map(child => (
+                        <tr key={child.id} className="hover:bg-indigo-50/30 transition-colors">
+                          <td className="px-4 py-3 border-r text-center"></td>
+                          <td className="px-6 py-3 border-r pl-10 flex items-center text-slate-600 font-medium">
+                            <ArrowDownRight size={12} className="mr-2 text-slate-300" /> {child.name}
+                            <span className="ml-2 text-[10px] text-slate-400 border px-1 rounded bg-white">By: {child.assignee}</span>
+                          </td>
+                          <td className="px-4 py-3 border-r text-center text-slate-500">{child.duration}</td>
+                          <td className="px-4 py-3 border-r text-center">{child.start}</td>
+                          <td className="px-4 py-3 border-r text-center">{child.end}</td>
+                          <td className="px-4 py-3 border-r text-center text-indigo-600 font-bold">{child.progress}</td>
+                          <td className="px-4 py-3 border-r text-center text-indigo-500 font-mono">{child.dep}</td>
+                          <td className="px-4 py-3 text-center"><MoreVertical size={14} className="mx-auto text-slate-400" /></td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {activeTab === 'Engagement Fees' && (
-           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-slate-700">Fees Schedule</h3><span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-lg text-sm font-bold">Total Value: ₹ 1,50,000</span></div>
-              <table className="w-full text-left">
-                 <thead className="text-xs uppercase text-slate-400 font-bold border-b border-slate-100"><tr><th className="px-6 py-4">Fee Description</th><th className="px-6 py-4">Qty</th><th className="px-6 py-4">Rate</th><th className="px-6 py-4 text-right">Amount</th></tr></thead>
-                 <tbody className="divide-y divide-slate-50">
-                    {INITIAL_FEES.map(item => (
-                       <tr key={item.id}><td className="px-6 py-4 font-medium text-slate-700">{item.item}</td><td className="px-6 py-4 text-slate-500">{item.qty}</td><td className="px-6 py-4 text-slate-500">₹ {item.rate.toLocaleString()}</td><td className="px-6 py-4 text-right font-bold text-slate-800">₹ {item.amount.toLocaleString()}</td></tr>
-                    ))}
-                 </tbody>
-              </table>
-           </div>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-slate-700">Fees Schedule</h3><span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-lg text-sm font-bold">Total Value: ₹ 1,50,000</span></div>
+            <table className="w-full text-left">
+              <thead className="text-xs uppercase text-slate-400 font-bold border-b border-slate-100"><tr><th className="px-6 py-4">Fee Description</th><th className="px-6 py-4">Qty</th><th className="px-6 py-4">Rate</th><th className="px-6 py-4 text-right">Amount</th></tr></thead>
+              <tbody className="divide-y divide-slate-50">
+                {INITIAL_FEES.map(item => (
+                  <tr key={item.id}><td className="px-6 py-4 font-medium text-slate-700">{item.item}</td><td className="px-6 py-4 text-slate-500">{item.qty}</td><td className="px-6 py-4 text-slate-500">₹ {item.rate.toLocaleString()}</td><td className="px-6 py-4 text-right font-bold text-slate-800">₹ {item.amount.toLocaleString()}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {activeTab === 'Payment Status' && (
-           <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
-                    <p className="text-xs text-slate-400 font-bold uppercase mb-2">Total Invoiced</p>
-                    <p className="text-3xl font-bold text-indigo-900">₹ {project.billed.toLocaleString()}</p>
-                 </div>
-                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
-                    <p className="text-xs text-slate-400 font-bold uppercase mb-2">Total Received</p>
-                    <p className="text-3xl font-bold text-emerald-600">₹ {project.received.toLocaleString()}</p>
-                 </div>
-                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
-                    <p className="text-xs text-slate-400 font-bold uppercase mb-2">Balance Recoverable</p>
-                    <p className="text-3xl font-bold text-rose-600">₹ {(project.billed - project.received).toLocaleString()}</p>
-                 </div>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
+                <p className="text-xs text-slate-400 font-bold uppercase mb-2">Total Invoiced</p>
+                <p className="text-3xl font-bold text-indigo-900">₹ {project.billed.toLocaleString()}</p>
               </div>
-              
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                 <div className="p-4 bg-slate-50 border-b border-slate-100"><h3 className="font-bold text-slate-700">Receipt History</h3></div>
-                 <table className="w-full text-left">
-                    <thead className="text-xs uppercase text-slate-400 font-bold border-b border-slate-100"><tr><th className="px-6 py-4">Date</th><th className="px-6 py-4">Description</th><th className="px-6 py-4">Mode</th><th className="px-6 py-4">Amount</th><th className="px-6 py-4">Status</th></tr></thead>
-                    <tbody className="divide-y divide-slate-50">
-                       {INITIAL_PAYMENTS.map(pay => (
-                          <tr key={pay.id}>
-                             <td className="px-6 py-4 text-slate-500">{pay.date}</td>
-                             <td className="px-6 py-4 font-medium text-slate-700">{pay.type}</td>
-                             <td className="px-6 py-4 text-slate-500">{pay.mode}</td>
-                             <td className="px-6 py-4 font-bold text-slate-800">₹ {pay.amount.toLocaleString()}</td>
-                             <td className="px-6 py-4"><StatusBadge status={pay.status}/></td>
-                          </tr>
-                       ))}
-                    </tbody>
-                 </table>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
+                <p className="text-xs text-slate-400 font-bold uppercase mb-2">Total Received</p>
+                <p className="text-3xl font-bold text-emerald-600">₹ {project.received.toLocaleString()}</p>
               </div>
-           </div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
+                <p className="text-xs text-slate-400 font-bold uppercase mb-2">Balance Recoverable</p>
+                <p className="text-3xl font-bold text-rose-600">₹ {(project.billed - project.received).toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-4 bg-slate-50 border-b border-slate-100"><h3 className="font-bold text-slate-700">Receipt History</h3></div>
+              <table className="w-full text-left">
+                <thead className="text-xs uppercase text-slate-400 font-bold border-b border-slate-100"><tr><th className="px-6 py-4">Date</th><th className="px-6 py-4">Description</th><th className="px-6 py-4">Mode</th><th className="px-6 py-4">Amount</th><th className="px-6 py-4">Status</th></tr></thead>
+                <tbody className="divide-y divide-slate-50">
+                  {INITIAL_PAYMENTS.map(pay => (
+                    <tr key={pay.id}>
+                      <td className="px-6 py-4 text-slate-500">{pay.date}</td>
+                      <td className="px-6 py-4 font-medium text-slate-700">{pay.type}</td>
+                      <td className="px-6 py-4 text-slate-500">{pay.mode}</td>
+                      <td className="px-6 py-4 font-bold text-slate-800">₹ {pay.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4"><StatusBadge status={pay.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
-        
+
         {activeTab === 'Client Documents' && (
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                 <h3 className="font-bold text-slate-800 mb-4">Pending from Client (PBC List)</h3>
-                 <ul className="space-y-3">
-                    {['Bank Statements (FY24)', 'Salary Register (March)', 'GST Returns (Annual)'].map((doc, i) => (
-                       <li key={i} className="flex items-center justify-between p-3 bg-amber-50 text-amber-800 rounded-lg border border-amber-100 text-sm">
-                          <span>{doc}</span>
-                          <span className="text-xs font-bold uppercase bg-amber-200/50 px-2 py-1 rounded">Requested</span>
-                       </li>
-                    ))}
-                 </ul>
-                 <button className="mt-4 w-full py-2 border-2 border-dashed border-indigo-200 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-50">+ Request New Document</button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-800 mb-4">Pending from Client (PBC List)</h3>
+              <ul className="space-y-3">
+                {['Bank Statements (FY24)', 'Salary Register (March)', 'GST Returns (Annual)'].map((doc, i) => (
+                  <li key={i} className="flex items-center justify-between p-3 bg-amber-50 text-amber-800 rounded-lg border border-amber-100 text-sm">
+                    <span>{doc}</span>
+                    <span className="text-xs font-bold uppercase bg-amber-200/50 px-2 py-1 rounded">Requested</span>
+                  </li>
+                ))}
+              </ul>
+              <button className="mt-4 w-full py-2 border-2 border-dashed border-indigo-200 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-50">+ Request New Document</button>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-800 mb-4">Uploaded Evidence</h3>
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="aspect-square bg-slate-50 rounded-xl flex flex-col items-center justify-center text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer border border-slate-200 hover:border-indigo-200 transition-all p-4 text-center">
+                    <FileText size={32} className="mb-3" />
+                    <span className="text-xs font-medium">Trial Balance.xlsx</span>
+                  </div>
+                ))}
               </div>
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                 <h3 className="font-bold text-slate-800 mb-4">Uploaded Evidence</h3>
-                 <div className="grid grid-cols-3 gap-3">
-                    {[1,2,3].map(i => (
-                       <div key={i} className="aspect-square bg-slate-50 rounded-xl flex flex-col items-center justify-center text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer border border-slate-200 hover:border-indigo-200 transition-all p-4 text-center">
-                          <FileText size={32} className="mb-3"/>
-                          <span className="text-xs font-medium">Trial Balance.xlsx</span>
-                       </div>
-                    ))}
-                 </div>
-              </div>
-           </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -500,9 +500,39 @@ const ProjectDetailView = ({ project, onBack }) => {
 // --- MAIN APP ---
 function App() {
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [currentView, setCurrentView] = useState('list'); 
+  const [currentView, setCurrentView] = useState('list');
   const [selectedProject, setSelectedProject] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [orders, setOrders] = useState([]); // State for real orders
+
+  // --- EFFECTS ---
+  React.useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('/api/orders');
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data);
+        } else {
+          console.error("Failed to fetch orders");
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    if (activeTab === 'ServiceRequests') {
+      fetchOrders();
+    }
+  }, [activeTab]);
+
+  // --- ACTIONS ---
+  const handleLogout = () => {
+    // Clear any auth tokens
+    localStorage.removeItem('userInfo');
+    // Redirect to login or home
+    window.location.href = '/login';
+  };
 
   // DASHBOARD VIEW
   const DashboardView = () => (
@@ -516,18 +546,18 @@ function App() {
           { label: 'Unbilled Amount', val: '₹ 4.5L', icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' }
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-start justify-between">
-             <div><p className="text-slate-500 text-sm font-medium mb-1">{stat.label}</p><h3 className="text-2xl font-bold text-slate-800">{stat.val}</h3></div>
-             <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}><stat.icon size={20}/></div>
+            <div><p className="text-slate-500 text-sm font-medium mb-1">{stat.label}</p><h3 className="text-2xl font-bold text-slate-800">{stat.val}</h3></div>
+            <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}><stat.icon size={20} /></div>
           </div>
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-80 flex flex-col items-center justify-center text-slate-400">
-            <PieChart size={32} className="mb-2"/><p>Revenue Distribution Chart</p>
-         </div>
-         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-80 flex flex-col items-center justify-center text-slate-400">
-            <BarChart size={32} className="mb-2"/><p>Task Completion Trends</p>
-         </div>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-80 flex flex-col items-center justify-center text-slate-400">
+          <PieChart size={32} className="mb-2" /><p>Revenue Distribution Chart</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-80 flex flex-col items-center justify-center text-slate-400">
+          <BarChart size={32} className="mb-2" /><p>Task Completion Trends</p>
+        </div>
       </div>
     </div>
   );
@@ -540,19 +570,19 @@ function App() {
         <button onClick={() => setCurrentView('wizard')} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center shadow-lg"><Plus size={18} className="mr-2" /> New Engagement</button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-         {INITIAL_PROJECTS.map(proj => (
-            <div key={proj.id} onClick={() => { setSelectedProject(proj); setCurrentView('detail'); }} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer group">
-               <div className="flex justify-between items-start mb-3">
-                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                     {proj.type === 'Audit' ? <Scale size={20}/> : proj.type === 'Registration' ? <Globe size={20}/> : <Briefcase size={20}/>}
-                  </div>
-                  <StatusBadge status={proj.status}/>
-               </div>
-               <h3 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-indigo-600">{proj.title}</h3>
-               <p className="text-sm text-slate-500 mb-4">{proj.client}</p>
-               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500" style={{width: `${proj.progress}%`}}></div></div>
+        {INITIAL_PROJECTS.map(proj => (
+          <div key={proj.id} onClick={() => { setSelectedProject(proj); setCurrentView('detail'); }} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer group">
+            <div className="flex justify-between items-start mb-3">
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                {proj.type === 'Audit' ? <Scale size={20} /> : proj.type === 'Registration' ? <Globe size={20} /> : <Briefcase size={20} />}
+              </div>
+              <StatusBadge status={proj.status} />
             </div>
-         ))}
+            <h3 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-indigo-600">{proj.title}</h3>
+            <p className="text-sm text-slate-500 mb-4">{proj.client}</p>
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500" style={{ width: `${proj.progress}%` }}></div></div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -560,73 +590,73 @@ function App() {
   // GENERIC LIST VIEW COMPONENT (Reusable for ToDo, Quotation, Finance, etc.)
   const GenericListView = ({ title, sub, data, columns }) => (
     <div className="animate-in fade-in zoom-in duration-300">
-       <div className="flex justify-between items-center mb-6">
-          <div><h2 className="text-2xl font-bold text-slate-800">{title}</h2><p className="text-slate-500">{sub}</p></div>
-          <button className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center shadow-lg"><Plus size={18} className="mr-2" /> Create New</button>
-       </div>
-       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <table className="w-full text-left">
-             <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
-                <tr>{columns.map((col, i) => <th key={i} className="px-6 py-4">{col}</th>)}<th className="px-6 py-4">Action</th></tr>
-             </thead>
-             <tbody className="divide-y divide-slate-100">
-                {data.map((item, i) => (
-                   <tr key={i} className="hover:bg-slate-50">
-                      {Object.values(item).slice(1).map((val, j) => ( // Skip ID
-                         <td key={j} className="px-6 py-4 text-sm text-slate-700 font-medium">
-                            {['High', 'Medium', 'Low', 'Sent', 'Draft', 'Paid', 'Overdue', 'Processed', 'Pending', 'New', 'Assigned', 'In Progress'].includes(val) ? <StatusBadge status={val}/> : val}
-                         </td>
-                      ))}
-                      <td className="px-6 py-4"><MoreVertical size={16} className="text-slate-400 cursor-pointer hover:text-indigo-600"/></td>
-                   </tr>
+      <div className="flex justify-between items-center mb-6">
+        <div><h2 className="text-2xl font-bold text-slate-800">{title}</h2><p className="text-slate-500">{sub}</p></div>
+        <button className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center shadow-lg"><Plus size={18} className="mr-2" /> Create New</button>
+      </div>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
+            <tr>{columns.map((col, i) => <th key={i} className="px-6 py-4">{col}</th>)}<th className="px-6 py-4">Action</th></tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {data.map((item, i) => (
+              <tr key={i} className="hover:bg-slate-50">
+                {Object.values(item).slice(1).map((val, j) => ( // Skip ID
+                  <td key={j} className="px-6 py-4 text-sm text-slate-700 font-medium">
+                    {['High', 'Medium', 'Low', 'Sent', 'Draft', 'Paid', 'Overdue', 'Processed', 'Pending', 'New', 'Assigned', 'In Progress'].includes(val) ? <StatusBadge status={val} /> : val}
+                  </td>
                 ))}
-             </tbody>
-          </table>
-       </div>
+                <td className="px-6 py-4"><MoreVertical size={16} className="text-slate-400 cursor-pointer hover:text-indigo-600" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
   // SERVICES CATALOG VIEW
   const ServicesView = () => (
     <div className="animate-in fade-in zoom-in duration-300">
-       <div className="mb-6"><h2 className="text-2xl font-bold text-slate-800">Service Catalog</h2><p className="text-slate-500">Master List of Offerings</p></div>
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Object.entries(SERVICE_CATALOG).map(([cat, services]) => (
-             <div key={cat} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4 text-indigo-600">
-                   {cat.includes('Industrial') ? <Factory/> : cat.includes('ISO') ? <Stamp/> : cat.includes('Tax') ? <Receipt/> : cat.includes('Registration') ? <Globe/> : <Briefcase/>}
-                   <h3 className="font-bold text-lg text-slate-800">{cat}</h3>
-                </div>
-                <ul className="space-y-2">
-                   {services.map(s => <li key={s} className="text-sm text-slate-600 flex items-center"><div className="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2"></div>{s}</li>)}
-                </ul>
-             </div>
-          ))}
-       </div>
+      <div className="mb-6"><h2 className="text-2xl font-bold text-slate-800">Service Catalog</h2><p className="text-slate-500">Master List of Offerings</p></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Object.entries(SERVICE_CATALOG).map(([cat, services]) => (
+          <div key={cat} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-4 text-indigo-600">
+              {cat.includes('Industrial') ? <Factory /> : cat.includes('ISO') ? <Stamp /> : cat.includes('Tax') ? <Receipt /> : cat.includes('Registration') ? <Globe /> : <Briefcase />}
+              <h3 className="font-bold text-lg text-slate-800">{cat}</h3>
+            </div>
+            <ul className="space-y-2">
+              {services.map(s => <li key={s} className="text-sm text-slate-600 flex items-center"><div className="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2"></div>{s}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
   // REPORTS VIEW (Mock)
   const ReportsView = () => (
     <div className="animate-in fade-in zoom-in duration-300">
-       <div className="mb-6"><h2 className="text-2xl font-bold text-slate-800">Reports Center</h2><p className="text-slate-500">Generated Compliance & MIS Reports</p></div>
-       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <table className="w-full text-left">
-             <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
-                <tr><th className="px-6 py-4">Report Name</th><th className="px-6 py-4">Category</th><th className="px-6 py-4">Generated Date</th><th className="px-6 py-4">Action</th></tr>
-             </thead>
-             <tbody className="divide-y divide-slate-100">
-                {INITIAL_REPORTS.map((report) => (
-                   <tr key={report.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 text-sm font-medium text-slate-700 flex items-center"><FileSpreadsheet size={16} className="mr-2 text-emerald-600"/>{report.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{report.type}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{report.generated}</td>
-                      <td className="px-6 py-4"><button className="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center"><Download size={14} className="mr-1"/> Download</button></td>
-                   </tr>
-                ))}
-             </tbody>
-          </table>
-       </div>
+      <div className="mb-6"><h2 className="text-2xl font-bold text-slate-800">Reports Center</h2><p className="text-slate-500">Generated Compliance & MIS Reports</p></div>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
+            <tr><th className="px-6 py-4">Report Name</th><th className="px-6 py-4">Category</th><th className="px-6 py-4">Generated Date</th><th className="px-6 py-4">Action</th></tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {INITIAL_REPORTS.map((report) => (
+              <tr key={report.id} className="hover:bg-slate-50">
+                <td className="px-6 py-4 text-sm font-medium text-slate-700 flex items-center"><FileSpreadsheet size={16} className="mr-2 text-emerald-600" />{report.name}</td>
+                <td className="px-6 py-4 text-sm text-slate-600">{report.type}</td>
+                <td className="px-6 py-4 text-sm text-slate-500">{report.generated}</td>
+                <td className="px-6 py-4"><button className="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center"><Download size={14} className="mr-1" /> Download</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
@@ -634,38 +664,56 @@ function App() {
     <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
       <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} bg-white h-full border-r border-slate-200 flex flex-col py-6 z-20 shadow-xl transition-all duration-300`} onMouseEnter={() => setSidebarCollapsed(false)} onMouseLeave={() => setSidebarCollapsed(true)}>
         <div className="flex items-center justify-center mb-8 px-4 h-12 overflow-hidden whitespace-nowrap">
-           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg shrink-0">VR</div>
-           <span className={`ml-3 font-bold text-xl tracking-tight text-slate-800 transition-opacity duration-300 ${sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100'}`}>VR <span className="text-indigo-600">Here</span></span>
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg shrink-0">VR</div>
+          <span className={`ml-3 font-bold text-xl tracking-tight text-slate-800 transition-opacity duration-300 ${sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100'}`}>VR <span className="text-indigo-600">Here</span></span>
         </div>
         <div className="space-y-1 flex-1 w-full px-3 overflow-y-auto">
-           <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'Dashboard'} onClick={() => setActiveTab('Dashboard')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={Layers} label="Projects" active={activeTab === 'Projects'} onClick={() => { setActiveTab('Projects'); setCurrentView('list'); }} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={MessageCircle} label="Service Requests" active={activeTab === 'ServiceRequests'} onClick={() => setActiveTab('ServiceRequests')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={CheckSquare} label="To Do" active={activeTab === 'ToDo'} onClick={() => setActiveTab('ToDo')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={FileText} label="Quotation" active={activeTab === 'Quotation'} onClick={() => setActiveTab('Quotation')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={DollarSign} label="Finance" active={activeTab === 'Finance'} onClick={() => setActiveTab('Finance')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={BarChart} label="Reports" active={activeTab === 'Reports'} onClick={() => setActiveTab('Reports')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={Users} label="Payroll" active={activeTab === 'Payroll'} onClick={() => setActiveTab('Payroll')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={ServiceIcon} label="Services" active={activeTab === 'Services'} onClick={() => setActiveTab('Services')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={BookOpen} label="Library" active={activeTab === 'Library'} onClick={() => setActiveTab('Library')} collapsed={sidebarCollapsed} />
-           <SidebarItem icon={Settings} label="Settings" active={activeTab === 'Settings'} onClick={() => setActiveTab('Settings')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'Dashboard'} onClick={() => setActiveTab('Dashboard')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={Layers} label="Projects" active={activeTab === 'Projects'} onClick={() => { setActiveTab('Projects'); setCurrentView('list'); }} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={MessageCircle} label="Service Requests" active={activeTab === 'ServiceRequests'} onClick={() => setActiveTab('ServiceRequests')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={CheckSquare} label="To Do" active={activeTab === 'ToDo'} onClick={() => setActiveTab('ToDo')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={FileText} label="Quotation" active={activeTab === 'Quotation'} onClick={() => setActiveTab('Quotation')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={DollarSign} label="Finance" active={activeTab === 'Finance'} onClick={() => setActiveTab('Finance')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={BarChart} label="Reports" active={activeTab === 'Reports'} onClick={() => setActiveTab('Reports')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={Users} label="Payroll" active={activeTab === 'Payroll'} onClick={() => setActiveTab('Payroll')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={ServiceIcon} label="Services" active={activeTab === 'Services'} onClick={() => setActiveTab('Services')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={BookOpen} label="Library" active={activeTab === 'Library'} onClick={() => setActiveTab('Library')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={Settings} label="Settings" active={activeTab === 'Settings'} onClick={() => setActiveTab('Settings')} collapsed={sidebarCollapsed} />
+
+          <div className="mt-auto pt-4 border-t border-slate-100 mx-3">
+            <SidebarItem icon={LogOut} label="Logout" active={false} onClick={handleLogout} collapsed={sidebarCollapsed} />
+          </div>
         </div>
       </aside>
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         <div className="flex-1 overflow-y-auto p-8">
-           {activeTab === 'Dashboard' && <DashboardView />}
-           {activeTab === 'Projects' && currentView === 'list' && <ProjectListView />}
-           {activeTab === 'Projects' && currentView === 'detail' && <ProjectDetailView project={selectedProject} onBack={() => setCurrentView('list')} />}
-           {activeTab === 'ServiceRequests' && <GenericListView title="Service Requests" sub="Incoming Inquiries from Clients" data={INITIAL_SERVICE_REQUESTS} columns={['Client', 'Service', 'Date', 'Status', 'Assigned To']} />}
-           {activeTab === 'ToDo' && <GenericListView title="Task List" sub="Ad-hoc Compliance Tasks" data={INITIAL_TODO} columns={['Task', 'Due Date', 'Priority', 'Assignee']} />}
-           {activeTab === 'Quotation' && <GenericListView title="Quotations" sub="Proposals Sent to Clients" data={INITIAL_QUOTES} columns={['Client', 'Subject', 'Amount', 'Status']} />}
-           {activeTab === 'Finance' && <GenericListView title="Invoices" sub="Billing & Receivables" data={INITIAL_INVOICES} columns={['Client', 'Date', 'Amount', 'Status']} />}
-           {activeTab === 'Payroll' && <GenericListView title="Staff Payroll" sub="Salary Processing" data={INITIAL_PAYROLL} columns={['Name', 'Role', 'Days Present', 'Net Salary', 'Status']} />}
-           {activeTab === 'Services' && <ServicesView />}
-           {activeTab === 'Library' && <GenericListView title="Client Directory" sub="Master Data of Parties" data={INITIAL_PARTIES} columns={['Name', 'Type', 'Contact']} />}
-           {activeTab === 'Reports' && <ReportsView />}
-           {activeTab === 'Settings' && <div className="flex h-full items-center justify-center text-slate-400 flex-col"><Settings size={48} className="mb-4 opacity-20"/><p>System Settings Placeholder</p></div>}
-           {currentView === 'wizard' && <ProjectWizard onClose={() => setCurrentView('list')} onSave={() => { /* Save Logic */ }} />}
+          {activeTab === 'Dashboard' && <DashboardView />}
+          {activeTab === 'Projects' && currentView === 'list' && <ProjectListView />}
+          {activeTab === 'Projects' && currentView === 'detail' && <ProjectDetailView project={selectedProject} onBack={() => setCurrentView('list')} />}
+          {activeTab === 'Projects' && currentView === 'list' && <ProjectListView />}
+          {activeTab === 'Projects' && currentView === 'detail' && <ProjectDetailView project={selectedProject} onBack={() => setCurrentView('list')} />}
+          {activeTab === 'ServiceRequests' && <GenericListView
+            title="Service Requests"
+            sub="Incoming Inquiries from Website"
+            data={orders.map(o => ({
+              id: o._id,
+              client: o.clientName,
+              service: o.serviceName,
+              date: new Date(o.date).toLocaleDateString(),
+              status: o.status,
+              assignedTo: '-'
+            }))}
+            columns={['Client', 'Service', 'Date', 'Status', 'Assigned To']}
+          />}
+          {activeTab === 'ToDo' && <GenericListView title="Task List" sub="Ad-hoc Compliance Tasks" data={INITIAL_TODO} columns={['Task', 'Due Date', 'Priority', 'Assignee']} />}
+          {activeTab === 'Quotation' && <GenericListView title="Quotations" sub="Proposals Sent to Clients" data={INITIAL_QUOTES} columns={['Client', 'Subject', 'Amount', 'Status']} />}
+          {activeTab === 'Finance' && <GenericListView title="Invoices" sub="Billing & Receivables" data={INITIAL_INVOICES} columns={['Client', 'Date', 'Amount', 'Status']} />}
+          {activeTab === 'Payroll' && <GenericListView title="Staff Payroll" sub="Salary Processing" data={INITIAL_PAYROLL} columns={['Name', 'Role', 'Days Present', 'Net Salary', 'Status']} />}
+          {activeTab === 'Services' && <ServicesView />}
+          {activeTab === 'Library' && <GenericListView title="Client Directory" sub="Master Data of Parties" data={INITIAL_PARTIES} columns={['Name', 'Type', 'Contact']} />}
+          {activeTab === 'Reports' && <ReportsView />}
+          {activeTab === 'Settings' && <div className="flex h-full items-center justify-center text-slate-400 flex-col"><Settings size={48} className="mb-4 opacity-20" /><p>System Settings Placeholder</p></div>}
+          {currentView === 'wizard' && <ProjectWizard onClose={() => setCurrentView('list')} onSave={() => { /* Save Logic */ }} />}
         </div>
       </main>
     </div>

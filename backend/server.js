@@ -50,7 +50,10 @@ app.use(cors()); // Enable CORS
 import authRoutes from './routes/authRoutes.js';
 
 // Routes
+import orderRoutes from './routes/orderRoutes.js';
+
 app.use('/api/auth', authRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Serve Frontend in Production
 

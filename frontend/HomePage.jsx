@@ -213,10 +213,45 @@ const HomePage = () => {
       name: "VR HERE Business Solutions",
       description: `Payment for ${selectedPlan.name}`,
       image: "https://vrhere.in/logo.png",
-      handler: function (response) {
-        alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
-        setIsSubmitting(false);
-        setIsModalOpen(false);
+      handler: async function (response) {
+        try {
+          // 1. Payment Successful - Save Order to Backend
+          const orderData = {
+            clientName: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            serviceName: selectedPlan.name,
+            amount: selectedPlan.price,
+            paymentStatus: 'Paid',
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpayOrderId: response.razorpay_order_id, // Might be undefined if not created via backend order
+          };
+
+          const res = await fetch('/api/orders', { // Use relative path for proxy
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData),
+          });
+
+          if (res.ok) {
+            alert(`Payment Successful! Booking Confirmed. Payment ID: ${response.razorpay_payment_id}`);
+            setIsSubmitting(false);
+            setIsModalOpen(false);
+            // Optional: Reset form
+            setFormData({ name: '', email: '', phone: '' });
+          } else {
+            console.error("Failed to save order to backend");
+            alert(`Payment successful, but we failed to save the booking details. Please contact support with Payment ID: ${response.razorpay_payment_id}`);
+            setIsSubmitting(false);
+          }
+
+        } catch (error) {
+          console.error("Error saving order:", error);
+          alert("An error occurred while confirming your booking. Please contact support.");
+          setIsSubmitting(false);
+        }
       },
       prefill: {
         name: formData.name,
