@@ -403,16 +403,28 @@ const HomePage = () => {
             </div>
 
             {/* SEARCH SUGGESTIONS DROPDOWN */}
-            {suggestions.length > 0 && (
+            {searchTerm.length > 1 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden text-left animate-fade-in max-h-60 overflow-y-auto z-50">
-                {suggestions.map((s, i) => (
-                  <a href={s.link} key={i} className="flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors group">
-                    <span className="font-bold text-slate-700 group-hover:text-red-600">{s.name}</span>
-                    <span className="text-xs text-slate-400 uppercase tracking-wider group-hover:text-red-400">
-                      {s.type === 'page' ? 'View Page' : 'Inquire'}
+                {suggestions.length > 0 ? (
+                  suggestions.map((s, i) => (
+                    <a href={s.link} key={i} className="flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors group">
+                      <span className="font-bold text-slate-700 group-hover:text-red-600">{s.name}</span>
+                      <span className="text-xs text-slate-400 uppercase tracking-wider group-hover:text-red-400">
+                        {s.type === 'page' ? 'View Page' : 'Inquire'}
+                      </span>
+                    </a>
+                  ))
+                ) : (
+                  <a href={`/contact?service=${searchTerm}`} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors group bg-red-50/30">
+                    <div>
+                      <span className="font-bold text-slate-700 group-hover:text-red-600">Not listed? Request '{searchTerm}'</span>
+                      <p className="text-xs text-slate-500 mt-0.5">We will arrange a custom solution for you.</p>
+                    </div>
+                    <span className="text-xs font-bold text-red-500 uppercase tracking-wider border border-red-200 px-2 py-1 rounded bg-white">
+                      Contact Us
                     </span>
                   </a>
-                ))}
+                )}
               </div>
             )}
           </div>
