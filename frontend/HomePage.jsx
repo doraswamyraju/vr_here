@@ -416,6 +416,16 @@ const HomePage = () => {
               </div>
             )}
           </div>
+
+          {/* SEARCH FALLBACK LINK */}
+          <div className="mt-6 animate-fade-in delay-500">
+            <p className="text-slate-400 text-sm">
+              Can't find what you're looking for?{' '}
+              <button onClick={handleConsultationBook} className="text-white hover:text-red-400 font-bold underline underline-offset-4 decoration-red-500 hover:decoration-red-400 transition-colors">
+                Talk to an Expert
+              </button>
+            </p>
+          </div>
         </div>
       </section>
 
@@ -573,41 +583,121 @@ const HomePage = () => {
       </section>
 
       {/* FAQ SECTION */}
-      <section className="py-20 bg-white border-t border-slate-100">
-        <div className="max-w-3xl mx-auto px-4">
-          <h2 className="text-3xl font-black text-center text-slate-900 mb-12">Frequently Asked Questions</h2>
+      <section className="py-24 bg-white border-t border-slate-100 relative overflow-hidden">
+        {/* Decorative Grid */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+
+        <div className="max-w-4xl mx-auto px-4 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-black text-slate-900 mb-4">Frequently Asked Questions</h2>
+            <p className="text-slate-500">Everything you need to know about the process.</p>
+          </div>
+
           <div className="space-y-4">
             {FAQS.map((faq, i) => (
-              <div key={i} className="border border-slate-200 rounded-xl overflow-hidden transition-all hover:border-red-200">
-                <button onClick={() => toggleAccordion(i)} className="w-full flex justify-between items-center p-5 text-left bg-slate-50 hover:bg-white transition-colors">
-                  <span className="font-bold text-slate-800">{faq.question}</span>
-                  {activeAccordion === i ? <ChevronUp className="w-5 h-5 text-red-600" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+              <div
+                key={i}
+                className={`border rounded-2xl overflow-hidden transition-all duration-300 ${activeAccordion === i ? 'border-red-200 shadow-lg bg-red-50/30' : 'border-slate-200 hover:border-red-100 hover:shadow-md bg-white'}`}
+              >
+                <button
+                  onClick={() => toggleAccordion(i)}
+                  className="w-full flex justify-between items-center p-6 text-left"
+                >
+                  <span className={`font-bold text-lg ${activeAccordion === i ? 'text-red-700' : 'text-slate-800'}`}>{faq.question}</span>
+                  {activeAccordion === i ?
+                    <div className="bg-red-100 p-1 rounded-full"><ChevronUp className="w-5 h-5 text-red-600" /></div> :
+                    <div className="bg-slate-100 p-1 rounded-full group-hover:bg-slate-200"><ChevronDown className="w-5 h-5 text-slate-500" /></div>
+                  }
                 </button>
-                {activeAccordion === i && (
-                  <div className="p-5 bg-white text-slate-600 text-sm leading-relaxed border-t border-slate-100 animate-fade-in">
-                    {faq.answer}
-                  </div>
-                )}
+                <div
+                  className={`px-6 text-slate-600 text-[15px] leading-relaxed overflow-hidden transition-all duration-300 ease-in-out ${activeAccordion === i ? 'max-h-48 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
+                >
+                  {faq.answer}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA SECTION */}
-      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-          <h2 className="text-3xl lg:text-5xl font-black mb-6">Ready to Start?</h2>
-          <p className="text-xl text-slate-400 mb-10">
-            Talk to our experts before you commit. Pay a small booking fee now, and we will deduct it from your final bill.
-          </p>
-          <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/10 inline-block w-full max-w-md">
-            <div className="text-sm font-bold text-red-400 uppercase tracking-widest mb-2">Consultation Offer</div>
-            <div className="text-5xl font-black mb-2">₹499</div>
-            <p className="text-slate-300 text-sm mb-6">Fully adjustable against registration fees</p>
-            <button onClick={handleConsultationBook} className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-600/30 flex items-center justify-center">
-              Book Now <ArrowRight className="ml-2 w-5 h-5" />
-            </button>
+      {/* CTA SECTION - READY TO START */}
+      <section className="relative py-24 md:py-32 bg-slate-900 text-white overflow-hidden">
+        {/* Background Gradients */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-red-600/20 rounded-full blur-[120px] translate-x-1/3 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3"></div>
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+
+            {/* Left Content */}
+            <div className="lg:w-1/2 text-center lg:text-left">
+              <div className="inline-block px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-sm font-bold uppercase tracking-widest mb-6">
+                Limitless Growth
+              </div>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
+                Ready to <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Scale Up?</span>
+              </h2>
+              <p className="text-xl text-slate-400 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Don't let compliance slow you down. Talk to our experts today, get a roadmap, and pay only when you're 100% satisfied.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+                <div className="flex items-center gap-2 text-slate-300 bg-white/5 py-2 px-4 rounded-lg border border-white/10">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span className="font-medium">Free 1st Call Adjustment</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300 bg-white/5 py-2 px-4 rounded-lg border border-white/10">
+                  <ShieldCheck className="w-5 h-5 text-blue-500" />
+                  <span className="font-medium">Secure Process</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Pricing Card */}
+            <div className="lg:w-1/2 w-full max-w-md mx-auto lg:mr-0">
+              <div className="bg-white/10 backdrop-blur-xl p-8 rounded-3xl border border-white/20 shadow-2xl relative overflow-hidden group hover:border-red-500/50 transition-colors duration-500">
+                <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-bl-xl shadow-lg">
+                  POPULAR
+                </div>
+
+                <div className="text-sm font-bold text-red-400 uppercase tracking-widest mb-2">Consultation Offer</div>
+                <div className="flex items-baseline mb-2">
+                  <span className="text-6xl font-black text-white">₹499</span>
+                  <span className="ml-2 text-slate-400 font-medium line-through">₹999</span>
+                </div>
+                <p className="text-slate-300 text-sm mb-8 border-b border-white/10 pb-6">
+                  Fully adjustable against any registration service fees. Use it as credit.
+                </p>
+
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 text-green-400 mr-3 mt-0.5" />
+                    <span className="text-slate-200 text-sm">30 Mins Expert Call (CA/CS)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 text-green-400 mr-3 mt-0.5" />
+                    <span className="text-slate-200 text-sm">Business Structure Analysis</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 text-green-400 mr-3 mt-0.5" />
+                    <span className="text-slate-200 text-sm">Actionable Roadmap PDF</span>
+                  </li>
+                </ul>
+
+                <button
+                  onClick={handleConsultationBook}
+                  className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-bold py-4 rounded-xl hover:from-red-500 hover:to-red-400 transition-all transform active:scale-95 shadow-lg shadow-red-600/30 flex items-center justify-center group-hover:shadow-red-600/50"
+                >
+                  Book Consultation Now <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+
+                <p className="text-center text-xs text-slate-500 mt-4">No hidden charges. 100% Secure.</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
