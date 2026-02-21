@@ -177,4 +177,12 @@ const getUserProfile = asyncHandler(async (req, res) => {
     }
 });
 
-export { authUser, registerUser, forgotPassword, resetPassword, getUserProfile };
+// @desc    Get all employees
+// @route   GET /api/auth/employees
+// @access  Private/Admin
+const getEmployees = asyncHandler(async (req, res) => {
+    const employees = await User.find({ role: 'employee' }).select('-password');
+    res.json(employees);
+});
+
+export { authUser, registerUser, forgotPassword, resetPassword, getUserProfile, getEmployees };

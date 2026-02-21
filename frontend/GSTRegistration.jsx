@@ -6,6 +6,8 @@ import {
     MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
     ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw, BadgePercent
 } from 'lucide-react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { RAZORPAY_KEY_ID } from './config';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 
@@ -50,6 +52,7 @@ const PACKAGES = [
 ];
 
 const GSTRegistrationPage = () => {
+    const navigate = useNavigate();
     // --- STATE ---
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeMobileCategory, setActiveMobileCategory] = useState(null);
@@ -117,11 +120,42 @@ const GSTRegistrationPage = () => {
             name: "VR HERE Business Solutions",
             description: `Payment for ${selectedPlan.name}`,
             image: "https://vrhere.in/logo.png", // Ensure you have a logo at this URL or remove line
-            handler: function (response) {
-                alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
-                setIsSubmitting(false);
-                setIsModalOpen(false);
-                // Here you would typically send the payment ID to your backend for verification
+            handler: async function (response) {
+                try {
+                    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+                    if (!userInfo || !userInfo.token) {
+                        alert("You must be logged in to complete this purchase.");
+                        setIsSubmitting(false);
+                        return;
+                    }
+
+                    const config = {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${userInfo.token}`,
+                        },
+                    };
+
+                    await axios.post(
+                        '/api/orders',
+                        {
+                            serviceName: 'GST Registration',
+                            packageName: selectedPlan.name,
+                            price: selectedPlan.price,
+                            paymentId: response.razorpay_payment_id
+                        },
+                        config
+                    );
+
+                    alert(`Payment Successful! Your application has been started.`);
+                    setIsSubmitting(false);
+                    setIsModalOpen(false);
+                    navigate('/customer-dashboard'); // Redirect to client dashboard
+                } catch (error) {
+                    console.error("Order Creation Error:", error);
+                    alert("Payment was successful, but there was an error creating your order. Please contact support.");
+                    setIsSubmitting(false);
+                }
             },
             prefill: {
                 name: formData.name,

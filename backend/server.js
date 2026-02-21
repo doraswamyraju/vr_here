@@ -48,6 +48,7 @@ app.use(express.json()); // Body parser
 app.use(cors()); // Enable CORS
 
 import authRoutes from './routes/authRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 
 // Routes
 import orderRoutes from './routes/orderRoutes.js';
@@ -57,6 +58,9 @@ app.use('/api/orders', orderRoutes);
 
 // Serve Frontend in Production
 
+
+// Ensure uploads folder is accessible
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../dist')));

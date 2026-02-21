@@ -125,27 +125,7 @@ const RegisterPage = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Account Type</label>
-                            <div className="relative group">
-                                <Briefcase className="absolute left-4 top-4 h-5 w-5 text-slate-400 group-focus-within:text-red-500 transition-colors z-10" />
-                                <select
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="w-full pl-12 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-none transition-all font-medium appearance-none cursor-pointer"
-                                    style={{ backgroundImage: 'none' }}
-                                >
-                                    <option value="client">Client (Business Owner)</option>
-                                    <option value="employee">Employee</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                                <div className="absolute right-4 top-4 pointer-events-none">
-                                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
+
 
                         <button
                             type="submit"
