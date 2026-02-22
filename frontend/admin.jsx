@@ -1,9 +1,9 @@
 ﻿import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, Users, FileText, CheckSquare, Settings, Bell,
+  LayoutDashboard, Users, User, FileText, CheckSquare, Settings, Bell,
   Menu, ChevronDown, MoreVertical, LogOut, Plus, Download,
   Building2, ChevronRight, Layers, MessageSquare, Briefcase,
-  BookOpen, Anchor, Globe, Factory, Stamp, Receipt, Scale
+  BookOpen, Anchor, Globe, Factory, Stamp, Receipt, Scale, FileSpreadsheet
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
