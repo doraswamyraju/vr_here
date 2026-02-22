@@ -115,7 +115,7 @@ export default function EmployeeApp() {
     <div className="space-y-6 animate-in fade-in">
       <div className="bg-slate-900 rounded-3xl p-8 text-white flex justify-between items-center shadow-lg">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Welcome, {userInfo.name}</h2>
+          <h2 className="text-3xl font-bold mb-2">Welcome, {userInfo?.name || 'Employee'}</h2>
           <p className="text-slate-400">You have {orders.filter(o => o.status !== 'Completed').length} active assignments.</p>
         </div>
       </div>
@@ -263,7 +263,7 @@ export default function EmployeeApp() {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
-      <aside className={`\${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white h-full border-r border-slate-200 flex flex-col z-20 transition-all duration-300`} onMouseEnter={() => setSidebarCollapsed(false)} onMouseLeave={() => setSidebarCollapsed(true)}>
+      <aside className={`${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white h-full border-r border-slate-200 flex flex-col z-20 transition-all duration-300`} onMouseEnter={() => setSidebarCollapsed(false)} onMouseLeave={() => setSidebarCollapsed(true)}>
         <div className="h-20 flex items-center justify-center border-b border-slate-100"><div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">VR</div></div>
         <div className="flex-1 py-6 px-3 space-y-1">
           {['Dashboard', 'Workspace'].map(item => (
@@ -279,7 +279,7 @@ export default function EmployeeApp() {
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
           <h1 className="text-xl font-bold text-slate-800">{activeTab}</h1>
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">{userInfo.name.charAt(0)}</div>
+            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">{userInfo?.name?.charAt(0) || 'E'}</div>
           </div>
         </header>
         <div className="flex-1 overflow-y-auto p-8">
