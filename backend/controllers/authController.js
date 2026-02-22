@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
-import * as crypto from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import generateToken from '../utils/generateToken.js';
+
 
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js'; // Ensure sendEmail is imported too if used
@@ -88,11 +89,10 @@ const forgotPassword = asyncHandler(async (req, res) => {
     }
 
     // Get Reset Token
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetToken = randomBytes(20).toString('hex');
 
     // Hash token and set to resetPasswordToken field
-    user.resetPasswordToken = crypto
-        .createHash('sha256')
+    user.resetPasswordToken = createHash('sha256')
         .update(resetToken)
         .digest('hex');
 
