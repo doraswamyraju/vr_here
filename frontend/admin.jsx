@@ -491,7 +491,44 @@ function App() {
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase">PAID</span>
                   </div>
                 </div>
-                <div className="pt-4"><h5 className="font-bold text-slate-700 mb-4 text-sm">Invoice History</h5><div className="border border-slate-100 rounded-xl overflow-hidden"><table className="w-full text-left text-xs"><thead className="bg-slate-50 font-bold text-slate-400 uppercase border-b border-slate-100"><tr><th className="p-4">Invoice #</th><th className="p-4">Amount</th><th className="p-4">Status</th><th className="p-4">Date</th><th className="p-4 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{project.invoices?.map(inv => (<tr key={inv.invoiceNumber}><td className="p-4 font-bold text-slate-800">{inv.invoiceNumber}</td><td className="p-4">â‚¹ {inv.amount.toLocaleString()}</td><td className="p-4"><StatusBadge status={inv.status} /></td><td className="p-4 text-slate-500">{new Date(inv.createdAt).toLocaleDateString()}</td><td className="p-4 text-right"><Download size={14} className="inline text-indigo-600 cursor-pointer" /></td></tr>))}</tbody></table>{(!project.invoices || project.invoices.length === 0) && <p className="p-6 text-center text-slate-400 italic">No additional invoices generated.</p>}</div></div>
+                <div className="pt-4">
+                  <h5 className="font-bold text-slate-700 mb-4 text-sm">Invoice History</h5>
+                  <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 font-bold text-slate-400 uppercase border-b border-slate-100">
+                        <tr>
+                          <th className="p-4">Invoice #</th>
+                          <th className="p-4">Amount</th>
+                          <th className="p-4">Status</th>
+                          <th className="p-4">Date</th>
+                          <th className="p-4 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {project.invoices?.map(inv => (
+                          <tr key={inv._id}>
+                            <td className="p-4 font-bold text-slate-800">{inv.invoiceNumber}</td>
+                            <td className="p-4">₹ {inv.amount.toLocaleString()}</td>
+                            <td className="p-4"><StatusBadge status={inv.status} /></td>
+                            <td className="p-4 text-slate-500">{new Date(inv.createdAt).toLocaleDateString()}</td>
+                            <td className="p-4 text-right flex justify-end gap-2">
+                              {inv.status !== 'Paid' && (
+                                <button
+                                  onClick={() => updateInvoiceStatus(project._id, inv._id, 'Paid')}
+                                  className="text-emerald-600 hover:text-emerald-800 font-bold"
+                                >
+                                  Mark Paid
+                                </button>
+                              )}
+                              <Download size={14} className="text-indigo-600 cursor-pointer" />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {(!project.invoices || project.invoices.length === 0) && <p className="p-6 text-center text-slate-400 italic">No additional invoices generated.</p>}
+                  </div>
+                </div>
               </div>
             </div>
           )}
