@@ -71,6 +71,14 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/customer-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['client', 'admin']}>
+            <CustomerPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* TEMP: Design Previews */}
       <Route path="/header-designs" element={<HeaderDesignOptions />} />

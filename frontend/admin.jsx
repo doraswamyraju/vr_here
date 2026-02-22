@@ -101,7 +101,7 @@ function App() {
       <div className="mb-8"><h1 className="text-2xl font-bold text-slate-800">Admin Overview</h1><p className="text-slate-500">Practice Performance & Active Projects</p></div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {[
-          { label: 'Total Revenue', val: `â‚¹ ${orders.reduce((acc, curr) => acc + curr.price, 0).toLocaleString()}`, icon: Receipt, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Total Revenue', val: `₹ ${orders.reduce((acc, curr) => acc + curr.price, 0).toLocaleString()}`, icon: Receipt, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Total Orders', val: orders.length, icon: Layers, color: 'text-indigo-600', bg: 'bg-indigo-50' },
           { label: 'Pending Assignment', val: orders.filter(o => !o.assignedEmployee).length, icon: Users, color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'Completed Orders', val: orders.filter(o => o.status === 'Completed').length, icon: CheckSquare, color: 'text-blue-600', bg: 'bg-blue-50' }
@@ -344,7 +344,11 @@ function App() {
         </div>
         <div className="space-y-1 flex-1 w-full px-3 overflow-y-auto">
           <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'Dashboard'} onClick={() => setActiveTab('Dashboard')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={Users} label="Users / Clients" active={activeTab === 'Users'} onClick={() => setActiveTab('Users')} collapsed={sidebarCollapsed} />
           <SidebarItem icon={Layers} label="Orders (Active)" active={activeTab === 'Projects'} onClick={() => { setActiveTab('Projects'); setCurrentView('list'); }} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={FileText} label="Documents" active={activeTab === 'Documents'} onClick={() => setActiveTab('Documents')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={Receipt} label="Finance" active={activeTab === 'Finance'} onClick={() => setActiveTab('Finance')} collapsed={sidebarCollapsed} />
+          <SidebarItem icon={Settings} label="Settings" active={activeTab === 'Settings'} onClick={() => setActiveTab('Settings')} collapsed={sidebarCollapsed} />
         </div>
         <div className="p-4 border-t border-slate-100"><button onClick={handleLogout} className="flex items-center w-full p-2 rounded-lg text-rose-500 hover:bg-rose-50"><LogOut size={20} /><span className={`ml-3 text-sm transition-all duration-300 ${sidebarCollapsed ? 'opacity-0' : 'opacity-100'}`}>Logout</span></button></div>
       </aside >
@@ -359,6 +363,10 @@ function App() {
           {activeTab === 'Dashboard' && <DashboardView />}
           {activeTab === 'Projects' && currentView === 'list' && <ProjectListView />}
           {activeTab === 'Projects' && currentView === 'detail' && <ProjectDetailView project={selectedProject} onBack={() => setCurrentView('list')} />}
+          {activeTab === 'Users' && <div className="p-8 text-center text-slate-500">Users/Clients Management View (Placeholder)</div>}
+          {activeTab === 'Documents' && <div className="p-8 text-center text-slate-500">Document Management View (Placeholder)</div>}
+          {activeTab === 'Finance' && <div className="p-8 text-center text-slate-500">Finance & Revenue View (Placeholder)</div>}
+          {activeTab === 'Settings' && <div className="p-8 text-center text-slate-500">Admin Settings View (Placeholder)</div>}
         </div >
       </main >
     </div >
