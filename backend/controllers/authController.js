@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import generateToken from '../utils/generateToken.js';
+
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js'; // Ensure sendEmail is imported too if used
 
