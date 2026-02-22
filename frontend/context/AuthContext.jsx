@@ -15,10 +15,13 @@ export const AuthProvider = ({ children }) => {
                     headers: { Authorization: `Bearer ${token}` }
                 };
                 const { data } = await axios.get('/api/auth/profile', config);
-                setUser({ ...data, token });
+                const fullUser = { ...data, token };
+                setUser(fullUser);
+                localStorage.setItem('userInfo', JSON.stringify(fullUser));
             } catch (error) {
                 console.error("Session expired or invalid token");
                 localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
                 setUser(null);
             }
         }
@@ -32,6 +35,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         const { data } = await axios.post('/api/auth/login', { email, password });
         localStorage.setItem('token', data.token);
+        localStorage.setItem('userInfo', JSON.stringify(data));
         setUser(data);
         return data; // Return user data for redirect logic
     };
@@ -41,6 +45,7 @@ export const AuthProvider = ({ children }) => {
             const config = { headers: { 'Content-Type': 'application/json' } };
             const { data } = await axios.post('/api/auth/register', { name, email, phone, password, role }, config);
             localStorage.setItem('token', data.token);
+            localStorage.setItem('userInfo', JSON.stringify(data));
             setUser(data);
             return data;
         } catch (error) {
@@ -51,6 +56,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
         setUser(null);
     };
 
