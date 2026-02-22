@@ -3,13 +3,28 @@ name: Deploy to VPS
 description: Steps for testing and deploying changes to the live VPS environment.
 ---
 
-# Deploy to VPS
+# Deploy to VPS (vrhere.in)
 
-We do not run `npm run build` or `npm run dev` locally to test the production build or serve it directly to clients. The workflow for testing and deploying live changes is strictly:
+The workflow for deploying live changes to this VPS is:
 
-1. **Commit your changes locally**
-2. **Push the changes to Git**
-3. **Pull the Git repository on the remote VPS**
-4. **Test it on the live website**
+1.  **Commit locally and push to GitHub**.
+2.  **On the VPS**, navigate to `/var/www/vrhere`.
+3.  **Sync the code**:
+    ```bash
+    git fetch origin main
+    git reset --hard origin/main
+    ```
+4.  **Build the Frontend**:
+    ```bash
+    npm run build
+    ```
+5.  **Restart the Backend**:
+    ```bash
+    pm2 restart ecosystem.config.cjs --env production
+    ```
 
-By following this workflow, we ensure that the source of truth is always Git and that live testing perfectly matches the remote environment.
+### Important Notes
+- **Process Name**: Always use **`vrhere-api`** (configured in `ecosystem.config.cjs`).
+- **Port**: The backend listens on port **5002**.
+- **Build Step**: You **must** run `npm run build` on the server after pulling code to see UI changes.
+
