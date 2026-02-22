@@ -30,6 +30,8 @@ export default function EmployeeApp() {
   const [userInfo, setUserInfo] = useState(null);
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [detailTab, setDetailTab] = useState('Overview');
+
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
@@ -75,6 +77,23 @@ export default function EmployeeApp() {
       }
     } catch (e) { alert("Error updating status"); }
   };
+
+  const toggleChecklist = async (orderId, itemId) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      await axios.put(`/api/orders/${orderId}/checklists/${itemId}/toggle`, {}, config);
+      fetchOrders();
+    } catch (e) { alert("Error toggling checklist."); }
+  };
+
+  const updateTask = async (orderId, taskId, updates) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      await axios.put(`/api/orders/${orderId}/tasks/${taskId}`, updates, config);
+      fetchOrders();
+    } catch (e) { alert("Error updating task."); }
+  };
+
 
   const handleUploadCertificate = async (e) => {
     e.preventDefault();
@@ -190,74 +209,130 @@ export default function EmployeeApp() {
           {orders.length === 0 && <p className="text-center text-slate-500 py-8">No assigned orders.</p>}
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Col: Details & Status */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-              <h3 className="font-bold text-lg mb-4 text-slate-800">Order Details</h3>
-              <div className="space-y-3 text-sm">
-                <div><span className="text-slate-500">Client:</span> <span className="font-bold float-right">{selectedOrder.user?.name}</span></div>
-                <div><span className="text-slate-500">Service:</span> <span className="font-bold float-right">{selectedOrder.serviceName}</span></div>
-                <div><span className="text-slate-500">Package:</span> <span className="font-bold float-right">{selectedOrder.packageName}</span></div>
-                <div><span className="text-slate-500">Date:</span> <span className="font-bold float-right">{new Date(selectedOrder.createdAt).toLocaleDateString()}</span></div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-              <h3 className="font-bold text-lg mb-4 text-slate-800">Update Status</h3>
-              <select
-                value={selectedOrder.status}
-                onChange={(e) => handleStatusChange(selectedOrder._id, e.target.value)}
-                className="w-full p-3 border border-slate-300 rounded-lg bg-slate-50 font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
-                {ORDER_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <p className="text-xs text-slate-400 mt-2">Updates immediately reflect on client dashboard.</p>
-            </div>
+        <div className="flex flex-col h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          {/* Workspace Header */}
+          <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-xl font-bold font-slate-800">{selectedOrder.serviceName}</h3>
+            <p className="text-sm text-slate-500">Client: <span className="font-bold text-slate-700">{selectedOrder.user?.name}</span> | <span className="text-indigo-600 font-bold">₹{selectedOrder.price.toLocaleString()}</span></p>
           </div>
 
-          {/* Right Col: Documents & Completion */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-              <h3 className="font-bold text-lg mb-4 text-slate-800 flex items-center"><FileText className="mr-2 text-indigo-600" /> Client Uploaded Documents</h3>
-              <div className="space-y-2">
-                {selectedOrder.clientDocuments?.map(doc => (
-                  <div key={doc._id} className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <span className="font-medium text-slate-700">{doc.name}</span>
-                    <a href={`http://localhost:5000${doc.url}`} target="_blank" rel="noreferrer" className="flex items-center text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-lg text-sm font-bold">
-                      <Download size={16} className="mr-2" /> Download
-                    </a>
+          {/* Workspace Tabs */}
+          <div className="flex px-6 border-b border-slate-100">
+            {['Overview', 'Workflow', 'Checklist'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setDetailTab(tab)}
+                className={`px-6 py-4 text-sm font-bold border-b-2 transition-all ${detailTab === tab ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {detailTab === 'Overview' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
+                <div className="space-y-6">
+                  <div className="p-5 bg-slate-50 rounded-xl border border-slate-100">
+                    <h4 className="font-bold text-slate-800 mb-3">Service Information</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between"><span className="text-slate-500">Package:</span><span className="font-bold">{selectedOrder.packageName}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Date:</span><span className="font-bold">{new Date(selectedOrder.createdAt).toLocaleDateString()}</span></div>
+                      <div className="flex justify-between items-center"><span className="text-slate-500">Status:</span><StatusBadge status={selectedOrder.status} /></div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-700 mb-3">Update Order Progress</h4>
+                    <select
+                      value={selectedOrder.status}
+                      onChange={(e) => handleStatusChange(selectedOrder._id, e.target.value)}
+                      className="w-full p-3 border border-slate-300 rounded-lg bg-white font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                      {ORDER_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-200">
+                  <h3 className="font-bold text-lg mb-4 text-emerald-800 flex items-center"><CheckCircle className="mr-2" /> Finish Order</h3>
+                  <p className="text-sm text-emerald-700 mb-4">Complete your work and upload the final certificate/invoice here.</p>
+
+                  {selectedOrder.finalCertificateUrl ? (
+                    <div className="bg-white p-4 rounded-xl border border-emerald-100 flex justify-between items-center">
+                      <span className="font-bold text-emerald-700 text-sm">Certificate Delivered</span>
+                      <a href={selectedOrder.finalCertificateUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm font-bold flex items-center"><Download size={14} className="mr-1" /> View</a>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleUploadCertificate} className="bg-white p-4 rounded-xl border border-emerald-100">
+                      <input type="file" onChange={(e) => setFile(e.target.files[0])} className="w-full mb-4 text-xs file:bg-emerald-50 file:text-emerald-700 file:border-0 file:rounded-lg file:px-3 file:py-2" required />
+                      <button type="submit" disabled={isUploading || !file} className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-emerald-700 transition disabled:opacity-50 w-full flex justify-center items-center text-sm">
+                        {isUploading ? 'Uploading...' : <><Upload size={16} className="mr-2" /> Upload & Complete</>}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {detailTab === 'Workflow' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in">
+                {['Pending', 'In Progress', 'Completed'].map(col => (
+                  <div key={col} className="bg-slate-50 p-4 rounded-xl min-h-[300px]">
+                    <h4 className="font-bold text-slate-500 text-xs uppercase mb-4 flex justify-between items-center">{col}</h4>
+                    <div className="space-y-3">
+                      {selectedOrder.tasks?.filter(t => t.status === col).map(task => (
+                        <div key={task._id} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:border-indigo-300 transition cursor-pointer" onClick={() => {
+                          const next = col === 'Pending' ? 'In Progress' : col === 'In Progress' ? 'Completed' : 'Pending';
+                          if (window.confirm(`Move task to ${next}?`)) updateTask(selectedOrder._id, task._id, { status: next });
+                        }}>
+                          <h5 className="font-bold text-sm text-slate-800">{task.title}</h5>
+                          <p className="text-xs text-slate-400 mt-1">{task.description}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
-                {(!selectedOrder.clientDocuments || selectedOrder.clientDocuments.length === 0) && (
-                  <div className="p-8 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-500">
-                    Client hasn't uploaded any documents yet.
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
-            <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-200">
-              <h3 className="font-bold text-lg mb-4 text-emerald-800 flex items-center"><CheckCircle className="mr-2" /> Complete Project (Upload Final Certificate)</h3>
+            {detailTab === 'Checklist' && (
+              <div className="space-y-6 animate-in fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-xl border border-slate-100">
+                    <h4 className="font-bold text-slate-800 mb-4 flex items-center"><CheckSquare className="mr-2 text-indigo-600" /> Compliance Checklist</h4>
+                    <div className="space-y-3">
+                      {selectedOrder.checklists?.map(item => (
+                        <div key={item._id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                          <button
+                            onClick={() => toggleChecklist(selectedOrder._id, item._id)}
+                            className={`w-5 h-5 rounded border flex items-center justify-center ${item.isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200'}`}
+                          >
+                            {item.isCompleted && <CheckSquare size={14} />}
+                          </button>
+                          <span className={`text-sm ${item.isCompleted ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>{item.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-              {selectedOrder.finalCertificateUrl ? (
-                <div className="bg-white p-4 rounded-xl border border-emerald-100 flex justify-between items-center">
-                  <span className="font-bold text-emerald-700">Certificate Uploaded</span>
-                  <a href={`http://localhost:5000${selectedOrder.finalCertificateUrl}`} target="_blank" rel="noreferrer" className="text-emerald-700 hover:underline text-sm font-bold">View Certificate</a>
+                  <div className="bg-white p-6 rounded-xl border border-slate-100">
+                    <h4 className="font-bold text-slate-800 mb-4 flex items-center"><FileText className="mr-2 text-indigo-600" /> Download Client Files</h4>
+                    <div className="space-y-2">
+                      {selectedOrder.clientDocuments?.map(doc => (
+                        <div key={doc._id} className="flex justify-between items-center p-3 border border-slate-50 rounded-lg bg-slate-50/50">
+                          <span className="text-sm font-medium text-slate-600 truncate mr-4">{doc.name}</span>
+                          <a href={doc.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:bg-white p-1.5 rounded"><Download size={16} /></a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <form onSubmit={handleUploadCertificate} className="bg-white p-4 rounded-xl border border-emerald-100">
-                  <p className="text-sm text-slate-600 mb-3">Uploading the final certificate will automatically mark this order as Completed.</p>
-                  <input type="file" onChange={(e) => setFile(e.target.files[0])} className="w-full mb-4 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" required />
-                  <button type="submit" disabled={isUploading || !file} className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-emerald-700 transition disabled:opacity-50 w-full flex justify-center items-center">
-                    {isUploading ? 'Uploading...' : <><Upload size={18} className="mr-2" /> Upload & Complete</>}
-                  </button>
-                </form>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
+
     </div>
   );
 

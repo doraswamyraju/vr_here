@@ -132,6 +132,24 @@ function App() {
     } catch (e) { alert("Error adding invoice."); }
   };
 
+  const updateInvoiceStatus = async (orderId, invoiceId, status) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      await axios.put(`/api/orders/${orderId}/invoices/${invoiceId}/status`, { status }, config);
+      fetchData();
+      alert(`Invoice marked as ${status}`);
+    } catch (e) { alert("Error updating invoice status."); }
+  };
+
+  const toggleChecklist = async (orderId, itemId) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      await axios.put(`/api/orders/${orderId}/checklists/${itemId}/toggle`, {}, config);
+      fetchData();
+    } catch (e) { alert("Error toggling checklist."); }
+  };
+
+
   if (!isLoggedIn) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-bold">Verifying Access...</div>;
 
   // DASHBOARD VIEW
@@ -434,12 +452,16 @@ function App() {
                 {project.checklists?.map((item, i) => (
                   <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 group">
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${item.isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white'}`}>
+                      <button
+                        onClick={() => toggleChecklist(project._id, item._id)}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white hover:border-indigo-400'}`}
+                      >
                         {item.isCompleted && <CheckSquare size={14} />}
-                      </div>
+                      </button>
                       <span className={`font-medium ${item.isCompleted ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{item.title}</span>
                     </div>
                   </div>
+
                 ))}
                 {(!project.checklists || project.checklists.length === 0) && (
                   <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl">

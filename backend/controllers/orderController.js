@@ -193,17 +193,45 @@ const addChecklistItem = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Add invoice
-// @route   POST /api/orders/:id/invoices
-// @access  Private/Admin
-const addInvoice = asyncHandler(async (req, res) => {
-    const { invoiceNumber, amount } = req.body;
+// @desc    Toggle checklist item completion
+// @route   PUT /api/orders/:id/checklists/:itemId/toggle
+// @access  Private
+const toggleChecklistItem = asyncHandler(async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (order) {
-        order.invoices.push({ invoiceNumber, amount, status: 'Draft' });
-        await order.save();
-        res.status(201).json(order);
+        const item = order.checklists.id(req.params.itemId);
+        if (item) {
+            item.isCompleted = !item.isCompleted;
+            await order.save();
+            res.json(order);
+        } else {
+            res.status(404);
+            throw new Error('Checklist item not found');
+        }
+    } else {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+});
+
+// @desc    Update invoice status
+// @route   PUT /api/orders/:id/invoices/:invoiceId/status
+// @access  Private/Admin
+const updateInvoiceStatus = asyncHandler(async (req, res) => {
+    const { status } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+        const invoice = order.invoices.id(req.params.invoiceId);
+        if (invoice) {
+            invoice.status = status;
+            await order.save();
+            res.json(order);
+        } else {
+            res.status(404);
+            throw new Error('Invoice not found');
+        }
     } else {
         res.status(404);
         throw new Error('Order not found');
@@ -220,6 +248,9 @@ export {
     addTask,
     updateTask,
     addChecklistItem,
-    addInvoice
+    toggleChecklistItem,
+    addInvoice,
+    updateInvoiceStatus
 };
+
 

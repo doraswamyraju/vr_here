@@ -40,8 +40,15 @@ router.route('/:id/tasks/:taskId')
 router.route('/:id/checklists')
     .post(protect, addChecklistItem);
 
+router.route('/:id/checklists/:itemId/toggle')
+    .put(protect, toggleChecklistItem);
+
 router.route('/:id/invoices')
     .post(protect, admin, addInvoice);
 
+router.route('/:id/invoices/:invoiceId/status')
+    .put(protect, admin, updateInvoiceStatus);
+
 export default router;
+
 
