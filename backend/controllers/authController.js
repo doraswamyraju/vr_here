@@ -1,6 +1,9 @@
 import asyncHandler from 'express-async-handler';
+import crypto from 'crypto';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/User.js';
+import sendEmail from '../utils/sendEmail.js'; // Ensure sendEmail is imported too if used
+
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
@@ -185,4 +188,13 @@ const getEmployees = asyncHandler(async (req, res) => {
     res.json(employees);
 });
 
-export { authUser, registerUser, forgotPassword, resetPassword, getUserProfile, getEmployees };
+// @desc    Get all users
+// @route   GET /api/auth/users
+// @access  Private/Admin
+const getUsers = asyncHandler(async (req, res) => {
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+    res.json(users);
+});
+
+export { authUser, registerUser, forgotPassword, resetPassword, getUserProfile, getEmployees, getUsers };
+

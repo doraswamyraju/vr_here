@@ -104,7 +104,7 @@ export default function EmployeeApp() {
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
-    navigate('/');
+    navigate('/login');
   };
 
   if (!isLoggedIn) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-bold">Verifying Access...</div>;

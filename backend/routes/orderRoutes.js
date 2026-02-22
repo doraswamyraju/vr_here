@@ -6,7 +6,11 @@ import {
     getOrderById,
     updateOrderStatus,
     assignOrder,
-    uploadDocument
+    uploadDocument,
+    addTask,
+    updateTask,
+    addChecklistItem,
+    addInvoice
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -19,7 +23,7 @@ router.route('/:id')
     .get(protect, getOrderById);
 
 router.route('/:id/status')
-    .put(protect, updateOrderStatus); // Should be protected, verified by controller logic
+    .put(protect, updateOrderStatus);
 
 router.route('/:id/assign')
     .put(protect, admin, assignOrder);
@@ -27,4 +31,17 @@ router.route('/:id/assign')
 router.route('/:id/documents')
     .post(protect, upload.single('document'), uploadDocument);
 
+router.route('/:id/tasks')
+    .post(protect, addTask);
+
+router.route('/:id/tasks/:taskId')
+    .put(protect, updateTask);
+
+router.route('/:id/checklists')
+    .post(protect, addChecklistItem);
+
+router.route('/:id/invoices')
+    .post(protect, admin, addInvoice);
+
 export default router;
+

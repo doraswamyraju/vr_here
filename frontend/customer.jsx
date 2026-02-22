@@ -232,7 +232,7 @@ export default function CustomerApp() {
 
    const handleLogout = () => {
       localStorage.removeItem('userInfo');
-      navigate('/');
+      navigate('/login');
    };
 
    if (!isLoggedIn) {

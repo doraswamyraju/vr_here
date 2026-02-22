@@ -43,7 +43,53 @@ const orderSchema = mongoose.Schema({
     finalCertificateUrl: {
         type: String,
         default: null
-    }
+    },
+    tasks: [{
+        title: String,
+        status: {
+            type: String,
+            enum: ['Pending', 'In Progress', 'Completed'],
+            default: 'Pending'
+        },
+        description: String,
+        subtasks: [{
+            title: String,
+            isCompleted: {
+                type: Boolean,
+                default: false
+            }
+        }],
+        assignedTo: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    }],
+    invoices: [{
+        invoiceNumber: String,
+        amount: Number,
+        status: {
+            type: String,
+            enum: ['Draft', 'Sent', 'Paid', 'Overdue'],
+            default: 'Draft'
+        },
+        url: String,
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    checklists: [{
+        title: String,
+        isCompleted: {
+            type: Boolean,
+            default: false
+        },
+        documentUrl: String,
+        required: {
+            type: Boolean,
+            default: true
+        }
+    }]
 }, {
     timestamps: true
 });

@@ -135,11 +135,91 @@ const uploadDocument = asyncHandler(async (req, res) => {
     res.json(updatedOrder);
 });
 
+// @desc    Add task to order
+// @route   POST /api/orders/:id/tasks
+// @access  Private
+const addTask = asyncHandler(async (req, res) => {
+    const { title, description } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+        order.tasks.push({ title, description, status: 'Pending' });
+        await order.save();
+        res.status(201).json(order);
+    } else {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+});
+
+// @desc    Update task status
+// @route   PUT /api/orders/:id/tasks/:taskId
+// @access  Private
+const updateTask = asyncHandler(async (req, res) => {
+    const { status, subtasks } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+        const task = order.tasks.id(req.params.taskId);
+        if (task) {
+            if (status) task.status = status;
+            if (subtasks) task.subtasks = subtasks;
+            await order.save();
+            res.json(order);
+        } else {
+            res.status(404);
+            throw new Error('Task not found');
+        }
+    } else {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+});
+
+// @desc    Add checklist item
+// @route   POST /api/orders/:id/checklists
+// @access  Private
+const addChecklistItem = asyncHandler(async (req, res) => {
+    const { title, required } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+        order.checklists.push({ title, required });
+        await order.save();
+        res.status(201).json(order);
+    } else {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+});
+
+// @desc    Add invoice
+// @route   POST /api/orders/:id/invoices
+// @access  Private/Admin
+const addInvoice = asyncHandler(async (req, res) => {
+    const { invoiceNumber, amount } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+        order.invoices.push({ invoiceNumber, amount, status: 'Draft' });
+        await order.save();
+        res.status(201).json(order);
+    } else {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+});
+
 export {
     createOrder,
     getOrders,
     getOrderById,
     updateOrderStatus,
     assignOrder,
-    uploadDocument
+    uploadDocument,
+    addTask,
+    updateTask,
+    addChecklistItem,
+    addInvoice
 };
+
