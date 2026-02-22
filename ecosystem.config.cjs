@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
         {
-            name: 'vr-here-backend',
+            name: 'vrhere-api',
             script: './server.js',
             cwd: './backend',
             env: {
