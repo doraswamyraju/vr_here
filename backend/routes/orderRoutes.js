@@ -9,6 +9,7 @@ import {
     uploadDocument,
     addTask,
     updateTask,
+    addSubtask,
     addChecklistItem,
     toggleChecklistItem,
     addInvoice,
