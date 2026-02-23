@@ -309,8 +309,34 @@ export default function CustomerApp() {
          <main className="flex-1 flex flex-col h-full overflow-hidden relative">
             <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
                <h1 className="text-xl font-bold text-slate-800">{activeTab}</h1>
-               <div className="flex items-center gap-4">
-                  <button className="p-2 text-slate-400 hover:text-indigo-600 relative"><Bell size={20} /></button>
+               <div className="flex items-center gap-4 relative">
+                  <button
+                     onClick={() => setShowNotifications(!showNotifications)}
+                     className="p-2 text-slate-400 hover:text-indigo-600 relative transition-colors"
+                  >
+                     <Bell size={20} />
+                     {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>}
+                  </button>
+
+                  {showNotifications && (
+                     <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                        <div className="p-4 bg-indigo-600 text-white flex justify-between items-center">
+                           <span className="font-bold">Notifications</span>
+                           <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">{notifications.length} New</span>
+                        </div>
+                        <div className="max-h-96 overflow-y-auto divide-y divide-slate-50">
+                           {notifications.map(note => (
+                              <div key={note.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                 <p className="text-xs font-bold text-slate-800">{note.title}</p>
+                                 <p className="text-xs text-slate-500 mt-1">{note.text}</p>
+                                 <p className="text-[10px] text-slate-400 mt-2">{new Date(note.date).toLocaleString()}</p>
+                              </div>
+                           ))}
+                           {notifications.length === 0 && <div className="p-8 text-center text-slate-400 text-sm">No new notifications.</div>}
+                        </div>
+                     </div>
+                  )}
+
                   <div className="w-8 h-8 rounded-full bg-indigo-100 border border-indigo-200 shadow-sm flex items-center justify-center text-xs font-bold text-indigo-700">
                      {userInfo.name.charAt(0).toUpperCase()}
                   </div>
