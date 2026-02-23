@@ -215,6 +215,46 @@ const toggleChecklistItem = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Add invoice
+// @route   POST /api/orders/:id/invoices
+// @access  Private/Admin
+const addInvoice = asyncHandler(async (req, res) => {
+    const { invoiceNumber, amount } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+        order.invoices.push({ invoiceNumber, amount, status: 'Draft' });
+        await order.save();
+        res.status(201).json(order);
+    } else {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+});
+
+// @desc    Add subtask to a task
+// @route   POST /api/orders/:id/tasks/:taskId/subtasks
+// @access  Private/Admin
+const addSubtask = asyncHandler(async (req, res) => {
+    const { title } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+        const task = order.tasks.id(req.params.taskId);
+        if (task) {
+            task.subtasks.push({ title, isCompleted: false });
+            await order.save();
+            res.status(201).json(order);
+        } else {
+            res.status(404);
+            throw new Error('Task not found');
+        }
+    } else {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+});
+
 // @desc    Update invoice status
 // @route   PUT /api/orders/:id/invoices/:invoiceId/status
 // @access  Private/Admin
@@ -239,6 +279,7 @@ const updateInvoiceStatus = asyncHandler(async (req, res) => {
 });
 
 export {
+
     createOrder,
     getOrders,
     getOrderById,
@@ -247,10 +288,12 @@ export {
     uploadDocument,
     addTask,
     updateTask,
+    addSubtask,
     addChecklistItem,
     toggleChecklistItem,
     addInvoice,
     updateInvoiceStatus
 };
+
 
 

@@ -10,7 +10,9 @@ import {
     addTask,
     updateTask,
     addChecklistItem,
-    addInvoice
+    toggleChecklistItem,
+    addInvoice,
+    updateInvoiceStatus
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -37,7 +39,11 @@ router.route('/:id/tasks')
 router.route('/:id/tasks/:taskId')
     .put(protect, updateTask);
 
+router.route('/:id/tasks/:taskId/subtasks')
+    .post(protect, admin, addSubtask);
+
 router.route('/:id/checklists')
+
     .post(protect, addChecklistItem);
 
 router.route('/:id/checklists/:itemId/toggle')
