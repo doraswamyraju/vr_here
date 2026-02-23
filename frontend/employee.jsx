@@ -94,6 +94,23 @@ export default function EmployeeApp() {
     } catch (e) { alert("Error updating task."); }
   };
 
+  const toggleSubtask = async (orderId, taskId, subtaskId) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      // We'll reuse updateTask for subtask toggling since the backend supports passing the whole subtasks array or we can add a specific toggle route
+      // For now, let's add a specific backend toggle if needed, or just map it here.
+      // Re-reading Order.js: subtasks: [{ title: String, isCompleted: Boolean }]
+      const order = orders.find(o => o._id === orderId);
+      const task = order.tasks.find(t => t._id === taskId);
+      const updatedSubtasks = task.subtasks.map(st =>
+        st._id === subtaskId ? { ...st, isCompleted: !st.isCompleted } : st
+      );
+      await axios.put(`/api/orders/${orderId}/tasks/${taskId}`, { subtasks: updatedSubtasks }, config);
+      fetchOrders();
+    } catch (e) { alert("Error toggling subtask."); }
+  };
+
+
 
   const handleUploadCertificate = async (e) => {
     e.preventDefault();
@@ -281,13 +298,31 @@ export default function EmployeeApp() {
                     <h4 className="font-bold text-slate-500 text-xs uppercase mb-4 flex justify-between items-center">{col}</h4>
                     <div className="space-y-3">
                       {selectedOrder.tasks?.filter(t => t.status === col).map(task => (
-                        <div key={task._id} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:border-indigo-300 transition cursor-pointer" onClick={() => {
-                          const next = col === 'Pending' ? 'In Progress' : col === 'In Progress' ? 'Completed' : 'Pending';
-                          if (window.confirm(`Move task to ${next}?`)) updateTask(selectedOrder._id, task._id, { status: next });
-                        }}>
-                          <h5 className="font-bold text-sm text-slate-800">{task.title}</h5>
-                          <p className="text-xs text-slate-400 mt-1">{task.description}</p>
+                        <div key={task._id} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:border-indigo-300 transition cursor-pointer">
+                          <div className="flex justify-between items-start mb-2" onClick={() => {
+                            const next = col === 'Pending' ? 'In Progress' : col === 'In Progress' ? 'Completed' : 'Pending';
+                            if (window.confirm(`Move task to ${next}?`)) updateTask(selectedOrder._id, task._id, { status: next });
+                          }}>
+                            <h5 className="font-bold text-sm text-slate-800">{task.title}</h5>
+                            <div className={`w-2 h-2 rounded-full ${col === 'Completed' ? 'bg-emerald-500' : col === 'In Progress' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                          </div>
+
+                          {/* Subtasks List */}
+                          <div className="space-y-2 mt-3">
+                            {task.subtasks?.map(st => (
+                              <div key={st._id} className="flex items-center gap-2 text-xs">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); toggleSubtask(selectedOrder._id, task._id, st._id); }}
+                                  className={`w-4 h-4 rounded border flex items-center justify-center ${st.isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-slate-50 border-slate-200'}`}
+                                >
+                                  {st.isCompleted && <CheckSquare size={10} />}
+                                </button>
+                                <span className={st.isCompleted ? 'text-slate-400 line-through' : 'text-slate-600 font-medium'}>{st.title}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
+
                       ))}
                     </div>
                   </div>

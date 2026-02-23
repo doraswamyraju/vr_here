@@ -132,6 +132,14 @@ function App() {
     } catch (e) { alert("Error adding invoice."); }
   };
 
+  const addSubtask = async (orderId, taskId, title) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      await axios.post(`/api/orders/${orderId}/tasks/${taskId}/subtasks`, { title }, config);
+      fetchData();
+    } catch (e) { alert("Error adding subtask."); }
+  };
+
   const updateInvoiceStatus = async (orderId, invoiceId, status) => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
@@ -148,6 +156,7 @@ function App() {
       fetchData();
     } catch (e) { alert("Error toggling checklist."); }
   };
+
 
 
   if (!isLoggedIn) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-bold">Verifying Access...</div>;
@@ -418,19 +427,40 @@ function App() {
                     </h4>
                     <div className="space-y-3">
                       {project.tasks?.filter(t => t.status === col).map(task => (
-                        <div key={task._id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group" onClick={() => {
-                          const newStatus = col === 'Pending' ? 'In Progress' : col === 'In Progress' ? 'Completed' : 'Pending';
-                          if (window.confirm(`Move task to ${newStatus}?`)) {
-                            updateTask(project._id, task._id, { status: newStatus });
-                          }
-                        }}>
-                          <h5 className="font-bold text-sm text-slate-800 mb-1 group-hover:text-indigo-600">{task.title}</h5>
-                          <p className="text-xs text-slate-500 mb-3">{task.description}</p>
-                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-slate-400">{task.subtasks?.length || 0} Subtasks</span>
+                        <div key={task._id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group">
+                          <div className="flex justify-between items-start mb-2" onClick={() => {
+                            const newStatus = col === 'Pending' ? 'In Progress' : col === 'In Progress' ? 'Completed' : 'Pending';
+                            if (window.confirm(`Move task to ${newStatus}?`)) {
+                              updateTask(project._id, task._id, { status: newStatus });
+                            }
+                          }}>
+                            <h5 className="font-bold text-sm text-slate-800 group-hover:text-indigo-600">{task.title}</h5>
                             <div className={`w-2 h-2 rounded-full ${col === 'Completed' ? 'bg-emerald-500' : col === 'In Progress' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
                           </div>
+                          <p className="text-xs text-slate-500 mb-3">{task.description}</p>
+
+                          {/* Subtasks List */}
+                          <div className="space-y-1 mb-3">
+                            {task.subtasks?.map(st => (
+                              <div key={st._id} className="flex items-center gap-2 text-[10px] text-slate-400">
+                                <div className={`w-1.5 h-1.5 rounded-full ${st.isCompleted ? 'bg-emerald-400' : 'bg-slate-200'}`}></div>
+                                <span className={st.isCompleted ? 'line-through' : ''}>{st.title}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const title = prompt("Enter subtask title:");
+                              if (title) addSubtask(project._id, task._id, title);
+                            }}
+                            className="text-[10px] font-bold text-indigo-600 flex items-center hover:underline"
+                          >
+                            <Plus size={10} className="mr-1" /> Add Subtask
+                          </button>
                         </div>
+
                       ))}
                     </div>
                   </div>

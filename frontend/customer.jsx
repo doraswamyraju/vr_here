@@ -30,7 +30,37 @@ const StatusBadge = ({ status }) => {
    return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${styles[status] || 'bg-slate-100'}`}>{status}</span>;
 };
 
-// --- COMPONENTS ---
+// --- RECAPTURED COMPONENTS ---
+const ProjectTimeline = ({ project }) => {
+   const timelineItems = [
+      { status: 'Order Placed', date: project.createdAt, done: true },
+      { status: 'Payment Received', date: project.invoices?.find(i => i.status === 'Paid')?.updatedAt || project.createdAt, done: project.invoices?.some(i => i.status === 'Paid') },
+      { status: 'Documents Verified', date: project.updatedAt, done: ['Documents Verified', 'Processing at Portal', 'Completed'].includes(project.status) },
+      { status: 'Processing at Portal', date: project.updatedAt, done: ['Processing at Portal', 'Completed'].includes(project.status) },
+      { status: 'Completed', date: project.updatedAt, done: project.status === 'Completed' },
+   ];
+
+   return (
+      <div className="space-y-4 mt-6">
+         <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">Project Timeline</h4>
+         <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
+            {timelineItems.map((item, i) => (
+               <div key={i} className="relative">
+                  <div className={`absolute -left-[29px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm \${item.done ? 'bg-indigo-500' : 'bg-slate-200'}`}></div>
+                  <div className="flex justify-between items-start">
+                     <div>
+                        <p className={`text-sm font-bold \${item.done ? 'text-slate-800' : 'text-slate-400'}`}>{item.status}</p>
+                        {item.done && <p className="text-[10px] text-slate-500">{new Date(item.date).toLocaleDateString()}</p>}
+                     </div>
+                     {item.done && <StatusBadge status="Done" />}
+                  </div>
+               </div>
+            ))}
+         </div>
+      </div>
+   );
+};
+
 
 const DashboardHome = ({ setActiveTab, orders }) => (
    <div className="space-y-6 animate-in fade-in zoom-in duration-300">
@@ -201,7 +231,10 @@ export default function CustomerApp() {
    const [isLoggedIn, setIsLoggedIn] = useState(false);
    const [userInfo, setUserInfo] = useState(null);
    const [orders, setOrders] = useState([]);
+   const [notifications, setNotifications] = useState([]);
+   const [showNotifications, setShowNotifications] = useState(false);
    const navigate = useNavigate();
+
 
    useEffect(() => {
       const user = localStorage.getItem('userInfo');
@@ -219,10 +252,25 @@ export default function CustomerApp() {
          const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
          const { data } = await axios.get('/api/orders', config);
          setOrders(data);
+
+         // derive notifications
+         const newNotes = [];
+         data.forEach(o => {
+            if (o.status !== 'Pending Documents') {
+               newNotes.push({ id: o._id + o.status, title: 'Status Update', text: `Project "${o.serviceName}" is now ${o.status}`, date: o.updatedAt });
+            }
+            o.invoices?.forEach(inv => {
+               if (inv.status === 'Paid') {
+                  newNotes.push({ id: inv._id, title: 'Invoice Paid', text: `Invoice ${inv.invoiceNumber} for ₹${inv.amount} has been verified as Paid.`, date: inv.updatedAt });
+               }
+            });
+         });
+         setNotifications(newNotes.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10));
       } catch (error) {
          console.error("Failed to fetch orders:");
       }
    };
+
 
    useEffect(() => {
       if (userInfo) {
@@ -273,25 +321,72 @@ export default function CustomerApp() {
                {activeTab === 'Dashboard' && <DashboardHome setActiveTab={setActiveTab} orders={orders} />}
                {activeTab === 'Documents' && <DocumentVault orders={orders} refreshOrders={fetchOrders} />}
                {activeTab === 'Projects' && (
-                  <div className="space-y-4 animate-in fade-in">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-in fade-in">
                      {orders.map(proj => (
-                        <div key={proj._id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                           <div className="flex justify-between mb-4">
+                        <div key={proj._id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                           <div className="flex justify-between items-start mb-6">
                               <div>
-                                 <h3 className="font-bold text-lg">{proj.serviceName}</h3>
-                                 <p className="text-xs text-slate-500">{proj.packageName} • Paid: ₹{proj.price.toLocaleString()}</p>
+                                 <h3 className="font-bold text-xl text-slate-800">{proj.serviceName}</h3>
+                                 <p className="text-sm text-slate-500">{proj.packageName} • ID: {proj._id.slice(-6).toUpperCase()}</p>
                               </div>
                               <StatusBadge status={proj.status} />
                            </div>
-                           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2"><div className="h-full bg-indigo-500" style={{ width: `${getStatusProgress(proj.status)}%` }}></div></div>
-                           <p className="text-sm text-slate-500">
-                              Progress: {getStatusProgress(proj.status)}%
-                           </p>
+
+                           <div className="flex-1 space-y-6">
+                              <div>
+                                 <div className="flex justify-between mb-2 text-xs font-bold text-slate-500">
+                                    <span>Completion Progress</span>
+                                    <span>{getStatusProgress(proj.status)}%</span>
+                                 </div>
+                                 <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+                                    <div className="h-full bg-indigo-500 transition-all duration-700 shadow-[0_0_10px_rgba(99,102,241,0.5)]" style={{ width: `${getStatusProgress(proj.status)}%` }}></div>
+                                 </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Total Fee</p>
+                                    <p className="text-lg font-black text-slate-800">₹ {proj.price.toLocaleString()}</p>
+                                 </div>
+                                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Payment</p>
+                                    <p className={`text-sm font-bold \${proj.status === 'Pending Documents' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                       {proj.invoices?.some(i => i.status === 'Paid') ? 'Verified' : 'Initial Paid'}
+                                    </p>
+                                 </div>
+                              </div>
+
+                              <ProjectTimeline project={proj} />
+
+                              {proj.invoices?.length > 0 && (
+                                 <div className="pt-4 border-t border-slate-100">
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Invoices</h4>
+                                    <div className="space-y-2">
+                                       {proj.invoices.map(inv => (
+                                          <div key={inv._id} className="flex justify-between items-center p-3 bg-indigo-50/30 rounded-lg border border-indigo-100/50 hover:bg-indigo-50 transition-colors">
+                                             <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-white rounded shadow-sm text-indigo-600"><FileText size={14} /></div>
+                                                <div>
+                                                   <p className="text-xs font-bold text-slate-800">{inv.invoiceNumber}</p>
+                                                   <p className="text-[10px] text-slate-500">₹ {inv.amount.toLocaleString()}</p>
+                                                </div>
+                                             </div>
+                                             <div className="flex items-center gap-3">
+                                                <StatusBadge status={inv.status} />
+                                                <button className="p-1.5 hover:bg-white rounded text-indigo-600"><Download size={14} /></button>
+                                             </div>
+                                          </div>
+                                       ))}
+                                    </div>
+                                 </div>
+                              )}
+                           </div>
                         </div>
                      ))}
-                     {orders.length === 0 && <p className="text-slate-500 text-center py-10">You have no active projects.</p>}
+                     {orders.length === 0 && <p className="text-slate-500 text-center py-10 col-span-full">You have no active projects.</p>}
                   </div>
                )}
+
                {activeTab === 'Support' && <div className="flex h-full items-center justify-center text-slate-400 flex-col"><MessageSquare size={48} className="mb-4 opacity-20" /><p>Support Chat / Ticket System</p></div>}
             </div>
          </main>
