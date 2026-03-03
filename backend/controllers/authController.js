@@ -133,8 +133,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/resetpassword/:resetToken
 // @access  Public
 const resetPassword = asyncHandler(async (req, res) => {
-    const resetPasswordToken = crypto
-        .createHash('sha256')
+    const resetPasswordToken = createHash('sha256')
         .update(req.params.resetToken)
         .digest('hex');
 
