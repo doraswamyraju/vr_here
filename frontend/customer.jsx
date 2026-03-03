@@ -1,419 +1,272 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-   LayoutDashboard, FileText, CheckSquare, Bell, Search,
-   Menu, LogOut, Plus, Download, Upload, CreditCard,
-   Briefcase, MessageSquare, User, HelpCircle,
-   ChevronRight, AlertTriangle, Building2, FolderOpen
+   LayoutDashboard, Briefcase, Package, FileText,
+   Wallet, Headphones, User, Bell, LogOut,
+   Menu, MessageSquare, Plus, X, Phone
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const getStatusProgress = (status) => {
-   switch (status) {
-      case 'Pending Documents': return 20;
-      case 'Documents Verified': return 40;
-      case 'Processing at Portal': return 60;
-      case 'Waiting for Clarification': return 70;
-      case 'Completed': return 100;
-      default: return 0;
-   }
-};
+// Import Modular Components
+import DashboardView from './components/customer/DashboardView';
+import ServicesView from './components/customer/ServicesView';
+import OrdersView from './components/customer/OrdersView';
+import DocumentsView from './components/customer/DocumentsView';
+import AccountsView from './components/customer/AccountsView';
+import SupportView from './components/customer/SupportView';
 
-const StatusBadge = ({ status }) => {
-   const styles = {
-      'Processing at Portal': 'bg-blue-100 text-blue-700',
-      'Waiting for Clarification': 'bg-purple-100 text-purple-700',
-      'Completed': 'bg-emerald-100 text-emerald-700',
-      'Pending Documents': 'bg-amber-100 text-amber-700',
-      'Documents Verified': 'bg-emerald-50 text-emerald-600',
-   };
-   return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${styles[status] || 'bg-slate-100'}`}>{status}</span>;
-};
-
-// --- RECAPTURED COMPONENTS ---
-const ProjectTimeline = ({ project }) => {
-   const timelineItems = [
-      { status: 'Order Placed', date: project.createdAt, done: true },
-      { status: 'Payment Received', date: project.invoices?.find(i => i.status === 'Paid')?.updatedAt || project.createdAt, done: project.invoices?.some(i => i.status === 'Paid') },
-      { status: 'Documents Verified', date: project.updatedAt, done: ['Documents Verified', 'Processing at Portal', 'Completed'].includes(project.status) },
-      { status: 'Processing at Portal', date: project.updatedAt, done: ['Processing at Portal', 'Completed'].includes(project.status) },
-      { status: 'Completed', date: project.updatedAt, done: project.status === 'Completed' },
-   ];
-
-   return (
-      <div className="space-y-4 mt-6">
-         <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">Project Timeline</h4>
-         <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
-            {timelineItems.map((item, i) => (
-               <div key={i} className="relative">
-                  <div className={`absolute -left-[29px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm \${item.done ? 'bg-indigo-500' : 'bg-slate-200'}`}></div>
-                  <div className="flex justify-between items-start">
-                     <div>
-                        <p className={`text-sm font-bold \${item.done ? 'text-slate-800' : 'text-slate-400'}`}>{item.status}</p>
-                        {item.done && <p className="text-[10px] text-slate-500">{new Date(item.date).toLocaleDateString()}</p>}
-                     </div>
-                     {item.done && <StatusBadge status="Done" />}
-                  </div>
-               </div>
-            ))}
-         </div>
-      </div>
-   );
-};
-
-
-const DashboardHome = ({ setActiveTab, orders }) => (
-   <div className="space-y-6 animate-in fade-in zoom-in duration-300">
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl p-8 text-white flex justify-between items-center shadow-lg">
-         <div>
-            <h1 className="text-3xl font-bold mb-2">Welcome Back!</h1>
-            <p className="text-indigo-100 opacity-90">Here is the status of your active packages.</p>
-         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div><p className="text-slate-500 text-sm font-medium">Action Required</p><h3 className="text-2xl font-bold text-slate-800">{orders.filter(o => o.status === 'Pending Documents' || o.status === 'Waiting for Clarification').length} Orders</h3></div>
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-lg"><Upload size={24} /></div>
-         </div>
-         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div><p className="text-slate-500 text-sm font-medium">Active Services</p><h3 className="text-2xl font-bold text-slate-800">{orders.filter(o => o.status !== 'Completed').length} Projects</h3></div>
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Briefcase size={24} /></div>
-         </div>
-         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div><p className="text-slate-500 text-sm font-medium">Total Paid</p><h3 className="text-2xl font-bold text-slate-800">₹ {orders.reduce((acc, curr) => acc + curr.price, 0).toLocaleString()}</h3></div>
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg"><CreditCard size={24} /></div>
-         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex justify-between items-center">
-               <h3 className="font-bold text-slate-800">Your Packages</h3>
-               <button onClick={() => setActiveTab('Projects')} className="text-sm text-indigo-600 font-medium hover:underline">View All</button>
-            </div>
-            <div className="divide-y divide-slate-100">
-               {orders.slice(0, 5).map(proj => (
-                  <div key={proj._id} className="p-5 hover:bg-slate-50 transition-colors">
-                     <div className="flex justify-between items-start mb-2">
-                        <div>
-                           <h4 className="font-bold text-slate-700">{proj.serviceName}</h4>
-                           <p className="text-xs text-slate-500">{proj.packageName} • Paid: ₹{proj.price.toLocaleString()}</p>
-                        </div>
-                        <StatusBadge status={proj.status} />
-                     </div>
-                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${getStatusProgress(proj.status)}%` }}></div>
-                     </div>
-                     <div className="flex justify-between mt-2 text-xs text-slate-400">
-                        <span>Progress: {getStatusProgress(proj.status)}%</span>
-                     </div>
-                  </div>
-               ))}
-               {orders.length === 0 && <p className="p-5 text-center text-slate-500">No orders found.</p>}
-            </div>
-         </div>
-
-         <div className="bg-white rounded-xl border border-slate-200 shadow-sm h-fit">
-            <div className="p-5 border-b border-slate-100">
-               <h3 className="font-bold text-slate-800 flex items-center text-amber-600"><AlertTriangle size={18} className="mr-2" /> Required Actions</h3>
-            </div>
-            <div className="p-5 space-y-4">
-               {orders.filter(o => o.status === 'Pending Documents').map(doc => (
-                  <div key={doc._id} className="bg-amber-50 border border-amber-100 p-4 rounded-xl">
-                     <p className="text-sm font-bold text-slate-700 mb-1">{doc.serviceName}</p>
-                     <p className="text-xs text-slate-500 mb-3">Documents Required</p>
-                     <button onClick={() => setActiveTab('Documents')} className="w-full py-2 bg-white border border-amber-200 text-amber-700 text-xs font-bold rounded-lg hover:bg-amber-100 transition-colors flex items-center justify-center">
-                        <Upload size={14} className="mr-2" /> Go to Documents
-                     </button>
-                  </div>
-               ))}
-               {orders.filter(o => o.status === 'Pending Documents').length === 0 && <p className="text-center text-slate-400 text-sm py-4">All caught up!</p>}
-            </div>
-         </div>
-      </div>
-   </div>
-);
-
-const DocumentVault = ({ orders, refreshOrders }) => {
-   const [activeOrder, setActiveOrder] = useState(orders[0]?._id || '');
-   const [file, setFile] = useState(null);
-   const [isUploading, setIsUploading] = useState(false);
-
-   const handleUpload = async (e) => {
-      e.preventDefault();
-      if (!file || !activeOrder) return;
-
-      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-      const formData = new FormData();
-      formData.append('document', file);
-
-      setIsUploading(true);
-      try {
-         await axios.post(`/api/orders/${activeOrder}/documents`, formData, {
-            headers: {
-               'Content-Type': 'multipart/form-data',
-               Authorization: `Bearer ${userInfo.token}`
-            }
-         });
-         alert('Document uploaded successfully!');
-         setFile(null);
-         refreshOrders();
-      } catch (error) {
-         console.error(error);
-         alert('Error uploading document');
-      }
-      setIsUploading(false);
-   };
-
-   return (
-      <div className="space-y-6 animate-in fade-in zoom-in duration-300">
-         <div className="flex justify-between items-center">
-            <div><h2 className="text-2xl font-bold text-slate-800">Document Vault</h2><p className="text-slate-500">Upload requirements and download final certificates.</p></div>
-         </div>
-
-         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 overflow-hidden">
-
-            <div className="mb-6">
-               <label className="block text-sm font-bold text-slate-700 mb-2">Select Project / Order</label>
-               <select value={activeOrder} onChange={e => setActiveOrder(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50">
-                  {orders.map(o => (
-                     <option key={o._id} value={o._id}>{o.serviceName} - {o.packageName} ({o.status})</option>
-                  ))}
-               </select>
-            </div>
-
-            {activeOrder && (
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="border border-slate-200 rounded-xl p-6 bg-slate-50">
-                     <h3 className="font-bold text-lg mb-4 text-slate-800"><Upload className="inline mr-2 text-indigo-600" />Upload Required Document</h3>
-                     <form onSubmit={handleUpload}>
-                        <input type="file" onChange={(e) => setFile(e.target.files[0])} className="w-full mb-4 text-sm" required />
-                        <button type="submit" disabled={isUploading || !file} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition disabled:opacity-50">
-                           {isUploading ? 'Uploading...' : 'Upload File'}
-                        </button>
-                     </form>
-                  </div>
-
-                  <div className="border border-slate-200 rounded-xl p-6">
-                     <h3 className="font-bold text-lg mb-4 text-slate-800"><FileText className="inline mr-2 text-indigo-600" />Uploaded Files</h3>
-                     {orders.find(o => o._id === activeOrder)?.clientDocuments?.map(doc => (
-                        <div key={doc._id} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
-                           <span className="text-sm text-slate-600 font-medium truncate pr-4">{doc.name}</span>
-                           <a href={`http://localhost:5000${doc.url}`} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-800"><Download size={18} /></a>
-                        </div>
-                     ))}
-                     {orders.find(o => o._id === activeOrder)?.clientDocuments?.length === 0 && <p className="text-sm text-slate-400">No documents uploaded yet.</p>}
-
-                     {orders.find(o => o._id === activeOrder)?.finalCertificateUrl && (
-                        <div className="mt-4 pt-4 border-t border-slate-200">
-                           <h4 className="font-bold text-emerald-600 mb-2">Final Certificate Ready!</h4>
-                           <a href={`http://localhost:5000${orders.find(o => o._id === activeOrder).finalCertificateUrl}`} target="_blank" rel="noreferrer" className="flex items-center text-sm bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-bold border border-emerald-200 hover:bg-emerald-100">
-                              <Download size={16} className="mr-2" /> Download Final Certificate
-                           </a>
-                        </div>
-                     )}
-                  </div>
-               </div>
-            )}
-            {orders.length === 0 && <p className="text-slate-500 text-center py-10">No active projects to upload documents for.</p>}
-
-         </div>
-      </div>
-   );
-};
-
-
-// --- MAIN CUSTOMER APP ---
 export default function CustomerApp() {
-   const [activeTab, setActiveTab] = useState('Dashboard');
+   const [activeTab, setActiveTab] = useState('Home');
    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
    const [isLoggedIn, setIsLoggedIn] = useState(false);
    const [userInfo, setUserInfo] = useState(null);
    const [orders, setOrders] = useState([]);
+   const [payments, setPayments] = useState([]);
    const [notifications, setNotifications] = useState([]);
-   const [showNotifications, setShowNotifications] = useState(false);
+   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
    const navigate = useNavigate();
 
-
+   // -- Authentication --
    useEffect(() => {
       const user = localStorage.getItem('userInfo');
       if (user) {
          setUserInfo(JSON.parse(user));
          setIsLoggedIn(true);
       } else {
-         navigate('/'); // Use root login
+         navigate('/');
       }
    }, [navigate]);
 
-   const fetchOrders = async () => {
+   // -- Data Fetching --
+   const fetchData = useCallback(async () => {
       if (!userInfo) return;
       try {
          const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-         const { data } = await axios.get('/api/orders', config);
-         setOrders(data);
-
-         // derive notifications
-         const newNotes = [];
-         data.forEach(o => {
-            if (o.status !== 'Pending Documents') {
-               newNotes.push({ id: o._id + o.status, title: 'Status Update', text: `Project "${o.serviceName}" is now ${o.status}`, date: o.updatedAt });
-            }
-            o.invoices?.forEach(inv => {
-               if (inv.status === 'Paid') {
-                  newNotes.push({ id: inv._id, title: 'Invoice Paid', text: `Invoice ${inv.invoiceNumber} for ₹${inv.amount} has been verified as Paid.`, date: inv.updatedAt });
-               }
-            });
-         });
-         setNotifications(newNotes.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10));
+         const [ordersRes, paymentsRes, notificationsRes] = await Promise.all([
+            axios.get('/api/orders', config),
+            axios.get('/api/payments', config),
+            axios.get('/api/notifications', config)
+         ]);
+         setOrders(ordersRes.data);
+         setPayments(paymentsRes.data);
+         setNotifications(notificationsRes.data);
       } catch (error) {
-         console.error("Failed to fetch orders:");
+         console.error("Failed to fetch data:", error);
       }
-   };
-
+   }, [userInfo]);
 
    useEffect(() => {
       if (userInfo) {
-         fetchOrders();
+         fetchData();
       }
-   }, [userInfo]);
+   }, [userInfo, fetchData]);
 
    const handleLogout = () => {
       localStorage.removeItem('userInfo');
       navigate('/login');
    };
 
-   if (!isLoggedIn) {
-      return <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">Loading...</div>;
+   if (!isLoggedIn || !userInfo) {
+      return (
+         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-slate-500 font-black text-xs uppercase tracking-widest">Loading Your Dashboard...</p>
+         </div>
+      );
    }
 
+   // -- Tab Mapping --
+   const renderView = () => {
+      switch (activeTab) {
+         case 'Home': return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} />;
+         case 'Services': return <ServicesView />;
+         case 'Orders': return <OrdersView orders={orders} />;
+         case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} />;
+         case 'Account': return <AccountsView orders={orders} payments={payments} />;
+         case 'New': return <SupportView userInfo={userInfo} />;
+         default: return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} />;
+      }
+   };
+
+   const NavItems = [
+      { id: 'Home', icon: LayoutDashboard, label: 'Home' },
+      { id: 'Services', icon: Briefcase, label: 'Services' },
+      { id: 'Orders', icon: Package, label: 'Orders' },
+      { id: 'Documents', icon: FileText, label: 'Vault' },
+      { id: 'New', icon: MessageSquare, label: 'Support' },
+      { id: 'Account', icon: Wallet, label: 'Account' },
+   ];
+
    return (
-      <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
-         {/* Sidebar */}
-         <aside className={`\${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white h-full border-r border-slate-200 flex flex-col z-20 transition-all duration-300`} onMouseEnter={() => setSidebarCollapsed(false)} onMouseLeave={() => setSidebarCollapsed(true)}>
-            <div className="h-20 flex items-center justify-center border-b border-slate-100"><div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">VR</div></div>
-            <div className="flex-1 py-6 px-3 space-y-1">
-               {['Dashboard', 'Projects', 'Documents', 'Support'].map(item => (
-                  <button key={item} onClick={() => setActiveTab(item)} className={`flex items-center w-full p-3 rounded-xl transition-all ${activeTab === item ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-500 hover:bg-slate-50'}`}>
-                     <div className="shrink-0">
-                        {item === 'Dashboard' ? <LayoutDashboard size={20} /> : item === 'Projects' ? <CheckSquare size={20} /> : item === 'Documents' ? <FileText size={20} /> : item === 'Support' ? <HelpCircle size={20} /> : <Plus size={20} />}
-                     </div>
-                     <span className={`ml-3 whitespace-nowrap transition-all duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>{item}</span>
+      <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden relative">
+
+         {/* --- DESKTOP SIDEBAR --- */}
+         <aside
+            className={`hidden md:flex flex-col ${sidebarCollapsed ? 'w-24' : 'w-64'} bg-white border-r border-slate-100 transition-all duration-500 z-30`}
+            onMouseEnter={() => setSidebarCollapsed(false)}
+            onMouseLeave={() => setSidebarCollapsed(true)}
+         >
+            <div className="h-24 flex items-center justify-center border-b border-slate-50">
+               <div className="w-12 h-12 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-100">
+                  VR
+               </div>
+            </div>
+
+            <nav className="flex-1 py-10 px-4 space-y-2">
+               {NavItems.map(item => (
+                  <button
+                     key={item.id}
+                     onClick={() => setActiveTab(item.id)}
+                     className={`flex items-center w-full p-4 rounded-2xl transition-all group ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
+                  >
+                     <item.icon size={22} className={`${activeTab === item.id ? '' : 'group-hover:scale-110 transition-transform'}`} />
+                     <span className={`ml-4 text-sm font-black transition-all duration-300 whitespace-nowrap overflow-hidden ${sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
+                        {item.label}
+                     </span>
                   </button>
                ))}
+            </nav>
+
+            <div className="p-4 border-t border-slate-50">
+               <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full p-4 rounded-2xl text-rose-500 hover:bg-rose-50 transition-colors group"
+               >
+                  <LogOut size={22} className="group-hover:rotate-12 transition-transform" />
+                  <span className={`ml-4 text-sm font-black transition-all duration-300 ${sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
+                     Logout
+                  </span>
+               </button>
             </div>
-            <div className="p-4 border-t border-slate-100"><button onClick={handleLogout} className="flex items-center w-full p-2 rounded-lg text-rose-500 hover:bg-rose-50"><LogOut size={20} /><span className={`ml-3 text-sm transition-all duration-300 ${sidebarCollapsed ? 'opacity-0' : 'opacity-100'}`}>Logout</span></button></div>
          </aside>
 
-         {/* Main Content */}
-         <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-            <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
-               <h1 className="text-xl font-bold text-slate-800">{activeTab}</h1>
-               <div className="flex items-center gap-4 relative">
-                  <button
-                     onClick={() => setShowNotifications(!showNotifications)}
-                     className="p-2 text-slate-400 hover:text-indigo-600 relative transition-colors"
-                  >
-                     <Bell size={20} />
-                     {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>}
-                  </button>
-
-                  {showNotifications && (
-                     <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                        <div className="p-4 bg-indigo-600 text-white flex justify-between items-center">
-                           <span className="font-bold">Notifications</span>
-                           <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">{notifications.length} New</span>
-                        </div>
-                        <div className="max-h-96 overflow-y-auto divide-y divide-slate-50">
-                           {notifications.map(note => (
-                              <div key={note.id} className="p-4 hover:bg-slate-50 transition-colors">
-                                 <p className="text-xs font-bold text-slate-800">{note.title}</p>
-                                 <p className="text-xs text-slate-500 mt-1">{note.text}</p>
-                                 <p className="text-[10px] text-slate-400 mt-2">{new Date(note.date).toLocaleString()}</p>
-                              </div>
-                           ))}
-                           {notifications.length === 0 && <div className="p-8 text-center text-slate-400 text-sm">No new notifications.</div>}
-                        </div>
+         {/* --- MOBILE SIDEBAR / MENU --- */}
+         {isMobileMenuOpen && (
+            <div className="fixed inset-0 z-50 md:hidden bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsMobileMenuOpen(false)}>
+               <div
+                  className="w-72 h-full bg-white shadow-2xl animate-in slide-in-from-left duration-500 flex flex-col"
+                  onClick={e => e.stopPropagation()}
+               >
+                  <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-lg">VR</div>
+                        <span className="font-black text-slate-800 tracking-tight">VR HERE</span>
                      </div>
-                  )}
+                     <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-slate-600">
+                        <X size={24} />
+                     </button>
+                  </div>
 
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 border border-indigo-200 shadow-sm flex items-center justify-center text-xs font-bold text-indigo-700">
-                     {userInfo.name.charAt(0).toUpperCase()}
+                  <nav className="flex-1 py-8 px-4 space-y-1 overflow-y-auto">
+                     {NavItems.map(item => (
+                        <button
+                           key={item.id}
+                           onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
+                           className={`flex items-center w-full p-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                           <item.icon size={22} className="mr-4" />
+                           <span className="font-bold text-sm">{item.label}</span>
+                        </button>
+                     ))}
+                  </nav>
+
+                  <div className="p-6 border-t border-slate-50">
+                     <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full p-4 rounded-2xl text-rose-500 bg-rose-50 hover:bg-rose-100 transition-colors font-bold text-sm"
+                     >
+                        <LogOut size={22} className="mr-4" />
+                        Logout Session
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* --- MAIN CONTENT AREA --- */}
+         <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+            {/* Mobile Header */}
+            <header className="md:hidden flex h-16 items-center justify-between px-5 bg-white border-b border-slate-50 sticky top-0 z-20">
+               <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-600">
+                  <Menu size={24} />
+               </button>
+               <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-sm">VR</div>
+                  <span className="font-black text-slate-800 text-sm tracking-tight uppercase">Dashboard</span>
+               </div>
+               <button onClick={handleLogout} className="p-2 -mr-2 text-rose-500">
+                  <LogOut size={22} />
+               </button>
+            </header>
+
+            {/* Desktop/Tablet Header */}
+            <header className="hidden md:flex h-20 items-center justify-between px-10 bg-white/50 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-20">
+               <div className="flex items-center gap-3">
+                  <h1 className="text-xl font-black text-slate-800 tracking-tight">{activeTab}</h1>
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
+               </div>
+               <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3 bg-white p-1.5 pr-4 rounded-2xl border border-slate-100 shadow-sm">
+                     <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-black">
+                        {userInfo.name.charAt(0).toUpperCase()}
+                     </div>
+                     <div className="text-left">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Customer</p>
+                        <p className="text-xs font-bold text-slate-700 leading-none">{userInfo.name}</p>
+                     </div>
                   </div>
                </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-4 md:p-8">
-               {activeTab === 'Dashboard' && <DashboardHome setActiveTab={setActiveTab} orders={orders} />}
-               {activeTab === 'Documents' && <DocumentVault orders={orders} refreshOrders={fetchOrders} />}
-               {activeTab === 'Projects' && (
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-in fade-in">
-                     {orders.map(proj => (
-                        <div key={proj._id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-                           <div className="flex justify-between items-start mb-6">
-                              <div>
-                                 <h3 className="font-bold text-xl text-slate-800">{proj.serviceName}</h3>
-                                 <p className="text-sm text-slate-500">{proj.packageName} • ID: {proj._id.slice(-6).toUpperCase()}</p>
-                              </div>
-                              <StatusBadge status={proj.status} />
-                           </div>
+            {/* SCROLLABLE VIEWPORT */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6 px-5 md:px-10 md:pt-10 scroll-smooth">
+               <div className="max-w-4xl mx-auto">
+                  {renderView()}
+               </div>
+            </div>
 
-                           <div className="flex-1 space-y-6">
-                              <div>
-                                 <div className="flex justify-between mb-2 text-xs font-bold text-slate-500">
-                                    <span>Completion Progress</span>
-                                    <span>{getStatusProgress(proj.status)}%</span>
-                                 </div>
-                                 <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-2">
-                                    <div className="h-full bg-indigo-500 transition-all duration-700 shadow-[0_0_10px_rgba(99,102,241,0.5)]" style={{ width: `${getStatusProgress(proj.status)}%` }}></div>
-                                 </div>
-                              </div>
+            {/* --- MOBILE BOTTOM NAVBAR --- */}
+            <nav className="md:hidden fixed bottom-1.5 left-4 right-4 h-16 bg-slate-900/90 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-around px-2 z-50 shadow-2xl shadow-indigo-200/50">
+               {NavItems.filter(i => i.id !== 'New').map((item) => (
+                  <button
+                     key={item.id}
+                     onClick={() => setActiveTab(item.id)}
+                     className={`flex flex-col items-center gap-1 px-3 py-1.5 transition-all ${activeTab === item.id ? 'text-white' : 'text-slate-400'}`}
+                  >
+                     <div className={`transition-all duration-300 ${activeTab === item.id ? 'scale-110 -translate-y-0.5' : ''}`}>
+                        <item.icon size={20} />
+                     </div>
+                     <span className={`text-[8px] font-black uppercase tracking-widest transition-opacity ${activeTab === item.id ? 'opacity-100' : 'opacity-60'}`}>
+                        {item.id === 'Home' ? 'Me' : item.label === 'Vault' ? 'Docs' : item.label}
+                     </span>
+                  </button>
+               ))}
+            </nav>
 
-                              <div className="grid grid-cols-2 gap-4">
-                                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Total Fee</p>
-                                    <p className="text-lg font-black text-slate-800">₹ {proj.price.toLocaleString()}</p>
-                                 </div>
-                                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Payment</p>
-                                    <p className={`text-sm font-bold \${proj.status === 'Pending Documents' ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                       {proj.invoices?.some(i => i.status === 'Paid') ? 'Verified' : 'Initial Paid'}
-                                    </p>
-                                 </div>
-                              </div>
-
-                              <ProjectTimeline project={proj} />
-
-                              {proj.invoices?.length > 0 && (
-                                 <div className="pt-4 border-t border-slate-100">
-                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Invoices</h4>
-                                    <div className="space-y-2">
-                                       {proj.invoices.map(inv => (
-                                          <div key={inv._id} className="flex justify-between items-center p-3 bg-indigo-50/30 rounded-lg border border-indigo-100/50 hover:bg-indigo-50 transition-colors">
-                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-white rounded shadow-sm text-indigo-600"><FileText size={14} /></div>
-                                                <div>
-                                                   <p className="text-xs font-bold text-slate-800">{inv.invoiceNumber}</p>
-                                                   <p className="text-[10px] text-slate-500">₹ {inv.amount.toLocaleString()}</p>
-                                                </div>
-                                             </div>
-                                             <div className="flex items-center gap-3">
-                                                <StatusBadge status={inv.status} />
-                                                <button className="p-1.5 hover:bg-white rounded text-indigo-600"><Download size={14} /></button>
-                                             </div>
-                                          </div>
-                                       ))}
-                                    </div>
-                                 </div>
-                              )}
-                           </div>
-                        </div>
-                     ))}
-                     {orders.length === 0 && <p className="text-slate-500 text-center py-10 col-span-full">You have no active projects.</p>}
-                  </div>
-               )}
-
-               {activeTab === 'Support' && <div className="flex h-full items-center justify-center text-slate-400 flex-col"><MessageSquare size={48} className="mb-4 opacity-20" /><p>Support Chat / Ticket System</p></div>}
+            {/* --- FLOATING CONTACT BUTTON --- */}
+            <div className="fixed bottom-24 right-5 z-40 flex flex-col gap-3 md:bottom-10 md:right-10">
+               <a
+                  href="https://wa.me/918008530606"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-14 h-14 bg-emerald-500 text-white rounded-full shadow-2xl shadow-emerald-200 flex items-center justify-center hover:bg-emerald-600 transform hover:scale-110 active:scale-90 transition-all group relative border-4 border-white"
+               >
+                  <MessageSquare size={24} />
+                  <span className="absolute right-full mr-4 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+                     Chat on WhatsApp
+                  </span>
+               </a>
+               <button
+                  onClick={() => setActiveTab('New')}
+                  className="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl shadow-indigo-200 flex items-center justify-center hover:bg-indigo-700 transform hover:scale-110 active:scale-90 transition-all group relative border-4 border-white"
+               >
+                  <Headphones size={24} />
+                  <span className="absolute right-full mr-4 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+                     Raise Support Ticket
+                  </span>
+               </button>
             </div>
          </main>
       </div>

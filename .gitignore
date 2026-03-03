@@ -13,7 +13,9 @@ api/db_connect.php
 
 # 3. Frontend Dependencies
 # The node_modules folder is huge and should be generated on the server.
+node_modules/
 /frontend/node_modules
 /frontend/package-lock.json
+/backend/node_modules
 
 # NOTE: /frontend/build is NO LONGER IGNORED, so it will be pushed!

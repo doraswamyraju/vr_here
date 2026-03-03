@@ -40,6 +40,14 @@ const orderSchema = mongoose.Schema({
             default: Date.now
         }
     }],
+    adminDocuments: [{
+        name: String,
+        url: String, // Path to file
+        uploadedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     finalCertificateUrl: {
         type: String,
         default: null

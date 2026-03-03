@@ -125,10 +125,18 @@ const uploadDocument = asyncHandler(async (req, res) => {
             url: `/uploads/${req.file.filename}`
         });
     }
-    // Employee/Admin uploading final certificate
+    // Employee/Admin uploading documents (final certificate or general admin/employee document)
     else if (req.user.role === 'employee' || req.user.role === 'admin') {
-        order.finalCertificateUrl = `/uploads/${req.file.filename}`;
-        order.status = 'Completed';
+        if (req.body.isFinalCertificate === 'true' || req.body.isFinalCertificate === true) {
+            order.finalCertificateUrl = `/uploads/${req.file.filename}`;
+            order.status = 'Completed';
+        } else {
+            const docName = req.body.name || req.file.originalname;
+            order.adminDocuments.push({
+                name: docName,
+                url: `/uploads/${req.file.filename}`
+            });
+        }
     }
 
     const updatedOrder = await order.save();

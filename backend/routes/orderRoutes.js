@@ -1,5 +1,4 @@
 import express from 'express';
-const router = express.Router();
 import {
     createOrder,
     getOrders,
@@ -17,6 +16,8 @@ import {
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
+
+const router = express.Router();
 
 router.route('/')
     .post(protect, createOrder)
@@ -44,7 +45,6 @@ router.route('/:id/tasks/:taskId/subtasks')
     .post(protect, admin, addSubtask);
 
 router.route('/:id/checklists')
-
     .post(protect, addChecklistItem);
 
 router.route('/:id/checklists/:itemId/toggle')
@@ -57,5 +57,3 @@ router.route('/:id/invoices/:invoiceId/status')
     .put(protect, admin, updateInvoiceStatus);
 
 export default router;
-
-
