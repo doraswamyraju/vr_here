@@ -222,7 +222,7 @@ export default function CustomerApp() {
 
             {/* SCROLLABLE VIEWPORT */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6 px-5 md:px-10 md:pt-10 scroll-smooth">
-               <div className="max-w-4xl mx-auto">
+               <div className="max-w-4xl lg:max-w-[1280px] mx-auto">
                   {renderView()}
                </div>
             </div>

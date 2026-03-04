@@ -53,7 +53,7 @@ const OrdersView = ({ orders }) => {
             </div>
 
             {/* Orders List */}
-            <div className="space-y-4">
+            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 mt-6 pb-2">
                 {orders.map((proj) => (
                     <div key={proj._id} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden group hover:shadow-md hover:border-indigo-100 transition-all">
                         <div className="p-5">

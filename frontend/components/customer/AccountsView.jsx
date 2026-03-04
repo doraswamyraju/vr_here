@@ -54,7 +54,7 @@ const AccountsView = ({ orders, payments }) => {
                 </div>
 
                 {/* Transactions List */}
-                <div className="space-y-3">
+                <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                     {payments.map((payment) => (
                         <div key={payment._id} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-indigo-100 transition-all">
                             <div className="flex items-center gap-4">

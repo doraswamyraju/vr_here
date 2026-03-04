@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Briefcase, Factory, Stamp, Calculator, Globe,
-    IndianRupee, Lightbulb, MoreHorizontal, ArrowRight, Search
+    IndianRupee, Lightbulb, ArrowRight, Search
 } from 'lucide-react';
 
 const SERVICES = [
@@ -60,8 +60,8 @@ const ServicesView = () => {
         <div className="space-y-6 pb-20 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-end mb-2 px-1">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">Our Services</h1>
-                    <p className="text-slate-500 text-sm">Select a service to get started.</p>
+                    <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">Services Catalog</h1>
+                    <p className="text-slate-500 text-sm">Select a specialized service to initiate your business journey.</p>
                 </div>
             </div>
 
@@ -73,46 +73,50 @@ const ServicesView = () => {
                 <input
                     type="text"
                     placeholder="Search for legal, tax or industrial services..."
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-100 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+                    className="w-full pl-11 pr-4 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium"
                 />
             </div>
 
             {/* Services Grid */}
-            <div className="grid grid-cols-1 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                 {SERVICES.map((service) => (
                     <button
                         key={service.id}
-                        className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all flex items-center gap-4 text-left group"
+                        className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all flex flex-col md:flex-row lg:flex-col items-center md:items-start lg:items-center text-center md:text-left lg:text-center gap-4 group"
                     >
-                        <div className={`w-14 h-14 ${service.color} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                            <service.icon size={24} />
+                        <div className={`w-16 h-16 ${service.color} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                            <service.icon size={28} />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-slate-800 text-sm mb-0.5 group-hover:text-indigo-600 transition-colors">{service.title}</h3>
-                            <p className="text-[11px] text-slate-400 font-medium line-clamp-1 mb-1">{service.description}</p>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{service.price}</span>
-                        </div>
-                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
-                            <ArrowRight size={16} />
+                            <h3 className="font-black text-slate-800 text-sm lg:text-base mb-1 group-hover:text-indigo-600 transition-colors">{service.title}</h3>
+                            <p className="text-[11px] lg:text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">{service.description}</p>
+                            <div className="flex items-center justify-center md:justify-start lg:justify-center gap-2">
+                                <span className="px-3 py-1 bg-slate-50 text-[10px] font-black text-slate-500 rounded-lg uppercase tracking-widest">{service.price}</span>
+                                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 transition-all group-hover:translate-x-1 lg:hidden">
+                                    <ArrowRight size={14} />
+                                </div>
+                            </div>
                         </div>
                     </button>
                 ))}
             </div>
 
             {/* Custom Request Card */}
-            <div className="bg-slate-900 rounded-3xl p-6 text-white overflow-hidden relative group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                <div className="relative z-10 flex flex-col gap-4">
-                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                        <Lightbulb className="text-amber-400" size={24} />
+            <div className="bg-slate-900 rounded-[40px] p-8 text-white overflow-hidden relative group mt-12">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+                    <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
+                        <div className="w-16 h-16 bg-white/10 rounded-[24px] flex items-center justify-center shadow-xl">
+                            <Lightbulb className="text-amber-400" size={32} />
+                        </div>
+                        <div className="text-center lg:text-left">
+                            <h4 className="font-black text-2xl mb-2 tracking-tight">Need a custom business solution?</h4>
+                            <p className="text-slate-400 text-sm leading-relaxed max-w-xl">Our multidisciplinary experts can create tailored end-to-end setups, feasiblity reports, and turnkey projects specifically for your industry.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h4 className="font-black text-lg mb-1 tracking-tight">Need something else?</h4>
-                        <p className="text-slate-400 text-xs leading-relaxed mb-4">Tell us your specific requirement and our experts will create a custom solution for you.</p>
-                        <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl text-sm font-black transition-all shadow-lg shadow-indigo-900/20">
-                            Contact Expert
-                        </button>
-                    </div>
+                    <button className="whitespace-nowrap bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-2xl text-sm font-black transition-all shadow-2xl shadow-indigo-900/40 hover:-translate-y-1 active:translate-y-0">
+                        Consult Expert
+                    </button>
                 </div>
             </div>
         </div>
