@@ -274,6 +274,8 @@ const ICON_MAP = {
     MoreHorizontal,
 };
 
+const REQUIRED_CATEGORY_IDS = MENU_DATA.map((service) => service.id);
+
 const normalizeServiceConfig = (services = []) => services.map((service) => ({
     ...service,
     iconKey: service.iconKey || 'Briefcase',
@@ -285,6 +287,9 @@ const normalizeServiceConfig = (services = []) => services.map((service) => ({
             : [],
     offers: Array.isArray(service.offers) ? service.offers : [],
 }));
+
+const hasCompleteCategorySet = (services = []) =>
+    REQUIRED_CATEGORY_IDS.every((id) => services.some((service) => service.id === id));
 
 export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -311,12 +316,20 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
         const fetchMenu = async () => {
             try {
                 const res = await fetch('/api/services/header-config');
-                if (!res.ok) return;
+                if (!res.ok) {
+                    setMenuConfig(normalizeServiceConfig(MENU_DATA));
+                    return;
+                }
                 const data = await res.json();
-                if (!Array.isArray(data?.services) || data.services.length === 0) return;
-                setMenuConfig(normalizeServiceConfig(data.services));
+                const fetched = Array.isArray(data?.services) ? normalizeServiceConfig(data.services) : [];
+                if (fetched.length === 0 || !hasCompleteCategorySet(fetched)) {
+                    setMenuConfig(normalizeServiceConfig(MENU_DATA));
+                    return;
+                }
+                setMenuConfig(fetched);
             } catch (error) {
                 console.error('Unable to load header service config', error);
+                setMenuConfig(normalizeServiceConfig(MENU_DATA));
             }
         };
         fetchMenu();
@@ -326,7 +339,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
 
     return (
         <>
-            <div className="bg-slate-900 text-slate-400 text-xs py-2 px-4 hidden lg:block border-b border-slate-800">
+            <div className="bg-slate-900 text-slate-400 text-xs py-2 px-4 hidden lg:block border-b border-slate-800 fixed top-0 left-0 right-0 z-[60]">
                 <div className="max-w-[1400px] mx-auto flex justify-between items-center">
                     <div className="flex space-x-6">
                         {/* ADDRESS REMOVED HERE */}
@@ -341,7 +354,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                 </div>
             </div>
 
-            <header className={`sticky top-0 z-50 transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-xl py-2' : 'bg-white border-b border-slate-100 py-4'}`}>
+            <header className={`fixed left-0 right-0 top-0 lg:top-8 z-[55] transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-xl py-2' : 'bg-white border-b border-slate-100 py-4'}`}>
                 <div className={`absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/60 to-transparent transition-opacity ${isScrolled ? 'opacity-100' : 'opacity-0'}`}></div>
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
                     <div className="flex justify-between items-center relative">
@@ -359,7 +372,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
 
                         <nav className="hidden lg:flex items-center">
                             <div className="relative" onMouseLeave={() => setActiveDesktopServiceId(null)}>
-                                <div className="max-w-[860px] overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                                <div className="max-w-[980px] overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                     <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 min-w-max">
                                     {menuConfig.map((service) => (
                                         <div
@@ -367,7 +380,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                             className="relative"
                                             onMouseEnter={() => setActiveDesktopServiceId(service.id)}
                                         >
-                                            <button className={`flex items-center px-3 py-2 text-[13px] font-bold rounded-xl transition-all duration-300 ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
+                                            <button className={`flex items-center px-3 py-2 text-[12px] font-bold rounded-xl transition-all duration-300 whitespace-nowrap ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
                                                 {service.title}
                                                 <ChevronDown className={`ml-1 w-4 h-4 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
                                             </button>
@@ -448,6 +461,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                     </div>
                 </div>
             </header>
+            <div className="h-[84px] lg:h-[132px]"></div>
 
             {/* MOBILE MENU */}
             <div className={`fixed inset-0 bg-white z-[60] transform transition-transform duration-300 lg:hidden overflow-y-auto ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
