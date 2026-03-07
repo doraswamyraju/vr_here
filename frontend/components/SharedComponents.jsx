@@ -275,6 +275,15 @@ const ICON_MAP = {
 };
 
 const REQUIRED_CATEGORY_IDS = MENU_DATA.map((service) => service.id);
+const TAB_LABELS = {
+    'accounting-compliance-taxation': 'Accounting, Compliance & Taxation',
+    'certification-quality-management': 'Certification & Quality Management',
+    'business-registration-licensing-corporate': 'Business Registrations & Corporate',
+    'government-portal-registrations': 'Government Portal Registrations',
+    'industrial-msme-consultancy': 'Industrial & MSME Consultancy',
+    'branding-documentation-startup-support': 'Branding & Startup Support',
+    'machinery-industrial-support': 'Machinery & Industrial Support',
+};
 
 const normalizeServiceConfig = (services = []) => services.map((service) => ({
     ...service,
@@ -372,16 +381,16 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
 
                         <nav className="hidden lg:flex items-center">
                             <div className="relative" onMouseLeave={() => setActiveDesktopServiceId(null)}>
-                                <div className="max-w-[980px] overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                                    <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 min-w-max">
+                                <div className="max-w-[980px]">
+                                    <div className="flex flex-wrap items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
                                     {menuConfig.map((service) => (
                                         <div
                                             key={service.id}
                                             className="relative"
                                             onMouseEnter={() => setActiveDesktopServiceId(service.id)}
                                         >
-                                            <button className={`flex items-center px-3 py-2 text-[12px] font-bold rounded-xl transition-all duration-300 whitespace-nowrap ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
-                                                {service.title}
+                                            <button className={`flex items-center px-3 py-2 text-[11px] font-bold rounded-xl transition-all duration-300 ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
+                                                <span className="text-left leading-tight max-w-[190px]">{TAB_LABELS[service.id] || service.title}</span>
                                                 <ChevronDown className={`ml-1 w-4 h-4 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
                                             </button>
                                         </div>
@@ -393,13 +402,6 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                     {activeDesktopService && (
                                         <div className="flex min-h-[360px]">
                                             <div className="flex-1 p-8 bg-gradient-to-br from-white via-white to-slate-50">
-                                                <div className="flex items-center gap-3 mb-5">
-                                                    <div className="p-2 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-lg shadow-md">
-                                                        <activeDesktopService.icon className="w-5 h-5" />
-                                                    </div>
-                                                    <h3 className="text-xl font-extrabold text-slate-900">Service Options</h3>
-                                                </div>
-                                                <p className="text-sm text-slate-500 mb-6">Explore services by specialization.</p>
                                                 <div className={`grid gap-4 ${activeDesktopService.columns.length >= 3 ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} grid-cols-1`}>
                                                     {activeDesktopService.columns.map((column, columnIndex) => (
                                                         <div key={`${activeDesktopService.id}-col-${columnIndex}`} className="rounded-xl border border-slate-200 bg-white p-4 hover:border-red-200 hover:shadow-lg hover:shadow-red-100/40 transition-all">
