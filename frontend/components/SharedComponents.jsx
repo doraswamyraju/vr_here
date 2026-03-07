@@ -372,6 +372,16 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
         activeDesktopService && Array.isArray(activeDesktopService.offers) && activeDesktopService.offers.length > 0
             ? activeDesktopService.offers
             : SAMPLE_OFFERS_BY_CATEGORY[activeDesktopService?.id] || [];
+    const handleSearchClick = () => {
+        if (window.location.pathname !== '/') {
+            window.location.href = '/?focusSearch=1';
+            return;
+        }
+        const searchSection = document.getElementById('hero-search');
+        const searchInput = document.getElementById('hero-search-input');
+        if (searchSection) searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => searchInput?.focus(), 350);
+    };
 
     return (
         <>
@@ -483,7 +493,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                         </nav>
 
                         <div className="hidden lg:flex items-center space-x-4">
-                            <button className="p-2 text-slate-600 hover:text-red-600 transition transform hover:scale-110"><Search className="w-5 h-5" /></button>
+                            <button onClick={handleSearchClick} className="p-2 text-slate-600 hover:text-red-600 transition transform hover:scale-110"><Search className="w-5 h-5" /></button>
                             <a href="/contact" className="bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red-600/20 flex items-center transform hover:-translate-y-1 active:scale-95 group">
                                 <Phone className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" /> Talk to Expert
                             </a>

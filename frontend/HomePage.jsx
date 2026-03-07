@@ -175,6 +175,16 @@ const HomePage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isServicesHovered]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('focusSearch') === '1') {
+      const searchSection = document.getElementById('hero-search');
+      const searchInput = document.getElementById('hero-search-input');
+      if (searchSection) searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => searchInput?.focus(), 450);
+    }
+  }, []);
+
   // --- ACTIONS ---
 
   const [formData, setFormData] = useState({
@@ -393,13 +403,14 @@ const HomePage = () => {
 
 
           {/* SEARCH BAR */}
-          <div className="max-w-3xl mx-auto relative z-50">
+          <div id="hero-search" className="max-w-3xl mx-auto relative z-50">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
             <div className="relative bg-white rounded-xl shadow-2xl p-2 flex items-center">
               <div className="pl-4 pr-2 text-slate-400">
                 <Search className="w-6 h-6" />
               </div>
               <input
+                id="hero-search-input"
                 type="text"
                 placeholder="Search for 'Private Limited', 'GST', 'Loans'..."
                 className="flex-1 p-3 text-lg font-medium text-slate-900 placeholder:text-slate-400 outline-none bg-transparent"
