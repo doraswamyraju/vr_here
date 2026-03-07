@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
     Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
-    Mail, MapPin, Quote, Star, Users, CheckCircle
+    Mail, Users, CheckCircle
 } from 'lucide-react';
 
 /* --- MENU DATA WITH LINKS --- */
@@ -22,58 +22,85 @@ export const MENU_DATA = [
     {
         id: 'machinery',
         title: 'Machinery & Industrial',
+        iconKey: 'Factory',
         icon: Factory,
         items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis']
     },
     {
         id: 'iso',
         title: 'Certification (ISO)',
+        iconKey: 'Stamp',
         icon: Stamp,
         items: ['ISO 9001, 14001, 45001', 'ISO 27001 (Info Sec)', 'CE Marking & FDA', 'GMP / HACCP / Halal']
     },
     {
         id: 'accounting',
         title: 'Accounting & Tax',
+        iconKey: 'Calculator',
         icon: Calculator,
         items: ['Cloud Accounting', 'GST Reg & Returns', 'Income Tax Filing', 'Statutory & Tax Audits']
     },
     {
         id: 'registration',
         title: 'Business Registration',
+        iconKey: 'Briefcase',
         icon: Briefcase,
         items: ['Pvt Ltd / LLP / OPC', 'Section 8 (NGO)', 'Udyam (MSME)', 'FSSAI & Trade License']
     },
     {
         id: 'govt',
         title: 'Govt. Portals',
+        iconKey: 'Globe',
         icon: Globe,
         items: ['GeM Seller/OEM Reg', 'TReDS Registration', 'RERA Registration', 'Import Export Code']
     },
     {
         id: 'msme',
         title: 'Industrial Consultancy',
+        iconKey: 'IndianRupee',
         icon: IndianRupee,
         items: ['Project Reports (DPR)', 'Term Loans & WC', 'CGTMSE & PMEGP', 'Subsidy Guidance']
     },
     {
         id: 'branding',
         title: 'Startup Support',
+        iconKey: 'Lightbulb',
         icon: Lightbulb,
         items: ['Business Plans', 'Pitch Decks', 'Website & Branding', 'HR Policy & SOPs']
     },
     {
         id: 'utility',
         title: 'Utility Services',
+        iconKey: 'MoreHorizontal',
         icon: MoreHorizontal,
         items: ['Trademark & IP', 'PAN / TAN Apps', 'Insurance Services', 'Digital Marketing']
     }
 ];
 
+const ICON_MAP = {
+    Factory,
+    Stamp,
+    Calculator,
+    Briefcase,
+    Globe,
+    IndianRupee,
+    Lightbulb,
+    MoreHorizontal,
+};
+
+const normalizeServiceConfig = (services = []) => services.map((service) => ({
+    ...service,
+    iconKey: service.iconKey || 'Briefcase',
+    icon: ICON_MAP[service.iconKey] || Briefcase,
+    offers: Array.isArray(service.offers) ? service.offers : [],
+}));
+
 export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeMobileCategory, setActiveMobileCategory] = useState(null);
-    const [isServicesHovered, setIsServicesHovered] = useState(false);
+    const [activeDesktopServiceId, setActiveDesktopServiceId] = useState(null);
     const [localIsScrolled, setLocalIsScrolled] = useState(false);
+    const [menuConfig, setMenuConfig] = useState(normalizeServiceConfig(MENU_DATA));
 
     // Use external scroll state if provided, otherwise handle internally
     const isScrolled = externalIsScrolled !== undefined ? externalIsScrolled : localIsScrolled;
@@ -82,12 +109,29 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
         if (externalIsScrolled === undefined) {
             const handleScroll = () => {
                 setLocalIsScrolled(window.scrollY > 20);
-                if (isServicesHovered) setIsServicesHovered(false);
+                if (activeDesktopServiceId) setActiveDesktopServiceId(null);
             };
             window.addEventListener('scroll', handleScroll);
             return () => window.removeEventListener('scroll', handleScroll);
         }
-    }, [externalIsScrolled, isServicesHovered]);
+    }, [externalIsScrolled, activeDesktopServiceId]);
+
+    useEffect(() => {
+        const fetchMenu = async () => {
+            try {
+                const res = await fetch('/api/services/header-config');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!Array.isArray(data?.services) || data.services.length === 0) return;
+                setMenuConfig(normalizeServiceConfig(data.services));
+            } catch (error) {
+                console.error('Unable to load header service config', error);
+            }
+        };
+        fetchMenu();
+    }, []);
+
+    const activeDesktopService = menuConfig.find((service) => service.id === activeDesktopServiceId);
 
     return (
         <>
@@ -123,53 +167,74 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
 
                         <nav className="hidden lg:flex items-center space-x-1">
                             <a href="/" className="px-4 py-2 text-sm font-bold text-slate-700 hover:text-red-600 rounded-full hover:bg-red-50 transition-all duration-300 hover:scale-105">Home</a>
-                            <div className="relative px-2 py-4" onMouseEnter={() => setIsServicesHovered(true)} onMouseLeave={() => setIsServicesHovered(false)}>
-                                <button className={`flex items-center px-4 py-2 text-sm font-bold rounded-full transition-all duration-300 hover:scale-105 group ${isServicesHovered ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-700 hover:text-red-600 hover:bg-red-50'}`}>
-                                    Services <ChevronDown className={`ml-1 w-4 h-4 transition-transform duration-300 ${isServicesHovered ? 'rotate-180' : ''}`} />
-                                </button>
-                                <div className={`absolute top-full left-1/2 -translate-x-1/2 w-[90vw] max-w-[1200px] bg-white rounded-2xl shadow-2xl border-t-4 border-red-600 overflow-hidden transition-all duration-300 origin-top z-50 ${isServicesHovered ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
-                                    <div className="flex">
-                                        <div className="w-64 bg-slate-50 p-8 flex flex-col justify-between border-r border-slate-100">
-                                            <div>
-                                                <h3 className="text-xl font-extrabold text-slate-900 mb-2">Our Expertise</h3>
-                                                <p className="text-sm text-slate-500 mb-6">From registration to expansion, we handle all your business needs under one roof.</p>
-                                                <div className="space-y-3">
-                                                    <div className="flex items-center text-xs font-semibold text-slate-600"><CheckCircle2 className="w-4 h-4 text-green-500 mr-2" /> 100% Online Process</div>
-                                                    <div className="flex items-center text-xs font-semibold text-slate-600"><CheckCircle2 className="w-4 h-4 text-green-500 mr-2" /> Expert CA/CS Team</div>
+                            <div className="relative" onMouseLeave={() => setActiveDesktopServiceId(null)}>
+                                <div className="flex items-center">
+                                    {menuConfig.map((service) => (
+                                        <div
+                                            key={service.id}
+                                            className="relative px-0.5 py-4"
+                                            onMouseEnter={() => setActiveDesktopServiceId(service.id)}
+                                        >
+                                            <button className={`flex items-center px-3 py-2 text-sm font-bold rounded-full transition-all duration-300 ${activeDesktopServiceId === service.id ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-700 hover:text-red-600 hover:bg-red-50'}`}>
+                                                {service.title}
+                                                <ChevronDown className={`ml-1 w-4 h-4 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className={`absolute top-full left-1/2 -translate-x-1/2 w-[90vw] max-w-[1120px] bg-white rounded-2xl shadow-2xl border-t-4 border-red-600 overflow-hidden transition-all duration-300 origin-top z-50 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
+                                    {activeDesktopService && (
+                                        <div className="flex min-h-[330px]">
+                                            <div className="flex-1 p-8 bg-white">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="p-2 bg-red-50 text-red-600 rounded-lg">
+                                                        <activeDesktopService.icon className="w-5 h-5" />
+                                                    </div>
+                                                    <h3 className="text-xl font-extrabold text-slate-900">{activeDesktopService.title}</h3>
+                                                </div>
+                                                <p className="text-sm text-slate-500 mb-5">Pick a sub-service and continue with quick onboarding.</p>
+                                                <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
+                                                    {activeDesktopService.items.map((item, i) => (
+                                                        <a
+                                                            href={getServiceLink(item)}
+                                                            key={`${activeDesktopService.id}-${i}`}
+                                                            className="text-sm font-semibold text-slate-700 border border-slate-200 rounded-lg px-3 py-2 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
+                                                        >
+                                                            {item}
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                                <div className="mt-4">
+                                                    <a href={`/contact?service=${encodeURIComponent(activeDesktopService.title)}`} className="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wide">View all {activeDesktopService.title} services &rarr;</a>
                                                 </div>
                                             </div>
-                                            <a href="/contact" className="block w-full py-3 bg-black text-white text-center text-sm font-bold rounded-lg hover:bg-slate-800 transition transform hover:-translate-y-1 shadow-lg">Get Custom Quote</a>
-                                        </div>
-                                        <div className="flex-1 p-8 bg-white">
-                                            <div className="grid grid-cols-4 gap-6">
-                                                {MENU_DATA.map((service) => (
-                                                    <div key={service.id} className="group/item hover:bg-slate-50 p-3 rounded-lg transition-colors">
-                                                        <div className="flex items-center space-x-3 mb-2">
-                                                            <div className="p-2 bg-red-50 text-red-600 rounded-lg group-hover/item:bg-red-600 group-hover/item:text-white transition-colors duration-300 shadow-sm">
-                                                                <service.icon className="w-6 h-6" />
+                                            <div className="w-[320px] bg-slate-50 p-6 border-l border-slate-100">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <h4 className="text-sm font-black text-slate-900">Latest Offers</h4>
+                                                    <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Admin Managed</span>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {(activeDesktopService.offers || []).slice(0, 2).map((offer) => (
+                                                        <a key={offer._id || `${offer.title}-${offer.imageUrl}`} href={offer.ctaLink || '/contact'} className="block overflow-hidden rounded-xl border border-slate-200 bg-white hover:shadow-lg transition-shadow">
+                                                            <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover" />
+                                                            <div className="p-3">
+                                                                <div className="text-sm font-bold text-slate-800 line-clamp-2">{offer.title}</div>
+                                                                <div className="mt-1 text-xs font-bold text-red-600">Explore Offer</div>
                                                             </div>
-                                                            <h4 className="font-bold text-slate-900 text-sm leading-tight group-hover/item:text-red-600 transition-colors">{service.title}</h4>
+                                                        </a>
+                                                    ))}
+                                                    {(!activeDesktopService.offers || activeDesktopService.offers.length === 0) && (
+                                                        <div className="text-xs text-slate-500 bg-white border border-dashed border-slate-300 rounded-xl px-3 py-4">
+                                                            No offers configured yet. Add offer images from Admin Dashboard.
                                                         </div>
-                                                        <ul className="space-y-1 ml-11 border-l-2 border-slate-100 pl-3 group-hover/item:border-red-200 transition-colors">
-                                                            {service.items.slice(0, 3).map((item, i) => (
-                                                                <li key={i}>
-                                                                    <a href={getServiceLink(item)} className="block text-xs font-medium text-slate-500 hover:text-red-600 transition-colors truncate">
-                                                                        {item}
-                                                                    </a>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                        <div className="mt-2 ml-11 pl-3">
-                                                            <a href={`/contact?service=${encodeURIComponent(service.title)}`} className="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-wide">View All &rarr;</a>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
-                            <button className="px-4 py-2 text-sm font-bold text-slate-700 hover:text-red-600 rounded-full hover:bg-red-50 transition-all duration-300 hover:scale-105">Pricing</button>
                         </nav>
 
                         <div className="hidden lg:flex items-center space-x-4">
@@ -197,9 +262,9 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                 <div className="p-4 space-y-1">
                     <a href="/" className="block w-full text-left px-4 py-3 text-lg font-bold text-slate-800 hover:bg-slate-50 rounded-xl">Home</a>
                     <div className="border rounded-xl overflow-hidden border-slate-100 my-2">
-                        <div className="bg-slate-50 px-4 py-3 font-bold text-lg flex justify-between items-center text-slate-900">Services <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">8 Cats</span></div>
+                        <div className="bg-slate-50 px-4 py-3 font-bold text-lg flex justify-between items-center text-slate-900">Services <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{menuConfig.length} Cats</span></div>
                         <div className="divide-y divide-slate-100">
-                            {MENU_DATA.map((service) => (
+                            {menuConfig.map((service) => (
                                 <div key={service.id} className="bg-white">
                                     <button onClick={() => setActiveMobileCategory(activeMobileCategory === service.id ? null : service.id)} className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-50 transition">
                                         <div className="flex items-center space-x-3">
@@ -220,6 +285,12 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                             <a href={`/contact?service=${encodeURIComponent(service.title)}`} className="block text-sm font-bold text-red-600 border-l-2 border-red-200 pl-3 py-1 mt-2">
                                                 View All Services
                                             </a>
+                                            {(service.offers || []).slice(0, 1).map((offer) => (
+                                                <a key={offer._id || offer.title} href={offer.ctaLink || '/contact'} className="block border rounded-lg border-slate-200 overflow-hidden bg-white mt-3">
+                                                    <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover" />
+                                                    <div className="p-2 text-xs font-semibold text-slate-700">{offer.title}</div>
+                                                </a>
+                                            ))}
                                         </div>
                                     )}
                                 </div>

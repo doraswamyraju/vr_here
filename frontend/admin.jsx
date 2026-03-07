@@ -13,18 +13,7 @@ import {
 import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
-// --- SERVICE CATALOG ---
-const SERVICE_CATALOG = {
-  'Machinery & Industrial': ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis'],
-  'Certification (ISO)': ['ISO 9001 (QMS)', 'ISO 14001 (EMS)', 'ISO 45001 (OHS)', 'ISO 27001 (ISMS)', 'HACCP/GMP', 'CE Marking'],
-  'Accounting & Tax': ['Cloud Accounting', 'GST Returns', 'Income Tax Filing', 'TDS Filing', 'Statutory Audit', 'Tax Audit (3CD)', 'Internal Audit'],
-  'Business Registration': ['Pvt Ltd Incorporation', 'LLP Registration', 'Partnership Firm', 'Section 8 (NGO)', 'Udyam (MSME)', 'Import Export Code'],
-  'Licensing & Compliance': ['FSSAI License', 'Trade License', 'Labour License', 'Factory License', 'Pollution Control (PCB)', 'ROC Filings'],
-  'Govt Portals': ['GeM Registration', 'TReDS Registration', 'RERA Registration', 'AP/TS Single Window'],
-  'Consultancy & Finance': ['DPR Preparation', 'CMA Data', 'Term Loan / Working Capital', 'Mudra Loans', 'Subsidy Guidance'],
-  'Startup Support': ['Business Plan', 'Pitch Decks', 'Trademark & IP', 'Digital Signatures (DSC)']
-};
+import ServicesMasterView from './components/admin/ServicesMasterView';
 
 const CHECKLIST_TEMPLATES = {
   'Pvt Ltd Incorporation': [
@@ -210,22 +199,6 @@ const GenericListView = ({ title, sub, data, columns }) => (
           ))}
         </tbody>
       </table>
-    </div>
-  </div>
-);
-
-const ServicesView = () => (
-  <div className="animate-in fade-in zoom-in duration-300">
-    <div className="mb-6 text-left"><h2 className="text-2xl font-bold text-slate-800">Service Catalog</h2><p className="text-slate-500">Master List of Offerings</p></div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {Object.entries(SERVICE_CATALOG).map(([cat, services]) => (
-        <div key={cat} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-left">
-          <h3 className="font-bold text-lg text-slate-800 mb-4">{cat}</h3>
-          <ul className="space-y-2">
-            {services.map(s => <li key={s} className="text-sm text-slate-600 flex items-center pr-2">{s}</li>)}
-          </ul>
-        </div>
-      ))}
     </div>
   </div>
 );
@@ -488,7 +461,7 @@ function App() {
           {activeTab === 'ToDo' && <GenericListView title="Task List" sub="Ad-hoc Compliance Tasks" data={INITIAL_TODO} columns={['Task', 'Due Date', 'Priority', 'Assignee']} />}
           {activeTab === 'Finance' && <GenericListView title="Invoices" sub="Billing & Receivables" data={INITIAL_INVOICES} columns={['Client', 'Date', 'Amount', 'Status']} />}
           {activeTab === 'Reports' && <ReportsView />}
-          {activeTab === 'Services' && <ServicesView />}
+          {activeTab === 'Services' && <ServicesMasterView token={userInfo?.token} />}
         </div>
       </main>
     </div>

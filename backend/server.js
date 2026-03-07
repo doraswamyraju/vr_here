@@ -51,6 +51,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import serviceMenuRoutes from './routes/serviceMenuRoutes.js';
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -58,6 +59,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/services', serviceMenuRoutes);
 
 // Serve Frontend in Production
 
