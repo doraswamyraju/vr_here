@@ -275,14 +275,14 @@ const ICON_MAP = {
 };
 
 const REQUIRED_CATEGORY_IDS = MENU_DATA.map((service) => service.id);
-const TAB_LABELS = {
-    'accounting-compliance-taxation': 'Accounting, Compliance & Taxation',
-    'certification-quality-management': 'Certification & Quality Management',
-    'business-registration-licensing-corporate': 'Business Registrations & Corporate',
-    'government-portal-registrations': 'Government Portal Registrations',
-    'industrial-msme-consultancy': 'Industrial & MSME Consultancy',
-    'branding-documentation-startup-support': 'Branding & Startup Support',
-    'machinery-industrial-support': 'Machinery & Industrial Support',
+const TAB_LABEL_LINES = {
+    'accounting-compliance-taxation': ['Accounting,', 'Compliance &', 'Taxation'],
+    'certification-quality-management': ['Certification &', 'Quality', 'Management'],
+    'business-registration-licensing-corporate': ['Business', 'Registrations &', 'Corporate'],
+    'government-portal-registrations': ['Government', 'Portal', 'Registrations'],
+    'industrial-msme-consultancy': ['Industrial &', 'MSME', 'Consultancy'],
+    'branding-documentation-startup-support': ['Branding &', 'Startup', 'Support'],
+    'machinery-industrial-support': ['Machinery &', 'Industrial', 'Support'],
 };
 
 const normalizeServiceConfig = (services = []) => services.map((service) => ({
@@ -382,16 +382,20 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                         <nav className="hidden lg:flex items-center">
                             <div className="relative" onMouseLeave={() => setActiveDesktopServiceId(null)}>
                                 <div className="max-w-[980px]">
-                                    <div className="flex flex-wrap items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
+                                    <div className="flex items-stretch gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
                                     {menuConfig.map((service) => (
                                         <div
                                             key={service.id}
                                             className="relative"
                                             onMouseEnter={() => setActiveDesktopServiceId(service.id)}
                                         >
-                                            <button className={`flex items-center px-3 py-2 text-[11px] font-bold rounded-xl transition-all duration-300 ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
-                                                <span className="text-left leading-tight max-w-[190px]">{TAB_LABELS[service.id] || service.title}</span>
-                                                <ChevronDown className={`ml-1 w-4 h-4 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
+                                            <button className={`h-full flex items-center px-2 py-2 text-[10px] font-bold rounded-xl transition-all duration-300 min-w-[118px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
+                                                <span className="text-left leading-[1.05]">
+                                                    {(TAB_LABEL_LINES[service.id] || [service.title]).map((line, idx) => (
+                                                        <span key={`${service.id}-line-${idx}`} className="block">{line}</span>
+                                                    ))}
+                                                </span>
+                                                <ChevronDown className={`ml-1 w-3.5 h-3.5 shrink-0 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
                                             </button>
                                         </div>
                                     ))}
