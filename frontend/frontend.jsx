@@ -11,12 +11,14 @@ import ResetPassword from './Auth/ResetPassword';
 import PrivateLimitedPage from './PrivateLimited';
 import PartnershipFirmPage from './PartnershipFirm';
 import GSTRegistrationPage from './GSTRegistration';
+import IncomeTaxPage from './IncomeTax';
 import AdminPage from './admin';
 import CustomerPage from './customer';
 import EmployeePage from './employee';
 import ContactUsPage from './ContactUs';
 import HeaderDesignOptions from './HeaderDesignOptions';
 import ServiceCardDesignOptions from './ServiceCardDesignOptions';
+import AllServicesPage from './AllServices';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -44,6 +46,8 @@ const App = () => {
       <Route path="/pvt-ltd-registration" element={<PrivateLimitedPage />} />
       <Route path="/partnership-firm" element={<PartnershipFirmPage />} />
       <Route path="/gst-registration" element={<GSTRegistrationPage />} />
+      <Route path="/income-tax-return" element={<IncomeTaxPage />} />
+      <Route path="/all-services" element={<AllServicesPage />} />
       <Route path="/contact" element={<ContactUsPage />} />
 
       {/* Protected Routes */}

@@ -7,15 +7,12 @@ import {
 
 /* --- MENU DATA WITH LINKS --- */
 export const getServiceLink = (serviceName) => {
-    const map = {
-        'Pvt Ltd / LLP / OPC': '/pvt-ltd-registration',
-        'Partnership Firm': '/partnership-firm', // Assumed based on existing files or common naming
-        'GST Reg & Returns': '/gst-registration',
-    };
-    // Partial matches or specific logic
-    if (serviceName.includes('Partnership')) return '/partnership-firm';
-
-    return map[serviceName] || `/contact?service=${encodeURIComponent(serviceName)}`;
+    const normalized = String(serviceName || '').toLowerCase();
+    if (normalized.includes('private limited')) return '/pvt-ltd-registration';
+    if (normalized.includes('gst registration') || normalized.includes('gst return')) return '/gst-registration';
+    if (normalized.includes('income tax')) return '/income-tax-return';
+    if (normalized.includes('partnership')) return '/partnership-firm';
+    return `/contact?service=${encodeURIComponent(serviceName)}`;
 };
 
 export const MENU_DATA = [
@@ -27,18 +24,36 @@ export const MENU_DATA = [
         columns: [
             {
                 title: 'Accounting-as-a-Service (AaaS)',
-                items: ['Bookkeeping & Accounting', 'Virtual CFO', 'MIS Reporting', 'Payroll Processing'],
+                items: [
+                    'Cloud Accounting (Tally Prime, Zoho Books, QuickBooks, Marg)',
+                    'GST Return Filing',
+                    'Payroll Management (Payslips, Leave, Form 16)',
+                    'Professional Tax (PT) Returns',
+                    'EPF / ESI Returns',
+                    'Gratuity Management',
+                    'TDS/TCS Filing',
+                    'Inventory & Stock Management',
+                    'Invoice Generation Support',
+                    'Expense Tracking Consultancy',
+                    'Monthly MIS Reports',
+                ],
             },
             {
                 title: 'Taxation & Legal Compliance',
-                items: ['GST Registration & Returns', 'Income Tax Filing', 'TDS/TCS Compliance', 'ROC Annual Filings'],
+                items: [
+                    'GST Registration',
+                    'Income Tax Return Filing (ITR 1-7)',
+                    '12AA/80G Certificates',
+                    'Tax Planning Support',
+                    '15CA Certification',
+                ],
             },
             {
-                title: 'Audit & Assurance',
-                items: ['Statutory Audit', 'Tax Audit', 'Internal Audit', 'Compliance Health Check'],
+                title: 'Audit Services',
+                items: ['Internal Audit', 'GST Audit', 'SOX Audit', 'Stock & Compliance Audit', 'Other Audits (Need Basis)'],
             },
         ],
-        items: ['Bookkeeping & Accounting', 'Virtual CFO', 'MIS Reporting', 'Payroll Processing', 'GST Registration & Returns', 'Income Tax Filing', 'TDS/TCS Compliance', 'ROC Annual Filings', 'Statutory Audit', 'Tax Audit', 'Internal Audit', 'Compliance Health Check'],
+        offers: [],
     },
     {
         id: 'certification-quality-management',
@@ -47,99 +62,204 @@ export const MENU_DATA = [
         icon: Stamp,
         columns: [
             {
-                title: 'ISO Management Systems',
-                items: ['ISO 9001', 'ISO 14001', 'ISO 45001', 'ISO 27001'],
+                title: 'ISO Services',
+                items: [
+                    'ISO 9001:2015 - Quality Management',
+                    'ISO 14001:2015 - Environmental Management',
+                    'ISO 45001:2018 - Occupational Health & Safety',
+                    'ISO 22000:2018 - Food Safety',
+                    'ISO 27001:2022 - Information Security',
+                    'ISO 50001:2018 - Energy Management',
+                    'ISO 13485:2016 - Medical Devices',
+                    'ISO 20000-1:2018 - IT Service Management',
+                    'ISO 22301:2019 - Business Continuity',
+                ],
             },
             {
-                title: 'Product & Export Certifications',
-                items: ['CE Marking', 'FDA Assistance', 'BIS Certification', 'IEC Support'],
+                title: 'Quality & Compliance',
+                items: ['GMP / HACCP', 'CE Marking', 'ISI / BIS Certification', 'FDA Compliance Support'],
             },
             {
-                title: 'Food & Pharma Standards',
-                items: ['HACCP', 'GMP', 'Halal Certification', 'FSSAI Compliance'],
+                title: 'Product & System Certifications',
+                items: ['BRCGS', 'Kosher Certification', 'Halal Certification'],
             },
         ],
-        items: ['ISO 9001', 'ISO 14001', 'ISO 45001', 'ISO 27001', 'CE Marking', 'FDA Assistance', 'BIS Certification', 'IEC Support', 'HACCP', 'GMP', 'Halal Certification', 'FSSAI Compliance'],
+        offers: [],
     },
     {
-        id: 'business-registration-corporate',
-        title: 'Business Registration & Corporate Services',
+        id: 'business-registration-licensing-corporate',
+        title: 'Business Registrations, Licensing & Corporate Services',
         iconKey: 'Briefcase',
         icon: Briefcase,
         columns: [
             {
-                title: 'Entity Formation',
-                items: ['Private Limited Company', 'LLP Registration', 'OPC Registration', 'Partnership Firm'],
+                title: 'Company / Business Entity Registrations',
+                items: [
+                    'Private Limited / Public Limited Company',
+                    'LLP Registration',
+                    'Partnership Firm Registration',
+                    'Proprietorship Setup',
+                    'Section 8 Company (NGO)',
+                    'One Person Company',
+                    'Society / Trust Registration',
+                ],
             },
             {
-                title: 'Regulatory Registrations',
-                items: ['Udyam (MSME)', 'PAN/TAN', 'Import Export Code', 'Trade License'],
+                title: 'Mandatory Registrations',
+                items: [
+                    'Udyam Registration (MSME)',
+                    'Shops & Establishment Registration',
+                    'EPFO (PF) Registration',
+                    'ESIC Registration',
+                    'Professional Tax Registration',
+                    'Startup India Registration',
+                    'Import Export Code (IEC)',
+                ],
             },
             {
-                title: 'Corporate Secretarial',
-                items: ['Board Resolutions', 'Shareholding Changes', 'DIN/DSC Services', 'MCA Compliances'],
+                title: 'Licensing Services',
+                items: [
+                    'FSSAI Registration / License',
+                    'LEI Certificate',
+                    'Trade License',
+                    'Labour / Contract Labour License',
+                    'Pollution Control Board NOC / CFE / CFO',
+                    'Factory License',
+                    'FCRA',
+                    'DARPAN for NGO',
+                ],
+            },
+            {
+                title: 'Corporate Compliances',
+                items: [
+                    'ROC Annual Filings (AOC-4, MGT-7)',
+                    'Director KYC (DIR-3 KYC)',
+                    'ROC Search Certificate',
+                    'Charge Creation',
+                    'Change in Shareholding',
+                    'Change in Directorship',
+                    'Merger / Demerger / Winding Up Compliance',
+                    'Bonus / Loans / Buyback Compliance',
+                    'Share Allotment & Transfer',
+                    'Increase in Share Capital',
+                    'Change in Name, Address, Objective',
+                    'Digital Signatures (DSC Class 3)',
+                ],
             },
         ],
-        items: ['Private Limited Company', 'LLP Registration', 'OPC Registration', 'Partnership Firm', 'Udyam (MSME)', 'PAN/TAN', 'Import Export Code', 'Trade License', 'Board Resolutions', 'Shareholding Changes', 'DIN/DSC Services', 'MCA Compliances'],
-    },
-    {
-        id: 'industrial-project-advisory',
-        title: 'Industrial & Project Advisory Services',
-        iconKey: 'Factory',
-        icon: Factory,
-        columns: [
-            {
-                title: 'Plant & Machinery',
-                items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis'],
-            },
-            {
-                title: 'Project Finance',
-                items: ['DPR Preparation', 'CMA Data', 'Term Loan Assistance', 'Working Capital'],
-            },
-            {
-                title: 'Incentives & Subsidy',
-                items: ['CGTMSE Guidance', 'PMEGP Support', 'State Subsidy Advisory', 'Documentation Support'],
-            },
-        ],
-        items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis', 'DPR Preparation', 'CMA Data', 'Term Loan Assistance', 'Working Capital', 'CGTMSE Guidance', 'PMEGP Support', 'State Subsidy Advisory', 'Documentation Support'],
+        offers: [],
     },
     {
         id: 'government-portal-registrations',
-        title: 'Government Portal & Registration Services',
+        title: 'Government Portal Registrations',
         iconKey: 'Globe',
         icon: Globe,
         columns: [
             {
-                title: 'Government Portals',
-                items: ['GeM Registration', 'TReDS Registration', 'RERA Registration', 'Single Window Support'],
+                title: 'GeM (Government e-Marketplace)',
+                items: [
+                    'GeM Seller Registration',
+                    'OEM Panel Registration',
+                    'Brand Approval',
+                    'Product Listing',
+                    'Bid Participation & Tender Management',
+                ],
             },
             {
-                title: 'Licenses & Approvals',
-                items: ['Factory License', 'Pollution NOC', 'Labour Registrations', 'Professional Tax'],
+                title: 'Other Modern Platforms',
+                items: [
+                    'TReDS Registration',
+                    'RERA Registration',
+                    'AP/TS Single Window',
+                    'NPCI Registrations',
+                    'Amazon/Flipkart Seller Registration Support',
+                ],
             },
         ],
-        items: ['GeM Registration', 'TReDS Registration', 'RERA Registration', 'Single Window Support', 'Factory License', 'Pollution NOC', 'Labour Registrations', 'Professional Tax'],
+        offers: [],
     },
     {
-        id: 'startup-branding-digital',
-        title: 'Startup Support, Branding & Digital Services',
+        id: 'industrial-msme-consultancy',
+        title: 'Industrial & MSME Consultancy',
+        iconKey: 'IndianRupee',
+        icon: IndianRupee,
+        columns: [
+            {
+                title: 'Project & Finance Support',
+                items: [
+                    'DPR Preparation',
+                    'CMA Data Preparation',
+                    'Bank Loans - Term Loan + Working Capital',
+                    'CGTMSE Loan Support',
+                    'PMEGP Loan Support',
+                    'Mudra Loans',
+                    'Stand-Up India Loan Assistance',
+                ],
+            },
+            {
+                title: 'MSME & Industrial Subsidy Guidance',
+                items: [
+                    'Updated MSME & Industrial Subsidy Guidance',
+                    'CLCSS / ZED Scheme Support',
+                    'PMFME (Food Processing Units)',
+                    'NSIC Schemes',
+                    'NABARD Schemes',
+                    'Cold Chain & Food Processing Subsidy',
+                    'AP/TS State Industrial Subsidy Schemes',
+                ],
+            },
+        ],
+        offers: [],
+    },
+    {
+        id: 'branding-documentation-startup-support',
+        title: 'Branding, Documentation & Startup Support',
         iconKey: 'Lightbulb',
         icon: Lightbulb,
         columns: [
             {
-                title: 'Startup Readiness',
-                items: ['Business Plan', 'Pitch Deck', 'Go-to-Market Advisory', 'Founder Documentation'],
+                title: 'Startup Support',
+                items: [
+                    'Business Plan Preparation',
+                    'Pitch Decks for Funding',
+                    'Website & Branding Consulting',
+                    'Vendor Empanelment Documentation',
+                    'HR Policy Documentation',
+                    'SOP Creation',
+                ],
             },
             {
-                title: 'Brand & Digital Presence',
-                items: ['Website Development', 'Brand Identity', 'Digital Marketing', 'Social Presence'],
-            },
-            {
-                title: 'IP & Utility',
-                items: ['Trademark Filing', 'Copyright Support', 'PAN/TAN Applications', 'Insurance Advisory'],
+                title: 'Additional Services',
+                items: [
+                    'Loan File Documentation & Follow-up',
+                    'Insurance Services (Business, Fire, Marine)',
+                    'Digital Marketing Support',
+                    'PAN / TAN Applications',
+                    'Trademark & IP Services',
+                    'Wealth Portfolio Management',
+                ],
             },
         ],
-        items: ['Business Plan', 'Pitch Deck', 'Go-to-Market Advisory', 'Founder Documentation', 'Website Development', 'Brand Identity', 'Digital Marketing', 'Social Presence', 'Trademark Filing', 'Copyright Support', 'PAN/TAN Applications', 'Insurance Advisory'],
+        offers: [],
+    },
+    {
+        id: 'machinery-industrial-support',
+        title: 'Machinery & Industrial Support',
+        iconKey: 'Factory',
+        icon: Factory,
+        columns: [
+            {
+                title: 'Industrial Support Services',
+                items: [
+                    'Machinery Sourcing & Imports',
+                    'Vendor Identification & Supplier Verification',
+                    'Turnkey Machinery Setup Assistance',
+                    'Technology Upgradation Consulting',
+                    'Industry Selection & Feasibility Analysis',
+                ],
+            },
+        ],
+        offers: [],
     }
 ];
 
@@ -221,7 +341,8 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                 </div>
             </div>
 
-            <header className={`sticky top-0 z-50 transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg py-2' : 'bg-white border-b border-slate-100 py-4'}`}>
+            <header className={`sticky top-0 z-50 transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-xl py-2' : 'bg-white border-b border-slate-100 py-4'}`}>
+                <div className={`absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/60 to-transparent transition-opacity ${isScrolled ? 'opacity-100' : 'opacity-0'}`}></div>
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
                     <div className="flex justify-between items-center relative">
                         {/* LOGO: Points to / (Home) */}
@@ -238,7 +359,8 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
 
                         <nav className="hidden lg:flex items-center">
                             <div className="relative" onMouseLeave={() => setActiveDesktopServiceId(null)}>
-                                <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
+                                <div className="max-w-[860px] overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                                    <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 min-w-max">
                                     {menuConfig.map((service) => (
                                         <div
                                             key={service.id}
@@ -251,6 +373,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                             </button>
                                         </div>
                                     ))}
+                                    </div>
                                 </div>
 
                                 <div className={`absolute top-full left-1/2 -translate-x-1/2 w-[92vw] max-w-[1240px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_30px_80px_-25px_rgba(0,0,0,0.4)] border border-slate-200 overflow-hidden transition-all duration-300 origin-top z-50 mt-3 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
@@ -261,7 +384,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                                     <div className="p-2 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-lg shadow-md">
                                                         <activeDesktopService.icon className="w-5 h-5" />
                                                     </div>
-                                                    <h3 className="text-xl font-extrabold text-slate-900">{activeDesktopService.title}</h3>
+                                                    <h3 className="text-xl font-extrabold text-slate-900">Service Options</h3>
                                                 </div>
                                                 <p className="text-sm text-slate-500 mb-6">Explore services by specialization.</p>
                                                 <div className={`grid gap-4 ${activeDesktopService.columns.length >= 3 ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} grid-cols-1`}>
@@ -283,7 +406,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                                     ))}
                                                 </div>
                                                 <div className="mt-4">
-                                                    <a href={`/contact?service=${encodeURIComponent(activeDesktopService.title)}`} className="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wide">View all {activeDesktopService.title} services &rarr;</a>
+                                                    <a href={`/all-services?category=${encodeURIComponent(activeDesktopService.id)}`} className="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wide">View all services &rarr;</a>
                                                 </div>
                                             </div>
                                             <div className="w-[320px] bg-slate-50 p-6 border-l border-slate-100">
@@ -362,7 +485,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                                     ))}
                                                 </div>
                                             ))}
-                                            <a href={`/contact?service=${encodeURIComponent(service.title)}`} className="block text-sm font-bold text-red-600 border-l-2 border-red-200 pl-3 py-1 mt-2">
+                                            <a href={`/all-services?category=${encodeURIComponent(service.id)}`} className="block text-sm font-bold text-red-600 border-l-2 border-red-200 pl-3 py-1 mt-2">
                                                 View All Services
                                             </a>
                                             {(service.offers || []).slice(0, 1).map((offer) => (

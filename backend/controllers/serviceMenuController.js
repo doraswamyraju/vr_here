@@ -2,6 +2,15 @@ import asyncHandler from 'express-async-handler';
 import ServiceMenuConfig from '../models/ServiceMenuConfig.js';
 
 const MENU_KEY = 'header-main-menu';
+const EXPECTED_CATEGORY_IDS = [
+    'accounting-compliance-taxation',
+    'certification-quality-management',
+    'business-registration-licensing-corporate',
+    'government-portal-registrations',
+    'industrial-msme-consultancy',
+    'branding-documentation-startup-support',
+    'machinery-industrial-support',
+];
 
 const sanitizeServicesPayload = (services = []) =>
     services.map((service, idx) => ({
@@ -44,8 +53,11 @@ const getOrCreateConfig = async () => {
     const hasColumnShape = (config.services || []).some(
         (service) => Array.isArray(service.columns) && service.columns.length > 0
     );
+    const hasLatestCategorySet = EXPECTED_CATEGORY_IDS.every((id) =>
+        (config.services || []).some((service) => service.id === id)
+    );
 
-    if (!hasColumnShape) {
+    if (!hasColumnShape || !hasLatestCategorySet) {
         const defaultsDoc = new ServiceMenuConfig();
         config.services = defaultsDoc.services;
         await config.save();
