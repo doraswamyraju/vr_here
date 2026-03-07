@@ -10,8 +10,13 @@ import { MENU_DATA, getServiceLink } from './components/SharedComponents';
 // --- UTILS ---
 const getAllServices = () => {
     let services = [];
+    const extractItems = (cat) => {
+        if (Array.isArray(cat.items) && cat.items.length > 0) return cat.items;
+        if (Array.isArray(cat.columns)) return cat.columns.flatMap((col) => Array.isArray(col.items) ? col.items : []);
+        return [];
+    };
     MENU_DATA.forEach(cat => {
-        cat.items.forEach(item => {
+        extractItems(cat).forEach(item => {
             services.push({ name: item, category: cat.title, link: getServiceLink(item) });
         });
     });
