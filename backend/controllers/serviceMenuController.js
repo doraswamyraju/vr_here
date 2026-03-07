@@ -8,8 +8,20 @@ const sanitizeServicesPayload = (services = []) =>
         id: String(service.id || `service-${idx + 1}`).trim(),
         title: String(service.title || '').trim(),
         iconKey: String(service.iconKey || 'Briefcase').trim(),
-        items: Array.isArray(service.items)
-            ? service.items.map((item) => String(item).trim()).filter(Boolean)
+        columns: Array.isArray(service.columns)
+            ? service.columns
+                .map((column) => ({
+                    title: String(column.title || '').trim(),
+                    items: Array.isArray(column.items)
+                        ? column.items.map((item) => String(item).trim()).filter(Boolean)
+                        : [],
+                }))
+                .filter((column) => column.title && column.items.length > 0)
+            : Array.isArray(service.items)
+                ? [{
+                    title: 'Services',
+                    items: service.items.map((item) => String(item).trim()).filter(Boolean),
+                }]
             : [],
         offers: Array.isArray(service.offers)
             ? service.offers
@@ -26,7 +38,19 @@ const getOrCreateConfig = async () => {
     let config = await ServiceMenuConfig.findOne({ key: MENU_KEY });
     if (!config) {
         config = await ServiceMenuConfig.create({ key: MENU_KEY });
+        return config;
     }
+
+    const hasColumnShape = (config.services || []).some(
+        (service) => Array.isArray(service.columns) && service.columns.length > 0
+    );
+
+    if (!hasColumnShape) {
+        const defaultsDoc = new ServiceMenuConfig();
+        config.services = defaultsDoc.services;
+        await config.save();
+    }
+
     return config;
 };
 

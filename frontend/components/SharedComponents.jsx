@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
-    Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
+    Phone, Menu, X, ChevronDown, Clock, Award, Search,
     Mail, Users, CheckCircle
 } from 'lucide-react';
 
@@ -20,60 +20,126 @@ export const getServiceLink = (serviceName) => {
 
 export const MENU_DATA = [
     {
-        id: 'machinery',
-        title: 'Machinery & Industrial',
-        iconKey: 'Factory',
-        icon: Factory,
-        items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis']
-    },
-    {
-        id: 'iso',
-        title: 'Certification (ISO)',
-        iconKey: 'Stamp',
-        icon: Stamp,
-        items: ['ISO 9001, 14001, 45001', 'ISO 27001 (Info Sec)', 'CE Marking & FDA', 'GMP / HACCP / Halal']
-    },
-    {
-        id: 'accounting',
-        title: 'Accounting & Tax',
+        id: 'accounting-compliance-taxation',
+        title: 'Accounting, Compliance & Taxation Services',
         iconKey: 'Calculator',
         icon: Calculator,
-        items: ['Cloud Accounting', 'GST Reg & Returns', 'Income Tax Filing', 'Statutory & Tax Audits']
+        columns: [
+            {
+                title: 'Accounting-as-a-Service (AaaS)',
+                items: ['Bookkeeping & Accounting', 'Virtual CFO', 'MIS Reporting', 'Payroll Processing'],
+            },
+            {
+                title: 'Taxation & Legal Compliance',
+                items: ['GST Registration & Returns', 'Income Tax Filing', 'TDS/TCS Compliance', 'ROC Annual Filings'],
+            },
+            {
+                title: 'Audit & Assurance',
+                items: ['Statutory Audit', 'Tax Audit', 'Internal Audit', 'Compliance Health Check'],
+            },
+        ],
+        items: ['Bookkeeping & Accounting', 'Virtual CFO', 'MIS Reporting', 'Payroll Processing', 'GST Registration & Returns', 'Income Tax Filing', 'TDS/TCS Compliance', 'ROC Annual Filings', 'Statutory Audit', 'Tax Audit', 'Internal Audit', 'Compliance Health Check'],
     },
     {
-        id: 'registration',
-        title: 'Business Registration',
+        id: 'certification-quality-management',
+        title: 'Certification & Quality Management Services',
+        iconKey: 'Stamp',
+        icon: Stamp,
+        columns: [
+            {
+                title: 'ISO Management Systems',
+                items: ['ISO 9001', 'ISO 14001', 'ISO 45001', 'ISO 27001'],
+            },
+            {
+                title: 'Product & Export Certifications',
+                items: ['CE Marking', 'FDA Assistance', 'BIS Certification', 'IEC Support'],
+            },
+            {
+                title: 'Food & Pharma Standards',
+                items: ['HACCP', 'GMP', 'Halal Certification', 'FSSAI Compliance'],
+            },
+        ],
+        items: ['ISO 9001', 'ISO 14001', 'ISO 45001', 'ISO 27001', 'CE Marking', 'FDA Assistance', 'BIS Certification', 'IEC Support', 'HACCP', 'GMP', 'Halal Certification', 'FSSAI Compliance'],
+    },
+    {
+        id: 'business-registration-corporate',
+        title: 'Business Registration & Corporate Services',
         iconKey: 'Briefcase',
         icon: Briefcase,
-        items: ['Pvt Ltd / LLP / OPC', 'Section 8 (NGO)', 'Udyam (MSME)', 'FSSAI & Trade License']
+        columns: [
+            {
+                title: 'Entity Formation',
+                items: ['Private Limited Company', 'LLP Registration', 'OPC Registration', 'Partnership Firm'],
+            },
+            {
+                title: 'Regulatory Registrations',
+                items: ['Udyam (MSME)', 'PAN/TAN', 'Import Export Code', 'Trade License'],
+            },
+            {
+                title: 'Corporate Secretarial',
+                items: ['Board Resolutions', 'Shareholding Changes', 'DIN/DSC Services', 'MCA Compliances'],
+            },
+        ],
+        items: ['Private Limited Company', 'LLP Registration', 'OPC Registration', 'Partnership Firm', 'Udyam (MSME)', 'PAN/TAN', 'Import Export Code', 'Trade License', 'Board Resolutions', 'Shareholding Changes', 'DIN/DSC Services', 'MCA Compliances'],
     },
     {
-        id: 'govt',
-        title: 'Govt. Portals',
+        id: 'industrial-project-advisory',
+        title: 'Industrial & Project Advisory Services',
+        iconKey: 'Factory',
+        icon: Factory,
+        columns: [
+            {
+                title: 'Plant & Machinery',
+                items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis'],
+            },
+            {
+                title: 'Project Finance',
+                items: ['DPR Preparation', 'CMA Data', 'Term Loan Assistance', 'Working Capital'],
+            },
+            {
+                title: 'Incentives & Subsidy',
+                items: ['CGTMSE Guidance', 'PMEGP Support', 'State Subsidy Advisory', 'Documentation Support'],
+            },
+        ],
+        items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis', 'DPR Preparation', 'CMA Data', 'Term Loan Assistance', 'Working Capital', 'CGTMSE Guidance', 'PMEGP Support', 'State Subsidy Advisory', 'Documentation Support'],
+    },
+    {
+        id: 'government-portal-registrations',
+        title: 'Government Portal & Registration Services',
         iconKey: 'Globe',
         icon: Globe,
-        items: ['GeM Seller/OEM Reg', 'TReDS Registration', 'RERA Registration', 'Import Export Code']
+        columns: [
+            {
+                title: 'Government Portals',
+                items: ['GeM Registration', 'TReDS Registration', 'RERA Registration', 'Single Window Support'],
+            },
+            {
+                title: 'Licenses & Approvals',
+                items: ['Factory License', 'Pollution NOC', 'Labour Registrations', 'Professional Tax'],
+            },
+        ],
+        items: ['GeM Registration', 'TReDS Registration', 'RERA Registration', 'Single Window Support', 'Factory License', 'Pollution NOC', 'Labour Registrations', 'Professional Tax'],
     },
     {
-        id: 'msme',
-        title: 'Industrial Consultancy',
-        iconKey: 'IndianRupee',
-        icon: IndianRupee,
-        items: ['Project Reports (DPR)', 'Term Loans & WC', 'CGTMSE & PMEGP', 'Subsidy Guidance']
-    },
-    {
-        id: 'branding',
-        title: 'Startup Support',
+        id: 'startup-branding-digital',
+        title: 'Startup Support, Branding & Digital Services',
         iconKey: 'Lightbulb',
         icon: Lightbulb,
-        items: ['Business Plans', 'Pitch Decks', 'Website & Branding', 'HR Policy & SOPs']
-    },
-    {
-        id: 'utility',
-        title: 'Utility Services',
-        iconKey: 'MoreHorizontal',
-        icon: MoreHorizontal,
-        items: ['Trademark & IP', 'PAN / TAN Apps', 'Insurance Services', 'Digital Marketing']
+        columns: [
+            {
+                title: 'Startup Readiness',
+                items: ['Business Plan', 'Pitch Deck', 'Go-to-Market Advisory', 'Founder Documentation'],
+            },
+            {
+                title: 'Brand & Digital Presence',
+                items: ['Website Development', 'Brand Identity', 'Digital Marketing', 'Social Presence'],
+            },
+            {
+                title: 'IP & Utility',
+                items: ['Trademark Filing', 'Copyright Support', 'PAN/TAN Applications', 'Insurance Advisory'],
+            },
+        ],
+        items: ['Business Plan', 'Pitch Deck', 'Go-to-Market Advisory', 'Founder Documentation', 'Website Development', 'Brand Identity', 'Digital Marketing', 'Social Presence', 'Trademark Filing', 'Copyright Support', 'PAN/TAN Applications', 'Insurance Advisory'],
     }
 ];
 
@@ -92,6 +158,11 @@ const normalizeServiceConfig = (services = []) => services.map((service) => ({
     ...service,
     iconKey: service.iconKey || 'Briefcase',
     icon: ICON_MAP[service.iconKey] || Briefcase,
+    columns: Array.isArray(service.columns)
+        ? service.columns
+        : Array.isArray(service.items)
+            ? [{ title: 'Services', items: service.items }]
+            : [],
     offers: Array.isArray(service.offers) ? service.offers : [],
 }));
 
@@ -165,17 +236,16 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                             </div>
                         </a>
 
-                        <nav className="hidden lg:flex items-center space-x-1">
-                            <a href="/" className="px-4 py-2 text-sm font-bold text-slate-700 hover:text-red-600 rounded-full hover:bg-red-50 transition-all duration-300 hover:scale-105">Home</a>
+                        <nav className="hidden lg:flex items-center">
                             <div className="relative" onMouseLeave={() => setActiveDesktopServiceId(null)}>
-                                <div className="flex items-center">
+                                <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
                                     {menuConfig.map((service) => (
                                         <div
                                             key={service.id}
-                                            className="relative px-0.5 py-4"
+                                            className="relative"
                                             onMouseEnter={() => setActiveDesktopServiceId(service.id)}
                                         >
-                                            <button className={`flex items-center px-3 py-2 text-sm font-bold rounded-full transition-all duration-300 ${activeDesktopServiceId === service.id ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-700 hover:text-red-600 hover:bg-red-50'}`}>
+                                            <button className={`flex items-center px-3 py-2 text-[13px] font-bold rounded-xl transition-all duration-300 ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
                                                 {service.title}
                                                 <ChevronDown className={`ml-1 w-4 h-4 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
                                             </button>
@@ -183,26 +253,33 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                     ))}
                                 </div>
 
-                                <div className={`absolute top-full left-1/2 -translate-x-1/2 w-[90vw] max-w-[1120px] bg-white rounded-2xl shadow-2xl border-t-4 border-red-600 overflow-hidden transition-all duration-300 origin-top z-50 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
+                                <div className={`absolute top-full left-1/2 -translate-x-1/2 w-[92vw] max-w-[1240px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_30px_80px_-25px_rgba(0,0,0,0.4)] border border-slate-200 overflow-hidden transition-all duration-300 origin-top z-50 mt-3 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
                                     {activeDesktopService && (
-                                        <div className="flex min-h-[330px]">
-                                            <div className="flex-1 p-8 bg-white">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <div className="p-2 bg-red-50 text-red-600 rounded-lg">
+                                        <div className="flex min-h-[360px]">
+                                            <div className="flex-1 p-8 bg-gradient-to-br from-white via-white to-slate-50">
+                                                <div className="flex items-center gap-3 mb-5">
+                                                    <div className="p-2 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-lg shadow-md">
                                                         <activeDesktopService.icon className="w-5 h-5" />
                                                     </div>
                                                     <h3 className="text-xl font-extrabold text-slate-900">{activeDesktopService.title}</h3>
                                                 </div>
-                                                <p className="text-sm text-slate-500 mb-5">Pick a sub-service and continue with quick onboarding.</p>
-                                                <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-                                                    {activeDesktopService.items.map((item, i) => (
-                                                        <a
-                                                            href={getServiceLink(item)}
-                                                            key={`${activeDesktopService.id}-${i}`}
-                                                            className="text-sm font-semibold text-slate-700 border border-slate-200 rounded-lg px-3 py-2 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
-                                                        >
-                                                            {item}
-                                                        </a>
+                                                <p className="text-sm text-slate-500 mb-6">Explore services by specialization.</p>
+                                                <div className={`grid gap-4 ${activeDesktopService.columns.length >= 3 ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} grid-cols-1`}>
+                                                    {activeDesktopService.columns.map((column, columnIndex) => (
+                                                        <div key={`${activeDesktopService.id}-col-${columnIndex}`} className="rounded-xl border border-slate-200 bg-white p-4 hover:border-red-200 hover:shadow-lg hover:shadow-red-100/40 transition-all">
+                                                            <h4 className="text-sm font-extrabold text-slate-800 mb-3">{column.title}</h4>
+                                                            <div className="space-y-2">
+                                                                {(column.items || []).map((item, i) => (
+                                                                    <a
+                                                                        href={getServiceLink(item)}
+                                                                        key={`${activeDesktopService.id}-${columnIndex}-${i}`}
+                                                                        className="block text-sm font-medium text-slate-600 hover:text-red-600 transition-colors"
+                                                                    >
+                                                                        {item}
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </div>
                                                     ))}
                                                 </div>
                                                 <div className="mt-4">
@@ -212,11 +289,10 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                             <div className="w-[320px] bg-slate-50 p-6 border-l border-slate-100">
                                                 <div className="flex items-center justify-between mb-3">
                                                     <h4 className="text-sm font-black text-slate-900">Latest Offers</h4>
-                                                    <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Admin Managed</span>
                                                 </div>
                                                 <div className="space-y-3">
                                                     {(activeDesktopService.offers || []).slice(0, 2).map((offer) => (
-                                                        <a key={offer._id || `${offer.title}-${offer.imageUrl}`} href={offer.ctaLink || '/contact'} className="block overflow-hidden rounded-xl border border-slate-200 bg-white hover:shadow-lg transition-shadow">
+                                                        <a key={offer._id || `${offer.title}-${offer.imageUrl}`} href={offer.ctaLink || '/contact'} className="block overflow-hidden rounded-xl border border-slate-200 bg-white hover:shadow-xl hover:-translate-y-0.5 transition-all">
                                                             <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover" />
                                                             <div className="p-3">
                                                                 <div className="text-sm font-bold text-slate-800 line-clamp-2">{offer.title}</div>
@@ -226,7 +302,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                                     ))}
                                                     {(!activeDesktopService.offers || activeDesktopService.offers.length === 0) && (
                                                         <div className="text-xs text-slate-500 bg-white border border-dashed border-slate-300 rounded-xl px-3 py-4">
-                                                            No offers configured yet. Add offer images from Admin Dashboard.
+                                                            Latest offers will appear here soon.
                                                         </div>
                                                     )}
                                                 </div>
@@ -260,9 +336,8 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                     <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 rounded-full hover:bg-red-100 hover:text-red-600 transition"><X className="w-6 h-6" /></button>
                 </div>
                 <div className="p-4 space-y-1">
-                    <a href="/" className="block w-full text-left px-4 py-3 text-lg font-bold text-slate-800 hover:bg-slate-50 rounded-xl">Home</a>
                     <div className="border rounded-xl overflow-hidden border-slate-100 my-2">
-                        <div className="bg-slate-50 px-4 py-3 font-bold text-lg flex justify-between items-center text-slate-900">Services <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{menuConfig.length} Cats</span></div>
+                        <div className="bg-slate-50 px-4 py-3 font-bold text-lg flex justify-between items-center text-slate-900">Services <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{menuConfig.length} Tabs</span></div>
                         <div className="divide-y divide-slate-100">
                             {menuConfig.map((service) => (
                                 <div key={service.id} className="bg-white">
@@ -277,10 +352,15 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                     </button>
                                     {activeMobileCategory === service.id && (
                                         <div className="bg-slate-50 px-4 pb-4 pt-2 space-y-2 pl-14 animate-fade-in">
-                                            {service.items.map((item, i) => (
-                                                <a href={getServiceLink(item)} key={i} className="block text-sm text-slate-600 border-l-2 border-slate-200 pl-3 py-1 active:text-red-600 hover:text-red-600">
-                                                    {item}
-                                                </a>
+                                            {service.columns.map((column, colIdx) => (
+                                                <div key={`${service.id}-mobile-col-${colIdx}`} className="mb-3">
+                                                    <div className="text-xs font-black uppercase tracking-wider text-slate-800 mb-1">{column.title}</div>
+                                                    {(column.items || []).map((item, i) => (
+                                                        <a href={getServiceLink(item)} key={`${service.id}-${colIdx}-${i}`} className="block text-sm text-slate-600 border-l-2 border-slate-200 pl-3 py-1 active:text-red-600 hover:text-red-600">
+                                                            {item}
+                                                        </a>
+                                                    ))}
+                                                </div>
                                             ))}
                                             <a href={`/contact?service=${encodeURIComponent(service.title)}`} className="block text-sm font-bold text-red-600 border-l-2 border-red-200 pl-3 py-1 mt-2">
                                                 View All Services

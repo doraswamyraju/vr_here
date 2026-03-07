@@ -8,8 +8,19 @@ const toEditableSeed = () =>
         id: service.id,
         title: service.title,
         iconKey: service.iconKey || 'Briefcase',
-        items: service.items || [],
+        columns: Array.isArray(service.columns) ? service.columns : [],
         offers: [],
+    }));
+
+const normalizeServices = (services = []) =>
+    services.map((service) => ({
+        ...service,
+        columns: Array.isArray(service.columns)
+            ? service.columns
+            : Array.isArray(service.items)
+                ? [{ title: 'Services', items: service.items }]
+                : [],
+        offers: Array.isArray(service.offers) ? service.offers : [],
     }));
 
 const ServicesMasterView = ({ token }) => {
@@ -31,7 +42,7 @@ const ServicesMasterView = ({ token }) => {
         try {
             const { data } = await axios.get('/api/services/header-config');
             if (Array.isArray(data?.services) && data.services.length > 0) {
-                setServices(data.services);
+                setServices(normalizeServices(data.services));
             }
         } catch (error) {
             console.error('Failed to load services header config', error);
@@ -50,16 +61,26 @@ const ServicesMasterView = ({ token }) => {
         try {
             const payload = {
                 services: services.map((service) => ({
-                    ...service,
-                    items: (service.items || []).map((item) => item.trim()).filter(Boolean),
-                    offers: (service.offers || []).map((offer) => ({
-                        ...offer,
-                        title: (offer.title || '').trim(),
-                        imageUrl: (offer.imageUrl || '').trim(),
-                        ctaLink: (offer.ctaLink || '/contact').trim(),
-                    })).filter((offer) => offer.title && offer.imageUrl),
-                })),
+                    id: (service.id || '').trim(),
+                    title: (service.title || '').trim(),
+                    iconKey: (service.iconKey || 'Briefcase').trim(),
+                    columns: (service.columns || [])
+                        .map((column) => ({
+                            title: (column.title || '').trim(),
+                            items: (column.items || []).map((item) => item.trim()).filter(Boolean),
+                        }))
+                        .filter((column) => column.title && column.items.length > 0),
+                    offers: (service.offers || [])
+                        .map((offer) => ({
+                            ...offer,
+                            title: (offer.title || '').trim(),
+                            imageUrl: (offer.imageUrl || '').trim(),
+                            ctaLink: (offer.ctaLink || '/contact').trim(),
+                        }))
+                        .filter((offer) => offer.title && offer.imageUrl),
+                })).filter((service) => service.id && service.title),
             };
+
             await axios.put('/api/services/header-config', payload, authConfig);
             setMessage('Services menu updated successfully.');
             await fetchConfig();
@@ -118,7 +139,7 @@ const ServicesMasterView = ({ token }) => {
             <div className="mb-6 flex items-center justify-between">
                 <div className="text-left">
                     <h2 className="text-2xl font-bold text-slate-800">Services Master</h2>
-                    <p className="text-slate-500">Header main services, sub-services, and latest offer images.</p>
+                    <p className="text-slate-500">Manage header tabs, dropdown columns, and latest offers.</p>
                 </div>
                 <button
                     onClick={saveAll}
@@ -138,64 +159,125 @@ const ServicesMasterView = ({ token }) => {
 
             <div className="space-y-5">
                 {services.map((service, serviceIndex) => (
-                    <div key={service.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                    <div key={service.id || serviceIndex} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                         <div className="grid md:grid-cols-3 gap-4 mb-4">
                             <input
                                 value={service.title}
                                 onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, title: e.target.value }))}
                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold"
-                                placeholder="Main service title"
+                                placeholder="Main tab title"
                             />
                             <input
                                 value={service.id}
                                 onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, id: e.target.value }))}
                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                placeholder="service id"
+                                placeholder="tab id"
                             />
                             <input
                                 value={service.iconKey || ''}
                                 onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, iconKey: e.target.value }))}
                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                placeholder="Icon key (Factory, Briefcase...)"
+                                placeholder="Icon key"
                             />
                         </div>
 
                         <div className="grid lg:grid-cols-2 gap-6">
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <h3 className="font-bold text-slate-800">Sub-services</h3>
+                                    <h3 className="font-bold text-slate-800">Dropdown Columns</h3>
                                     <button
-                                        onClick={() => updateService(serviceIndex, (s) => ({ ...s, items: [...(s.items || []), ''] }))}
+                                        onClick={() =>
+                                            updateService(serviceIndex, (s) => ({
+                                                ...s,
+                                                columns: [...(s.columns || []), { title: '', items: [''] }],
+                                            }))
+                                        }
                                         className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
                                     >
-                                        <Plus className="w-3 h-3" /> Add
+                                        <Plus className="w-3 h-3" /> Add Column
                                     </button>
                                 </div>
-                                <div className="space-y-2">
-                                    {(service.items || []).map((item, itemIndex) => (
-                                        <div key={`${service.id}-item-${itemIndex}`} className="flex gap-2">
-                                            <input
-                                                value={item}
-                                                onChange={(e) =>
-                                                    updateService(serviceIndex, (s) => ({
-                                                        ...s,
-                                                        items: (s.items || []).map((x, idx) => (idx === itemIndex ? e.target.value : x)),
-                                                    }))
-                                                }
-                                                className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                                placeholder="Sub-service name"
-                                            />
-                                            <button
-                                                onClick={() =>
-                                                    updateService(serviceIndex, (s) => ({
-                                                        ...s,
-                                                        items: (s.items || []).filter((_, idx) => idx !== itemIndex),
-                                                    }))
-                                                }
-                                                className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+
+                                <div className="space-y-3">
+                                    {(service.columns || []).map((column, colIndex) => (
+                                        <div key={`${service.id}-col-${colIndex}`} className="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                                            <div className="flex gap-2 mb-2">
+                                                <input
+                                                    value={column.title || ''}
+                                                    onChange={(e) =>
+                                                        updateService(serviceIndex, (s) => ({
+                                                            ...s,
+                                                            columns: (s.columns || []).map((c, idx) => (idx === colIndex ? { ...c, title: e.target.value } : c)),
+                                                        }))
+                                                    }
+                                                    className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold"
+                                                    placeholder="Column title"
+                                                />
+                                                <button
+                                                    onClick={() =>
+                                                        updateService(serviceIndex, (s) => ({
+                                                            ...s,
+                                                            columns: (s.columns || []).filter((_, idx) => idx !== colIndex),
+                                                        }))
+                                                    }
+                                                    className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                {(column.items || []).map((item, itemIndex) => (
+                                                    <div key={`${service.id}-col-${colIndex}-item-${itemIndex}`} className="flex gap-2">
+                                                        <input
+                                                            value={item}
+                                                            onChange={(e) =>
+                                                                updateService(serviceIndex, (s) => ({
+                                                                    ...s,
+                                                                    columns: (s.columns || []).map((c, idx) =>
+                                                                        idx !== colIndex
+                                                                            ? c
+                                                                            : {
+                                                                                ...c,
+                                                                                items: (c.items || []).map((x, innerIdx) => (innerIdx === itemIndex ? e.target.value : x)),
+                                                                            }
+                                                                    ),
+                                                                }))
+                                                            }
+                                                            className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                                            placeholder="Service name"
+                                                        />
+                                                        <button
+                                                            onClick={() =>
+                                                                updateService(serviceIndex, (s) => ({
+                                                                    ...s,
+                                                                    columns: (s.columns || []).map((c, idx) =>
+                                                                        idx !== colIndex
+                                                                            ? c
+                                                                            : { ...c, items: (c.items || []).filter((_, innerIdx) => innerIdx !== itemIndex) }
+                                                                    ),
+                                                                }))
+                                                            }
+                                                            className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    onClick={() =>
+                                                        updateService(serviceIndex, (s) => ({
+                                                            ...s,
+                                                            columns: (s.columns || []).map((c, idx) =>
+                                                                idx !== colIndex ? c : { ...c, items: [...(c.items || []), ''] }
+                                                            ),
+                                                        }))
+                                                    }
+                                                    className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
+                                                >
+                                                    <Plus className="w-3 h-3" /> Add Service
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

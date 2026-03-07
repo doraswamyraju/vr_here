@@ -9,12 +9,21 @@ const offerSchema = new mongoose.Schema(
     { _id: true }
 );
 
+const columnSchema = new mongoose.Schema(
+    {
+        title: { type: String, required: true, trim: true },
+        items: [{ type: String, required: true, trim: true }],
+    },
+    { _id: false }
+);
+
 const serviceMenuItemSchema = new mongoose.Schema(
     {
         id: { type: String, required: true, trim: true },
         title: { type: String, required: true, trim: true },
         iconKey: { type: String, required: true, trim: true },
-        items: [{ type: String, required: true, trim: true }],
+        items: [{ type: String, trim: true }], // legacy fallback
+        columns: { type: [columnSchema], default: [] },
         offers: [offerSchema],
     },
     { _id: false }
@@ -27,23 +36,49 @@ const serviceMenuConfigSchema = new mongoose.Schema(
             type: [serviceMenuItemSchema],
             default: [
                 {
-                    id: 'machinery',
-                    title: 'Machinery & Industrial',
-                    iconKey: 'Factory',
-                    items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis'],
+                    id: 'accounting-compliance-taxation',
+                    title: 'Accounting, Compliance & Taxation Services',
+                    iconKey: 'Calculator',
+                    columns: [
+                        {
+                            title: 'Accounting-as-a-Service (AaaS)',
+                            items: ['Bookkeeping & Accounting', 'Virtual CFO', 'MIS Reporting', 'Payroll Processing'],
+                        },
+                        {
+                            title: 'Taxation & Legal Compliance',
+                            items: ['GST Registration & Returns', 'Income Tax Filing', 'TDS/TCS Compliance', 'ROC Annual Filings'],
+                        },
+                        {
+                            title: 'Audit & Assurance',
+                            items: ['Statutory Audit', 'Tax Audit', 'Internal Audit', 'Compliance Health Check'],
+                        },
+                    ],
                     offers: [
                         {
-                            title: 'Factory Setup Package',
-                            imageUrl: 'https://images.unsplash.com/photo-1565608087341-404b25492fee?auto=format&fit=crop&w=1200&q=80',
-                            ctaLink: '/contact?service=Factory%20Setup%20Package',
+                            title: 'Quarterly Compliance Bundle',
+                            imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80',
+                            ctaLink: '/contact?service=Quarterly%20Compliance%20Bundle',
                         },
                     ],
                 },
                 {
-                    id: 'iso',
-                    title: 'Certification (ISO)',
+                    id: 'certification-quality-management',
+                    title: 'Certification & Quality Management Services',
                     iconKey: 'Stamp',
-                    items: ['ISO 9001, 14001, 45001', 'ISO 27001 (Info Sec)', 'CE Marking & FDA', 'GMP / HACCP / Halal'],
+                    columns: [
+                        {
+                            title: 'ISO Management Systems',
+                            items: ['ISO 9001', 'ISO 14001', 'ISO 45001', 'ISO 27001'],
+                        },
+                        {
+                            title: 'Product & Export Certifications',
+                            items: ['CE Marking', 'FDA Assistance', 'BIS Certification', 'IEC Support'],
+                        },
+                        {
+                            title: 'Food & Pharma Standards',
+                            items: ['HACCP', 'GMP', 'Halal Certification', 'FSSAI Compliance'],
+                        },
+                    ],
                     offers: [
                         {
                             title: 'ISO Combo Offer',
@@ -53,23 +88,23 @@ const serviceMenuConfigSchema = new mongoose.Schema(
                     ],
                 },
                 {
-                    id: 'accounting',
-                    title: 'Accounting & Tax',
-                    iconKey: 'Calculator',
-                    items: ['Cloud Accounting', 'GST Reg & Returns', 'Income Tax Filing', 'Statutory & Tax Audits'],
-                    offers: [
+                    id: 'business-registration-corporate',
+                    title: 'Business Registration & Corporate Services',
+                    iconKey: 'Briefcase',
+                    columns: [
                         {
-                            title: 'Quarterly GST Plan',
-                            imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80',
-                            ctaLink: '/contact?service=Quarterly%20GST%20Plan',
+                            title: 'Entity Formation',
+                            items: ['Private Limited Company', 'LLP Registration', 'OPC Registration', 'Partnership Firm'],
+                        },
+                        {
+                            title: 'Regulatory Registrations',
+                            items: ['Udyam (MSME)', 'PAN/TAN', 'Import Export Code', 'Trade License'],
+                        },
+                        {
+                            title: 'Corporate Secretarial',
+                            items: ['Board Resolutions', 'Shareholding Changes', 'DIN/DSC Services', 'MCA Compliances'],
                         },
                     ],
-                },
-                {
-                    id: 'registration',
-                    title: 'Business Registration',
-                    iconKey: 'Briefcase',
-                    items: ['Pvt Ltd / LLP / OPC', 'Section 8 (NGO)', 'Udyam (MSME)', 'FSSAI & Trade License'],
                     offers: [
                         {
                             title: 'Startup Launch Offer',
@@ -79,10 +114,45 @@ const serviceMenuConfigSchema = new mongoose.Schema(
                     ],
                 },
                 {
-                    id: 'govt',
-                    title: 'Govt. Portals',
+                    id: 'industrial-project-advisory',
+                    title: 'Industrial & Project Advisory Services',
+                    iconKey: 'Factory',
+                    columns: [
+                        {
+                            title: 'Plant & Machinery',
+                            items: ['Machinery Sourcing', 'Vendor Verification', 'Turnkey Setup', 'Feasibility Analysis'],
+                        },
+                        {
+                            title: 'Project Finance',
+                            items: ['DPR Preparation', 'CMA Data', 'Term Loan Assistance', 'Working Capital'],
+                        },
+                        {
+                            title: 'Incentives & Subsidy',
+                            items: ['CGTMSE Guidance', 'PMEGP Support', 'State Subsidy Advisory', 'Documentation Support'],
+                        },
+                    ],
+                    offers: [
+                        {
+                            title: 'Factory Setup Package',
+                            imageUrl: 'https://images.unsplash.com/photo-1565608087341-404b25492fee?auto=format&fit=crop&w=1200&q=80',
+                            ctaLink: '/contact?service=Factory%20Setup%20Package',
+                        },
+                    ],
+                },
+                {
+                    id: 'government-portal-registrations',
+                    title: 'Government Portal & Registration Services',
                     iconKey: 'Globe',
-                    items: ['GeM Seller/OEM Reg', 'TReDS Registration', 'RERA Registration', 'Import Export Code'],
+                    columns: [
+                        {
+                            title: 'Government Portals',
+                            items: ['GeM Registration', 'TReDS Registration', 'RERA Registration', 'Single Window Support'],
+                        },
+                        {
+                            title: 'Licenses & Approvals',
+                            items: ['Factory License', 'Pollution NOC', 'Labour Registrations', 'Professional Tax'],
+                        },
+                    ],
                     offers: [
                         {
                             title: 'GeM Fast Track',
@@ -92,41 +162,28 @@ const serviceMenuConfigSchema = new mongoose.Schema(
                     ],
                 },
                 {
-                    id: 'msme',
-                    title: 'Industrial Consultancy',
-                    iconKey: 'IndianRupee',
-                    items: ['Project Reports (DPR)', 'Term Loans & WC', 'CGTMSE & PMEGP', 'Subsidy Guidance'],
-                    offers: [
+                    id: 'startup-branding-digital',
+                    title: 'Startup Support, Branding & Digital Services',
+                    iconKey: 'Lightbulb',
+                    columns: [
                         {
-                            title: 'MSME Loan Assist',
-                            imageUrl: 'https://images.unsplash.com/photo-1593672715438-d88a70629abe?auto=format&fit=crop&w=1200&q=80',
-                            ctaLink: '/contact?service=MSME%20Loan%20Assist',
+                            title: 'Startup Readiness',
+                            items: ['Business Plan', 'Pitch Deck', 'Go-to-Market Advisory', 'Founder Documentation'],
+                        },
+                        {
+                            title: 'Brand & Digital Presence',
+                            items: ['Website Development', 'Brand Identity', 'Digital Marketing', 'Social Presence'],
+                        },
+                        {
+                            title: 'IP & Utility',
+                            items: ['Trademark Filing', 'Copyright Support', 'PAN/TAN Applications', 'Insurance Advisory'],
                         },
                     ],
-                },
-                {
-                    id: 'branding',
-                    title: 'Startup Support',
-                    iconKey: 'Lightbulb',
-                    items: ['Business Plans', 'Pitch Decks', 'Website & Branding', 'HR Policy & SOPs'],
                     offers: [
                         {
                             title: 'Founder Branding Pack',
                             imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
                             ctaLink: '/contact?service=Founder%20Branding%20Pack',
-                        },
-                    ],
-                },
-                {
-                    id: 'utility',
-                    title: 'Utility Services',
-                    iconKey: 'MoreHorizontal',
-                    items: ['Trademark & IP', 'PAN / TAN Apps', 'Insurance Services', 'Digital Marketing'],
-                    offers: [
-                        {
-                            title: 'Trademark Filing Deal',
-                            imageUrl: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80',
-                            ctaLink: '/contact?service=Trademark%20Filing%20Deal',
                         },
                     ],
                 },

@@ -15,7 +15,15 @@ The workflow for deploying live changes to this VPS is:
     chmod -R +x node_modules/.bin
     npm run build
     pm2 restart ecosystem.config.cjs --env production
+    pm2 save
     ```
+
+## Mandatory response format (for Codex)
+- After **every completed change request**, always provide:
+  1. Local git commands (`git add`, `git commit`, `git push`)
+  2. VPS deploy commands (`git pull`, `npm run build`, `pm2 restart`, `pm2 save`)
+- Do not skip these command blocks, even if not explicitly asked again.
+- Keep commands copy-paste ready.
 
 ### Important Notes
 - **Process Name**: Always use **`vrhere-api`** (configured in `ecosystem.config.cjs`).
