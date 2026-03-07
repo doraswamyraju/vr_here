@@ -284,6 +284,29 @@ const TAB_LABEL_LINES = {
     'branding-documentation-startup-support': ['Branding &', 'Startup', 'Support'],
     'machinery-industrial-support': ['Machinery &', 'Industrial', 'Support'],
 };
+const SAMPLE_OFFERS_BY_CATEGORY = {
+    'accounting-compliance-taxation': [
+        { title: 'GST + ITR Combo Offer', imageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=GST%20and%20ITR%20Combo' },
+    ],
+    'certification-quality-management': [
+        { title: 'ISO Certification Starter Pack', imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=ISO%20Starter%20Pack' },
+    ],
+    'business-registration-licensing-corporate': [
+        { title: 'Private Limited Launch Deal', imageUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=1200&q=80', ctaLink: '/pvt-ltd-registration' },
+    ],
+    'government-portal-registrations': [
+        { title: 'GeM Fast-Track Enrollment', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=GeM%20Fast%20Track' },
+    ],
+    'industrial-msme-consultancy': [
+        { title: 'MSME Loan Support Offer', imageUrl: 'https://images.unsplash.com/photo-1593672715438-d88a70629abe?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=MSME%20Loan%20Support' },
+    ],
+    'branding-documentation-startup-support': [
+        { title: 'Startup Branding Booster', imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=Startup%20Branding%20Booster' },
+    ],
+    'machinery-industrial-support': [
+        { title: 'Factory Setup Advantage', imageUrl: 'https://images.unsplash.com/photo-1565608087341-404b25492fee?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=Factory%20Setup%20Advantage' },
+    ],
+};
 
 const normalizeServiceConfig = (services = []) => services.map((service) => ({
     ...service,
@@ -345,6 +368,10 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
     }, []);
 
     const activeDesktopService = menuConfig.find((service) => service.id === activeDesktopServiceId);
+    const activeDesktopOffers =
+        activeDesktopService && Array.isArray(activeDesktopService.offers) && activeDesktopService.offers.length > 0
+            ? activeDesktopService.offers
+            : SAMPLE_OFFERS_BY_CATEGORY[activeDesktopService?.id] || [];
 
     return (
         <>
@@ -433,7 +460,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                                     <h4 className="text-sm font-black text-slate-900">Latest Offers</h4>
                                                 </div>
                                                 <div className="space-y-3">
-                                                    {(activeDesktopService.offers || []).slice(0, 2).map((offer) => (
+                                                    {activeDesktopOffers.slice(0, 2).map((offer) => (
                                                         <a key={offer._id || `${offer.title}-${offer.imageUrl}`} href={offer.ctaLink || '/contact'} className="block overflow-hidden rounded-xl border border-slate-200 bg-white hover:shadow-xl hover:-translate-y-0.5 transition-all">
                                                             <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover" />
                                                             <div className="p-3">
@@ -442,7 +469,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                                             </div>
                                                         </a>
                                                     ))}
-                                                    {(!activeDesktopService.offers || activeDesktopService.offers.length === 0) && (
+                                                    {activeDesktopOffers.length === 0 && (
                                                         <div className="text-xs text-slate-500 bg-white border border-dashed border-slate-300 rounded-xl px-3 py-4">
                                                             Latest offers will appear here soon.
                                                         </div>
@@ -508,7 +535,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                             <a href={`/all-services?category=${encodeURIComponent(service.id)}`} className="block text-sm font-bold text-red-600 border-l-2 border-red-200 pl-3 py-1 mt-2">
                                                 View All Services
                                             </a>
-                                            {(service.offers || []).slice(0, 1).map((offer) => (
+                                            {((Array.isArray(service.offers) && service.offers.length > 0 ? service.offers : SAMPLE_OFFERS_BY_CATEGORY[service.id] || [])).slice(0, 1).map((offer) => (
                                                 <a key={offer._id || offer.title} href={offer.ctaLink || '/contact'} className="block border rounded-lg border-slate-200 overflow-hidden bg-white mt-3">
                                                     <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover" />
                                                     <div className="p-2 text-xs font-semibold text-slate-700">{offer.title}</div>
