@@ -14,68 +14,60 @@ import { SharedHeader, SharedFooter } from './components/SharedComponents';
 /* --- DATA FOR HOMEPAGE SERVICE GRID --- */
 const SERVICES_GRID_DATA = [
   {
-    id: 'registration',
-    title: 'Start Business',
+    id: 'accounting-compliance-taxation',
+    title: 'Accounting, Compliance & Taxation',
+    icon: Calculator,
+    color: 'bg-red-50 text-red-600',
+    description: 'AaaS, GST, ITR, TDS/TCS, Audit services',
+    link: '/all-services?category=accounting-compliance-taxation'
+  },
+  {
+    id: 'certification-quality-management',
+    title: 'Certification & Quality Management',
+    icon: Stamp,
+    color: 'bg-blue-50 text-blue-600',
+    description: 'ISO, GMP/HACCP, CE, BIS, Halal and more',
+    link: '/all-services?category=certification-quality-management'
+  },
+  {
+    id: 'business-registration-licensing-corporate',
+    title: 'Business Registrations & Corporate',
     icon: Briefcase,
     color: 'bg-red-50 text-red-600',
-    description: 'Pvt Ltd, LLP, Section 8, FSSAI, Trade License',
-    link: '/pvt-ltd-registration'
+    description: 'Company setup, licenses, ROC and secretarial',
+    link: '/all-services?category=business-registration-licensing-corporate'
   },
   {
-    id: 'machinery',
-    title: 'Machinery & Industrial',
-    icon: Factory,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'Sourcing, Vendor Verification, Turnkey Setup',
-    link: '/contact?service=Machinery'
-  },
-  {
-    id: 'iso',
-    title: 'Certifications',
-    icon: Stamp,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'ISO 9001, FDA, CE, BIS, HACCP, Halal',
-    link: '/contact?service=ISO'
-  },
-  {
-    id: 'accounting',
-    title: 'Accounting & Tax',
-    icon: Calculator,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'GST Returns, Income Tax, Audits, RoC Filings',
-    link: '/gst-registration'
-  },
-  {
-    id: 'govt',
-    title: 'Govt Portals',
+    id: 'government-portal-registrations',
+    title: 'Government Portal Registrations',
     icon: Globe,
     color: 'bg-slate-100 text-slate-700',
-    description: 'GeM, TReDS, RERA, Import Export Code',
-    link: '/contact?service=Govt Portals'
+    description: 'GeM, TReDS, RERA, AP/TS single-window',
+    link: '/all-services?category=government-portal-registrations'
   },
   {
-    id: 'msme',
-    title: 'Industrial Consultancy',
+    id: 'industrial-msme-consultancy',
+    title: 'Industrial & MSME Consultancy',
     icon: IndianRupee,
     color: 'bg-slate-100 text-slate-700',
-    description: 'Project Reports (DPR), Loans, Subsidies',
-    link: '/contact?service=Loans'
+    description: 'DPR, CMA, loans, subsidy and scheme guidance',
+    link: '/all-services?category=industrial-msme-consultancy'
   },
   {
-    id: 'branding',
-    title: 'Startup Support',
+    id: 'branding-documentation-startup-support',
+    title: 'Branding & Startup Support',
     icon: Lightbulb,
     color: 'bg-slate-100 text-slate-700',
-    description: 'Business Plans, Pitch Decks, Branding, IP',
-    link: '/contact?service=Startup Support'
+    description: 'Business plans, branding, SOPs, documentation',
+    link: '/all-services?category=branding-documentation-startup-support'
   },
   {
-    id: 'utility',
-    title: 'Utility Services',
-    icon: MoreHorizontal,
+    id: 'machinery-industrial-support',
+    title: 'Machinery & Industrial Support',
+    icon: Factory,
     color: 'bg-slate-100 text-slate-700',
-    description: 'Trademark, PAN/TAN, Insurance, Digital Marketing',
-    link: '/contact?service=Utility Services'
+    description: 'Sourcing, verification, turnkey setup, feasibility',
+    link: '/all-services?category=machinery-industrial-support'
   }
 ];
 
@@ -391,7 +383,7 @@ const HomePage = () => {
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
           <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/80 text-xs font-bold mb-8 uppercase tracking-widest animate-fade-in">
-            <span className="text-red-500 mr-2">●</span> Trusted by 5000+ Businesses
+            <span className="text-red-500 mr-2">●</span> Trusted by 1000+ Businesses
           </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-8">
             Build Your Business.<br />
@@ -491,11 +483,11 @@ const HomePage = () => {
       <div className="bg-black border-y border-slate-800 relative z-20">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-800 text-center">
           <div className="py-6">
-            <div className="text-red-500 text-3xl font-black">5000+</div>
+            <div className="text-red-500 text-3xl font-black">1000+</div>
             <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Clients Served</div>
           </div>
           <div className="py-6">
-            <div className="text-red-500 text-3xl font-black">₹100Cr+</div>
+            <div className="text-red-500 text-3xl font-black">₹10Cr+</div>
             <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Loans Facilitated</div>
           </div>
           <div className="py-6">
@@ -522,24 +514,22 @@ const HomePage = () => {
       </section>
 
       {/* SERVICE CATEGORIES GRID */}
-      <section id="services" className="py-24 bg-white">
+      <section id="services" className="py-24 bg-gradient-to-b from-white to-slate-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-black text-slate-900">Everything Your Business Needs</h2>
-            <p className="text-slate-500 mt-4">Categorized for simplicity. Executed with expertise.</p>
+            <p className="text-slate-500 mt-4">Built on our latest category structure. Click a category to explore all included services.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
             {SERVICES_GRID_DATA.map((service) => (
-              <a href={service.link || '#'} key={service.id} className="bg-white p-8 rounded-2xl border border-slate-100 hover:border-red-200 shadow-sm hover:shadow-xl hover:shadow-red-600/5 transition-all duration-300 group relative overflow-hidden">
-                <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110`}>
-                  <service.icon className="w-24 h-24 text-slate-900" />
+              <a href={service.link || '#'} key={service.id} className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 hover:border-red-200 shadow-sm hover:shadow-xl hover:shadow-red-600/10 transition-all duration-300 group relative overflow-hidden">
+                <div className={`absolute -top-10 -right-10 w-28 h-28 rounded-full ${service.color.replace('text-', 'bg-').replace('600', '100')} opacity-50 blur-2xl`} />
+                <div className={`w-12 h-12 ${service.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                  <service.icon className="w-6 h-6" />
                 </div>
-                <div className={`w-14 h-14 ${service.color} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <service.icon className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-red-600 transition-colors">{service.title}</h3>
-                <p className="text-slate-500 text-sm mb-6 leading-relaxed">{service.description}</p>
+                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-red-600 transition-colors leading-tight">{service.title}</h3>
+                <p className="text-slate-500 text-sm mb-5 leading-relaxed min-h-[44px]">{service.description}</p>
                 <div className="flex items-center text-sm font-bold text-slate-900 group-hover:text-red-600 transition-colors">
                   Explore <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </div>
