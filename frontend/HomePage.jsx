@@ -152,6 +152,7 @@ const HomePage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]); // Search Suggestions
@@ -195,11 +196,16 @@ const HomePage = () => {
 
   const handleConsultationBook = () => {
     setSelectedPlan(PACKAGES[0]);
+    setTermsAccepted(false);
     setIsModalOpen(true);
   };
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
+    if (!termsAccepted) {
+      alert('Please accept the Terms & Conditions before proceeding.');
+      return;
+    }
     setIsSubmitting(true);
 
     if (!window.Razorpay) {
@@ -342,7 +348,18 @@ const HomePage = () => {
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
                 placeholder="Email Address"
               />
-              <button disabled={isSubmitting} type="submit" className="w-full bg-red-600 text-white font-bold py-3.5 rounded-lg hover:bg-red-700 transition transform active:scale-95 flex items-center justify-center shadow-lg shadow-red-600/20">
+              <label className="flex items-start gap-2 text-xs text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  I agree to the <a href="/terms-and-conditions" target="_blank" rel="noreferrer" className="text-red-600 font-bold hover:underline">Terms & Conditions</a>.
+                </span>
+              </label>
+              <button disabled={isSubmitting || !termsAccepted} type="submit" className="w-full bg-red-600 text-white font-bold py-3.5 rounded-lg hover:bg-red-700 transition transform active:scale-95 flex items-center justify-center shadow-lg shadow-red-600/20 disabled:opacity-60 disabled:cursor-not-allowed">
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : `Pay ${selectedPlan ? formatCurrency(selectedPlan.price) : ''} & Proceed`}
               </button>
             </form>

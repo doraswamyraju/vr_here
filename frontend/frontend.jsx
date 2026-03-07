@@ -19,6 +19,7 @@ import ContactUsPage from './ContactUs';
 import HeaderDesignOptions from './HeaderDesignOptions';
 import ServiceCardDesignOptions from './ServiceCardDesignOptions';
 import AllServicesPage from './AllServices';
+import TermsConditionsPage from './TermsConditions';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -48,6 +49,7 @@ const App = () => {
       <Route path="/gst-registration" element={<GSTRegistrationPage />} />
       <Route path="/income-tax-return" element={<IncomeTaxPage />} />
       <Route path="/all-services" element={<AllServicesPage />} />
+      <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
       <Route path="/contact" element={<ContactUsPage />} />
 
       {/* Protected Routes */}

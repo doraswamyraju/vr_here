@@ -25,6 +25,11 @@ const normalizeServices = (services = []) =>
 
 const ServicesMasterView = ({ token }) => {
     const [services, setServices] = useState(toEditableSeed());
+    const [tickerMessages, setTickerMessages] = useState([
+        'New: Income Tax return filing support now available.',
+        'Startup consultation fee is adjustable against package purchase.',
+        'Get faster support for registrations and certifications.',
+    ]);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState('');
@@ -44,6 +49,9 @@ const ServicesMasterView = ({ token }) => {
             if (Array.isArray(data?.services) && data.services.length > 0) {
                 setServices(normalizeServices(data.services));
             }
+            if (Array.isArray(data?.tickerMessages)) {
+                setTickerMessages(data.tickerMessages);
+            }
         } catch (error) {
             console.error('Failed to load services header config', error);
         } finally {
@@ -60,6 +68,7 @@ const ServicesMasterView = ({ token }) => {
         setMessage('');
         try {
             const payload = {
+                tickerMessages: (tickerMessages || []).map((m) => m.trim()).filter(Boolean),
                 services: services.map((service) => ({
                     id: (service.id || '').trim(),
                     title: (service.title || '').trim(),
@@ -156,6 +165,38 @@ const ServicesMasterView = ({ token }) => {
                     {message}
                 </div>
             )}
+
+            <div className="mb-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-slate-800">Top Bar Ticker (Latest Updates)</h3>
+                    <button
+                        onClick={() => setTickerMessages((prev) => [...prev, ''])}
+                        className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
+                    >
+                        <Plus className="w-3 h-3" /> Add Message
+                    </button>
+                </div>
+                <div className="space-y-2">
+                    {tickerMessages.map((msg, idx) => (
+                        <div key={`ticker-${idx}`} className="flex gap-2">
+                            <input
+                                value={msg}
+                                onChange={(e) =>
+                                    setTickerMessages((prev) => prev.map((x, i) => (i === idx ? e.target.value : x)))
+                                }
+                                className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                placeholder="Ticker message"
+                            />
+                            <button
+                                onClick={() => setTickerMessages((prev) => prev.filter((_, i) => i !== idx))}
+                                className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             <div className="space-y-5">
                 {services.map((service, serviceIndex) => (

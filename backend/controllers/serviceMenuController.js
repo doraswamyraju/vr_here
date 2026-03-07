@@ -43,6 +43,11 @@ const sanitizeServicesPayload = (services = []) =>
             : [],
     })).filter((service) => service.title);
 
+const sanitizeTickerMessages = (messages = []) =>
+    Array.isArray(messages)
+        ? messages.map((msg) => String(msg || '').trim()).filter(Boolean)
+        : [];
+
 const getOrCreateConfig = async () => {
     let config = await ServiceMenuConfig.findOne({ key: MENU_KEY });
     if (!config) {
@@ -60,6 +65,7 @@ const getOrCreateConfig = async () => {
     if (!hasColumnShape || !hasLatestCategorySet) {
         const defaultsDoc = new ServiceMenuConfig();
         config.services = defaultsDoc.services;
+        config.tickerMessages = defaultsDoc.tickerMessages;
         await config.save();
     }
 
@@ -72,7 +78,7 @@ const getHeaderMenuConfig = asyncHandler(async (req, res) => {
 });
 
 const updateHeaderMenuConfig = asyncHandler(async (req, res) => {
-    const { services } = req.body;
+    const { services, tickerMessages } = req.body;
 
     if (!Array.isArray(services) || services.length === 0) {
         res.status(400);
@@ -87,6 +93,9 @@ const updateHeaderMenuConfig = asyncHandler(async (req, res) => {
 
     const config = await getOrCreateConfig();
     config.services = cleanServices;
+    if (tickerMessages !== undefined) {
+        config.tickerMessages = sanitizeTickerMessages(tickerMessages);
+    }
     const updated = await config.save();
 
     res.json(updated);

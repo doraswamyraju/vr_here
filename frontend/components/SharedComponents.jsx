@@ -329,6 +329,11 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
     const [activeDesktopServiceId, setActiveDesktopServiceId] = useState(null);
     const [localIsScrolled, setLocalIsScrolled] = useState(false);
     const [menuConfig, setMenuConfig] = useState(normalizeServiceConfig(MENU_DATA));
+    const [tickerMessages, setTickerMessages] = useState([
+        'New: Income Tax return filing support now available.',
+        'Startup consultation fee is adjustable against package purchase.',
+        'Get faster support for registrations and certifications.',
+    ]);
 
     // Use external scroll state if provided, otherwise handle internally
     const isScrolled = externalIsScrolled !== undefined ? externalIsScrolled : localIsScrolled;
@@ -356,9 +361,15 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                 const fetched = Array.isArray(data?.services) ? normalizeServiceConfig(data.services) : [];
                 if (fetched.length === 0 || !hasCompleteCategorySet(fetched)) {
                     setMenuConfig(normalizeServiceConfig(MENU_DATA));
+                    if (Array.isArray(data?.tickerMessages) && data.tickerMessages.length > 0) {
+                        setTickerMessages(data.tickerMessages);
+                    }
                     return;
                 }
                 setMenuConfig(fetched);
+                if (Array.isArray(data?.tickerMessages) && data.tickerMessages.length > 0) {
+                    setTickerMessages(data.tickerMessages);
+                }
             } catch (error) {
                 console.error('Unable to load header service config', error);
                 setMenuConfig(normalizeServiceConfig(MENU_DATA));
@@ -387,11 +398,20 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
         <>
             <div className="bg-slate-900 text-slate-400 text-xs py-2 px-4 hidden lg:block border-b border-slate-800 fixed top-0 left-0 right-0 z-[60]">
                 <div className="max-w-[1400px] mx-auto flex justify-between items-center">
-                    <div className="flex space-x-6">
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
                         {/* ADDRESS REMOVED HERE */}
                         <span className="flex items-center hover:text-white transition cursor-default"><Clock className="w-3 h-3 mr-2 text-red-600" /> Mon - Sat: 10AM - 7PM</span>
                         <span className="flex items-center hover:text-white transition cursor-default"><Award className="w-3 h-3 mr-2 text-red-600" /> ISO 9001:2015 Certified</span>
-                        <span className="flex items-center hover:text-white transition cursor-default text-green-500 font-bold"><CheckCircle className="w-3 h-3 mr-2" /> Digital Office Only</span>
+                        <div className="min-w-0 flex-1 overflow-hidden rounded-full border border-slate-700/80 bg-slate-800/70 h-6">
+                            <div className="ticker-track h-full flex items-center gap-10 px-4 text-[11px] font-semibold text-slate-200 whitespace-nowrap">
+                                {[...tickerMessages, ...tickerMessages].map((msg, idx) => (
+                                    <span key={`ticker-msg-${idx}`} className="inline-flex items-center">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-2"></span>
+                                        {msg}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                     <div className="flex items-center space-x-6">
                         <a href="mailto:vrherebms@gmail.com" className="flex items-center hover:text-red-500 transition"><Mail className="w-3 h-3 mr-2" /> vrherebms@gmail.com</a>
@@ -635,7 +655,7 @@ export const SharedFooter = () => (
                 <p>&copy; {new Date().getFullYear()} VR HERE Business Management Solutions. All rights reserved.</p>
                 <div className="flex space-x-6">
                     <a href="#" className="hover:text-white transition">Privacy Policy</a>
-                    <a href="#" className="hover:text-white transition">Terms & Conditions</a>
+                    <a href="/terms-and-conditions" className="hover:text-white transition">Terms & Conditions</a>
                 </div>
             </div>
         </div>

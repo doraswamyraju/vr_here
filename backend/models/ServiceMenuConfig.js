@@ -32,6 +32,14 @@ const serviceMenuItemSchema = new mongoose.Schema(
 const serviceMenuConfigSchema = new mongoose.Schema(
     {
         key: { type: String, required: true, unique: true, default: 'header-main-menu' },
+        tickerMessages: {
+            type: [{ type: String, trim: true }],
+            default: [
+                'New: Income Tax return filing support now available.',
+                'Startup consultation fee is adjustable against package purchase.',
+                'Get faster support for registrations and certifications.',
+            ],
+        },
         services: {
             type: [serviceMenuItemSchema],
             default: [
