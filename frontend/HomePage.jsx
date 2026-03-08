@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { RAZORPAY_KEY_ID } from './config';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
+import OurTeamModule from './components/OurTeamModule';
 
 // MENU_DATA removed (moved to SharedComponents)
 
@@ -766,6 +767,8 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      <OurTeamModule compact={true} sectionId="our-team-home" />
 
       <SharedFooter />
 
