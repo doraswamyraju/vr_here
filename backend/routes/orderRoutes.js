@@ -5,6 +5,7 @@ import {
     getOrderById,
     updateOrderStatus,
     assignOrder,
+    updateOrderCommercials,
     uploadDocument,
     addTask,
     updateTask,
@@ -36,6 +37,9 @@ router.route('/:id/status')
 
 router.route('/:id/assign')
     .put(protect, admin, assignOrder);
+
+router.route('/:id/commercials')
+    .put(protect, admin, updateOrderCommercials);
 
 router.route('/:id/documents')
     .post(protect, upload.single('document'), uploadDocument);

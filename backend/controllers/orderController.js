@@ -367,6 +367,26 @@ const updateInvoiceStatus = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Update order package/commercial details (Admin)
+// @route   PUT /api/orders/:id/commercials
+// @access  Private/Admin
+const updateOrderCommercials = asyncHandler(async (req, res) => {
+    const { packageName, price, serviceName } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    if (packageName !== undefined) order.packageName = packageName;
+    if (serviceName !== undefined) order.serviceName = serviceName;
+    if (price !== undefined) order.price = Number(price);
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+});
+
 // @desc    Bulk import tasks/subtasks
 // @route   POST /api/orders/:id/tasks/import
 // @access  Private/Admin
@@ -515,6 +535,7 @@ export {
     getOrderById,
     updateOrderStatus,
     assignOrder,
+    updateOrderCommercials,
     uploadDocument,
     addTask,
     updateTask,
