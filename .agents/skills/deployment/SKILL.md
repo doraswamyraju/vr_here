@@ -24,6 +24,7 @@ The workflow for deploying live changes to this VPS is:
   2. VPS deploy commands (`git pull`, `npm run build`, `pm2 restart`, `pm2 save`)
 - Do not skip these command blocks, even if not explicitly asked again.
 - Keep commands copy-paste ready.
+- Whenever any **service/package is added or updated**, ensure the mandatory **Terms & Conditions checkbox/tick** remains enabled for all related payment package flows before deployment.
 
 ### Important Notes
 - **Process Name**: Always use **`vrhere-api`** (configured in `ecosystem.config.cjs`).

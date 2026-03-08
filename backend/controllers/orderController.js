@@ -1,6 +1,54 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/Order.js';
 
+const parseTasksFromText = (rawText) => {
+    if (!rawText || typeof rawText !== 'string') return [];
+
+    return rawText
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+            const [taskPart, subtaskPart] = line.split('>');
+            const title = taskPart.trim();
+            const subtasks = subtaskPart
+                ? subtaskPart.split('|').map((item) => item.trim()).filter(Boolean).map((title) => ({ title, isCompleted: false }))
+                : [];
+
+            return {
+                title,
+                status: 'Pending',
+                subtasks
+            };
+        })
+        .filter((task) => task.title);
+};
+
+const parseRequirementsFromText = (rawText) => {
+    if (!rawText || typeof rawText !== 'string') return [];
+
+    return rawText
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+            const [prefix, rest] = line.includes(':') ? line.split(':') : ['Document', line];
+            const normalizedPrefix = prefix.trim().toLowerCase();
+            const type = normalizedPrefix === 'detail' ? 'Detail' : 'Document';
+            const body = (rest || '').trim();
+            const [title, description] = body.includes('|') ? body.split('|') : [body, ''];
+
+            return {
+                title: title.trim(),
+                type,
+                description: (description || '').trim(),
+                required: true,
+                status: 'Pending'
+            };
+        })
+        .filter((item) => item.title);
+};
+
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
@@ -32,10 +80,21 @@ const getOrders = asyncHandler(async (req, res) => {
 
     if (req.user.role === 'admin') {
         // Admin sees all
-        orders = await Order.find({}).populate('user', 'name email').populate('assignedEmployee', 'name email');
+        orders = await Order.find({})
+            .populate('user', 'name email')
+            .populate('assignedEmployee', 'name email')
+            .populate('tasks.assignedTo', 'name email');
     } else if (req.user.role === 'employee') {
-        // Employee sees assigned
-        orders = await Order.find({ assignedEmployee: req.user._id }).populate('user', 'name email');
+        // Employee sees order-level assignments and task-level assignments
+        orders = await Order.find({
+            $or: [
+                { assignedEmployee: req.user._id },
+                { 'tasks.assignedTo': req.user._id }
+            ]
+        })
+            .populate('user', 'name email')
+            .populate('assignedEmployee', 'name email')
+            .populate('tasks.assignedTo', 'name email');
     } else {
         // Client sees their own
         orders = await Order.find({ user: req.user._id });
@@ -50,7 +109,9 @@ const getOrders = asyncHandler(async (req, res) => {
 const getOrderById = asyncHandler(async (req, res) => {
     const order = await Order.findById(req.params.id)
         .populate('user', 'name email phone')
-        .populate('assignedEmployee', 'name email');
+        .populate('assignedEmployee', 'name email')
+        .populate('tasks.assignedTo', 'name email')
+        .populate('tasks.timeLogs.employee', 'name email');
 
     if (order) {
         // Check permissions
@@ -147,11 +208,18 @@ const uploadDocument = asyncHandler(async (req, res) => {
 // @route   POST /api/orders/:id/tasks
 // @access  Private
 const addTask = asyncHandler(async (req, res) => {
-    const { title, description } = req.body;
+    const { title, description, subtasks = [], assignedTo = null } = req.body;
     const order = await Order.findById(req.params.id);
 
     if (order) {
-        order.tasks.push({ title, description, status: 'Pending' });
+        const mappedSubtasks = Array.isArray(subtasks)
+            ? subtasks.map((item) => ({
+                title: typeof item === 'string' ? item : item?.title,
+                isCompleted: Boolean(item?.isCompleted)
+            })).filter((item) => item.title)
+            : [];
+
+        order.tasks.push({ title, description, status: 'Pending', subtasks: mappedSubtasks, assignedTo });
         await order.save();
         res.status(201).json(order);
     } else {
@@ -164,7 +232,7 @@ const addTask = asyncHandler(async (req, res) => {
 // @route   PUT /api/orders/:id/tasks/:taskId
 // @access  Private
 const updateTask = asyncHandler(async (req, res) => {
-    const { status, subtasks } = req.body;
+    const { status, subtasks, assignedTo, description } = req.body;
     const order = await Order.findById(req.params.id);
 
     if (order) {
@@ -172,6 +240,8 @@ const updateTask = asyncHandler(async (req, res) => {
         if (task) {
             if (status) task.status = status;
             if (subtasks) task.subtasks = subtasks;
+            if (assignedTo !== undefined) task.assignedTo = assignedTo || null;
+            if (description !== undefined) task.description = description;
             await order.save();
             res.json(order);
         } else {
@@ -227,11 +297,19 @@ const toggleChecklistItem = asyncHandler(async (req, res) => {
 // @route   POST /api/orders/:id/invoices
 // @access  Private/Admin
 const addInvoice = asyncHandler(async (req, res) => {
-    const { invoiceNumber, amount } = req.body;
+    const { invoiceNumber, amount, status = 'Draft', url = '', dueDate = null, notes = '' } = req.body;
     const order = await Order.findById(req.params.id);
 
     if (order) {
-        order.invoices.push({ invoiceNumber, amount, status: 'Draft' });
+        order.invoices.push({
+            invoiceNumber,
+            amount,
+            status,
+            url,
+            dueDate,
+            notes,
+            sentAt: status === 'Sent' ? new Date() : null
+        });
         await order.save();
         res.status(201).json(order);
     } else {
@@ -274,6 +352,9 @@ const updateInvoiceStatus = asyncHandler(async (req, res) => {
         const invoice = order.invoices.id(req.params.invoiceId);
         if (invoice) {
             invoice.status = status;
+            if (status === 'Sent' && !invoice.sentAt) {
+                invoice.sentAt = new Date();
+            }
             await order.save();
             res.json(order);
         } else {
@@ -284,6 +365,147 @@ const updateInvoiceStatus = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error('Order not found');
     }
+});
+
+// @desc    Bulk import tasks/subtasks
+// @route   POST /api/orders/:id/tasks/import
+// @access  Private/Admin
+const importTasks = asyncHandler(async (req, res) => {
+    const { tasksText } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const parsedTasks = parseTasksFromText(tasksText);
+
+    if (!parsedTasks.length) {
+        res.status(400);
+        throw new Error('No valid tasks found for import');
+    }
+
+    order.tasks.push(...parsedTasks);
+    await order.save();
+    res.status(201).json(order);
+});
+
+// @desc    Assign task to staff
+// @route   PUT /api/orders/:id/tasks/:taskId/assign
+// @access  Private/Admin
+const assignTask = asyncHandler(async (req, res) => {
+    const { employeeId } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const task = order.tasks.id(req.params.taskId);
+    if (!task) {
+        res.status(404);
+        throw new Error('Task not found');
+    }
+
+    task.assignedTo = employeeId || null;
+    await order.save();
+    res.json(order);
+});
+
+// @desc    Track staff time against task
+// @route   POST /api/orders/:id/tasks/:taskId/time-log
+// @access  Private
+const addTaskTimeLog = asyncHandler(async (req, res) => {
+    const { minutes, notes = '' } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const task = order.tasks.id(req.params.taskId);
+    if (!task) {
+        res.status(404);
+        throw new Error('Task not found');
+    }
+
+    const parsedMinutes = Number(minutes);
+    if (!Number.isFinite(parsedMinutes) || parsedMinutes <= 0) {
+        res.status(400);
+        throw new Error('Minutes must be a positive number');
+    }
+
+    if (req.user.role === 'employee') {
+        const taskOwner = task.assignedTo ? task.assignedTo.toString() : null;
+        if (taskOwner && taskOwner !== req.user._id.toString()) {
+            res.status(403);
+            throw new Error('Not authorized to log time for this task');
+        }
+    }
+
+    task.timeLogs.push({
+        employee: req.user._id,
+        minutes: parsedMinutes,
+        notes
+    });
+    task.totalMinutes = (task.totalMinutes || 0) + parsedMinutes;
+
+    await order.save();
+    res.status(201).json(order);
+});
+
+// @desc    Bulk import customer details/documents requirements
+// @route   POST /api/orders/:id/requirements/import
+// @access  Private/Admin
+const importRequirements = asyncHandler(async (req, res) => {
+    const { requirementsText } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const parsedRequirements = parseRequirementsFromText(requirementsText);
+
+    if (!parsedRequirements.length) {
+        res.status(400);
+        throw new Error('No valid requirements found for import');
+    }
+
+    order.customerRequirements.push(...parsedRequirements);
+    await order.save();
+    res.status(201).json(order);
+});
+
+// @desc    Update customer requirement status/details
+// @route   PUT /api/orders/:id/requirements/:requirementId
+// @access  Private
+const updateRequirement = asyncHandler(async (req, res) => {
+    const { status, value, documentUrl, description } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const requirement = order.customerRequirements.id(req.params.requirementId);
+    if (!requirement) {
+        res.status(404);
+        throw new Error('Requirement not found');
+    }
+
+    if (status) requirement.status = status;
+    if (value !== undefined) requirement.value = value;
+    if (documentUrl !== undefined) requirement.documentUrl = documentUrl;
+    if (description !== undefined) requirement.description = description;
+
+    await order.save();
+    res.json(order);
 });
 
 export {
@@ -300,7 +522,12 @@ export {
     addChecklistItem,
     toggleChecklistItem,
     addInvoice,
-    updateInvoiceStatus
+    updateInvoiceStatus,
+    importTasks,
+    assignTask,
+    addTaskTimeLog,
+    importRequirements,
+    updateRequirement
 };
 
 

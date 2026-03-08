@@ -70,6 +70,28 @@ const orderSchema = mongoose.Schema({
         assignedTo: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
+        },
+        timeLogs: [{
+            employee: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            minutes: {
+                type: Number,
+                default: 0
+            },
+            notes: {
+                type: String,
+                default: ''
+            },
+            loggedAt: {
+                type: Date,
+                default: Date.now
+            }
+        }],
+        totalMinutes: {
+            type: Number,
+            default: 0
         }
     }],
     invoices: [{
@@ -81,9 +103,44 @@ const orderSchema = mongoose.Schema({
             default: 'Draft'
         },
         url: String,
+        sentAt: Date,
+        dueDate: Date,
+        notes: String,
         createdAt: {
             type: Date,
             default: Date.now
+        }
+    }],
+    customerRequirements: [{
+        title: {
+            type: String,
+            required: true
+        },
+        type: {
+            type: String,
+            enum: ['Detail', 'Document'],
+            default: 'Document'
+        },
+        required: {
+            type: Boolean,
+            default: true
+        },
+        status: {
+            type: String,
+            enum: ['Pending', 'Received', 'Verified'],
+            default: 'Pending'
+        },
+        description: {
+            type: String,
+            default: ''
+        },
+        value: {
+            type: String,
+            default: ''
+        },
+        documentUrl: {
+            type: String,
+            default: ''
         }
     }],
     checklists: [{

@@ -12,7 +12,12 @@ import {
     addChecklistItem,
     toggleChecklistItem,
     addInvoice,
-    updateInvoiceStatus
+    updateInvoiceStatus,
+    importTasks,
+    assignTask,
+    addTaskTimeLog,
+    importRequirements,
+    updateRequirement
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -38,8 +43,17 @@ router.route('/:id/documents')
 router.route('/:id/tasks')
     .post(protect, addTask);
 
+router.route('/:id/tasks/import')
+    .post(protect, admin, importTasks);
+
 router.route('/:id/tasks/:taskId')
     .put(protect, updateTask);
+
+router.route('/:id/tasks/:taskId/assign')
+    .put(protect, admin, assignTask);
+
+router.route('/:id/tasks/:taskId/time-log')
+    .post(protect, addTaskTimeLog);
 
 router.route('/:id/tasks/:taskId/subtasks')
     .post(protect, admin, addSubtask);
@@ -55,5 +69,11 @@ router.route('/:id/invoices')
 
 router.route('/:id/invoices/:invoiceId/status')
     .put(protect, admin, updateInvoiceStatus);
+
+router.route('/:id/requirements/import')
+    .post(protect, admin, importRequirements);
+
+router.route('/:id/requirements/:requirementId')
+    .put(protect, updateRequirement);
 
 export default router;
