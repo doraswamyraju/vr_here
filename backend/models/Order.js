@@ -3,8 +3,20 @@ import mongoose from 'mongoose';
 const orderSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
+        ref: 'User',
+        default: null
+    },
+    clientName: {
+        type: String,
+        default: ''
+    },
+    email: {
+        type: String,
+        default: ''
+    },
+    phone: {
+        type: String,
+        default: ''
     },
     serviceName: {
         type: String,
@@ -21,6 +33,19 @@ const orderSchema = mongoose.Schema({
     paymentId: {
         type: String,
         required: true
+    },
+    razorpayOrderId: {
+        type: String,
+        default: ''
+    },
+    paymentSignature: {
+        type: String,
+        default: ''
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['Pending', 'Paid', 'Failed', 'Refunded'],
+        default: 'Paid'
     },
     status: {
         type: String,

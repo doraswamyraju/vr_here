@@ -4,7 +4,7 @@ const PaymentSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        default: null
     },
     order: {
         type: mongoose.Schema.Types.ObjectId,
@@ -24,6 +24,14 @@ const PaymentSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    razorpayOrderId: {
+        type: String,
+        default: ''
+    },
+    signature: {
+        type: String,
+        default: ''
+    },
     status: {
         type: String,
         enum: ['Pending', 'Completed', 'Failed', 'Refunded'],
@@ -33,6 +41,26 @@ const PaymentSchema = new mongoose.Schema({
         type: String,
         enum: ['Razorpay', 'NEFT', 'UPI', 'Cash'],
         required: true
+    },
+    customerName: {
+        type: String,
+        default: ''
+    },
+    email: {
+        type: String,
+        default: ''
+    },
+    phone: {
+        type: String,
+        default: ''
+    },
+    serviceName: {
+        type: String,
+        default: ''
+    },
+    packageName: {
+        type: String,
+        default: ''
     },
     invoiceUrl: {
         type: String

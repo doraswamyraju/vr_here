@@ -2,32 +2,45 @@ import jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 
-const protect = asyncHandler(async (req, res, next) => {
-    let token;
-
+const attachUserFromToken = async (req) => {
     if (
         req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer')
     ) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = await User.findById(decoded.id).select('-password');
+        return token;
+    }
 
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return null;
+};
 
-            req.user = await User.findById(decoded.id).select('-password');
+const protect = asyncHandler(async (req, res, next) => {
+    try {
+        const token = await attachUserFromToken(req);
 
-            next();
-        } catch (error) {
-            console.error(error);
+        if (!token || !req.user) {
             res.status(401);
-            throw new Error('Not authorized, token failed');
+            throw new Error('Not authorized, no token');
         }
+
+        next();
+    } catch (error) {
+        console.error(error);
+        res.status(401);
+        throw new Error('Not authorized, token failed');
+    }
+});
+
+const protectOptional = asyncHandler(async (req, res, next) => {
+    try {
+        await attachUserFromToken(req);
+    } catch (error) {
+        req.user = null;
     }
 
-    if (!token) {
-        res.status(401);
-        throw new Error('Not authorized, no token');
-    }
+    next();
 });
 
 const admin = (req, res, next) => {
@@ -39,4 +52,4 @@ const admin = (req, res, next) => {
     }
 };
 
-export { protect, admin };
+export { protect, protectOptional, admin };

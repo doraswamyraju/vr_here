@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
   Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { RAZORPAY_KEY_ID } from './config';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
+import ConsultationPaymentModal from './components/ConsultationPaymentModal';
+import { launchRazorpayCheckout } from './utils/razorpayCheckout';
 
 // SERVICES_DATA removed (handled by SharedHeader)
 
@@ -109,48 +111,23 @@ const PrivateLimitedPage = () => {
       alert('Please accept the Terms & Conditions before proceeding.');
       return;
     }
-    setIsSubmitting(true);
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
 
-    if (!window.Razorpay) {
-      alert("Razorpay SDK failed to load. Please check your internet connection or disable ad-blockers.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const options = {
-      key: RAZORPAY_KEY_ID,
-      amount: (selectedPlan.price || 499) * 100, // Amount in currency subunits
-      currency: "INR",
-      name: "VR HERE Business Solutions",
-      description: `Payment for ${selectedPlan.name}`,
-      image: "https://vrhere.in/logo.png",
-      handler: function (response) {
-        alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
-        setIsSubmitting(false);
+    launchRazorpayCheckout({
+      serviceName: 'Private Limited Registration',
+      selectedPlan,
+      formData,
+      token: userInfo?.token,
+      onSubmittingChange: setIsSubmitting,
+      onSuccess: (data) => {
+        alert(`Payment Successful! Booking Confirmed. Payment ID: ${data.payment.paymentId}`);
         setIsModalOpen(false);
       },
-      prefill: {
-        name: formData.name,
-        email: formData.email,
-        contact: formData.phone
-      },
-      theme: {
-        color: "#DC2626"
+      onFailure: (error) => {
+        console.error('Payment Flow Error:', error);
+        alert(error?.response?.data?.message || error?.description || error?.message || 'Something went wrong while processing payment.');
       }
-    };
-
-    try {
-      const rzp1 = new window.Razorpay(options);
-      rzp1.on('payment.failed', function (response) {
-        alert(`Payment Failed: ${response.error.description}`);
-        setIsSubmitting(false);
-      });
-      rzp1.open();
-    } catch (error) {
-      console.error("Razorpay Error:", error);
-      alert("Something went wrong initializing payment. Please try again.");
-      setIsSubmitting(false);
-    }
+    });
   };
 
   const formatCurrency = (amount) => {
@@ -160,80 +137,6 @@ const PrivateLimitedPage = () => {
   // --- SUB-COMPONENTS ---
 
   // Header definition removed
-
-  // Quote / Payment Modal
-  const QuoteModal = () => (
-    isModalOpen && (
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden animate-slide-up">
-          <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-red-600 transition bg-white rounded-full p-1"><X className="w-6 h-6" /></button>
-          <div className="bg-slate-900 p-6 text-center border-b-4 border-red-600">
-            <h3 className="text-white font-bold text-xl">
-              {selectedPlan?.id === 'consultation' ? 'Book Consultation' : 'Get Started'}
-            </h3>
-            <p className="text-slate-400 text-sm mt-1">{selectedPlan?.name || "Expert Guidance"}</p>
-          </div>
-          <div className="p-6">
-            <div className="mb-6 bg-red-50 border border-red-100 p-4 rounded-xl flex items-start">
-              <CreditCard className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
-              <div>
-                <div className="font-bold text-slate-900 text-sm">Payment Amount: {selectedPlan ? formatCurrency(selectedPlan.price) : '...'}</div>
-                {selectedPlan?.isAdjustable ? (
-                  <p className="text-xs text-green-700 font-bold mt-1 flex items-center"><RefreshCw className="w-3 h-3 mr-1" /> Fully adjustable against final package</p>
-                ) : (
-                  <p className="text-xs text-slate-500 mt-1">+ Government Fees as applicable</p>
-                )}
-              </div>
-            </div>
-            <form onSubmit={handleFormSubmit} className="space-y-4">
-              <input
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                type="text"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
-                placeholder="Full Name"
-              />
-              <input
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                required
-                type="tel"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
-                placeholder="Mobile Number"
-              />
-              <input
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                type="email"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
-                placeholder="Email Address"
-              />
-              <label className="flex items-start gap-2 text-xs text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
-                  className="mt-0.5"
-                />
-                <span>
-                  I agree to the <a href="/terms-and-conditions" target="_blank" rel="noreferrer" className="text-red-600 font-bold hover:underline">Terms & Conditions</a>.
-                </span>
-              </label>
-              <button disabled={isSubmitting || !termsAccepted} type="submit" className="w-full bg-red-600 text-white font-bold py-3.5 rounded-lg hover:bg-red-700 transition transform active:scale-95 flex items-center justify-center shadow-lg shadow-red-600/20 disabled:opacity-60 disabled:cursor-not-allowed">
-                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : `Pay ${selectedPlan ? formatCurrency(selectedPlan.price) : ''} & Proceed`}
-              </button>
-            </form>
-            <p className="text-center text-xs text-slate-400 mt-4 flex items-center justify-center"><ShieldCheck className="w-3 h-3 mr-1" /> Secure Payment Gateway</p>
-          </div>
-        </div>
-      </div>
-    )
-  );
 
   // Floating Buttons
   const FloatingButtons = () => (
@@ -266,7 +169,19 @@ const PrivateLimitedPage = () => {
   return (
     <div className="font-sans text-slate-800 bg-white min-h-screen selection:bg-red-100 selection:text-red-900 overflow-x-hidden">
       <SharedHeader isScrolled={isScrolled} />
-      <QuoteModal />
+      <ConsultationPaymentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedPlan={selectedPlan}
+        formData={formData}
+        onInputChange={handleInputChange}
+        termsAccepted={termsAccepted}
+        onTermsChange={setTermsAccepted}
+        onSubmit={handleFormSubmit}
+        isSubmitting={isSubmitting}
+        formatCurrency={formatCurrency}
+        title={selectedPlan?.id === 'consultation' ? 'Book Consultation' : 'Get Started'}
+      />
       <FloatingButtons />
 
       {/* LANDING CONTENT: PRIVATE LIMITED REGISTRATION */}

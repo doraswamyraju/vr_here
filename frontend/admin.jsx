@@ -31,6 +31,8 @@ const TASK_STATUSES = ['Pending', 'In Progress', 'Completed'];
 const INVOICE_STATUSES = ['Draft', 'Sent', 'Paid', 'Overdue'];
 const PACKAGE_OPTIONS = ['Basic Package', 'Standard Package', 'Premium Package'];
 
+const getOrderClientLabel = (order) => order?.user?.name || order?.clientName || order?.email || order?.phone || 'Guest';
+
 const StatusBadge = ({ status }) => {
   const styles = {
     'Pending Documents': 'bg-amber-100 text-amber-800',
@@ -215,7 +217,7 @@ function AdminApp() {
             {orders.map((order) => (
               <tr key={order._id} onClick={() => { setSelectedOrderId(order._id); setOrderDetailTab('Overview'); }} className="cursor-pointer hover:bg-indigo-50 transition">
                 <td className="px-5 py-3"><p className="font-semibold text-slate-800">{order.serviceName}</p><p className="text-xs text-slate-500">{order.packageName}</p></td>
-                <td className="px-5 py-3">{order.user?.name || 'Unknown'}</td>
+                <td className="px-5 py-3">{getOrderClientLabel(order)}</td>
                 <td className="px-5 py-3">{order.assignedEmployee?.name || 'Unassigned'}</td>
                 <td className="px-5 py-3"><StatusBadge status={order.status} /></td>
                 <td className="px-5 py-3 font-semibold">Rs. {Number(order.price || 0).toLocaleString()}</td>
@@ -232,7 +234,7 @@ function AdminApp() {
       {orders.map((order) => (
         <Card key={order._id} className="p-4 cursor-pointer hover:-translate-y-1 transition-all" onClick={() => { setSelectedOrderId(order._id); setOrderDetailTab('Overview'); }}>
           <div className="flex justify-between items-start"><h3 className="font-semibold">{order.serviceName}</h3><StatusBadge status={order.status} /></div>
-          <p className="text-sm text-slate-600 mt-2">{order.user?.name || 'Unknown'}</p>
+          <p className="text-sm text-slate-600 mt-2">{getOrderClientLabel(order)}</p>
           <p className="text-sm text-slate-600">{order.packageName}</p>
         </Card>
       ))}
@@ -259,7 +261,7 @@ function AdminApp() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-black text-slate-900">{selectedOrder.serviceName}</h2>
-            <p className="text-sm text-slate-500 flex items-center gap-2 mt-1"><Building2 size={14} /> {selectedOrder.user?.name || 'Unknown'} <span className="text-slate-300">|</span> Rs. {Number(selectedOrder.price || 0).toLocaleString()}</p>
+            <p className="text-sm text-slate-500 flex items-center gap-2 mt-1"><Building2 size={14} /> {getOrderClientLabel(selectedOrder)} <span className="text-slate-300">|</span> Rs. {Number(selectedOrder.price || 0).toLocaleString()}</p>
           </div>
           <button onClick={() => setSelectedOrderId(null)} className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200">Back to Orders</button>
         </div>

@@ -21,6 +21,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const ORDER_STATUSES = ['Pending Documents', 'Documents Verified', 'Processing at Portal', 'Waiting for Clarification', 'Completed'];
+const getOrderClientLabel = (order) => order?.user?.name || order?.clientName || order?.email || order?.phone || 'Guest';
 
 // --- MAIN EMPLOYEE APP ---
 export default function EmployeeApp() {
@@ -178,7 +179,7 @@ export default function EmployeeApp() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h4 className="font-bold text-lg text-slate-800">{order.serviceName}</h4>
-                <p className="text-sm text-slate-500">Client: {order.user?.name || 'Unknown'}</p>
+                <p className="text-sm text-slate-500">Client: {getOrderClientLabel(order)}</p>
               </div>
               <StatusBadge status={order.status} />
             </div>
@@ -213,7 +214,7 @@ export default function EmployeeApp() {
             <tbody className="divide-y divide-slate-100">
               {orders.map(order => (
                 <tr key={order._id} className="hover:bg-slate-50 transition">
-                  <td className="p-4 font-bold text-slate-700">{order.user?.name}</td>
+                  <td className="p-4 font-bold text-slate-700">{getOrderClientLabel(order)}</td>
                   <td className="p-4 text-slate-600">{order.serviceName} <span className="text-xs text-slate-400 block">{order.packageName}</span></td>
                   <td className="p-4"><StatusBadge status={order.status} /></td>
                   <td className="p-4">
@@ -230,7 +231,7 @@ export default function EmployeeApp() {
           {/* Workspace Header */}
           <div className="p-6 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-xl font-bold font-slate-800">{selectedOrder.serviceName}</h3>
-            <p className="text-sm text-slate-500">Client: <span className="font-bold text-slate-700">{selectedOrder.user?.name}</span> | <span className="text-indigo-600 font-bold">₹{selectedOrder.price.toLocaleString()}</span></p>
+            <p className="text-sm text-slate-500">Client: <span className="font-bold text-slate-700">{getOrderClientLabel(selectedOrder)}</span> | <span className="text-indigo-600 font-bold">₹{selectedOrder.price.toLocaleString()}</span></p>
           </div>
 
           {/* Workspace Tabs */}

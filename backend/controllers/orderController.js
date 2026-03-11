@@ -53,7 +53,18 @@ const parseRequirementsFromText = (rawText) => {
 // @route   POST /api/orders
 // @access  Private
 const createOrder = asyncHandler(async (req, res) => {
-    const { serviceName, packageName, price, paymentId } = req.body;
+    const {
+        serviceName,
+        packageName,
+        price,
+        paymentId,
+        razorpayOrderId = '',
+        paymentSignature = '',
+        paymentStatus = 'Paid',
+        clientName = '',
+        email = '',
+        phone = ''
+    } = req.body;
 
     if (!paymentId) {
         res.status(400);
@@ -62,10 +73,16 @@ const createOrder = asyncHandler(async (req, res) => {
 
     const order = new Order({
         user: req.user._id,
+        clientName: clientName || req.user.name || '',
+        email: email || req.user.email || '',
+        phone: phone || req.user.phone || '',
         serviceName,
         packageName,
         price,
         paymentId,
+        razorpayOrderId,
+        paymentSignature,
+        paymentStatus,
     });
 
     const createdOrder = await order.save();

@@ -1,12 +1,17 @@
 import express from 'express';
 import {
+    createCheckoutOrder,
     getPayments,
     getPaymentById,
-    createPayment
+    createPayment,
+    verifyPayment
 } from '../controllers/paymentController.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect, protectOptional, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+router.post('/checkout-order', protectOptional, createCheckoutOrder);
+router.post('/verify', protectOptional, verifyPayment);
 
 router.route('/')
     .get(protect, getPayments)
