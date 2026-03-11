@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { RAZORPAY_KEY_ID } from './config';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from './utils/razorpayCheckout';
@@ -63,7 +62,6 @@ const GSTRegistrationPage = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [termsAccepted, setTermsAccepted] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
 
     // --- EFFECTS ---
@@ -88,38 +86,28 @@ const GSTRegistrationPage = () => {
         phone: ''
     });
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
     const handleConsultationBook = () => {
         setSelectedPlan(PACKAGES[0]); // Set consultation as selected
-        setTermsAccepted(false);
         setIsModalOpen(true);
     };
 
     const handleSelectPlan = (plan) => {
         setSelectedPlan(plan);
-        setTermsAccepted(false);
         setIsModalOpen(true);
     };
 
-    const handleFormSubmit = (e) => {
-        e.preventDefault();
+    const handleFormSubmit = ({ formData: submittedFormData, termsAccepted }) => {
         if (!termsAccepted) {
             alert('Please accept the Terms & Conditions before proceeding.');
             return;
         }
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+        setFormData(submittedFormData);
 
         launchRazorpayCheckout({
             serviceName: 'GST Registration',
             selectedPlan,
-            formData,
+            formData: submittedFormData,
             token: userInfo?.token,
             onSubmittingChange: setIsSubmitting,
             onSuccess: () => {
@@ -177,15 +165,13 @@ const GSTRegistrationPage = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 selectedPlan={selectedPlan}
-                formData={formData}
-                onInputChange={handleInputChange}
-                termsAccepted={termsAccepted}
-                onTermsChange={setTermsAccepted}
+                initialFormData={formData}
                 onSubmit={handleFormSubmit}
                 isSubmitting={isSubmitting}
                 formatCurrency={formatCurrency}
                 title={selectedPlan?.id === 'consultation' ? 'Book Consultation' : 'Get Started'}
                 nonAdjustableNote="+ Government Fees & GST"
+                initialTermsAccepted={false}
             />
             <FloatingButtons />
 

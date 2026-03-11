@@ -6,7 +6,6 @@ import {
   Building2, Mail, MapPin, CheckCircle, Smartphone, ShieldCheck, RefreshCw,
   CreditCard, Loader2, MessageSquare, Users, Star, Quote, HelpCircle, ChevronUp
 } from 'lucide-react';
-import { RAZORPAY_KEY_ID } from './config';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';
 import OurTeamModule from './components/OurTeamModule';
@@ -155,7 +154,6 @@ const HomePage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]); // Search Suggestions
@@ -189,32 +187,23 @@ const HomePage = () => {
     phone: ''
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleConsultationBook = () => {
     setSelectedPlan(PACKAGES[0]);
-    setTermsAccepted(false);
     setIsModalOpen(true);
   };
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
+  const handleFormSubmit = ({ formData: submittedFormData, termsAccepted }) => {
     if (!termsAccepted) {
       alert('Please accept the Terms & Conditions before proceeding.');
       return;
     }
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+    setFormData(submittedFormData);
 
     launchRazorpayCheckout({
       serviceName: 'Expert Consultation',
       selectedPlan,
-      formData,
+      formData: submittedFormData,
       token: userInfo?.token,
       onSubmittingChange: setIsSubmitting,
       onSuccess: (data) => {
@@ -261,14 +250,12 @@ const HomePage = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedPlan={selectedPlan}
-        formData={formData}
-        onInputChange={handleInputChange}
-        termsAccepted={termsAccepted}
-        onTermsChange={setTermsAccepted}
+        initialFormData={formData}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}
         formatCurrency={formatCurrency}
         title={selectedPlan?.buttonText || 'Book Consultation'}
+        initialTermsAccepted={false}
       />
       <FloatingButtons />
 

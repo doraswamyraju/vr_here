@@ -1,21 +1,53 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, CreditCard, RefreshCw, Loader2, ShieldCheck } from 'lucide-react';
 
 const ConsultationPaymentModal = ({
   isOpen,
   onClose,
   selectedPlan,
-  formData,
-  onInputChange,
-  termsAccepted,
-  onTermsChange,
+  initialFormData,
+  initialTermsAccepted = false,
   onSubmit,
   isSubmitting,
   formatCurrency,
   title,
   nonAdjustableNote = '+ Government Fees as applicable'
 }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: ''
+  });
+  const [termsAccepted, setTermsAccepted] = useState(initialTermsAccepted);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setFormData({
+      name: initialFormData?.name || '',
+      phone: initialFormData?.phone || '',
+      email: initialFormData?.email || ''
+    });
+    setTermsAccepted(Boolean(initialTermsAccepted));
+  }, [isOpen, initialFormData, initialTermsAccepted, selectedPlan?.id]);
+
   if (!isOpen) return null;
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit({
+      formData,
+      termsAccepted
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -50,11 +82,11 @@ const ConsultationPaymentModal = ({
             </div>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
               name="name"
               value={formData.name}
-              onChange={onInputChange}
+              onChange={handleInputChange}
               required
               type="text"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
@@ -63,7 +95,7 @@ const ConsultationPaymentModal = ({
             <input
               name="phone"
               value={formData.phone}
-              onChange={onInputChange}
+              onChange={handleInputChange}
               required
               type="tel"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
@@ -72,7 +104,7 @@ const ConsultationPaymentModal = ({
             <input
               name="email"
               value={formData.email}
-              onChange={onInputChange}
+              onChange={handleInputChange}
               required
               type="email"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
@@ -83,7 +115,7 @@ const ConsultationPaymentModal = ({
               <input
                 type="checkbox"
                 checked={termsAccepted}
-                onChange={(e) => onTermsChange(e.target.checked)}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
                 className="mt-0.5"
               />
               <span>

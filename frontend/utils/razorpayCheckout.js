@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { RAZORPAY_KEY_ID } from '../config';
 
 const getAuthConfig = (token) => (
   token
@@ -38,8 +37,12 @@ export const launchRazorpayCheckout = async ({
       getAuthConfig(token)
     );
 
+    if (!checkoutOrder?.key || !checkoutOrder?.orderId) {
+      throw new Error('Backend did not return a valid Razorpay checkout order. Check backend env and deployment restart.');
+    }
+
     const options = {
-      key: checkoutOrder.key || RAZORPAY_KEY_ID,
+      key: checkoutOrder.key,
       amount: checkoutOrder.amount,
       currency: checkoutOrder.currency || 'INR',
       name: 'VR HERE Business Solutions',
