@@ -7,7 +7,12 @@ const TaskManagementModule = ({
   selectedOrder,
   setSelectedOrder,
   onTaskStatusChange,
-  onToggleSubtask
+  onToggleSubtask,
+  activeTaskSession,
+  activeTaskElapsedSeconds,
+  onStartTask,
+  onPauseTask,
+  onCompleteTask
 }) => {
   if (!selectedOrder) {
     return (
@@ -69,6 +74,48 @@ const TaskManagementModule = ({
                         </label>
                       ))}
                     </div>
+
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      {activeTaskSession?.orderId === selectedOrder._id && activeTaskSession?.taskId === task._id ? (
+                        <>
+                          <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded">
+                            Running: {new Date(activeTaskElapsedSeconds * 1000).toISOString().slice(11, 19)}
+                          </span>
+                          <button
+                            onClick={onPauseTask}
+                            className="text-[10px] px-2 py-1 rounded bg-amber-100 text-amber-700 font-bold"
+                          >
+                            Pause
+                          </button>
+                          <button
+                            onClick={onCompleteTask}
+                            className="text-[10px] px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-bold"
+                          >
+                            Complete
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => onStartTask({
+                              orderId: selectedOrder._id,
+                              taskId: task._id,
+                              serviceName: selectedOrder.serviceName,
+                              taskTitle: task.title
+                            })}
+                            disabled={Boolean(activeTaskSession)}
+                            className="text-[10px] px-2 py-1 rounded bg-indigo-100 text-indigo-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Start
+                          </button>
+                          {activeTaskSession && (
+                            <span className="text-[10px] text-rose-600 font-semibold">
+                              One task at a time
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
             </div>
@@ -85,4 +132,3 @@ const TaskManagementModule = ({
 };
 
 export default TaskManagementModule;
-

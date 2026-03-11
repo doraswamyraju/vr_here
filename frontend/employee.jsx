@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,6 +17,17 @@ import NotificationsModule from './components/employee/NotificationsModule';
 import SecurityModule from './components/employee/SecurityModule';
 import { dummyNotifications, dummyTickets } from './components/employee/mockData';
 
+const SHIFT_STORAGE_KEY = 'employee_shift_state_v2';
+const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
+
+const formatDuration = (totalSeconds) => {
+  const safe = Math.max(0, Number(totalSeconds || 0));
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const s = safe % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
 const EmployeeApp = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -26,8 +37,15 @@ const EmployeeApp = () => {
   const [notifications, setNotifications] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isClockedIn, setIsClockedIn] = useState(false);
+  const [shiftStartedAt, setShiftStartedAt] = useState(null);
+  const [shiftElapsedSeconds, setShiftElapsedSeconds] = useState(0);
+  const [activeTaskSession, setActiveTaskSession] = useState(null);
+  const [activeTaskElapsedSeconds, setActiveTaskElapsedSeconds] = useState(0);
 
   const navigate = useNavigate();
+  const shiftIntervalRef = useRef(null);
+  const activeTaskIntervalRef = useRef(null);
 
   const authConfig = useMemo(() => (
     userInfo?.token
@@ -39,6 +57,18 @@ const EmployeeApp = () => {
     () => orders.find((order) => order._id === selectedOrderId) || null,
     [orders, selectedOrderId]
   );
+
+  const activeTaskDetails = useMemo(() => {
+    if (!activeTaskSession?.orderId || !activeTaskSession?.taskId) return null;
+    const order = orders.find((item) => item._id === activeTaskSession.orderId);
+    const task = order?.tasks?.find((item) => item._id === activeTaskSession.taskId);
+    return {
+      orderId: activeTaskSession.orderId,
+      taskId: activeTaskSession.taskId,
+      serviceName: order?.serviceName || activeTaskSession.serviceName || 'Unknown Service',
+      taskTitle: task?.title || activeTaskSession.taskTitle || 'Unknown Task'
+    };
+  }, [activeTaskSession, orders]);
 
   const fetchOrders = useCallback(async () => {
     if (!authConfig) return;
@@ -91,9 +121,85 @@ const EmployeeApp = () => {
     fetchExtras();
   }, [userInfo, fetchOrders, fetchExtras]);
 
+  useEffect(() => {
+    const rawShift = localStorage.getItem(SHIFT_STORAGE_KEY);
+    if (rawShift) {
+      try {
+        const parsed = JSON.parse(rawShift);
+        if (parsed?.isClockedIn && parsed?.shiftStartedAt) {
+          setIsClockedIn(true);
+          setShiftStartedAt(parsed.shiftStartedAt);
+          const elapsed = Math.floor((Date.now() - new Date(parsed.shiftStartedAt).getTime()) / 1000);
+          setShiftElapsedSeconds(Math.max(0, elapsed));
+        }
+      } catch (error) {
+        localStorage.removeItem(SHIFT_STORAGE_KEY);
+      }
+    }
+
+    const rawTask = localStorage.getItem(ACTIVE_TASK_STORAGE_KEY);
+    if (rawTask) {
+      try {
+        const parsed = JSON.parse(rawTask);
+        if (parsed?.orderId && parsed?.taskId && parsed?.startedAt) {
+          setActiveTaskSession(parsed);
+          const elapsed = Math.floor((Date.now() - new Date(parsed.startedAt).getTime()) / 1000);
+          setActiveTaskElapsedSeconds(Math.max(0, elapsed));
+        }
+      } catch (error) {
+        localStorage.removeItem(ACTIVE_TASK_STORAGE_KEY);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isClockedIn && shiftStartedAt) {
+      shiftIntervalRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - new Date(shiftStartedAt).getTime()) / 1000);
+        setShiftElapsedSeconds(Math.max(0, elapsed));
+      }, 1000);
+    }
+    return () => {
+      if (shiftIntervalRef.current) {
+        clearInterval(shiftIntervalRef.current);
+        shiftIntervalRef.current = null;
+      }
+    };
+  }, [isClockedIn, shiftStartedAt]);
+
+  useEffect(() => {
+    if (activeTaskSession?.startedAt) {
+      activeTaskIntervalRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - new Date(activeTaskSession.startedAt).getTime()) / 1000);
+        setActiveTaskElapsedSeconds(Math.max(0, elapsed));
+      }, 1000);
+    }
+    return () => {
+      if (activeTaskIntervalRef.current) {
+        clearInterval(activeTaskIntervalRef.current);
+        activeTaskIntervalRef.current = null;
+      }
+    };
+  }, [activeTaskSession]);
+
   const refreshAll = () => {
     fetchOrders();
     fetchExtras();
+  };
+
+  const clockIn = () => {
+    const startedAt = new Date().toISOString();
+    setIsClockedIn(true);
+    setShiftStartedAt(startedAt);
+    setShiftElapsedSeconds(0);
+    localStorage.setItem(SHIFT_STORAGE_KEY, JSON.stringify({ isClockedIn: true, shiftStartedAt: startedAt }));
+  };
+
+  const clockOut = () => {
+    setIsClockedIn(false);
+    setShiftStartedAt(null);
+    setShiftElapsedSeconds(0);
+    localStorage.removeItem(SHIFT_STORAGE_KEY);
   };
 
   const openOrderInProcessing = (order) => {
@@ -152,6 +258,44 @@ const EmployeeApp = () => {
     }
   };
 
+  const startTaskSession = async ({ orderId, taskId, serviceName, taskTitle }) => {
+    if (activeTaskSession && (activeTaskSession.orderId !== orderId || activeTaskSession.taskId !== taskId)) {
+      alert('Pause or complete the current task before starting another one.');
+      return;
+    }
+
+    if (activeTaskSession) return;
+
+    const startedAt = new Date().toISOString();
+    const nextSession = { orderId, taskId, startedAt, serviceName, taskTitle };
+    setActiveTaskSession(nextSession);
+    setActiveTaskElapsedSeconds(0);
+    localStorage.setItem(ACTIVE_TASK_STORAGE_KEY, JSON.stringify(nextSession));
+    await handleTaskStatusChange(orderId, taskId, 'In Progress');
+  };
+
+  const pauseTaskSession = async () => {
+    if (!activeTaskSession?.orderId || !activeTaskSession?.taskId || !activeTaskSession?.startedAt) return;
+    const elapsedSeconds = Math.floor((Date.now() - new Date(activeTaskSession.startedAt).getTime()) / 1000);
+    const minutes = Math.max(1, Math.round(elapsedSeconds / 60));
+    await handleLogTime(
+      activeTaskSession.orderId,
+      activeTaskSession.taskId,
+      minutes,
+      `Timer log (${formatDuration(elapsedSeconds)})`
+    );
+
+    setActiveTaskSession(null);
+    setActiveTaskElapsedSeconds(0);
+    localStorage.removeItem(ACTIVE_TASK_STORAGE_KEY);
+  };
+
+  const completeTaskSession = async () => {
+    if (!activeTaskSession?.orderId || !activeTaskSession?.taskId) return;
+    await pauseTaskSession();
+    await handleTaskStatusChange(activeTaskSession.orderId, activeTaskSession.taskId, 'Completed');
+  };
+
   const handleUploadCertificate = async (file) => {
     if (!authConfig || !selectedOrder) return;
 
@@ -205,6 +349,11 @@ const EmployeeApp = () => {
             setSelectedOrder={(order) => setSelectedOrderId(order?._id || null)}
             onTaskStatusChange={handleTaskStatusChange}
             onToggleSubtask={handleToggleSubtask}
+            activeTaskSession={activeTaskSession}
+            activeTaskElapsedSeconds={activeTaskElapsedSeconds}
+            onStartTask={startTaskSession}
+            onPauseTask={pauseTaskSession}
+            onCompleteTask={completeTaskSession}
           />
         );
       case 'time':
@@ -215,6 +364,8 @@ const EmployeeApp = () => {
             setSelectedOrder={(order) => setSelectedOrderId(order?._id || null)}
             onLogTime={handleLogTime}
             userInfo={userInfo}
+            activeTaskSession={activeTaskSession}
+            activeTaskElapsedSeconds={activeTaskElapsedSeconds}
           />
         );
       case 'documents':
@@ -245,7 +396,19 @@ const EmployeeApp = () => {
       />
 
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <EmployeeTopbar activeTab={activeTab} userInfo={userInfo} onRefresh={refreshAll} />
+        <EmployeeTopbar
+          activeTab={activeTab}
+          userInfo={userInfo}
+          onRefresh={refreshAll}
+          isClockedIn={isClockedIn}
+          shiftElapsedLabel={formatDuration(shiftElapsedSeconds)}
+          onClockIn={clockIn}
+          onClockOut={clockOut}
+          activeTaskDetails={activeTaskDetails}
+          activeTaskElapsedLabel={formatDuration(activeTaskElapsedSeconds)}
+          onPauseTask={pauseTaskSession}
+          onCompleteTask={completeTaskSession}
+        />
         <div className="flex-1 overflow-y-auto p-6 md:p-8">{renderActiveModule()}</div>
       </main>
     </div>
