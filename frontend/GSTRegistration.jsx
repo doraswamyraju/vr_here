@@ -110,8 +110,8 @@ const GSTRegistrationPage = () => {
             formData: submittedFormData,
             token: userInfo?.token,
             onSubmittingChange: setIsSubmitting,
-            onSuccess: () => {
-                alert('Payment Successful! Your application has been started.');
+            onSuccess: (data) => {
+                alert(data?.postPaymentMessage || 'Payment Successful! Your application has been started.');
                 setIsModalOpen(false);
                 navigate('/customer-dashboard');
             },

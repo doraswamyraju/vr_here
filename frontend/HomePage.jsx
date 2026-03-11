@@ -207,9 +207,10 @@ const HomePage = () => {
       token: userInfo?.token,
       onSubmittingChange: setIsSubmitting,
       onSuccess: (data) => {
-        alert(`Payment Successful! Booking Confirmed. Payment ID: ${data.payment.paymentId}`);
+        alert(data?.postPaymentMessage || `Payment Successful! Booking Confirmed. Payment ID: ${data.payment.paymentId}`);
         setIsModalOpen(false);
         setFormData({ name: '', email: '', phone: '' });
+        window.location.href = '/customer-dashboard';
       },
       onFailure: (error) => {
         console.error('Payment Flow Error:', error);

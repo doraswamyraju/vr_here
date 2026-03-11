@@ -4,6 +4,7 @@ import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
+import sendEmail from '../utils/sendEmail.js';
 
 const getRazorpayClient = () => {
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -86,6 +87,77 @@ const resolveCustomerUser = async ({
         user,
         accountCreated
     };
+};
+
+const sendPostPaymentEmail = async ({
+    user,
+    customerEmail,
+    customerName,
+    paymentId,
+    serviceName,
+    packageName,
+    amount,
+    shouldSendSetPasswordLink
+}) => {
+    const targetEmail = String(customerEmail || user?.email || '').trim().toLowerCase();
+    if (!targetEmail || !user) {
+        return {
+            emailSent: false,
+            resetLinkSent: false
+        };
+    }
+
+    let resetUrl = '';
+    let resetLinkSent = false;
+
+    if (shouldSendSetPasswordLink) {
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        user.resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex');
+        user.resetPasswordExpire = Date.now() + 24 * 60 * 60 * 1000; // 24h
+        await user.save();
+        resetUrl = `https://vrhere.in/reset-password/${resetToken}`;
+        resetLinkSent = true;
+    }
+
+    const message = `
+      <h2>Payment Successful</h2>
+      <p>Hi ${customerName || user.name || 'Customer'},</p>
+      <p>We have received your payment successfully.</p>
+      <ul>
+        <li><strong>Payment ID:</strong> ${paymentId || '-'}</li>
+        <li><strong>Service:</strong> ${serviceName || '-'}</li>
+        <li><strong>Package:</strong> ${packageName || '-'}</li>
+        <li><strong>Amount:</strong> INR ${Number(amount || 0).toLocaleString('en-IN')}</li>
+      </ul>
+      ${resetLinkSent
+            ? `<p>Your customer account is ready. Please set your password using this secure link:</p>
+             <p><a href="${resetUrl}">${resetUrl}</a></p>
+             <p>This link will expire in 24 hours.</p>`
+            : '<p>You can continue using your existing login credentials to access your dashboard.</p>'
+        }
+      <p>Thanks,<br/>VR HERE Business Solutions</p>
+    `;
+
+    try {
+        await sendEmail({
+            email: targetEmail,
+            subject: 'VR HERE Payment Confirmation & Login Details',
+            message
+        });
+        return {
+            emailSent: true,
+            resetLinkSent
+        };
+    } catch (error) {
+        console.error('Post-payment email send failure:', error);
+        return {
+            emailSent: false,
+            resetLinkSent: false
+        };
+    }
 };
 
 // @desc    Create Razorpay checkout order
@@ -173,6 +245,7 @@ export const verifyPayment = async (req, res) => {
 
         const parsedAmount = Number(amount);
 
+        const isGuestCheckout = !req.user?._id;
         const { user: customerUser, accountCreated } = await resolveCustomerUser({
             currentUser: req.user,
             customerName,
@@ -184,12 +257,16 @@ export const verifyPayment = async (req, res) => {
         const existingPayment = await Payment.findOne({ paymentId: razorpay_payment_id });
         if (existingPayment) {
             const existingOrder = await Order.findById(existingPayment.order);
+            const existingMessage = isGuestCheckout
+                ? 'Payment already confirmed. Login details were sent to your email.'
+                : 'Payment already confirmed.';
             return res.status(200).json({
                 message: 'Payment already verified',
                 order: existingOrder,
                 payment: existingPayment,
                 auth,
-                accountCreated
+                accountCreated,
+                postPaymentMessage: existingMessage
             });
         }
 
@@ -228,12 +305,35 @@ export const verifyPayment = async (req, res) => {
             packageName
         });
 
+        const emailStatus = await sendPostPaymentEmail({
+            user: customerUser,
+            customerEmail: resolvedEmail,
+            customerName: resolvedCustomerName,
+            paymentId: razorpay_payment_id,
+            serviceName,
+            packageName,
+            amount: parsedAmount,
+            shouldSendSetPasswordLink: isGuestCheckout
+        });
+
+        let postPaymentMessage = 'Payment successful. Your application has been started.';
+        if (isGuestCheckout && emailStatus.emailSent && emailStatus.resetLinkSent) {
+            postPaymentMessage = 'Payment successful. We sent login details and a password setup link to your email.';
+        } else if (isGuestCheckout && !emailStatus.emailSent) {
+            postPaymentMessage = 'Payment successful, but we could not send the login email right now. Please contact support.';
+        } else if (!isGuestCheckout && emailStatus.emailSent) {
+            postPaymentMessage = 'Payment successful. A confirmation email has been sent to your email.';
+        }
+
         res.status(201).json({
             message: 'Payment verified successfully',
             order: createdOrder,
             payment,
             auth,
-            accountCreated
+            accountCreated,
+            emailSent: emailStatus.emailSent,
+            resetLinkSent: emailStatus.resetLinkSent,
+            postPaymentMessage
         });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });

@@ -9,6 +9,7 @@ import {
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from './utils/razorpayCheckout';
+import { useNavigate } from 'react-router-dom';
 
 // SERVICES_DATA removed (handled by SharedHeader)
 
@@ -51,6 +52,7 @@ const PACKAGES = [
 ];
 
 const PartnershipFirmPage = () => {
+    const navigate = useNavigate();
     // --- STATE ---
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeMobileCategory, setActiveMobileCategory] = useState(null);
@@ -108,8 +110,9 @@ const PartnershipFirmPage = () => {
             token: userInfo?.token,
             onSubmittingChange: setIsSubmitting,
             onSuccess: (data) => {
-                alert(`Payment Successful! Booking Confirmed. Payment ID: ${data.payment.paymentId}`);
+                alert(data?.postPaymentMessage || `Payment Successful! Booking Confirmed. Payment ID: ${data.payment.paymentId}`);
                 setIsModalOpen(false);
+                navigate('/customer-dashboard');
             },
             onFailure: (error) => {
                 console.error('Payment Flow Error:', error);
