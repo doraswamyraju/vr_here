@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, CreditCard, RefreshCw, Loader2, ShieldCheck } from 'lucide-react';
 
 const ConsultationPaymentModal = ({
@@ -19,17 +19,25 @@ const ConsultationPaymentModal = ({
     email: ''
   });
   const [termsAccepted, setTermsAccepted] = useState(initialTermsAccepted);
+  const hasInitializedForOpen = useRef(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      hasInitializedForOpen.current = false;
+      return;
+    }
 
-    setFormData({
-      name: initialFormData?.name || '',
-      phone: initialFormData?.phone || '',
-      email: initialFormData?.email || ''
-    });
-    setTermsAccepted(Boolean(initialTermsAccepted));
-  }, [isOpen, initialFormData, initialTermsAccepted, selectedPlan?.id]);
+    // Initialize only once per open cycle so typing isn't reset by parent re-renders.
+    if (!hasInitializedForOpen.current) {
+      setFormData({
+        name: initialFormData?.name || '',
+        phone: initialFormData?.phone || '',
+        email: initialFormData?.email || ''
+      });
+      setTermsAccepted(Boolean(initialTermsAccepted));
+      hasInitializedForOpen.current = true;
+    }
+  }, [isOpen, initialFormData, initialTermsAccepted]);
 
   if (!isOpen) return null;
 
@@ -87,6 +95,7 @@ const ConsultationPaymentModal = ({
               name="name"
               value={formData.name}
               onChange={handleInputChange}
+              autoComplete="name"
               required
               type="text"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
@@ -96,6 +105,7 @@ const ConsultationPaymentModal = ({
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
+              autoComplete="tel"
               required
               type="tel"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
@@ -105,6 +115,7 @@ const ConsultationPaymentModal = ({
               name="email"
               value={formData.email}
               onChange={handleInputChange}
+              autoComplete="email"
               required
               type="email"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-600 outline-none transition-shadow hover:shadow-inner"
