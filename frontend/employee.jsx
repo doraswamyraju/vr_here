@@ -208,7 +208,15 @@ const EmployeeApp = () => {
           />
         );
       case 'time':
-        return <TimeTrackingModule selectedOrder={selectedOrder} onLogTime={handleLogTime} />;
+        return (
+          <TimeTrackingModule
+            orders={orders}
+            selectedOrder={selectedOrder}
+            setSelectedOrder={(order) => setSelectedOrderId(order?._id || null)}
+            onLogTime={handleLogTime}
+            userInfo={userInfo}
+          />
+        );
       case 'documents':
         return <DocumentsModule selectedOrder={selectedOrder} />;
       case 'requirements':
