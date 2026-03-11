@@ -6,6 +6,14 @@ const getAuthConfig = (token) => (
     : {}
 );
 
+const persistAuthFromPayment = (paymentResponse) => {
+  const auth = paymentResponse?.auth;
+  if (!auth?.token) return;
+
+  localStorage.setItem('token', auth.token);
+  localStorage.setItem('userInfo', JSON.stringify(auth));
+};
+
 export const launchRazorpayCheckout = async ({
   serviceName,
   selectedPlan,
@@ -62,6 +70,7 @@ export const launchRazorpayCheckout = async ({
             getAuthConfig(token)
           );
 
+          persistAuthFromPayment(data);
           onSubmittingChange(false);
           onSuccess?.(data);
         } catch (error) {

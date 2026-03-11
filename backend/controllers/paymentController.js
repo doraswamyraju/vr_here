@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
+import User from '../models/User.js';
+import generateToken from '../utils/generateToken.js';
 
 const getRazorpayClient = () => {
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -17,6 +19,73 @@ const getRazorpayClient = () => {
         key_id: keyId,
         key_secret: keySecret
     });
+};
+
+const getAuthPayload = (userDoc) => {
+    if (!userDoc) return null;
+
+    return {
+        _id: userDoc._id,
+        name: userDoc.name,
+        email: userDoc.email,
+        role: userDoc.role,
+        token: generateToken(userDoc._id)
+    };
+};
+
+const resolveCustomerUser = async ({
+    currentUser,
+    customerName,
+    email,
+    phone
+}) => {
+    if (currentUser?._id) {
+        return {
+            user: currentUser,
+            accountCreated: false
+        };
+    }
+
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+        return {
+            user: null,
+            accountCreated: false
+        };
+    }
+
+    let user = await User.findOne({ email: normalizedEmail });
+    let accountCreated = false;
+
+    if (!user) {
+        const tempPassword = `VrHere@${crypto.randomBytes(8).toString('hex')}`;
+        user = await User.create({
+            name: customerName || 'VR HERE Customer',
+            email: normalizedEmail,
+            phone: phone || '',
+            password: tempPassword,
+            role: 'client'
+        });
+        accountCreated = true;
+    } else {
+        let shouldSave = false;
+        if (!user.phone && phone) {
+            user.phone = phone;
+            shouldSave = true;
+        }
+        if (!user.name && customerName) {
+            user.name = customerName;
+            shouldSave = true;
+        }
+        if (shouldSave) {
+            await user.save();
+        }
+    }
+
+    return {
+        user,
+        accountCreated
+    };
 };
 
 // @desc    Create Razorpay checkout order
@@ -104,22 +173,32 @@ export const verifyPayment = async (req, res) => {
 
         const parsedAmount = Number(amount);
 
+        const { user: customerUser, accountCreated } = await resolveCustomerUser({
+            currentUser: req.user,
+            customerName,
+            email,
+            phone
+        });
+        const auth = getAuthPayload(customerUser);
+
         const existingPayment = await Payment.findOne({ paymentId: razorpay_payment_id });
         if (existingPayment) {
             const existingOrder = await Order.findById(existingPayment.order);
             return res.status(200).json({
                 message: 'Payment already verified',
                 order: existingOrder,
-                payment: existingPayment
+                payment: existingPayment,
+                auth,
+                accountCreated
             });
         }
 
-        const resolvedCustomerName = customerName || req.user?.name || '';
-        const resolvedEmail = email || req.user?.email || '';
-        const resolvedPhone = phone || req.user?.phone || '';
+        const resolvedCustomerName = customerName || customerUser?.name || req.user?.name || '';
+        const resolvedEmail = email || customerUser?.email || req.user?.email || '';
+        const resolvedPhone = phone || customerUser?.phone || req.user?.phone || '';
 
         const createdOrder = await Order.create({
-            user: req.user?._id || null,
+            user: customerUser?._id || req.user?._id || null,
             clientName: resolvedCustomerName,
             email: resolvedEmail,
             phone: resolvedPhone,
@@ -133,7 +212,7 @@ export const verifyPayment = async (req, res) => {
         });
 
         const payment = await Payment.create({
-            user: req.user?._id || null,
+            user: customerUser?._id || req.user?._id || null,
             order: createdOrder._id,
             amount: parsedAmount,
             currency: 'INR',
@@ -152,7 +231,9 @@ export const verifyPayment = async (req, res) => {
         res.status(201).json({
             message: 'Payment verified successfully',
             order: createdOrder,
-            payment
+            payment,
+            auth,
+            accountCreated
         });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
