@@ -10,6 +10,7 @@ import { SharedHeader, SharedFooter } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';
 import OurTeamModule from './components/OurTeamModule';
 import { launchRazorpayCheckout } from './utils/razorpayCheckout';
+import { showPaymentSuccessPopup } from './utils/paymentSuccessPopup';
 
 // MENU_DATA removed (moved to SharedComponents)
 
@@ -206,11 +207,16 @@ const HomePage = () => {
       formData: submittedFormData,
       token: userInfo?.token,
       onSubmittingChange: setIsSubmitting,
-      onSuccess: (data) => {
-        alert(data?.postPaymentMessage || `Payment Successful! Booking Confirmed. Payment ID: ${data.payment.paymentId}`);
+      onSuccess: async (data) => {
+        const requiresEmailLogin = Boolean(data?.resetLinkSent);
+        await showPaymentSuccessPopup({
+          serviceName: selectedPlan?.name || data?.order?.serviceName,
+          paymentId: data?.payment?.paymentId,
+          requiresEmailLogin
+        });
         setIsModalOpen(false);
         setFormData({ name: '', email: '', phone: '' });
-        window.location.href = '/customer-dashboard';
+        window.location.href = requiresEmailLogin ? '/login' : '/customer-dashboard';
       },
       onFailure: (error) => {
         console.error('Payment Flow Error:', error);

@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from './utils/razorpayCheckout';
+import { showPaymentSuccessPopup } from './utils/paymentSuccessPopup';
 
 // SERVICES_DATA removed (handled by SharedHeader)
 
@@ -110,10 +111,15 @@ const GSTRegistrationPage = () => {
             formData: submittedFormData,
             token: userInfo?.token,
             onSubmittingChange: setIsSubmitting,
-            onSuccess: (data) => {
-                alert(data?.postPaymentMessage || 'Payment Successful! Your application has been started.');
+            onSuccess: async (data) => {
+                const requiresEmailLogin = Boolean(data?.resetLinkSent);
+                await showPaymentSuccessPopup({
+                    serviceName: selectedPlan?.name || data?.order?.serviceName,
+                    paymentId: data?.payment?.paymentId,
+                    requiresEmailLogin
+                });
                 setIsModalOpen(false);
-                navigate('/customer-dashboard');
+                navigate(requiresEmailLogin ? '/login' : '/customer-dashboard');
             },
             onFailure: (error) => {
                 console.error('Payment Flow Error:', error);
