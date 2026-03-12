@@ -227,7 +227,7 @@ const OrdersModule = ({
                 <OrderRequirementsTab
                   selectedOrder={selectedOrder}
                   onImportRequirementsWorkbook={(file, replaceExisting) => onImportRequirementsWorkbook(selectedOrder._id, file, replaceExisting)}
-                  onRaiseRequirement={(text) => onRaiseRequirement(selectedOrder._id, text)}
+                  onRaiseRequirement={(payload) => onRaiseRequirement(selectedOrder._id, payload)}
                   onUpdateRequirementStatus={(requirementId, status) => onUpdateRequirementStatus(selectedOrder._id, requirementId, status)}
                 />
               )}

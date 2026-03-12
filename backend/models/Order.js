@@ -286,6 +286,10 @@ const orderSchema = mongoose.Schema({
             type: Boolean,
             default: false
         },
+        isAdditional: {
+            type: Boolean,
+            default: false
+        },
         lastSavedAt: {
             type: Date,
             default: null

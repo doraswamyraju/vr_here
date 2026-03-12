@@ -159,11 +159,8 @@ function AdminApp() {
     fetchData();
   };
 
-  const raiseRequirement = async (orderId, text) => {
-    await axios.post(`/api/orders/${orderId}/requirements/import`, {
-      requirementsText: `Detail: ${text}`,
-      replaceExisting: false
-    }, config);
+  const raiseRequirement = async (orderId, payload) => {
+    await axios.post(`/api/orders/${orderId}/requirements`, payload, config);
     fetchData();
   };
 

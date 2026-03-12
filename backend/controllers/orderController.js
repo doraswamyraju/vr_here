@@ -1021,6 +1021,41 @@ const updateRequirement = asyncHandler(async (req, res) => {
     res.json(order);
 });
 
+// @desc    Add a single additional requirement (query)
+// @route   POST /api/orders/:id/requirements
+// @access  Private
+const addRequirement = asyncHandler(async (req, res) => {
+    const { title, description, type } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to add a requirement to this order');
+    }
+
+    const newReq = {
+        title: title || 'Additional Requirement',
+        description: description || '',
+        type: type === 'Document' ? 'Document' : 'Detail',
+        category: type === 'Document' ? 'Document' : 'Detail',
+        inputType: type === 'Document' ? 'file' : 'text',
+        required: true,
+        status: 'Pending',
+        isClientCompleted: false,
+        isAdditional: true
+    };
+
+    order.customerRequirements.push(newReq);
+    await order.save();
+
+    res.status(201).json(order);
+});
+
 export {
     createOrder,
     getOrders,
@@ -1043,5 +1078,6 @@ export {
     importTasks,
     addTaskTimeLog,
     importRequirements,
-    updateRequirement
+    updateRequirement,
+    addRequirement
 };
