@@ -70,10 +70,27 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../dist')));
+    const distPath = path.join(__dirname, '../dist');
+    app.use('/assets', express.static(path.join(distPath, 'assets'), {
+        maxAge: '1y',
+        immutable: true
+    }));
+    app.use(express.static(distPath, {
+        setHeaders: (res, filePath) => {
+            if (filePath.endsWith('index.html')) {
+                res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Expires', '0');
+            }
+        }
+    }));
 
     app.get('*', (req, res) =>
-        res.sendFile(path.resolve(__dirname, '../', 'dist', 'index.html'))
+        res
+            .set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+            .set('Pragma', 'no-cache')
+            .set('Expires', '0')
+            .sendFile(path.resolve(__dirname, '../', 'dist', 'index.html'))
     );
 } else {
     app.get('/', (req, res) => {
