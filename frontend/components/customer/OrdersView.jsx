@@ -3,6 +3,7 @@ import {
     CheckSquare, Clock, Package, CheckCircle2,
     AlertCircle, ChevronRight, FileText, Search
 } from 'lucide-react';
+import ProjectDetailsView from './ProjectDetailsView';
 
 const getStatusProgress = (status) => {
     switch (status) {
@@ -30,7 +31,21 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const OrdersView = ({ orders }) => {
+const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId, onOpenVault, payments }) => {
+    if (selectedOrderId) {
+        const order = orders.find(o => o._id === selectedOrderId);
+        if (order) {
+            return (
+                <ProjectDetailsView 
+                    order={order} 
+                    payments={payments} 
+                    onBack={() => setSelectedOrderId(null)} 
+                    onOpenVault={onOpenVault}
+                />
+            );
+        }
+    }
+
     return (
         <div className="space-y-6 pb-20 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-end mb-2 px-1">
@@ -75,7 +90,7 @@ const OrdersView = ({ orders }) => {
                                         <Clock size={10} />
                                         <span>Current Phase</span>
                                     </div>
-                                    <span className="text-indigo-600">{getStatusProgress(proj.status)}% 完成</span>
+                                    <span className="text-indigo-600">{getStatusProgress(proj.status)}% Complete</span>
                                 </div>
                                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                                     <div
@@ -90,7 +105,7 @@ const OrdersView = ({ orders }) => {
                                     <span className="text-slate-400 font-bold text-xs mr-0.5">₹</span>
                                     {proj.price.toLocaleString()}
                                 </div>
-                                <button className="flex items-center gap-1.5 bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-600 hover:text-white transition-all">
+                                <button onClick={() => setSelectedOrderId ? setSelectedOrderId(proj._id) : {}} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-600 hover:text-white transition-all">
                                     Details <ChevronRight size={12} />
                                 </button>
                             </div>

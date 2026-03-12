@@ -60,7 +60,7 @@ const DocumentsView = ({ orders, refreshOrders, userInfo }) => {
             {[
               { key: 'provided', label: 'Admin Docs' },
               { key: 'uploaded', label: 'My Uploads' },
-              { key: 'requirements', label: 'Requirements' }
+              { key: 'requirements', label: 'Queries' }
             ].map((tab) => (
               <button
                 key={tab.key}

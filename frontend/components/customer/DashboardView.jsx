@@ -27,7 +27,7 @@ const StatusBadge = ({ status }) => {
     return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${styles[status] || 'bg-slate-100'}`}>{status}</span>;
 };
 
-const DashboardView = ({ setActiveTab, orders, notifications, userInfo }) => {
+const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenProject }) => {
     const activeOrders = orders.filter(o => o.status !== 'Completed');
     const pendingActions = orders.filter(o => o.status === 'Pending Documents' || o.status === 'Waiting for Clarification');
     const unreadNotifications = notifications.filter(n => !n.isRead);
@@ -143,7 +143,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo }) => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {activeOrders.slice(0, 4).map(proj => (
-                                <div key={proj._id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group cursor-pointer">
+                                <div key={proj._id} onClick={() => onOpenProject ? onOpenProject(proj._id) : {}} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group cursor-pointer">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="max-w-[70%]">
                                             <h4 className="font-black text-slate-800 text-sm group-hover:text-indigo-600 transition-colors line-clamp-1">{proj.serviceName}</h4>

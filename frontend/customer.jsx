@@ -17,6 +17,7 @@ import SupportView from './components/customer/SupportView';
 
 export default function CustomerApp() {
    const [activeTab, setActiveTab] = useState('Home');
+   const [selectedOrderId, setSelectedOrderId] = useState('');
    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
    const [isLoggedIn, setIsLoggedIn] = useState(false);
    const [userInfo, setUserInfo] = useState(null);
@@ -79,10 +80,30 @@ export default function CustomerApp() {
    // -- Tab Mapping --
    const renderView = () => {
       switch (activeTab) {
-         case 'Home': return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} />;
+         case 'Home': return (
+            <DashboardView
+               setActiveTab={setActiveTab}
+               orders={orders}
+               notifications={notifications}
+               userInfo={userInfo}
+               onOpenProject={(orderId) => {
+                  setSelectedOrderId(orderId);
+                  setActiveTab('Orders');
+               }}
+            />
+         );
          case 'Services': return <ServicesView />;
-         case 'Orders': return <OrdersView orders={orders} />;
-         case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} />;
+         case 'Orders': return (
+            <OrdersView
+               orders={orders}
+               notifications={notifications}
+               selectedOrderId={selectedOrderId}
+               setSelectedOrderId={setSelectedOrderId}
+               payments={payments}
+               onOpenVault={() => setActiveTab('Documents')}
+            />
+         );
+         case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
          case 'Account': return <AccountsView orders={orders} payments={payments} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} />;
@@ -222,7 +243,7 @@ export default function CustomerApp() {
 
             {/* SCROLLABLE VIEWPORT */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6 px-5 md:px-10 md:pt-10 scroll-smooth">
-               <div className="max-w-4xl lg:max-w-[1280px] mx-auto">
+               <div className="max-w-7xl mx-auto w-full">
                   {renderView()}
                </div>
             </div>
