@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Upload, Download, CheckCircle } from 'lucide-react';
 import { ORDER_STATUSES } from './constants';
 import { getOrderClientLabel, StatusBadge } from './helpers';
+import { rupees } from '../admin/orders/helpers';
 
 const OrderProcessingModule = ({
   orders,
@@ -9,9 +10,33 @@ const OrderProcessingModule = ({
   setSelectedOrder,
   onStatusChange,
   onUploadCertificate,
-  isUploading
+  isUploading,
+  userInfo
 }) => {
   const [file, setFile] = useState(null);
+  const [detailTab, setDetailTab] = useState('Tasks');
+
+  const normalizeId = (value) => {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (value?._id) return String(value._id);
+    return String(value);
+  };
+
+  const employeeId = userInfo?._id ? String(userInfo._id) : '';
+  const selectedOrderAssignedTasks = (selectedOrder?.tasks || []).filter((task) => {
+    const taskAssignees = [task.assignedTo, task.assignedMaker, task.assignedChecker]
+      .map(normalizeId)
+      .filter(Boolean);
+    const subtaskAssignees = (task.subtasks || [])
+      .flatMap((subtask) => [subtask.assignedToMaker, subtask.assignedToChecker])
+      .map(normalizeId)
+      .filter(Boolean);
+    return [...taskAssignees, ...subtaskAssignees].includes(employeeId);
+  });
+
+  const clientPhone = selectedOrder?.phone || selectedOrder?.user?.phone || '';
+  const clientEmail = selectedOrder?.email || selectedOrder?.user?.email || '';
 
   if (!selectedOrder) {
     return (
@@ -21,6 +46,7 @@ const OrderProcessingModule = ({
             <tr>
               <th className="p-3">Client</th>
               <th className="p-3">Service</th>
+              <th className="p-3">Contact</th>
               <th className="p-3">Status</th>
               <th className="p-3">Action</th>
             </tr>
@@ -30,6 +56,15 @@ const OrderProcessingModule = ({
               <tr key={order._id}>
                 <td className="p-3 font-semibold">{getOrderClientLabel(order)}</td>
                 <td className="p-3">{order.serviceName}</td>
+                <td className="p-3 text-xs">
+                  {order.phone ? (
+                    <a href={`tel:${order.phone}`} className="text-indigo-700 font-semibold hover:underline">
+                      {order.phone}
+                    </a>
+                  ) : (
+                    <span className="text-slate-400">No phone</span>
+                  )}
+                </td>
                 <td className="p-3">
                   <StatusBadge status={order.status} />
                 </td>
@@ -59,12 +94,28 @@ const OrderProcessingModule = ({
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
-        <div className="flex justify-between items-start gap-4">
+        <div className="flex justify-between items-start gap-4 flex-wrap">
           <div>
             <h3 className="text-xl font-bold text-slate-800">{selectedOrder.serviceName}</h3>
             <p className="text-sm text-slate-500">
               Client: <span className="font-semibold">{getOrderClientLabel(selectedOrder)}</span>
             </p>
+            <div className="mt-1 flex flex-wrap gap-3 text-xs">
+              {clientPhone ? (
+                <a href={`tel:${clientPhone}`} className="text-indigo-700 font-semibold hover:underline">
+                  Call: {clientPhone}
+                </a>
+              ) : (
+                <span className="text-slate-400">Phone not available</span>
+              )}
+              {clientEmail ? (
+                <a href={`mailto:${clientEmail}`} className="text-indigo-700 font-semibold hover:underline">
+                  Email: {clientEmail}
+                </a>
+              ) : (
+                <span className="text-slate-400">Email not available</span>
+              )}
+            </div>
           </div>
           <button onClick={() => setSelectedOrder(null)} className="text-indigo-600 font-semibold text-sm">
             Back to List
@@ -72,13 +123,33 @@ const OrderProcessingModule = ({
         </div>
       </div>
 
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">Status</p>
+            <div className="mt-1"><StatusBadge status={selectedOrder.status} /></div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">Package</p>
+            <p className="font-semibold text-slate-800 mt-1">{selectedOrder.packageName || '-'}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">Price</p>
+            <p className="font-semibold text-slate-800 mt-1">{rupees(selectedOrder.price)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">Assigned Tasks</p>
+            <p className="font-semibold text-slate-800 mt-1">{selectedOrderAssignedTasks.length}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
-          <h4 className="font-bold text-slate-800 mb-4">Order Progress</h4>
+          <h4 className="font-bold text-slate-800 mb-4">Order Controls</h4>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">Current Status</span>
-              <StatusBadge status={selectedOrder.status} />
+              <span className="text-sm text-slate-500">Update Status</span>
             </div>
             <select
               value={selectedOrder.status}
@@ -126,6 +197,87 @@ const OrderProcessingModule = ({
                 {isUploading ? 'Uploading...' : 'Upload Final Certificate'}
               </button>
             </form>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+        <div className="px-4 border-b border-slate-100 flex flex-wrap gap-2">
+          {['Tasks', 'Requirements', 'Invoices'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setDetailTab(tab)}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition ${detailTab === tab ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-5 space-y-3">
+          {detailTab === 'Tasks' && (
+            <div className="space-y-2">
+              {selectedOrderAssignedTasks.map((task) => (
+                <div key={task._id} className="rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-slate-800">{task.taskCode ? `${task.taskCode} - ${task.title}` : task.title}</p>
+                    <StatusBadge status={task.status || 'Pending'} />
+                  </div>
+                  {(task.subtasks || []).length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {task.subtasks.map((subtask) => (
+                        <p key={subtask._id} className="text-xs text-slate-600">
+                          • {subtask.subTaskCode ? `${subtask.subTaskCode} - ` : ''}{subtask.title} ({subtask.status || 'Pending'})
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {selectedOrderAssignedTasks.length === 0 && (
+                <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4">
+                  No tasks currently assigned to you in this project.
+                </div>
+              )}
+            </div>
+          )}
+
+          {detailTab === 'Requirements' && (
+            <div className="space-y-2">
+              {(selectedOrder.customerRequirements || []).map((item) => (
+                <div key={item._id} className="rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-slate-800">{item.title}</p>
+                    <StatusBadge status={item.status || 'Pending'} />
+                  </div>
+                  {item.description && <p className="text-xs text-slate-500 mt-1">{item.description}</p>}
+                </div>
+              ))}
+              {(selectedOrder.customerRequirements || []).length === 0 && (
+                <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4">
+                  No requirements listed yet.
+                </div>
+              )}
+            </div>
+          )}
+
+          {detailTab === 'Invoices' && (
+            <div className="space-y-2">
+              {(selectedOrder.invoices || []).map((invoice) => (
+                <div key={invoice._id} className="rounded-lg border border-slate-200 p-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-slate-800">{invoice.invoiceNumber || 'Invoice'}</p>
+                    <p className="text-xs text-slate-500">{rupees(invoice.amount || 0)}</p>
+                  </div>
+                  <StatusBadge status={invoice.status || 'Draft'} />
+                </div>
+              ))}
+              {(selectedOrder.invoices || []).length === 0 && (
+                <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4">
+                  No invoices for this project yet.
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

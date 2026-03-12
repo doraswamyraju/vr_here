@@ -131,6 +131,22 @@ const OrdersModule = ({
               <div>
                 <h2 className="text-xl font-black text-slate-900">{selectedOrder.serviceName}</h2>
                 <p className="text-sm text-slate-500 mt-1">{getOrderClientLabel(selectedOrder)} | {rupees(selectedOrder.price)}</p>
+                <div className="mt-1 flex flex-wrap gap-3 text-xs">
+                  {(selectedOrder.phone || selectedOrder?.user?.phone) ? (
+                    <a href={`tel:${selectedOrder.phone || selectedOrder?.user?.phone}`} className="text-indigo-700 font-semibold hover:underline">
+                      Call: {selectedOrder.phone || selectedOrder?.user?.phone}
+                    </a>
+                  ) : (
+                    <span className="text-slate-400">Phone not available</span>
+                  )}
+                  {(selectedOrder.email || selectedOrder?.user?.email) ? (
+                    <a href={`mailto:${selectedOrder.email || selectedOrder?.user?.email}`} className="text-indigo-700 font-semibold hover:underline">
+                      Email: {selectedOrder.email || selectedOrder?.user?.email}
+                    </a>
+                  ) : (
+                    <span className="text-slate-400">Email not available</span>
+                  )}
+                </div>
               </div>
               <button onClick={() => setSelectedOrderId(null)} className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200">Back to Orders</button>
             </div>

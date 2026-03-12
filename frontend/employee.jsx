@@ -350,11 +350,14 @@ const EmployeeApp = () => {
             onStatusChange={handleStatusChange}
             onUploadCertificate={handleUploadCertificate}
             isUploading={isUploading}
+            userInfo={userInfo}
           />
         );
       case 'tasks':
         return (
           <TaskManagementModule
+            orders={orders}
+            userInfo={userInfo}
             selectedOrder={selectedOrder}
             setSelectedOrder={(order) => setSelectedOrderId(order?._id || null)}
             onTaskStatusChange={handleTaskStatusChange}
