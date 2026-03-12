@@ -57,6 +57,16 @@ const orderSchema = mongoose.Schema({
         ref: 'User',
         default: null
     },
+    assignedMaker: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    assignedChecker: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
     clientDocuments: [{
         name: String,
         url: String, // Path to file
@@ -78,18 +88,83 @@ const orderSchema = mongoose.Schema({
         default: null
     },
     tasks: [{
+        taskCode: {
+            type: String,
+            default: ''
+        },
         title: String,
         status: {
             type: String,
             enum: ['Pending', 'In Progress', 'Completed'],
             default: 'Pending'
         },
+        ownerRole: {
+            type: String,
+            default: ''
+        },
+        startTrigger: {
+            type: String,
+            default: ''
+        },
         description: String,
+        assignedMaker: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        },
+        assignedChecker: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        },
+        sortOrder: {
+            type: Number,
+            default: 0
+        },
         subtasks: [{
+            subTaskCode: {
+                type: String,
+                default: ''
+            },
             title: String,
             isCompleted: {
                 type: Boolean,
                 default: false
+            },
+            status: {
+                type: String,
+                enum: ['Pending', 'In Progress', 'Completed'],
+                default: 'Pending'
+            },
+            makerRole: {
+                type: String,
+                default: ''
+            },
+            checkerRole: {
+                type: String,
+                default: ''
+            },
+            assignedToMaker: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+                default: null
+            },
+            assignedToChecker: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+                default: null
+            },
+            duration: {
+                type: String,
+                default: ''
+            },
+            dependency: {
+                type: String,
+                default: ''
+            },
+            output: {
+                type: String,
+                default: ''
             }
         }],
         assignedTo: {
@@ -141,11 +216,35 @@ const orderSchema = mongoose.Schema({
             type: String,
             required: true
         },
+        sheetName: {
+            type: String,
+            default: ''
+        },
+        category: {
+            type: String,
+            enum: ['Detail', 'Document'],
+            default: 'Document'
+        },
         type: {
             type: String,
             enum: ['Detail', 'Document'],
             default: 'Document'
         },
+        itemCode: {
+            type: String,
+            default: ''
+        },
+        inputType: {
+            type: String,
+            default: 'text'
+        },
+        placeholder: {
+            type: String,
+            default: ''
+        },
+        options: [{
+            type: String
+        }],
         required: {
             type: Boolean,
             default: true
@@ -163,9 +262,33 @@ const orderSchema = mongoose.Schema({
             type: String,
             default: ''
         },
+        clientValue: {
+            type: String,
+            default: ''
+        },
+        clientNotes: {
+            type: String,
+            default: ''
+        },
         documentUrl: {
             type: String,
             default: ''
+        },
+        uploadedDocumentUrl: {
+            type: String,
+            default: ''
+        },
+        uploadedDocumentName: {
+            type: String,
+            default: ''
+        },
+        isClientCompleted: {
+            type: Boolean,
+            default: false
+        },
+        lastSavedAt: {
+            type: Date,
+            default: null
         }
     }],
     checklists: [{

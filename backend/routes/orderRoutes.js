@@ -4,6 +4,8 @@ import {
     getOrders,
     getOrderById,
     updateOrderStatus,
+    updateOrder,
+    deleteOrder,
     assignOrder,
     updateOrderCommercials,
     uploadDocument,
@@ -16,6 +18,7 @@ import {
     updateInvoiceStatus,
     importTasks,
     assignTask,
+    updateSubtask,
     addTaskTimeLog,
     importRequirements,
     updateRequirement
@@ -30,7 +33,9 @@ router.route('/')
     .get(protect, getOrders);
 
 router.route('/:id')
-    .get(protect, getOrderById);
+    .get(protect, getOrderById)
+    .put(protect, admin, updateOrder)
+    .delete(protect, admin, deleteOrder);
 
 router.route('/:id/status')
     .put(protect, updateOrderStatus);
@@ -61,6 +66,9 @@ router.route('/:id/tasks/:taskId/time-log')
 
 router.route('/:id/tasks/:taskId/subtasks')
     .post(protect, admin, addSubtask);
+
+router.route('/:id/tasks/:taskId/subtasks/:subtaskId')
+    .put(protect, updateSubtask);
 
 router.route('/:id/checklists')
     .post(protect, addChecklistItem);

@@ -7,7 +7,7 @@ const TaskManagementModule = ({
   selectedOrder,
   setSelectedOrder,
   onTaskStatusChange,
-  onToggleSubtask,
+  onUpdateSubtask,
   activeTaskSession,
   activeTaskElapsedSeconds,
   onStartTask,
@@ -44,7 +44,12 @@ const TaskManagementModule = ({
                 .map((task) => (
                   <div key={task._id} className="bg-white p-3 rounded-lg border border-slate-200">
                     <div className="flex items-start justify-between">
-                      <p className="font-semibold text-sm text-slate-700">{task.title}</p>
+                      <div>
+                        <p className="font-semibold text-sm text-slate-700">{task.taskCode ? `${task.taskCode} - ${task.title}` : task.title}</p>
+                        <p className="text-[10px] text-slate-500">
+                          Maker: {task.assignedMaker?.name || 'Unassigned'} | Checker: {task.assignedChecker?.name || 'Unassigned'}
+                        </p>
+                      </div>
                       <button
                         onClick={() => {
                           const nextStatus =
@@ -62,16 +67,30 @@ const TaskManagementModule = ({
                     </div>
                     <div className="mt-2 space-y-2">
                       {(task.subtasks || []).map((subtask) => (
-                        <label key={subtask._id} className="flex items-center gap-2 text-xs">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(subtask.isCompleted)}
-                            onChange={() => onToggleSubtask(selectedOrder._id, task._id, subtask._id)}
-                          />
-                          <span className={subtask.isCompleted ? 'line-through text-slate-400' : 'text-slate-600'}>
-                            {subtask.title}
-                          </span>
-                        </label>
+                        <div key={subtask._id} className="rounded-md border border-slate-200 p-2">
+                          <label className="flex items-center gap-2 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(subtask.isCompleted)}
+                              onChange={(event) => onUpdateSubtask(selectedOrder._id, task._id, subtask._id, { isCompleted: event.target.checked })}
+                            />
+                            <span className={subtask.isCompleted ? 'line-through text-slate-400' : 'text-slate-600'}>
+                              {subtask.subTaskCode ? `${subtask.subTaskCode} - ${subtask.title}` : subtask.title}
+                            </span>
+                          </label>
+                          <div className="mt-1 flex items-center justify-between gap-2">
+                            <span className="text-[10px] text-slate-500">Maker: {subtask.assignedToMaker?.name || 'Unassigned'} | Checker: {subtask.assignedToChecker?.name || 'Unassigned'}</span>
+                            <select
+                              value={subtask.status || 'Pending'}
+                              onChange={(event) => onUpdateSubtask(selectedOrder._id, task._id, subtask._id, { status: event.target.value })}
+                              className="text-[10px] p-1 border rounded border-slate-300"
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="In Progress">In Progress</option>
+                              <option value="Completed">Completed</option>
+                            </select>
+                          </div>
+                        </div>
                       ))}
                     </div>
 

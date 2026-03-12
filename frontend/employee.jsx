@@ -227,21 +227,10 @@ const EmployeeApp = () => {
     }
   };
 
-  const handleToggleSubtask = async (orderId, taskId, subtaskId) => {
+  const handleUpdateSubtask = async (orderId, taskId, subtaskId, payload) => {
     if (!authConfig) return;
-
-    const order = orders.find((item) => item._id === orderId);
-    const task = order?.tasks?.find((item) => item._id === taskId);
-    if (!task) return;
-
-    const updatedSubtasks = (task.subtasks || []).map((subtask) => (
-      subtask._id === subtaskId
-        ? { ...subtask, isCompleted: !subtask.isCompleted }
-        : subtask
-    ));
-
     try {
-      await axios.put(`/api/orders/${orderId}/tasks/${taskId}`, { subtasks: updatedSubtasks }, authConfig);
+      await axios.put(`/api/orders/${orderId}/tasks/${taskId}/subtasks/${subtaskId}`, payload, authConfig);
       await fetchOrders();
     } catch (error) {
       alert('Unable to update subtask.');
@@ -348,7 +337,7 @@ const EmployeeApp = () => {
             selectedOrder={selectedOrder}
             setSelectedOrder={(order) => setSelectedOrderId(order?._id || null)}
             onTaskStatusChange={handleTaskStatusChange}
-            onToggleSubtask={handleToggleSubtask}
+            onUpdateSubtask={handleUpdateSubtask}
             activeTaskSession={activeTaskSession}
             activeTaskElapsedSeconds={activeTaskElapsedSeconds}
             onStartTask={startTaskSession}

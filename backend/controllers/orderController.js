@@ -1,6 +1,27 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/Order.js';
 
+const ORDER_POPULATE = [
+    { path: 'user', select: 'name email phone' },
+    { path: 'assignedEmployee', select: 'name email role' },
+    { path: 'assignedMaker', select: 'name email role' },
+    { path: 'assignedChecker', select: 'name email role' },
+    { path: 'tasks.assignedTo', select: 'name email role' },
+    { path: 'tasks.assignedMaker', select: 'name email role' },
+    { path: 'tasks.assignedChecker', select: 'name email role' },
+    { path: 'tasks.subtasks.assignedToMaker', select: 'name email role' },
+    { path: 'tasks.subtasks.assignedToChecker', select: 'name email role' },
+    { path: 'tasks.timeLogs.employee', select: 'name email role' }
+];
+
+const populateOrderQuery = (query) => {
+    let enriched = query;
+    ORDER_POPULATE.forEach((populate) => {
+        enriched = enriched.populate(populate.path, populate.select);
+    });
+    return enriched;
+};
+
 const parseTasksFromText = (rawText) => {
     if (!rawText || typeof rawText !== 'string') return [];
 
@@ -8,17 +29,22 @@ const parseTasksFromText = (rawText) => {
         .split('\n')
         .map((line) => line.trim())
         .filter(Boolean)
-        .map((line) => {
+        .map((line, index) => {
             const [taskPart, subtaskPart] = line.split('>');
             const title = taskPart.trim();
             const subtasks = subtaskPart
-                ? subtaskPart.split('|').map((item) => item.trim()).filter(Boolean).map((title) => ({ title, isCompleted: false }))
+                ? subtaskPart.split('|').map((item) => item.trim()).filter(Boolean).map((subtaskTitle) => ({
+                    title: subtaskTitle,
+                    isCompleted: false,
+                    status: 'Pending'
+                }))
                 : [];
 
             return {
                 title,
                 status: 'Pending',
-                subtasks
+                subtasks,
+                sortOrder: index + 1
             };
         })
         .filter((task) => task.title);
@@ -40,13 +66,169 @@ const parseRequirementsFromText = (rawText) => {
 
             return {
                 title: title.trim(),
+                category: type,
                 type,
                 description: (description || '').trim(),
                 required: true,
-                status: 'Pending'
+                status: 'Pending',
+                isClientCompleted: false,
+                inputType: type === 'Detail' ? 'text' : 'file'
             };
         })
         .filter((item) => item.title);
+};
+
+const sanitizeTaskCode = (value) => String(value || '').trim();
+
+const mapStructuredTasks = ({ parentTasks = [], subTasks = [], makerId = null, checkerId = null }) => {
+    const tasks = [];
+    const byCode = new Map();
+
+    parentTasks.forEach((row, idx) => {
+        const taskCode = sanitizeTaskCode(row.taskCode || row['Task Code']);
+        const task = {
+            taskCode,
+            title: String(row.mainTask || row.title || row['Main Task'] || '').trim(),
+            description: String(row.description || row['Description'] || '').trim(),
+            ownerRole: String(row.owner || row.ownerRole || row['Owner (Checker)'] || '').trim(),
+            startTrigger: String(row.startTrigger || row['Start Trigger'] || '').trim(),
+            status: String(row.status || row['Status'] || 'Pending').trim() || 'Pending',
+            assignedMaker: makerId || null,
+            assignedChecker: checkerId || null,
+            sortOrder: idx + 1,
+            subtasks: []
+        };
+
+        if (task.title) {
+            tasks.push(task);
+            if (taskCode) {
+                byCode.set(taskCode, task);
+            }
+        }
+    });
+
+    subTasks.forEach((row) => {
+        const taskCode = sanitizeTaskCode(row.taskCode || row['Task Code']);
+        const parentTask = byCode.get(taskCode) || tasks.find((item) => item.taskCode === taskCode);
+        if (!parentTask) return;
+
+        const subtask = {
+            subTaskCode: sanitizeTaskCode(row.subTaskCode || row['Sub Task Code']),
+            title: String(row.subTaskName || row.title || row['Sub Task Name'] || '').trim(),
+            makerRole: String(row.makerRole || row['Maker Role'] || '').trim(),
+            checkerRole: String(row.checkerRole || row['Checker Role'] || '').trim(),
+            duration: String(row.duration || row['Duration'] || '').trim(),
+            dependency: String(row.dependency || row['Dependency'] || '').trim(),
+            output: String(row.output || row['Output'] || '').trim(),
+            status: 'Pending',
+            isCompleted: false,
+            assignedToMaker: makerId || null,
+            assignedToChecker: checkerId || null
+        };
+
+        if (subtask.title) {
+            parentTask.subtasks.push(subtask);
+        }
+    });
+
+    return tasks;
+};
+
+const mapStructuredRequirements = ({ detailRows = [], documentRows = [] }) => {
+    const details = detailRows
+        .map((row) => {
+            const title = String(row.title || row.fieldName || row.name || row['Field Name'] || row['Detail'] || '').trim();
+            if (!title) return null;
+            const requiredRaw = row.required ?? row.mandatory ?? row['Required'];
+            const required = typeof requiredRaw === 'boolean'
+                ? requiredRaw
+                : !['no', 'false', 'optional', '0'].includes(String(requiredRaw || 'yes').trim().toLowerCase());
+
+            return {
+                title,
+                itemCode: String(row.code || row.itemCode || row['Code'] || '').trim(),
+                sheetName: String(row.sheetName || 'Client Details').trim(),
+                category: 'Detail',
+                type: 'Detail',
+                inputType: String(row.inputType || row['Input Type'] || 'text').trim().toLowerCase(),
+                placeholder: String(row.placeholder || row['Placeholder'] || '').trim(),
+                description: String(row.description || row.instructions || row['Description'] || '').trim(),
+                required,
+                status: 'Pending',
+                isClientCompleted: false,
+                options: Array.isArray(row.options)
+                    ? row.options
+                    : String(row.options || row['Options'] || '')
+                        .split('|')
+                        .map((item) => item.trim())
+                        .filter(Boolean)
+            };
+        })
+        .filter(Boolean);
+
+    const documents = documentRows
+        .map((row) => {
+            const title = String(row.title || row.documentName || row.name || row['Document Name'] || row['Document'] || '').trim();
+            if (!title) return null;
+            const requiredRaw = row.required ?? row.mandatory ?? row['Required'];
+            const required = typeof requiredRaw === 'boolean'
+                ? requiredRaw
+                : !['no', 'false', 'optional', '0'].includes(String(requiredRaw || 'yes').trim().toLowerCase());
+
+            return {
+                title,
+                itemCode: String(row.code || row.itemCode || row['Code'] || '').trim(),
+                sheetName: String(row.sheetName || 'Documents Required').trim(),
+                category: 'Document',
+                type: 'Document',
+                inputType: 'file',
+                placeholder: String(row.placeholder || row['Placeholder'] || '').trim(),
+                description: String(row.description || row.instructions || row['Description'] || '').trim(),
+                required,
+                status: 'Pending',
+                isClientCompleted: false
+            };
+        })
+        .filter(Boolean);
+
+    return [...details, ...documents];
+};
+
+const canAccessOrder = (user, order) => {
+    const normalizeId = (value) => {
+        if (!value) return '';
+        if (value._id) return value._id.toString();
+        return value.toString();
+    };
+
+    if (!user || !order) return false;
+    if (user.role === 'admin') return true;
+
+    if (user.role === 'client') {
+        return normalizeId(order.user) === user._id.toString();
+    }
+
+    if (user.role === 'employee') {
+        const id = user._id.toString();
+        if (normalizeId(order.assignedEmployee) === id) return true;
+        if (normalizeId(order.assignedMaker) === id) return true;
+        if (normalizeId(order.assignedChecker) === id) return true;
+
+        const foundTask = (order.tasks || []).some((task) => {
+            const taskAssigned = [task.assignedTo, task.assignedMaker, task.assignedChecker]
+                .filter(Boolean)
+                .some((assignedId) => normalizeId(assignedId) === id);
+            if (taskAssigned) return true;
+
+            return (task.subtasks || []).some((subtask) => [subtask.assignedToMaker, subtask.assignedToChecker]
+                .filter(Boolean)
+                .some((assignedId) => normalizeId(assignedId) === id));
+        });
+
+        return foundTask;
+    }
+
+    return false;
 };
 
 // @desc    Create new order
@@ -82,7 +264,7 @@ const createOrder = asyncHandler(async (req, res) => {
         paymentId,
         razorpayOrderId,
         paymentSignature,
-        paymentStatus,
+        paymentStatus
     });
 
     const createdOrder = await order.save();
@@ -93,30 +275,28 @@ const createOrder = asyncHandler(async (req, res) => {
 // @route   GET /api/orders
 // @access  Private
 const getOrders = asyncHandler(async (req, res) => {
-    let orders;
+    let orderQuery;
 
     if (req.user.role === 'admin') {
-        // Admin sees all
-        orders = await Order.find({})
-            .populate('user', 'name email')
-            .populate('assignedEmployee', 'name email')
-            .populate('tasks.assignedTo', 'name email');
+        orderQuery = Order.find({});
     } else if (req.user.role === 'employee') {
-        // Employee sees order-level assignments and task-level assignments
-        orders = await Order.find({
+        orderQuery = Order.find({
             $or: [
                 { assignedEmployee: req.user._id },
-                { 'tasks.assignedTo': req.user._id }
+                { assignedMaker: req.user._id },
+                { assignedChecker: req.user._id },
+                { 'tasks.assignedTo': req.user._id },
+                { 'tasks.assignedMaker': req.user._id },
+                { 'tasks.assignedChecker': req.user._id },
+                { 'tasks.subtasks.assignedToMaker': req.user._id },
+                { 'tasks.subtasks.assignedToChecker': req.user._id }
             ]
-        })
-            .populate('user', 'name email')
-            .populate('assignedEmployee', 'name email')
-            .populate('tasks.assignedTo', 'name email');
+        });
     } else {
-        // Client sees their own
-        orders = await Order.find({ user: req.user._id });
+        orderQuery = Order.find({ user: req.user._id });
     }
 
+    const orders = await populateOrderQuery(orderQuery.sort({ createdAt: -1 }));
     res.json(orders);
 });
 
@@ -124,23 +304,19 @@ const getOrders = asyncHandler(async (req, res) => {
 // @route   GET /api/orders/:id
 // @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
-    const order = await Order.findById(req.params.id)
-        .populate('user', 'name email phone')
-        .populate('assignedEmployee', 'name email')
-        .populate('tasks.assignedTo', 'name email')
-        .populate('tasks.timeLogs.employee', 'name email');
+    const order = await populateOrderQuery(Order.findById(req.params.id));
 
-    if (order) {
-        // Check permissions
-        if (req.user.role === 'client' && order.user._id.toString() !== req.user._id.toString()) {
-            res.status(403);
-            throw new Error('Not authorized to view this order');
-        }
-        res.json(order);
-    } else {
+    if (!order) {
         res.status(404);
         throw new Error('Order not found');
     }
+
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to view this order');
+    }
+
+    res.json(order);
 });
 
 // @desc    Update order status (Employee/Admin)
@@ -148,35 +324,99 @@ const getOrderById = asyncHandler(async (req, res) => {
 // @access  Private
 const updateOrderStatus = asyncHandler(async (req, res) => {
     const { status } = req.body;
-
     const order = await Order.findById(req.params.id);
 
-    if (order) {
-        order.status = status;
-        const updatedOrder = await order.save();
-        res.json(updatedOrder);
-    } else {
+    if (!order) {
         res.status(404);
         throw new Error('Order not found');
     }
+
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to update this order');
+    }
+
+    order.status = status;
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
 });
 
-// @desc    Assign order to employee (Admin only)
+// @desc    Update order core details (Admin only)
+// @route   PUT /api/orders/:id
+// @access  Private/Admin
+const updateOrder = asyncHandler(async (req, res) => {
+    const { serviceName, packageName, price, status } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    if (serviceName !== undefined) order.serviceName = String(serviceName).trim();
+    if (packageName !== undefined) order.packageName = String(packageName).trim();
+    if (price !== undefined) order.price = Number(price);
+    if (status !== undefined) order.status = status;
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+});
+
+// @desc    Delete order (Admin only)
+// @route   DELETE /api/orders/:id
+// @access  Private/Admin
+const deleteOrder = asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    await order.deleteOne();
+    res.json({ message: 'Order deleted successfully' });
+});
+
+// @desc    Assign order to employee / maker / checker (Admin only)
 // @route   PUT /api/orders/:id/assign
 // @access  Private/Admin
 const assignOrder = asyncHandler(async (req, res) => {
-    const { employeeId } = req.body;
-
+    const { employeeId, makerId, checkerId } = req.body;
     const order = await Order.findById(req.params.id);
 
-    if (order) {
-        order.assignedEmployee = employeeId;
-        const updatedOrder = await order.save();
-        res.json(updatedOrder);
-    } else {
+    if (!order) {
         res.status(404);
         throw new Error('Order not found');
     }
+
+    if (employeeId !== undefined) order.assignedEmployee = employeeId || null;
+    if (makerId !== undefined) order.assignedMaker = makerId || null;
+    if (checkerId !== undefined) order.assignedChecker = checkerId || null;
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+});
+
+// @desc    Update order package/commercial details (Admin)
+// @route   PUT /api/orders/:id/commercials
+// @access  Private/Admin
+const updateOrderCommercials = asyncHandler(async (req, res) => {
+    const { packageName, price, serviceName, makerId, checkerId } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    if (packageName !== undefined) order.packageName = packageName;
+    if (serviceName !== undefined) order.serviceName = serviceName;
+    if (price !== undefined) order.price = Number(price);
+    if (makerId !== undefined) order.assignedMaker = makerId || null;
+    if (checkerId !== undefined) order.assignedChecker = checkerId || null;
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
 });
 
 // @desc    Upload documents for an order
@@ -190,29 +430,45 @@ const uploadDocument = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to upload documents for this order');
+    }
+
     if (!req.file) {
         res.status(400);
         throw new Error('No file uploaded');
     }
 
-    // Client uploading requirements
+    const documentUrl = `/uploads/${req.file.filename}`;
+
     if (req.user.role === 'client') {
         const docName = req.body.name || req.file.originalname;
         order.clientDocuments.push({
             name: docName,
-            url: `/uploads/${req.file.filename}`
+            url: documentUrl
         });
-    }
-    // Employee/Admin uploading documents (final certificate or general admin/employee document)
-    else if (req.user.role === 'employee' || req.user.role === 'admin') {
+
+        if (req.body.requirementId) {
+            const requirement = order.customerRequirements.id(req.body.requirementId);
+            if (requirement) {
+                requirement.uploadedDocumentUrl = documentUrl;
+                requirement.uploadedDocumentName = docName;
+                requirement.documentUrl = documentUrl;
+                requirement.status = 'Received';
+                requirement.isClientCompleted = true;
+                requirement.lastSavedAt = new Date();
+            }
+        }
+    } else if (req.user.role === 'employee' || req.user.role === 'admin') {
         if (req.body.isFinalCertificate === 'true' || req.body.isFinalCertificate === true) {
-            order.finalCertificateUrl = `/uploads/${req.file.filename}`;
+            order.finalCertificateUrl = documentUrl;
             order.status = 'Completed';
         } else {
             const docName = req.body.name || req.file.originalname;
             order.adminDocuments.push({
                 name: docName,
-                url: `/uploads/${req.file.filename}`
+                url: documentUrl
             });
         }
     }
@@ -225,50 +481,294 @@ const uploadDocument = asyncHandler(async (req, res) => {
 // @route   POST /api/orders/:id/tasks
 // @access  Private
 const addTask = asyncHandler(async (req, res) => {
-    const { title, description, subtasks = [], assignedTo = null } = req.body;
+    const {
+        title,
+        description,
+        taskCode = '',
+        ownerRole = '',
+        startTrigger = '',
+        assignedTo = null,
+        assignedMaker = null,
+        assignedChecker = null,
+        subtasks = []
+    } = req.body;
+
     const order = await Order.findById(req.params.id);
 
-    if (order) {
-        const mappedSubtasks = Array.isArray(subtasks)
-            ? subtasks.map((item) => ({
-                title: typeof item === 'string' ? item : item?.title,
-                isCompleted: Boolean(item?.isCompleted)
-            })).filter((item) => item.title)
-            : [];
-
-        order.tasks.push({ title, description, status: 'Pending', subtasks: mappedSubtasks, assignedTo });
-        await order.save();
-        res.status(201).json(order);
-    } else {
+    if (!order) {
         res.status(404);
         throw new Error('Order not found');
     }
+
+    const mappedSubtasks = Array.isArray(subtasks)
+        ? subtasks
+            .map((item) => ({
+                title: typeof item === 'string' ? item : item?.title,
+                subTaskCode: item?.subTaskCode || '',
+                makerRole: item?.makerRole || '',
+                checkerRole: item?.checkerRole || '',
+                duration: item?.duration || '',
+                dependency: item?.dependency || '',
+                output: item?.output || '',
+                assignedToMaker: item?.assignedToMaker || null,
+                assignedToChecker: item?.assignedToChecker || null,
+                status: item?.status || 'Pending',
+                isCompleted: Boolean(item?.isCompleted)
+            }))
+            .filter((item) => item.title)
+        : [];
+
+    order.tasks.push({
+        title,
+        description,
+        taskCode,
+        ownerRole,
+        startTrigger,
+        status: 'Pending',
+        assignedTo,
+        assignedMaker,
+        assignedChecker,
+        subtasks: mappedSubtasks,
+        sortOrder: (order.tasks || []).length + 1
+    });
+
+    await order.save();
+    res.status(201).json(order);
 });
 
-// @desc    Update task status
+// @desc    Update task status/details/assignment
 // @route   PUT /api/orders/:id/tasks/:taskId
 // @access  Private
 const updateTask = asyncHandler(async (req, res) => {
-    const { status, subtasks, assignedTo, description } = req.body;
+    const { status, subtasks, assignedTo, assignedMaker, assignedChecker, description, title } = req.body;
     const order = await Order.findById(req.params.id);
 
-    if (order) {
-        const task = order.tasks.id(req.params.taskId);
-        if (task) {
-            if (status) task.status = status;
-            if (subtasks) task.subtasks = subtasks;
-            if (assignedTo !== undefined) task.assignedTo = assignedTo || null;
-            if (description !== undefined) task.description = description;
-            await order.save();
-            res.json(order);
-        } else {
-            res.status(404);
-            throw new Error('Task not found');
-        }
-    } else {
+    if (!order) {
         res.status(404);
         throw new Error('Order not found');
     }
+
+    const task = order.tasks.id(req.params.taskId);
+    if (!task) {
+        res.status(404);
+        throw new Error('Task not found');
+    }
+
+    if (status) task.status = status;
+    if (subtasks) task.subtasks = subtasks;
+    if (assignedTo !== undefined) task.assignedTo = assignedTo || null;
+    if (assignedMaker !== undefined) task.assignedMaker = assignedMaker || null;
+    if (assignedChecker !== undefined) task.assignedChecker = assignedChecker || null;
+    if (description !== undefined) task.description = description;
+    if (title !== undefined) task.title = title;
+
+    await order.save();
+    res.json(order);
+});
+
+// @desc    Assign task to staff
+// @route   PUT /api/orders/:id/tasks/:taskId/assign
+// @access  Private/Admin
+const assignTask = asyncHandler(async (req, res) => {
+    const { employeeId, makerId, checkerId } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const task = order.tasks.id(req.params.taskId);
+    if (!task) {
+        res.status(404);
+        throw new Error('Task not found');
+    }
+
+    if (employeeId !== undefined) task.assignedTo = employeeId || null;
+    if (makerId !== undefined) task.assignedMaker = makerId || null;
+    if (checkerId !== undefined) task.assignedChecker = checkerId || null;
+
+    await order.save();
+    res.json(order);
+});
+
+// @desc    Add subtask to a task
+// @route   POST /api/orders/:id/tasks/:taskId/subtasks
+// @access  Private/Admin
+const addSubtask = asyncHandler(async (req, res) => {
+    const {
+        title,
+        subTaskCode = '',
+        makerRole = '',
+        checkerRole = '',
+        duration = '',
+        dependency = '',
+        output = '',
+        assignedToMaker = null,
+        assignedToChecker = null
+    } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const task = order.tasks.id(req.params.taskId);
+    if (!task) {
+        res.status(404);
+        throw new Error('Task not found');
+    }
+
+    task.subtasks.push({
+        title,
+        subTaskCode,
+        makerRole,
+        checkerRole,
+        duration,
+        dependency,
+        output,
+        assignedToMaker,
+        assignedToChecker,
+        status: 'Pending',
+        isCompleted: false
+    });
+
+    await order.save();
+    res.status(201).json(order);
+});
+
+// @desc    Update subtask assignment/status
+// @route   PUT /api/orders/:id/tasks/:taskId/subtasks/:subtaskId
+// @access  Private
+const updateSubtask = asyncHandler(async (req, res) => {
+    const { title, status, isCompleted, makerId, checkerId } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const task = order.tasks.id(req.params.taskId);
+    if (!task) {
+        res.status(404);
+        throw new Error('Task not found');
+    }
+
+    const subtask = task.subtasks.id(req.params.subtaskId);
+    if (!subtask) {
+        res.status(404);
+        throw new Error('Subtask not found');
+    }
+
+    if (title !== undefined) subtask.title = title;
+    if (status !== undefined) subtask.status = status;
+    if (isCompleted !== undefined) {
+        subtask.isCompleted = Boolean(isCompleted);
+        if (Boolean(isCompleted)) {
+            subtask.status = 'Completed';
+        }
+    }
+    if (makerId !== undefined) subtask.assignedToMaker = makerId || null;
+    if (checkerId !== undefined) subtask.assignedToChecker = checkerId || null;
+
+    await order.save();
+    res.json(order);
+});
+
+// @desc    Track staff time against task
+// @route   POST /api/orders/:id/tasks/:taskId/time-log
+// @access  Private
+const addTaskTimeLog = asyncHandler(async (req, res) => {
+    const { minutes, notes = '' } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const task = order.tasks.id(req.params.taskId);
+    if (!task) {
+        res.status(404);
+        throw new Error('Task not found');
+    }
+
+    const parsedMinutes = Number(minutes);
+    if (!Number.isFinite(parsedMinutes) || parsedMinutes <= 0) {
+        res.status(400);
+        throw new Error('Minutes must be a positive number');
+    }
+
+    if (req.user.role === 'employee') {
+        const taskOwners = [task.assignedTo, task.assignedMaker, task.assignedChecker]
+            .filter(Boolean)
+            .map((id) => id.toString());
+
+        if (taskOwners.length && !taskOwners.includes(req.user._id.toString())) {
+            res.status(403);
+            throw new Error('Not authorized to log time for this task');
+        }
+    }
+
+    task.timeLogs.push({
+        employee: req.user._id,
+        minutes: parsedMinutes,
+        notes
+    });
+    task.totalMinutes = (task.totalMinutes || 0) + parsedMinutes;
+
+    await order.save();
+    res.status(201).json(order);
+});
+
+// @desc    Bulk import tasks/subtasks
+// @route   POST /api/orders/:id/tasks/import
+// @access  Private/Admin
+const importTasks = asyncHandler(async (req, res) => {
+    const {
+        tasksText,
+        parentTasks = [],
+        subTasks = [],
+        replaceExisting = true,
+        makerId,
+        checkerId
+    } = req.body;
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    let parsedTasks = [];
+
+    if (Array.isArray(parentTasks) && parentTasks.length) {
+        parsedTasks = mapStructuredTasks({
+            parentTasks,
+            subTasks: Array.isArray(subTasks) ? subTasks : [],
+            makerId: makerId || order.assignedMaker || null,
+            checkerId: checkerId || order.assignedChecker || null
+        });
+    } else {
+        parsedTasks = parseTasksFromText(tasksText);
+    }
+
+    if (!parsedTasks.length) {
+        res.status(400);
+        throw new Error('No valid tasks found for import');
+    }
+
+    if (replaceExisting) {
+        order.tasks = parsedTasks;
+    } else {
+        order.tasks.push(...parsedTasks);
+    }
+
+    await order.save();
+    res.status(201).json(order);
 });
 
 // @desc    Add checklist item
@@ -335,29 +835,6 @@ const addInvoice = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Add subtask to a task
-// @route   POST /api/orders/:id/tasks/:taskId/subtasks
-// @access  Private/Admin
-const addSubtask = asyncHandler(async (req, res) => {
-    const { title } = req.body;
-    const order = await Order.findById(req.params.id);
-
-    if (order) {
-        const task = order.tasks.id(req.params.taskId);
-        if (task) {
-            task.subtasks.push({ title, isCompleted: false });
-            await order.save();
-            res.status(201).json(order);
-        } else {
-            res.status(404);
-            throw new Error('Task not found');
-        }
-    } else {
-        res.status(404);
-        throw new Error('Order not found');
-    }
-});
-
 // @desc    Update invoice status
 // @route   PUT /api/orders/:id/invoices/:invoiceId/status
 // @access  Private/Admin
@@ -384,121 +861,17 @@ const updateInvoiceStatus = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Update order package/commercial details (Admin)
-// @route   PUT /api/orders/:id/commercials
-// @access  Private/Admin
-const updateOrderCommercials = asyncHandler(async (req, res) => {
-    const { packageName, price, serviceName } = req.body;
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-        res.status(404);
-        throw new Error('Order not found');
-    }
-
-    if (packageName !== undefined) order.packageName = packageName;
-    if (serviceName !== undefined) order.serviceName = serviceName;
-    if (price !== undefined) order.price = Number(price);
-
-    const updatedOrder = await order.save();
-    res.json(updatedOrder);
-});
-
-// @desc    Bulk import tasks/subtasks
-// @route   POST /api/orders/:id/tasks/import
-// @access  Private/Admin
-const importTasks = asyncHandler(async (req, res) => {
-    const { tasksText } = req.body;
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-        res.status(404);
-        throw new Error('Order not found');
-    }
-
-    const parsedTasks = parseTasksFromText(tasksText);
-
-    if (!parsedTasks.length) {
-        res.status(400);
-        throw new Error('No valid tasks found for import');
-    }
-
-    order.tasks.push(...parsedTasks);
-    await order.save();
-    res.status(201).json(order);
-});
-
-// @desc    Assign task to staff
-// @route   PUT /api/orders/:id/tasks/:taskId/assign
-// @access  Private/Admin
-const assignTask = asyncHandler(async (req, res) => {
-    const { employeeId } = req.body;
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-        res.status(404);
-        throw new Error('Order not found');
-    }
-
-    const task = order.tasks.id(req.params.taskId);
-    if (!task) {
-        res.status(404);
-        throw new Error('Task not found');
-    }
-
-    task.assignedTo = employeeId || null;
-    await order.save();
-    res.json(order);
-});
-
-// @desc    Track staff time against task
-// @route   POST /api/orders/:id/tasks/:taskId/time-log
-// @access  Private
-const addTaskTimeLog = asyncHandler(async (req, res) => {
-    const { minutes, notes = '' } = req.body;
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-        res.status(404);
-        throw new Error('Order not found');
-    }
-
-    const task = order.tasks.id(req.params.taskId);
-    if (!task) {
-        res.status(404);
-        throw new Error('Task not found');
-    }
-
-    const parsedMinutes = Number(minutes);
-    if (!Number.isFinite(parsedMinutes) || parsedMinutes <= 0) {
-        res.status(400);
-        throw new Error('Minutes must be a positive number');
-    }
-
-    if (req.user.role === 'employee') {
-        const taskOwner = task.assignedTo ? task.assignedTo.toString() : null;
-        if (taskOwner && taskOwner !== req.user._id.toString()) {
-            res.status(403);
-            throw new Error('Not authorized to log time for this task');
-        }
-    }
-
-    task.timeLogs.push({
-        employee: req.user._id,
-        minutes: parsedMinutes,
-        notes
-    });
-    task.totalMinutes = (task.totalMinutes || 0) + parsedMinutes;
-
-    await order.save();
-    res.status(201).json(order);
-});
-
 // @desc    Bulk import customer details/documents requirements
 // @route   POST /api/orders/:id/requirements/import
 // @access  Private/Admin
 const importRequirements = asyncHandler(async (req, res) => {
-    const { requirementsText } = req.body;
+    const {
+        requirementsText,
+        detailRows = [],
+        documentRows = [],
+        replaceExisting = true
+    } = req.body;
+
     const order = await Order.findById(req.params.id);
 
     if (!order) {
@@ -506,28 +879,58 @@ const importRequirements = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
-    const parsedRequirements = parseRequirementsFromText(requirementsText);
+    let parsedRequirements = [];
+
+    if ((Array.isArray(detailRows) && detailRows.length) || (Array.isArray(documentRows) && documentRows.length)) {
+        parsedRequirements = mapStructuredRequirements({
+            detailRows: Array.isArray(detailRows) ? detailRows : [],
+            documentRows: Array.isArray(documentRows) ? documentRows : []
+        });
+    } else {
+        parsedRequirements = parseRequirementsFromText(requirementsText);
+    }
 
     if (!parsedRequirements.length) {
         res.status(400);
         throw new Error('No valid requirements found for import');
     }
 
-    order.customerRequirements.push(...parsedRequirements);
+    if (replaceExisting) {
+        order.customerRequirements = parsedRequirements;
+    } else {
+        order.customerRequirements.push(...parsedRequirements);
+    }
+
     await order.save();
     res.status(201).json(order);
 });
 
-// @desc    Update customer requirement status/details
+// @desc    Update customer requirement status/details (supports client partial save)
 // @route   PUT /api/orders/:id/requirements/:requirementId
 // @access  Private
 const updateRequirement = asyncHandler(async (req, res) => {
-    const { status, value, documentUrl, description } = req.body;
+    const {
+        status,
+        value,
+        clientValue,
+        clientNotes,
+        documentUrl,
+        uploadedDocumentUrl,
+        uploadedDocumentName,
+        description,
+        isClientCompleted
+    } = req.body;
+
     const order = await Order.findById(req.params.id);
 
     if (!order) {
         res.status(404);
         throw new Error('Order not found');
+    }
+
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to update this requirement');
     }
 
     const requirement = order.customerRequirements.id(req.params.requirementId);
@@ -536,37 +939,61 @@ const updateRequirement = asyncHandler(async (req, res) => {
         throw new Error('Requirement not found');
     }
 
-    if (status) requirement.status = status;
-    if (value !== undefined) requirement.value = value;
-    if (documentUrl !== undefined) requirement.documentUrl = documentUrl;
-    if (description !== undefined) requirement.description = description;
+    if (req.user.role === 'client') {
+        if (value !== undefined || clientValue !== undefined) {
+            const resolvedValue = clientValue !== undefined ? clientValue : value;
+            requirement.clientValue = resolvedValue;
+            requirement.value = resolvedValue;
+        }
+        if (clientNotes !== undefined) requirement.clientNotes = clientNotes;
+        if (uploadedDocumentUrl !== undefined) {
+            requirement.uploadedDocumentUrl = uploadedDocumentUrl;
+            requirement.documentUrl = uploadedDocumentUrl;
+        }
+        if (uploadedDocumentName !== undefined) requirement.uploadedDocumentName = uploadedDocumentName;
+        if (isClientCompleted !== undefined) requirement.isClientCompleted = Boolean(isClientCompleted);
+        requirement.status = requirement.isClientCompleted ? 'Received' : requirement.status;
+        requirement.lastSavedAt = new Date();
+    } else {
+        if (status !== undefined) requirement.status = status;
+        if (value !== undefined) {
+            requirement.value = value;
+            requirement.clientValue = value;
+        }
+        if (documentUrl !== undefined) {
+            requirement.documentUrl = documentUrl;
+            requirement.uploadedDocumentUrl = documentUrl;
+        }
+        if (description !== undefined) requirement.description = description;
+        if (isClientCompleted !== undefined) requirement.isClientCompleted = Boolean(isClientCompleted);
+        if (clientNotes !== undefined) requirement.clientNotes = clientNotes;
+    }
 
     await order.save();
     res.json(order);
 });
 
 export {
-
     createOrder,
     getOrders,
     getOrderById,
     updateOrderStatus,
+    updateOrder,
+    deleteOrder,
     assignOrder,
     updateOrderCommercials,
     uploadDocument,
     addTask,
     updateTask,
+    assignTask,
     addSubtask,
+    updateSubtask,
     addChecklistItem,
     toggleChecklistItem,
     addInvoice,
     updateInvoiceStatus,
     importTasks,
-    assignTask,
     addTaskTimeLog,
     importRequirements,
     updateRequirement
 };
-
-
-

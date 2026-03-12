@@ -18,7 +18,13 @@ const RequirementsModule = ({ selectedOrder }) => {
               <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-bold">{item.status || 'Pending'}</span>
             </div>
             {item.description && <p className="text-sm text-slate-500 mt-1">{item.description}</p>}
-            {item.value && <p className="text-sm text-indigo-600 mt-1">Value: {item.value}</p>}
+            {(item.clientValue || item.value) && <p className="text-sm text-indigo-600 mt-1">Value: {item.clientValue || item.value}</p>}
+            {item.clientNotes && <p className="text-xs text-slate-500 mt-1">Client Notes: {item.clientNotes}</p>}
+            {item.uploadedDocumentUrl && (
+              <a className="text-xs text-indigo-700 underline mt-1 inline-block" href={item.uploadedDocumentUrl} target="_blank" rel="noreferrer">
+                View Client Uploaded Document
+              </a>
+            )}
           </div>
         ))}
         {requirements.length === 0 && (
@@ -32,4 +38,3 @@ const RequirementsModule = ({ selectedOrder }) => {
 };
 
 export default RequirementsModule;
-
