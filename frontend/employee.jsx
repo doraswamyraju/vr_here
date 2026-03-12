@@ -17,7 +17,6 @@ import NotificationsModule from './components/employee/NotificationsModule';
 import SecurityModule from './components/employee/SecurityModule';
 import { dummyNotifications, dummyTickets } from './components/employee/mockData';
 
-const SHIFT_STORAGE_KEY = 'employee_shift_state_v2';
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
 
 const formatDuration = (totalSeconds) => {
@@ -80,6 +79,26 @@ const EmployeeApp = () => {
     }
   }, [authConfig]);
 
+  const fetchAttendanceStatus = useCallback(async () => {
+    if (!authConfig) return;
+    try {
+      const { data } = await axios.get('/api/attendance/my-status', authConfig);
+      const openSession = data?.openSession || null;
+      if (openSession?.clockInAt) {
+        setIsClockedIn(true);
+        setShiftStartedAt(openSession.clockInAt);
+        const elapsed = Math.floor((Date.now() - new Date(openSession.clockInAt).getTime()) / 1000);
+        setShiftElapsedSeconds(Math.max(0, elapsed));
+      } else {
+        setIsClockedIn(false);
+        setShiftStartedAt(null);
+        setShiftElapsedSeconds(0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch attendance status:', error);
+    }
+  }, [authConfig]);
+
   const fetchExtras = useCallback(async () => {
     if (!authConfig) return;
 
@@ -119,24 +138,10 @@ const EmployeeApp = () => {
     if (!userInfo) return;
     fetchOrders();
     fetchExtras();
-  }, [userInfo, fetchOrders, fetchExtras]);
+    fetchAttendanceStatus();
+  }, [userInfo, fetchOrders, fetchExtras, fetchAttendanceStatus]);
 
   useEffect(() => {
-    const rawShift = localStorage.getItem(SHIFT_STORAGE_KEY);
-    if (rawShift) {
-      try {
-        const parsed = JSON.parse(rawShift);
-        if (parsed?.isClockedIn && parsed?.shiftStartedAt) {
-          setIsClockedIn(true);
-          setShiftStartedAt(parsed.shiftStartedAt);
-          const elapsed = Math.floor((Date.now() - new Date(parsed.shiftStartedAt).getTime()) / 1000);
-          setShiftElapsedSeconds(Math.max(0, elapsed));
-        }
-      } catch (error) {
-        localStorage.removeItem(SHIFT_STORAGE_KEY);
-      }
-    }
-
     const rawTask = localStorage.getItem(ACTIVE_TASK_STORAGE_KEY);
     if (rawTask) {
       try {
@@ -185,21 +190,32 @@ const EmployeeApp = () => {
   const refreshAll = () => {
     fetchOrders();
     fetchExtras();
+    fetchAttendanceStatus();
   };
 
-  const clockIn = () => {
-    const startedAt = new Date().toISOString();
-    setIsClockedIn(true);
-    setShiftStartedAt(startedAt);
-    setShiftElapsedSeconds(0);
-    localStorage.setItem(SHIFT_STORAGE_KEY, JSON.stringify({ isClockedIn: true, shiftStartedAt: startedAt }));
+  const clockIn = async () => {
+    if (!authConfig) return;
+    try {
+      const { data } = await axios.post('/api/attendance/clock-in', { source: 'employee-dashboard' }, authConfig);
+      const startedAt = data?.session?.clockInAt || new Date().toISOString();
+      setIsClockedIn(true);
+      setShiftStartedAt(startedAt);
+      setShiftElapsedSeconds(0);
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to clock in.');
+    }
   };
 
-  const clockOut = () => {
-    setIsClockedIn(false);
-    setShiftStartedAt(null);
-    setShiftElapsedSeconds(0);
-    localStorage.removeItem(SHIFT_STORAGE_KEY);
+  const clockOut = async () => {
+    if (!authConfig) return;
+    try {
+      await axios.post('/api/attendance/clock-out', {}, authConfig);
+      setIsClockedIn(false);
+      setShiftStartedAt(null);
+      setShiftElapsedSeconds(0);
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to clock out.');
+    }
   };
 
   const openOrderInProcessing = (order) => {

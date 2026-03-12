@@ -21,6 +21,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ServicesMasterView from './components/admin/ServicesMasterView';
 import OrdersModule from './components/admin/orders/OrdersModule';
+import UsersModule from './components/admin/users/UsersModule';
 import { ORDER_STATUSES } from './components/admin/orders/constants';
 import { nextStatus } from './components/admin/orders/helpers';
 import { parseRequirementWorkbook, parseTaskWorkbook } from './components/admin/orders/excelParsers';
@@ -271,7 +272,7 @@ function AdminApp() {
         />
       );
     }
-    if (activeTab === 'Users') return <DummyView title="Users" />;
+    if (activeTab === 'Users') return <UsersModule token={userInfo?.token} users={users} orders={orders} onRefresh={fetchData} />;
     if (activeTab === 'ToDo') return <DummyView title="To Do" />;
     if (activeTab === 'Finance') return <DummyView title="Finance" />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;

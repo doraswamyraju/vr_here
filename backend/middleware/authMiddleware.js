@@ -25,6 +25,11 @@ const protect = asyncHandler(async (req, res, next) => {
             throw new Error('Not authorized, no token');
         }
 
+        if (req.user.isActive === false) {
+            res.status(403);
+            throw new Error('User account is inactive');
+        }
+
         next();
     } catch (error) {
         console.error(error);

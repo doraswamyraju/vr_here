@@ -1,11 +1,39 @@
 import asyncHandler from 'express-async-handler';
 import { randomBytes, createHash } from 'crypto';
 import generateToken from '../utils/generateToken.js';
-
-
 import User from '../models/User.js';
-import sendEmail from '../utils/sendEmail.js'; // Ensure sendEmail is imported too if used
+import sendEmail from '../utils/sendEmail.js';
 
+const buildResetUrl = (token) => {
+    const baseUrl = process.env.FRONTEND_URL || 'https://vrhere.in';
+    return `${baseUrl.replace(/\/$/, '')}/reset-password/${token}`;
+};
+
+const issueResetToken = async (user, expiryMs = 24 * 60 * 60 * 1000) => {
+    const resetToken = randomBytes(20).toString('hex');
+    user.resetPasswordToken = createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpire = Date.now() + expiryMs;
+    await user.save();
+    return resetToken;
+};
+
+const sendPasswordSetupEmail = async (user, token, subject = 'Set Your VR HERE Password') => {
+    const resetUrl = buildResetUrl(token);
+    const message = `
+        <h2>Welcome ${user.name}</h2>
+        <p>Your account is ready. Click below to set your password and start using the dashboard.</p>
+        <p><a href="${resetUrl}" clicktracking="off">Set Password</a></p>
+        <p>If the button does not work, copy this URL:</p>
+        <p>${resetUrl}</p>
+        <p>This link will expire soon for security.</p>
+    `;
+
+    await sendEmail({
+        email: user.email,
+        subject,
+        message
+    });
+};
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
@@ -15,18 +43,24 @@ const authUser = asyncHandler(async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (user && (await user.matchPassword(password))) {
-        res.json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            token: generateToken(user._id),
-        });
-    } else {
+    if (!user || !(await user.matchPassword(password))) {
         res.status(401);
         throw new Error('Invalid email or password');
     }
+
+    if (!user.isActive) {
+        res.status(403);
+        throw new Error('User account is inactive. Contact admin.');
+    }
+
+    res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        token: generateToken(user._id)
+    });
 });
 
 // @desc    Register a new user
@@ -47,20 +81,19 @@ const registerUser = asyncHandler(async (req, res) => {
         email,
         password,
         phone,
-        role: role || 'client'
+        role: role || 'client',
+        isActive: true
     });
 
     if (user) {
-        // Send Welcome Email
         try {
             await sendEmail({
                 email: user.email,
                 subject: 'Welcome to VR HERE Business Solutions',
-                message: `<h1>Welcome ${user.name}!</h1><p>Thank you for registering with VR HERE. We are excited to have you on board.</p>`
+                message: `<h1>Welcome ${user.name}!</h1><p>Thank you for registering with VR HERE.</p>`
             });
         } catch (error) {
             console.error('Email send failure:', error);
-            // Don't fail registration if email fails
         }
 
         res.status(201).json({
@@ -68,7 +101,8 @@ const registerUser = asyncHandler(async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            token: generateToken(user._id),
+            isActive: user.isActive,
+            token: generateToken(user._id)
         });
     } else {
         res.status(400);
@@ -88,42 +122,16 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 
-    // Get Reset Token
-    const resetToken = randomBytes(20).toString('hex');
-
-    // Hash token and set to resetPasswordToken field
-    user.resetPasswordToken = createHash('sha256')
-        .update(resetToken)
-        .digest('hex');
-
-    // Set expire (10 minutes)
-    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
-
-    await user.save();
-
-    const resetUrl = `https://vrhere.in/reset-password/${resetToken}`;
-
-    const message = `
-        <h1>You have requested a password reset</h1>
-        <p>Please go to this link to reset your password:</p>
-        <a href=${resetUrl} clicktracking=off>${resetUrl}</a>
-    `;
+    const resetToken = await issueResetToken(user, 10 * 60 * 1000);
 
     try {
-        await sendEmail({
-            email: user.email,
-            subject: 'Password Reset Request',
-            message,
-        });
-
+        await sendPasswordSetupEmail(user, resetToken, 'Password Reset Request');
         res.status(200).json({ success: true, data: 'Email sent' });
     } catch (error) {
         console.error(error);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
-
         await user.save();
-
         res.status(500);
         throw new Error('Email could not be sent');
     }
@@ -139,7 +147,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
     const user = await User.findOne({
         resetPasswordToken,
-        resetPasswordExpire: { $gt: Date.now() },
+        resetPasswordExpire: { $gt: Date.now() }
     });
 
     if (!user) {
@@ -147,17 +155,17 @@ const resetPassword = asyncHandler(async (req, res) => {
         throw new Error('Invalid token');
     }
 
-    // Set new password
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
+    user.isActive = true;
 
     await user.save();
 
     res.status(201).json({
         success: true,
         data: 'Password reset success',
-        token: generateToken(user._id),
+        token: generateToken(user._id)
     });
 });
 
@@ -173,6 +181,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
+            isActive: user.isActive
         });
     } else {
         res.status(404);
@@ -184,7 +193,9 @@ const getUserProfile = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/employees
 // @access  Private/Admin
 const getEmployees = asyncHandler(async (req, res) => {
-    const employees = await User.find({ role: 'employee' }).select('-password');
+    const includeInactive = String(req.query.includeInactive || 'false').toLowerCase() === 'true';
+    const query = includeInactive ? { role: 'employee' } : { role: 'employee', isActive: true };
+    const employees = await User.find(query).select('-password').sort({ createdAt: -1 });
     res.json(employees);
 });
 
@@ -192,9 +203,151 @@ const getEmployees = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/users
 // @access  Private/Admin
 const getUsers = asyncHandler(async (req, res) => {
-    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+    const { role = '', active = '' } = req.query;
+    const query = {};
+
+    if (role) query.role = role;
+    if (active) query.isActive = String(active).toLowerCase() === 'true';
+
+    const users = await User.find(query).select('-password').sort({ createdAt: -1 });
     res.json(users);
 });
 
-export { authUser, registerUser, forgotPassword, resetPassword, getUserProfile, getEmployees, getUsers };
+// @desc    Admin creates user and triggers set-password email
+// @route   POST /api/auth/users
+// @access  Private/Admin
+const createUserByAdmin = asyncHandler(async (req, res) => {
+    const { name, email, phone = '', role = 'employee' } = req.body;
 
+    if (!name || !email) {
+        res.status(400);
+        throw new Error('Name and email are required');
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+        res.status(400);
+        throw new Error('User with this email already exists');
+    }
+
+    const tempPassword = randomBytes(12).toString('hex');
+
+    const user = await User.create({
+        name,
+        email,
+        phone,
+        role,
+        password: tempPassword,
+        isActive: true
+    });
+
+    const resetToken = await issueResetToken(user, 24 * 60 * 60 * 1000);
+    await sendPasswordSetupEmail(user, resetToken, 'Set Your VR HERE Password');
+
+    res.status(201).json({
+        message: 'User created and password setup email sent',
+        user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            isActive: user.isActive,
+            createdAt: user.createdAt
+        }
+    });
+});
+
+// @desc    Update user details
+// @route   PUT /api/auth/users/:id
+// @access  Private/Admin
+const updateUserByAdmin = asyncHandler(async (req, res) => {
+    const { name, email, phone, role, isActive } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (phone !== undefined) user.phone = phone;
+    if (role !== undefined) user.role = role;
+    if (isActive !== undefined) user.isActive = Boolean(isActive);
+
+    await user.save();
+
+    res.json({
+        message: 'User updated',
+        user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            isActive: user.isActive,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        }
+    });
+});
+
+// @desc    Toggle user active status
+// @route   PATCH /api/auth/users/:id/toggle-active
+// @access  Private/Admin
+const toggleUserActiveByAdmin = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    if (user.role === 'admin' && user._id.toString() === req.user._id.toString()) {
+        res.status(400);
+        throw new Error('You cannot deactivate your own admin account');
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    res.json({
+        message: `User ${user.isActive ? 'activated' : 'deactivated'}`,
+        user: {
+            _id: user._id,
+            isActive: user.isActive
+        }
+    });
+});
+
+// @desc    Resend set-password email
+// @route   POST /api/auth/users/:id/send-password-link
+// @access  Private/Admin
+const sendPasswordLinkByAdmin = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    const resetToken = await issueResetToken(user, 24 * 60 * 60 * 1000);
+    await sendPasswordSetupEmail(user, resetToken, 'Set or Reset Your VR HERE Password');
+
+    res.json({ message: 'Password setup email sent' });
+});
+
+export {
+    authUser,
+    registerUser,
+    forgotPassword,
+    resetPassword,
+    getUserProfile,
+    getEmployees,
+    getUsers,
+    createUserByAdmin,
+    updateUserByAdmin,
+    toggleUserActiveByAdmin,
+    sendPasswordLinkByAdmin
+};
