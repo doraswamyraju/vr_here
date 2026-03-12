@@ -81,6 +81,14 @@ const parseRequirementsFromText = (rawText) => {
 const sanitizeTaskCode = (value) => String(value || '').trim();
 
 const mapStructuredTasks = ({ parentTasks = [], subTasks = [], makerId = null, checkerId = null }) => {
+    const normalizeTaskStatus = (value) => {
+        const raw = String(value || '').trim().toLowerCase();
+        if (!raw || raw === 'not started' || raw === 'todo' || raw === 'to do') return 'Pending';
+        if (raw === 'in progress' || raw === 'ongoing' || raw === 'wip') return 'In Progress';
+        if (raw === 'completed' || raw === 'complete' || raw === 'done') return 'Completed';
+        return 'Pending';
+    };
+
     const tasks = [];
     const byCode = new Map();
 
@@ -92,7 +100,7 @@ const mapStructuredTasks = ({ parentTasks = [], subTasks = [], makerId = null, c
             description: String(row.description || row['Description'] || '').trim(),
             ownerRole: String(row.owner || row.ownerRole || row['Owner (Checker)'] || '').trim(),
             startTrigger: String(row.startTrigger || row['Start Trigger'] || '').trim(),
-            status: String(row.status || row['Status'] || 'Pending').trim() || 'Pending',
+            status: normalizeTaskStatus(row.status || row['Status'] || 'Pending'),
             assignedMaker: makerId || null,
             assignedChecker: checkerId || null,
             sortOrder: idx + 1,
