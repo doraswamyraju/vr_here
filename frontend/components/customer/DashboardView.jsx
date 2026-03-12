@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     Upload, Briefcase, CreditCard, ChevronRight, AlertTriangle, Bell, Plus,
     Search, Gift, Newspaper, Building2, FileCheck, Shield,
-    ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink
+    ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink, ArrowRight
 } from 'lucide-react';
 
 const getStatusProgress = (status) => {
@@ -43,6 +43,47 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
         { id: 8, name: 'Compliance', icon: Settings, color: 'bg-slate-50 text-slate-600' },
     ];
 
+    const SEARCH_SUGGESTIONS = [
+        'Private Limited Company Registration',
+        'Limited Liability Partnership (LLP)',
+        'GST Registration',
+        'GST Return Filing',
+        'Income Tax Return',
+        'MSME / Udyam Registration',
+        'Trademark Registration',
+        'FSSAI Food License',
+        'ISO Certification',
+        'Import Export Code (IEC)',
+        'Company Annual Compliances',
+        'Startup India DPIIT Registration'
+    ];
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchRef = useRef(null);
+
+    // Filter suggestions based on input
+    const filteredSuggestions = SEARCH_SUGGESTIONS.filter(item => 
+        item.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 5); // Limit to top 5 hits
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleSelectSuggestion = (suggestion) => {
+        setSearchQuery(suggestion);
+        setShowSuggestions(false);
+        setActiveTab('Services');
+    };
+
     return (
         <div className="pb-28 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Top Header Section - Spans full width */}
@@ -72,18 +113,49 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
 
                 {/* Left Column - Main Activity (2/3) */}
                 <div className="lg:col-span-2 space-y-8">
-                    {/* Floating Search Bar */}
-                    <div className="relative z-10">
-                        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex items-center px-4 py-3.5 gap-3 group focus-within:ring-2 ring-indigo-500/10 transition-all">
+                    {/* Floating Search Bar with Autocomplete */}
+                    <div ref={searchRef} className="relative z-20">
+                        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex items-center px-4 py-3.5 gap-3 group focus-within:ring-2 ring-indigo-500/10 transition-all relative">
                             <Search size={18} className="text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Search services (e.g. GST, Company...)"
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setShowSuggestions(true);
+                                }}
+                                onFocus={() => setShowSuggestions(true)}
                                 className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400"
                             />
                             <div className="w-px h-4 bg-slate-100 mx-1"></div>
                             <button onClick={() => setActiveTab('Services')} className="text-indigo-600 font-black text-xs uppercase tracking-wider hover:text-indigo-700">Find</button>
                         </div>
+                        
+                        {/* Dropdown Suggestions */}
+                        {showSuggestions && searchQuery.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform origin-top animate-in fade-in slide-in-from-top-2 z-50">
+                                {filteredSuggestions.length > 0 ? (
+                                    <ul className="py-2">
+                                        {filteredSuggestions.map((suggestion, index) => (
+                                            <li key={index}>
+                                                <button
+                                                    onClick={() => handleSelectSuggestion(suggestion)}
+                                                    className="w-full text-left px-5 py-3 hover:bg-slate-50 text-sm font-medium text-slate-700 flex items-center justify-between group transition-colors"
+                                                >
+                                                    <span>{suggestion}</span>
+                                                    <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-500 transition-colors opacity-0 group-hover:opacity-100" />
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <div className="p-5 text-center text-sm font-medium text-slate-400">
+                                        No exact matches. Check our full catalog.
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Main Hero Card */}
