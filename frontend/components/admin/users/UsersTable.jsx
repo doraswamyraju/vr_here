@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Pencil, Power, Send } from 'lucide-react';
+import { Pencil, Power, Send } from 'lucide-react';
 
 const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit, onSaveEdit, onCancelEdit, onToggleActive, onSendPasswordLink }) => (
   <div className="rounded-xl border border-slate-200 bg-white overflow-x-auto">
@@ -14,6 +14,13 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
         </tr>
       </thead>
       <tbody className="divide-y divide-slate-100">
+        {!users.length && (
+          <tr>
+            <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+              No users found for selected filters.
+            </td>
+          </tr>
+        )}
         {users.map((user) => {
           const isEditing = editingUserId === user._id;
           return (

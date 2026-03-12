@@ -80,6 +80,30 @@ const parseRequirementsFromText = (rawText) => {
 
 const sanitizeTaskCode = (value) => String(value || '').trim();
 
+const pickByKeyHint = (row, hints = []) => {
+    const keys = Object.keys(row || {});
+    const lowered = keys.map((key) => ({ key, lower: key.toLowerCase() }));
+
+    for (const hint of hints) {
+        const found = lowered.find((item) => item.lower.includes(String(hint || '').toLowerCase()));
+        if (found) {
+            const value = row[found.key];
+            if (value !== undefined && value !== null && String(value).trim()) {
+                return value;
+            }
+        }
+    }
+
+    return '';
+};
+
+const pickFirstUsefulText = (row) => {
+    const values = Object.values(row || {})
+        .map((value) => String(value || '').trim())
+        .filter(Boolean);
+    return values[0] || '';
+};
+
 const mapStructuredTasks = ({ parentTasks = [], subTasks = [], makerId = null, checkerId = null }) => {
     const normalizeTaskStatus = (value) => {
         const raw = String(value || '').trim().toLowerCase();
@@ -145,7 +169,15 @@ const mapStructuredTasks = ({ parentTasks = [], subTasks = [], makerId = null, c
 const mapStructuredRequirements = ({ detailRows = [], documentRows = [] }) => {
     const details = detailRows
         .map((row) => {
-            const title = String(row.title || row.fieldName || row.name || row['Field Name'] || row['Detail'] || '').trim();
+            const title = String(
+                row.title ||
+                row.fieldName ||
+                row.name ||
+                row['Field Name'] ||
+                row['Detail'] ||
+                pickByKeyHint(row, ['field', 'detail', 'title', 'name', 'information']) ||
+                pickFirstUsefulText(row)
+            ).trim();
             if (!title) return null;
             const requiredRaw = row.required ?? row.mandatory ?? row['Required'];
             const required = typeof requiredRaw === 'boolean'
@@ -154,19 +186,19 @@ const mapStructuredRequirements = ({ detailRows = [], documentRows = [] }) => {
 
             return {
                 title,
-                itemCode: String(row.code || row.itemCode || row['Code'] || '').trim(),
+                itemCode: String(row.code || row.itemCode || row['Code'] || pickByKeyHint(row, ['code', 'id']) || '').trim(),
                 sheetName: String(row.sheetName || 'Client Details').trim(),
                 category: 'Detail',
                 type: 'Detail',
-                inputType: String(row.inputType || row['Input Type'] || 'text').trim().toLowerCase(),
-                placeholder: String(row.placeholder || row['Placeholder'] || '').trim(),
-                description: String(row.description || row.instructions || row['Description'] || '').trim(),
+                inputType: String(row.inputType || row['Input Type'] || pickByKeyHint(row, ['input', 'type']) || 'text').trim().toLowerCase(),
+                placeholder: String(row.placeholder || row['Placeholder'] || pickByKeyHint(row, ['placeholder', 'example', 'sample']) || '').trim(),
+                description: String(row.description || row.instructions || row['Description'] || pickByKeyHint(row, ['description', 'instruction', 'remark', 'note']) || '').trim(),
                 required,
                 status: 'Pending',
                 isClientCompleted: false,
                 options: Array.isArray(row.options)
                     ? row.options
-                    : String(row.options || row['Options'] || '')
+                    : String(row.options || row['Options'] || pickByKeyHint(row, ['option', 'values']) || '')
                         .split('|')
                         .map((item) => item.trim())
                         .filter(Boolean)
@@ -176,7 +208,15 @@ const mapStructuredRequirements = ({ detailRows = [], documentRows = [] }) => {
 
     const documents = documentRows
         .map((row) => {
-            const title = String(row.title || row.documentName || row.name || row['Document Name'] || row['Document'] || '').trim();
+            const title = String(
+                row.title ||
+                row.documentName ||
+                row.name ||
+                row['Document Name'] ||
+                row['Document'] ||
+                pickByKeyHint(row, ['document', 'proof', 'attachment', 'title', 'name']) ||
+                pickFirstUsefulText(row)
+            ).trim();
             if (!title) return null;
             const requiredRaw = row.required ?? row.mandatory ?? row['Required'];
             const required = typeof requiredRaw === 'boolean'
@@ -185,13 +225,13 @@ const mapStructuredRequirements = ({ detailRows = [], documentRows = [] }) => {
 
             return {
                 title,
-                itemCode: String(row.code || row.itemCode || row['Code'] || '').trim(),
+                itemCode: String(row.code || row.itemCode || row['Code'] || pickByKeyHint(row, ['code', 'id']) || '').trim(),
                 sheetName: String(row.sheetName || 'Documents Required').trim(),
                 category: 'Document',
                 type: 'Document',
                 inputType: 'file',
-                placeholder: String(row.placeholder || row['Placeholder'] || '').trim(),
-                description: String(row.description || row.instructions || row['Description'] || '').trim(),
+                placeholder: String(row.placeholder || row['Placeholder'] || pickByKeyHint(row, ['placeholder', 'example', 'sample']) || '').trim(),
+                description: String(row.description || row.instructions || row['Description'] || pickByKeyHint(row, ['description', 'instruction', 'remark', 'note']) || '').trim(),
                 required,
                 status: 'Pending',
                 isClientCompleted: false

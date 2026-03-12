@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import axios from 'axios';
 import AddUserForm from './AddUserForm';
+import UsersFilters from './UsersFilters';
 import UsersTable from './UsersTable';
 import WorkloadPanel from './WorkloadPanel';
 import AssignmentPreview from './AssignmentPreview';
@@ -12,10 +13,27 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
   const [editDraft, setEditDraft] = useState({ name: '', email: '', role: 'employee', phone: '' });
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [attendanceSummary, setAttendanceSummary] = useState({ items: [] });
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [searchText, setSearchText] = useState('');
 
   const config = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
   const employeeUsers = useMemo(() => users.filter((item) => item.role === 'employee'), [users]);
+  const filteredUsers = useMemo(() => {
+    const normalizedSearch = searchText.trim().toLowerCase();
+
+    return users.filter((item) => {
+      const roleMatches = roleFilter === 'all' || item.role === roleFilter;
+      if (!roleMatches) return false;
+      if (!normalizedSearch) return true;
+
+      const haystack = [item.name, item.email, item.phone, item.role]
+        .map((value) => String(value || '').toLowerCase())
+        .join(' ');
+
+      return haystack.includes(normalizedSearch);
+    });
+  }, [users, roleFilter, searchText]);
 
   const loadSummary = async () => {
     const { data } = await axios.get('/api/attendance/admin/summary', config);
@@ -68,9 +86,17 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
   return (
     <div className="space-y-4">
       <AddUserForm draft={createDraft} setDraft={setCreateDraft} onCreateUser={createUser} isCreating={isCreating} />
+      <UsersFilters
+        roleFilter={roleFilter}
+        setRoleFilter={setRoleFilter}
+        searchText={searchText}
+        setSearchText={setSearchText}
+        totalUsers={users.length}
+        filteredCount={filteredUsers.length}
+      />
 
       <UsersTable
-        users={users}
+        users={filteredUsers}
         editingUserId={editingUserId}
         editDraft={editDraft}
         setEditDraft={setEditDraft}

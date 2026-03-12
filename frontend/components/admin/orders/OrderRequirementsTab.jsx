@@ -20,6 +20,8 @@ const OrderRequirementsTab = ({
     try {
       await onImportRequirementsWorkbook(requirementFile, replaceExisting);
       setRequirementFile(null);
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to import requirements from this workbook.');
     } finally {
       setIsImporting(false);
     }
