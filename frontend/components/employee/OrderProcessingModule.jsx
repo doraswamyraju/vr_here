@@ -3,6 +3,7 @@ import { Upload, Download, CheckCircle } from 'lucide-react';
 import { ORDER_STATUSES } from './constants';
 import { getOrderClientLabel, StatusBadge } from './helpers';
 import { rupees } from '../admin/orders/helpers';
+import RequirementsModule from './RequirementsModule';
 
 const OrderProcessingModule = ({
   orders,
@@ -11,7 +12,9 @@ const OrderProcessingModule = ({
   onStatusChange,
   onUploadCertificate,
   isUploading,
-  userInfo
+  userInfo,
+  onUpdateRequirementStatus,
+  onRaiseRequirement
 }) => {
   const [file, setFile] = useState(null);
   const [detailTab, setDetailTab] = useState('Tasks');
@@ -243,22 +246,11 @@ const OrderProcessingModule = ({
           )}
 
           {detailTab === 'Requirements' && (
-            <div className="space-y-2">
-              {(selectedOrder.customerRequirements || []).map((item) => (
-                <div key={item._id} className="rounded-lg border border-slate-200 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-slate-800">{item.title}</p>
-                    <StatusBadge status={item.status || 'Pending'} />
-                  </div>
-                  {item.description && <p className="text-xs text-slate-500 mt-1">{item.description}</p>}
-                </div>
-              ))}
-              {(selectedOrder.customerRequirements || []).length === 0 && (
-                <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4">
-                  No requirements listed yet.
-                </div>
-              )}
-            </div>
+            <RequirementsModule
+              selectedOrder={selectedOrder}
+              onUpdateRequirementStatus={onUpdateRequirementStatus}
+              onRaiseRequirement={onRaiseRequirement}
+            />
           )}
 
           {detailTab === 'Invoices' && (

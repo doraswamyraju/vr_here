@@ -263,6 +263,26 @@ const EmployeeApp = () => {
     }
   };
 
+  const handleUpdateRequirementStatus = async (orderId, requirementId, status) => {
+    if (!authConfig) return;
+    try {
+      await axios.put(`/api/orders/${orderId}/requirements/${requirementId}/status`, { status }, authConfig);
+      await fetchOrders();
+    } catch (error) {
+      alert('Unable to update requirement status.');
+    }
+  };
+
+  const handleRaiseRequirement = async (orderId, payload) => {
+    if (!authConfig) return;
+    try {
+      await axios.post(`/api/orders/${orderId}/requirements`, payload, authConfig);
+      await fetchOrders();
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to raise requirement.');
+    }
+  };
+
   const startTaskSession = async ({ orderId, taskId, serviceName, taskTitle }) => {
     if (!isClockedIn) {
       alert('Please clock in before starting a task timer.');
@@ -351,6 +371,8 @@ const EmployeeApp = () => {
             onUploadCertificate={handleUploadCertificate}
             isUploading={isUploading}
             userInfo={userInfo}
+            onUpdateRequirementStatus={handleUpdateRequirementStatus}
+            onRaiseRequirement={handleRaiseRequirement}
           />
         );
       case 'tasks':
@@ -385,7 +407,13 @@ const EmployeeApp = () => {
       case 'documents':
         return <DocumentsModule selectedOrder={selectedOrder} />;
       case 'requirements':
-        return <RequirementsModule selectedOrder={selectedOrder} />;
+        return (
+          <RequirementsModule
+            selectedOrder={selectedOrder}
+            onUpdateRequirementStatus={handleUpdateRequirementStatus}
+            onRaiseRequirement={handleRaiseRequirement}
+          />
+        );
       case 'support':
         return <SupportModule tickets={tickets} />;
       case 'commercials':

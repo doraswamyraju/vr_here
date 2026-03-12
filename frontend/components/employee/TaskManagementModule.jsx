@@ -75,15 +75,42 @@ const TaskManagementModule = ({
   }, [projectTasks, boardOrder]);
 
   const renderTaskActions = (order, task) => {
+    if (task.status === 'Completed') {
+      return (
+        <span className="text-[10px] px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-bold border border-emerald-200">
+          Completed
+        </span>
+      );
+    }
+
     const isActiveCurrent = activeTaskSession?.orderId === order._id && activeTaskSession?.taskId === task._id;
     if (isActiveCurrent) {
       return (
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded">
-            Running: {new Date(activeTaskElapsedSeconds * 1000).toISOString().slice(11, 19)}
-          </span>
-          <button onClick={onPauseTask} className="text-[10px] px-2 py-1 rounded bg-amber-100 text-amber-700 font-bold">Pause</button>
-          <button onClick={onCompleteTask} className="text-[10px] px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-bold">Complete</button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded">
+              Running: {new Date(activeTaskElapsedSeconds * 1000).toISOString().slice(11, 19)}
+            </span>
+            <button onClick={onPauseTask} className="text-[10px] px-2 py-1 rounded bg-amber-100 text-amber-700 font-bold hover:bg-amber-200 transition">Pause</button>
+            <button onClick={onCompleteTask} className="text-[10px] px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-bold hover:bg-emerald-200 transition">Complete</button>
+          </div>
+          {(task.subtasks || []).length > 0 && (
+            <div className="flex flex-wrap items-center justify-end gap-2 mt-1 max-w-md">
+              {task.subtasks.map(subtask => (
+                <label key={subtask._id} className="flex items-center gap-1.5 text-[10px] font-medium bg-slate-50 border border-slate-200 px-2 py-1 rounded cursor-pointer hover:bg-slate-100 transition">
+                  <input
+                    type="checkbox"
+                    className="w-3 h-3 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                    checked={Boolean(subtask.isCompleted)}
+                    onChange={(e) => onUpdateSubtask(order._id, task._id, subtask._id, { isCompleted: e.target.checked })}
+                  />
+                  <span className={subtask.isCompleted ? 'line-through text-slate-400' : 'text-slate-700'}>
+                    {subtask.subTaskCode ? `${subtask.subTaskCode} - ` : ''}{subtask.title}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       );
     }

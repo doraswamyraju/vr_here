@@ -12,16 +12,22 @@ The workflow for deploying live changes to this VPS is:
 3.  **Sync the code**:
     ```bash
     git pull origin main
+    git restore index.html 2>/dev/null || true
     chmod -R +x node_modules/.bin
     npm run build
-    pm2 restart ecosystem.config.cjs --env production
+    find assets -type f -name "index-*.js" -delete 2>/dev/null
+    find assets -type f -name "index-*.css" -delete 2>/dev/null
+    cp -r dist/assets/* assets/
+    cp -f dist/index.html index.html
+    cd backend
+    pm2 restart vrhere-api --update-env
     pm2 save
     ```
 
 ## Mandatory response format (for Codex)
 - After **every completed change request**, always provide:
   1. Local git commands (`git add`, `git commit`, `git push`)
-  2. VPS deploy commands (`git pull`, `npm run build`, `pm2 restart`, `pm2 save`)
+  2. VPS deploy commands with the exact Nginx copying steps shown above.
 - Do not skip these command blocks, even if not explicitly asked again.
 - Keep commands copy-paste ready.
 - Whenever any **service/package is added or updated**, ensure the mandatory **Terms & Conditions checkbox/tick** remains enabled for all related payment package flows before deployment.
