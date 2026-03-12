@@ -19,7 +19,7 @@ const WorkQueueModule = ({ orders, onOpenOrder }) => {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row gap-3">
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-4 flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={16} className="absolute top-3 left-3 text-slate-400" />
           <input
@@ -42,7 +42,7 @@ const WorkQueueModule = ({ orders, onOpenOrder }) => {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 overflow-x-auto">
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-4 overflow-x-auto">
         <table className="w-full text-left min-w-[820px]">
           <thead className="text-xs uppercase font-bold text-slate-500">
             <tr>
@@ -85,4 +85,3 @@ const WorkQueueModule = ({ orders, onOpenOrder }) => {
 };
 
 export default WorkQueueModule;
-

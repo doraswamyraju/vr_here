@@ -91,3 +91,10 @@ Each module should maintain a changelog like this:
 - Build it separately.
 - Plug it into dashboards after the module interface is ready.
 - Continue the same process for future modules.
+
+## Non-Negotiable Safety Rules (Effective Immediately)
+- Unless specifically mentioned by the user, do not change the existing look and feel of any page.
+- While implementing new functionality, do not delete, remove, or silently alter existing functionality.
+- If any new change can impact existing behavior, flows, or UI, explicitly call out the risk first.
+- For any potentially breaking impact on existing functionality, proceed only after user confirmation.
+- During implementation, preserve backward compatibility of existing routes, actions, and visible controls wherever feasible.

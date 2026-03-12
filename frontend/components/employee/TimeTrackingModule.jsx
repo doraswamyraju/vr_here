@@ -72,7 +72,7 @@ const TimeTrackingModule = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
         <h3 className="font-bold text-slate-800 mb-2">Live Task Tracker</h3>
         {activeTaskSession ? (
           <p className="text-sm text-indigo-700 font-semibold">
@@ -83,7 +83,7 @@ const TimeTrackingModule = ({
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
         <h3 className="font-bold text-slate-800 mb-3">Manual Time Log (Optional)</h3>
         <form onSubmit={submitManualLog} className="grid grid-cols-1 lg:grid-cols-4 gap-3">
           <select
@@ -139,7 +139,7 @@ const TimeTrackingModule = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
           <h3 className="font-bold text-slate-800 mb-1">Project-wise Hours</h3>
           <p className="text-sm text-slate-500 mb-4">Total hours spent per project/service.</p>
           <div className="space-y-2">
@@ -153,7 +153,7 @@ const TimeTrackingModule = ({
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
           <h3 className="font-bold text-slate-800 mb-1">Task-wise Hours</h3>
           <p className="text-sm text-slate-500 mb-4">Detailed breakdown by task.</p>
           <div className="space-y-2 max-h-[340px] overflow-auto pr-1">

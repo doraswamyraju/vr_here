@@ -11,12 +11,12 @@ const EmployeeSidebar = ({
 }) => {
   return (
     <aside
-      className={`${collapsed ? 'w-20' : 'w-72'} bg-white h-full border-r border-slate-200 flex flex-col z-20 transition-all duration-300`}
+      className={`${collapsed ? 'w-20' : 'w-72'} bg-white/75 backdrop-blur-md h-full border-r border-slate-200/70 flex flex-col z-20 transition-all duration-300`}
       onMouseEnter={() => setCollapsed(false)}
       onMouseLeave={() => setCollapsed(true)}
     >
-      <div className="h-20 flex items-center justify-center border-b border-slate-100">
-        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+      <div className="h-20 flex items-center justify-center border-b border-slate-200/70">
+        <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
           VR
         </div>
       </div>
@@ -30,8 +30,8 @@ const EmployeeSidebar = ({
               onClick={() => setActiveTab(item.id)}
               className={`flex items-center w-full p-3 rounded-xl transition-all ${
                 activeTab === item.id
-                  ? 'bg-indigo-50 text-indigo-600 font-bold'
-                  : 'text-slate-500 hover:bg-slate-50'
+                  ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold shadow-lg'
+                  : 'text-slate-600 hover:bg-indigo-50'
               }`}
             >
               <Icon size={20} className="shrink-0" />
@@ -56,4 +56,3 @@ const EmployeeSidebar = ({
 };
 
 export default EmployeeSidebar;
-

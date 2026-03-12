@@ -264,6 +264,11 @@ const EmployeeApp = () => {
   };
 
   const startTaskSession = async ({ orderId, taskId, serviceName, taskTitle }) => {
+    if (!isClockedIn) {
+      alert('Please clock in before starting a task timer.');
+      return;
+    }
+
     if (activeTaskSession && (activeTaskSession.orderId !== orderId || activeTaskSession.taskId !== taskId)) {
       alert('Pause or complete the current task before starting another one.');
       return;
@@ -359,6 +364,7 @@ const EmployeeApp = () => {
             onStartTask={startTaskSession}
             onPauseTask={pauseTaskSession}
             onCompleteTask={completeTaskSession}
+            isClockedIn={isClockedIn}
           />
         );
       case 'time':
@@ -391,7 +397,7 @@ const EmployeeApp = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 font-sans text-slate-800 overflow-hidden">
       <EmployeeSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -414,7 +420,7 @@ const EmployeeApp = () => {
           onPauseTask={pauseTaskSession}
           onCompleteTask={completeTaskSession}
         />
-        <div className="flex-1 overflow-y-auto p-6 md:p-8">{renderActiveModule()}</div>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">{renderActiveModule()}</div>
       </main>
     </div>
   );

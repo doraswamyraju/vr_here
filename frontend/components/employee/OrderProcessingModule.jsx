@@ -15,7 +15,7 @@ const OrderProcessingModule = ({
 
   if (!selectedOrder) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6 overflow-x-auto">
         <table className="w-full text-left min-w-[760px]">
           <thead className="text-xs uppercase font-bold text-slate-500">
             <tr>
@@ -58,7 +58,7 @@ const OrderProcessingModule = ({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
         <div className="flex justify-between items-start gap-4">
           <div>
             <h3 className="text-xl font-bold text-slate-800">{selectedOrder.serviceName}</h3>
@@ -73,7 +73,7 @@ const OrderProcessingModule = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
           <h4 className="font-bold text-slate-800 mb-4">Order Progress</h4>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -134,4 +134,3 @@ const OrderProcessingModule = ({
 };
 
 export default OrderProcessingModule;
-

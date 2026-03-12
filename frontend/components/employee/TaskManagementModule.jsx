@@ -12,11 +12,12 @@ const TaskManagementModule = ({
   activeTaskElapsedSeconds,
   onStartTask,
   onPauseTask,
-  onCompleteTask
+  onCompleteTask,
+  isClockedIn
 }) => {
   if (!selectedOrder) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 text-sm text-slate-500">
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6 text-sm text-slate-500">
         Select an order from Work Queue or Order Processing to manage tasks.
       </div>
     );
@@ -24,10 +25,15 @@ const TaskManagementModule = ({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-4 flex items-center justify-between">
         <div>
           <h3 className="font-bold text-slate-800">Task Board</h3>
           <p className="text-sm text-slate-500">{selectedOrder.serviceName}</p>
+          {!isClockedIn && (
+            <p className="text-xs text-rose-600 font-semibold mt-1">
+              Clock in first to start any task timer.
+            </p>
+          )}
         </div>
         <button className="text-sm text-indigo-600 font-semibold" onClick={() => setSelectedOrder(null)}>
           Change Order
@@ -122,16 +128,20 @@ const TaskManagementModule = ({
                               serviceName: selectedOrder.serviceName,
                               taskTitle: task.title
                             })}
-                            disabled={Boolean(activeTaskSession)}
+                            disabled={!isClockedIn || Boolean(activeTaskSession)}
                             className="text-[10px] px-2 py-1 rounded bg-indigo-100 text-indigo-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Start
                           </button>
-                          {activeTaskSession && (
+                          {!isClockedIn ? (
+                            <span className="text-[10px] text-rose-600 font-semibold">
+                              Clock in required
+                            </span>
+                          ) : activeTaskSession ? (
                             <span className="text-[10px] text-rose-600 font-semibold">
                               One task at a time
                             </span>
-                          )}
+                          ) : null}
                         </>
                       )}
                     </div>
