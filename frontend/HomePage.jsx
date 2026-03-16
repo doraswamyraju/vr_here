@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';
-import OurTeamModule from './components/OurTeamModule';
+import ProfessionalsModule from './components/OurTeamModule';
 import { launchRazorpayCheckout } from './utils/razorpayCheckout';
 import { showPaymentSuccessPopup } from './utils/paymentSuccessPopup';
 
@@ -644,7 +644,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      <OurTeamModule compact={true} sectionId="our-team-home" />
+      <ProfessionalsModule sectionId="managed-by-professionals" />
 
       <SharedFooter />
 

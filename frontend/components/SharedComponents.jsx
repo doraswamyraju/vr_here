@@ -647,7 +647,6 @@ export const SharedFooter = () => (
                             {['Machinery Sourcing', 'Factory License', 'Pollution Control NOC', 'Turnkey Setup', 'Import Export Code'].map(item => (
                                 <li key={item}><a href={`/contact?service=${encodeURIComponent(item)}`} className="hover:text-white transition-colors block py-1">{item}</a></li>
                             ))}
-                            <li><a href="/our-team" className="hover:text-white transition-colors block py-1">Our Team</a></li>
                         </ul>
                     </div>
                 </div>
@@ -657,9 +656,9 @@ export const SharedFooter = () => (
                 <div className="flex space-x-6">
                     <a href="#" className="hover:text-white transition">Privacy Policy</a>
                     <a href="/terms-and-conditions" className="hover:text-white transition">Terms & Conditions</a>
-                    <a href="/our-team" className="hover:text-white transition">Our Team</a>
                 </div>
             </div>
         </div>
     </footer>
 );
+

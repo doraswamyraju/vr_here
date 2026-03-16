@@ -1,82 +1,122 @@
 import React from 'react';
-import { Users, ShieldCheck, Sparkles, ArrowRight } from 'lucide-react';
-import { ADVISORS, LEADERSHIP_TEAM } from './ourTeamData';
+import { 
+  Calculator, 
+  ShieldCheck, 
+  Briefcase, 
+  FileText, 
+  Award,
+  Users,
+  PieChart,
+  HardHat,
+  Scale
+} from 'lucide-react';
 
-const ProfileCard = ({ profile }) => (
-  <div className="group bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-indigo-100/70 transition-all duration-300 hover:-translate-y-1">
-    <div className="relative h-52 overflow-hidden">
-      <img
-        src={profile.imageUrl}
-        alt={profile.name}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-      <div className="absolute bottom-4 left-4 right-4">
-        <p className="text-white text-xs font-bold uppercase tracking-wide">{profile.title}</p>
-        <h3 className="text-white text-xl font-black mt-1">{profile.name}</h3>
-      </div>
+const ProfessionalCard = ({ title, description, icon: Icon, color }) => (
+  <div className="group bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-8 hover:border-red-500/50 transition-all duration-300 hover:-translate-y-1">
+    <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+      <Icon className="w-7 h-7 text-white" />
     </div>
-    <div className="p-5">
-      <p className="text-sm text-slate-600 leading-relaxed">{profile.summary}</p>
-    </div>
+    <h3 className="text-xl font-black text-white mb-3 tracking-tight">{title}</h3>
+    <p className="text-slate-400 text-sm leading-relaxed">{description}</p>
   </div>
 );
 
-const OurTeamModule = ({ compact = false, sectionId = 'our-team' }) => {
-  const teamItems = compact ? LEADERSHIP_TEAM.slice(0, 4) : LEADERSHIP_TEAM;
-  const advisorItems = compact ? ADVISORS.slice(0, 2) : ADVISORS;
+const ProfessionalsModule = ({ sectionId = 'managed-by-professionals' }) => {
+  const professionals = [
+    {
+      title: 'Chartered Accountants (CAs)',
+      description: 'Expertise in Statutory Audit, Taxation, Financial Planning, and Business Consulting to ensure your finances are robust and compliant.',
+      icon: Calculator,
+      color: 'bg-blue-600'
+    },
+    {
+      title: 'Company Secretaries (CSs)',
+      description: 'Handling Corporate Governance, ROC Filings, Legal Secretarial Services, and ensuring your business stays compliant with all statutory laws.',
+      icon: ShieldCheck,
+      color: 'bg-emerald-600'
+    },
+    {
+      title: 'Cost Accountants (CMAs)',
+      description: 'Strategic Cost Management, Audit, and Optimization services to improve operational efficiency and bottom-line performance.',
+      icon: PieChart,
+      color: 'bg-orange-600'
+    },
+    {
+      title: 'Tax Consultants',
+      description: 'Specialists in Indirect Taxes (GST) and Direct Taxes (IT), providing advisory, filing, and representation services across all tax verticals.',
+      icon: FileText,
+      color: 'bg-red-600'
+    },
+    {
+      title: 'Quality Consultants',
+      description: 'Experts in ISO Certifications (9001, 14001, etc.), Quality Management Systems, and ensuring global standards in your operations.',
+      icon: Award,
+      color: 'bg-purple-600'
+    },
+    {
+      title: 'Industrial Consultants',
+      description: 'Technical expertise in Machinery Sourcing, Factory Setup, Pollution Control, and comprehensive industrial licensing solutions.',
+      icon: HardHat,
+      color: 'bg-amber-600'
+    },
+    {
+      title: 'Legal Advisors',
+      description: 'Qualified legal professionals specializing in Business Laws, Contracts, Intellectual Property, and Dispute Resolution support.',
+      icon: Scale,
+      color: 'bg-indigo-600'
+    },
+    {
+      title: 'Business Analysts',
+      description: 'Strategic experts providing market analysis, feasibility reports, and data-driven insights to scale your business ventures.',
+      icon: Briefcase,
+      color: 'bg-cyan-600'
+    }
+  ];
 
   return (
     <section id={sectionId} className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white relative overflow-hidden">
-      <div className="absolute -top-28 -left-20 w-96 h-96 rounded-full bg-red-500/20 blur-3xl" />
-      <div className="absolute -bottom-28 -right-20 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl" />
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-14 relative z-10">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 text-red-300 text-xs font-bold uppercase tracking-wider mb-4 border border-white/15">
-            <Users className="w-4 h-4 mr-2" /> Our Team
+      {/* Decorative Elements */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        <div className="absolute -top-28 -left-20 w-96 h-96 rounded-full bg-red-500/5 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-blue-500/5 blur-[120px]" />
+        <div className="absolute -bottom-28 -right-20 w-96 h-96 rounded-full bg-orange-500/5 blur-3xl" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 relative z-10">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 text-red-400 text-xs font-bold uppercase tracking-widest mb-4 border border-white/10">
+            <Users className="w-4 h-4 mr-2" /> Professional Network
           </div>
-          <h2 className="text-3xl md:text-5xl font-black text-white">People Behind VR HERE</h2>
-          <p className="text-slate-300 mt-4 max-w-3xl mx-auto">
-            Cross-functional professionals in finance, compliance, training, investments, and operations.
+          <h2 className="text-3xl md:text-6xl font-black text-white tracking-tight leading-[1.1]">
+            Managed by <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Professionals</span>
+          </h2>
+          <p className="text-slate-400 mt-6 max-w-2xl mx-auto text-lg leading-relaxed">
+            Our platform is powered by a diverse network of highly qualified professionals, 
+            ensuring expert-level execution and strategic guidance for every business need.
           </p>
-          <div className="flex justify-center mt-6">
-            <div className="inline-flex items-center text-xs font-bold text-amber-300 bg-amber-400/10 px-3 py-1.5 rounded-full border border-amber-300/20">
-              <Sparkles className="w-3.5 h-3.5 mr-2" /> High-trust advisory + execution team
-            </div>
-          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6 relative z-10">
-          {teamItems.map((profile) => (
-            <ProfileCard key={profile.name} profile={profile} />
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {professionals.map((prof, index) => (
+            <ProfessionalCard key={index} {...prof} />
           ))}
         </div>
 
-        <div className="mt-16 text-center relative z-10">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider mb-4 border border-white/15">
-            <ShieldCheck className="w-4 h-4 mr-2" /> Our Advisors
-          </div>
-          <h3 className="text-2xl font-black text-white">Strategic Advisory Panel</h3>
+        <div className="mt-20 p-10 rounded-[40px] bg-gradient-to-r from-red-600 to-orange-600 text-white text-center shadow-2xl shadow-red-600/20">
+          <h3 className="text-2xl md:text-3xl font-black mb-4">Need Dedicated Expert Advice?</h3>
+          <p className="text-white/90 mb-8 max-w-xl mx-auto font-medium">
+            Connect with our certified professionals today for a personalized consultation tailored to your business goals.
+          </p>
+          <a
+            href="/contact"
+            className="inline-flex items-center bg-white text-red-600 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-slate-100 transition-all hover:scale-105"
+          >
+            Talk to an Expert
+          </a>
         </div>
-        <div className="grid md:grid-cols-2 gap-6 mt-8 relative z-10">
-          {advisorItems.map((profile) => (
-            <ProfileCard key={profile.name} profile={profile} />
-          ))}
-        </div>
-
-        {compact && (
-          <div className="text-center mt-10">
-            <a
-              href="/our-team"
-              className="inline-flex items-center bg-red-600 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red-700/30"
-            >
-              View Full Team Profile <ArrowRight className="w-4 h-4 ml-2" />
-            </a>
-          </div>
-        )}
       </div>
     </section>
   );
 };
 
-export default OurTeamModule;
+export default ProfessionalsModule;
