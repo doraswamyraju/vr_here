@@ -424,7 +424,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
             <header className={`fixed left-0 right-0 top-0 lg:top-8 z-[55] transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-xl py-2' : 'bg-white border-b border-slate-100 py-4'}`}>
                 <div className={`absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/60 to-transparent transition-opacity ${isScrolled ? 'opacity-100' : 'opacity-0'}`}></div>
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
-                    <div className="flex justify-between items-center relative">
+                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 relative">
                         {/* LOGO: Points to / (Home) */}
                         <a href="/" className="flex items-center flex-shrink-0 group cursor-pointer">
                             <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center mr-3 shadow-lg group-hover:bg-red-600 transition duration-300 relative overflow-hidden transform group-hover:scale-105">
@@ -437,7 +437,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                             </div>
                         </a>
 
-                        <nav className="hidden lg:flex items-center">
+                        <nav className="hidden lg:flex items-center justify-center min-w-0">
                             <div className="relative" onMouseLeave={() => setActiveDesktopServiceId(null)}>
                                 <div className="max-w-[980px]">
                                     <div className="flex items-stretch gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
@@ -513,20 +513,18 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                             </div>
                         </nav>
 
-                        <div className="hidden lg:flex items-center flex-shrink-0 space-x-4">
+                        <div className="hidden lg:flex items-center flex-shrink-0 gap-3 justify-end">
                             <button onClick={handleSearchClick} className="p-2 text-slate-600 hover:text-red-600 transition transform hover:scale-110"><Search className="w-5 h-5" /></button>
-                            
-                            <a href="/contact" className="bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red-600/20 flex items-center transform hover:-translate-y-1 active:scale-95 group">
-                                <Phone className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" /> Talk to Expert
+                            <a href="/contact" className="bg-red-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red-600/20 flex items-center whitespace-nowrap">
+                                <Phone className="w-4 h-4 mr-2" /> Talk to Expert
                             </a>
-
-                            <a href="/login" className="flex items-center gap-2 p-2 px-3 text-slate-700 hover:text-red-600 transition-all font-bold group border border-slate-200 rounded-lg hover:bg-slate-50 flex-shrink-0">
-                                <LogIn className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                            <a href="/login" className="flex items-center gap-1.5 px-3 py-2 text-slate-700 hover:text-red-600 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 whitespace-nowrap transition-all">
+                                <LogIn className="w-4 h-4" />
                                 <span>Login</span>
                             </a>
                         </div>
-                        <div className="flex items-center flex-shrink-0 lg:hidden">
-                            <a href="/login" className="p-2 text-slate-700 hover:text-red-600 transition mr-1">
+                        <div className="flex items-center gap-1 lg:hidden">
+                            <a href="/login" className="p-2 text-slate-700 hover:text-red-600 transition">
                                 <LogIn className="w-6 h-6" />
                             </a>
                             <button className="p-2 text-slate-800 hover:bg-slate-100 rounded-lg transition" onClick={() => setIsMobileMenuOpen(true)}>
