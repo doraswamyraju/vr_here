@@ -1,4 +1,4 @@
-// Header Version: 1.2 - Debugging Login Visibility
+// Header Version: 1.3 - Final UI
 import React, { useState, useEffect } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
@@ -336,11 +336,6 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
         'Get faster support for registrations and certifications.',
     ]);
 
-    useEffect(() => {
-        console.log("SharedHeader v1.2: Searching for Login Link...");
-        // alert("VR HERE v1.2 Loaded!"); // Alert can be annoying, let's stick to visible elements first
-    }, []);
-
     // Use external scroll state if provided, otherwise handle internally
     const isScrolled = externalIsScrolled !== undefined ? externalIsScrolled : localIsScrolled;
 
@@ -525,13 +520,13 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                 <Phone className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" /> Talk to Expert
                             </a>
 
-                            <a href="/login" className="flex items-center gap-2 p-2 px-3 bg-yellow-400 text-black border-2 border-black transition-all font-black group rounded-lg flex-shrink-0 animate-bounce">
-                                <LogIn className="w-4 h-4" />
-                                <span>LOGIN-HERE</span>
+                            <a href="/login" className="flex items-center gap-2 p-2 px-3 text-slate-700 hover:text-red-600 transition-all font-bold group border border-slate-200 rounded-lg hover:bg-slate-50 flex-shrink-0">
+                                <LogIn className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                <span>Login</span>
                             </a>
                         </div>
                         <div className="flex items-center flex-shrink-0 lg:hidden">
-                            <a href="/login" className="p-2 bg-yellow-400 text-black border-2 border-black transition mr-1 animate-bounce">
+                            <a href="/login" className="p-2 text-slate-700 hover:text-red-600 transition mr-1">
                                 <LogIn className="w-6 h-6" />
                             </a>
                             <button className="p-2 text-slate-800 hover:bg-slate-100 rounded-lg transition" onClick={() => setIsMobileMenuOpen(true)}>
