@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
     Phone, Menu, X, ChevronDown, Clock, Award, Search,
-    Mail, Users, CheckCircle
+    Mail, Users, CheckCircle, LogIn
 } from 'lucide-react';
 
 /* --- MENU DATA WITH LINKS --- */
@@ -514,6 +514,11 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
 
                         <div className="hidden lg:flex items-center space-x-4">
                             <button onClick={handleSearchClick} className="p-2 text-slate-600 hover:text-red-600 transition transform hover:scale-110"><Search className="w-5 h-5" /></button>
+                            <a href="/login" className="flex items-center gap-2 p-2 px-3 text-slate-700 hover:text-red-600 transition-all font-bold group border border-slate-200 rounded-lg hover:bg-slate-50">
+                                <LogIn className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                <span>Login</span>
+                            </a>
+
                             <a href="/contact" className="bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red-600/20 flex items-center transform hover:-translate-y-1 active:scale-95 group">
                                 <Phone className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" /> Talk to Expert
                             </a>
