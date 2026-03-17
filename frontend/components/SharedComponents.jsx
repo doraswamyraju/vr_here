@@ -526,7 +526,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                 </a>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1 lg:hidden">
+                        <div className="flex items-center gap-1 lg:hidden ml-auto">
                             <a href="/login" className="p-2 text-slate-700 hover:text-red-600 transition">
                                 <LogIn className="w-6 h-6" />
                             </a>
