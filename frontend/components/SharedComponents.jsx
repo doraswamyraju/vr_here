@@ -1,4 +1,4 @@
-// Header Version: 1.3 - Final UI
+// Header Version: 1.4 - Layout Fixes
 import React, { useState, useEffect } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
@@ -447,7 +447,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                             className="relative"
                                             onMouseEnter={() => setActiveDesktopServiceId(service.id)}
                                         >
-                                            <button className={`h-full flex items-center px-2 py-2 text-[10px] font-bold rounded-xl transition-all duration-300 min-w-[118px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
+                                            <button className={`h-full flex items-center px-2 py-2 text-[10px] font-bold rounded-xl transition-all duration-300 min-w-[100px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
                                                 <span className="text-left leading-[1.05]">
                                                     {(TAB_LABEL_LINES[service.id] || [service.title]).map((line, idx) => (
                                                         <span key={`${service.id}-line-${idx}`} className="block">{line}</span>
@@ -513,15 +513,18 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                             </div>
                         </nav>
 
-                        <div className="hidden lg:flex items-center flex-shrink-0 gap-3 justify-end">
+                        <div className="hidden lg:flex items-center flex-shrink-0 gap-4 justify-end">
                             <button onClick={handleSearchClick} className="p-2 text-slate-600 hover:text-red-600 transition transform hover:scale-110"><Search className="w-5 h-5" /></button>
-                            <a href="/contact" className="bg-red-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red-600/20 flex items-center whitespace-nowrap">
-                                <Phone className="w-4 h-4 mr-2" /> Talk to Expert
-                            </a>
-                            <a href="/login" className="flex items-center gap-1.5 px-3 py-2 text-slate-700 hover:text-red-600 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 whitespace-nowrap transition-all">
-                                <LogIn className="w-4 h-4" />
-                                <span>Login</span>
-                            </a>
+                            
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <a href="/contact" className="bg-red-600 text-white px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red-600/20 flex items-center whitespace-nowrap">
+                                    <Phone className="w-4 h-4 mr-2" /> Talk to Expert
+                                </a>
+                                <a href="/login" className="flex items-center gap-1.5 px-3 py-2.5 text-slate-700 hover:text-red-600 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 whitespace-nowrap transition-all flex-shrink-0">
+                                    <LogIn className="w-4 h-4" />
+                                    <span>Login</span>
+                                </a>
+                            </div>
                         </div>
                         <div className="flex items-center gap-1 lg:hidden">
                             <a href="/login" className="p-2 text-slate-700 hover:text-red-600 transition">
