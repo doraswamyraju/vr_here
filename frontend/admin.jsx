@@ -25,6 +25,10 @@ import UsersModule from './components/admin/users/UsersModule';
 import { ORDER_STATUSES } from './components/admin/orders/constants';
 import { nextStatus } from './components/admin/orders/helpers';
 import { parseRequirementWorkbook, parseTaskWorkbook } from './components/admin/orders/excelParsers';
+import QuickActionFAB from './components/admin/QuickActionFAB';
+import NewOrderModal from './components/admin/modals/NewOrderModal';
+import NewTodoModal from './components/admin/modals/NewTodoModal';
+import TodoModule from './components/admin/TodoModule';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -47,6 +51,9 @@ function AdminApp() {
   const [users, setUsers] = useState([]);
   const [invoiceForm, setInvoiceForm] = useState({ invoiceNumber: '', amount: '', status: 'Draft', dueDate: '', notes: '' });
   const [commercialDraft, setCommercialDraft] = useState({ packageName: '', price: '' });
+  const [todos, setTodos] = useState([]);
+  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
+  const [isNewTodoModalOpen, setIsNewTodoModalOpen] = useState(false);
 
   useEffect(() => {
     const user = localStorage.getItem('userInfo');
@@ -64,14 +71,16 @@ function AdminApp() {
 
   const fetchData = async () => {
     if (!config) return;
-    const [ordersRes, employeesRes, usersRes] = await Promise.all([
+    const [ordersRes, employeesRes, usersRes, todosRes] = await Promise.all([
       axios.get('/api/orders', config),
       axios.get('/api/auth/employees', config),
-      axios.get('/api/auth/users', config)
+      axios.get('/api/auth/users', config),
+      axios.get('/api/todos', config)
     ]);
     setOrders(ordersRes.data || []);
     setEmployees(employeesRes.data || []);
     setUsers(usersRes.data || []);
+    setTodos(todosRes.data || []);
   };
 
   useEffect(() => {
@@ -270,7 +279,7 @@ function AdminApp() {
       );
     }
     if (activeTab === 'Users') return <UsersModule token={userInfo?.token} users={users} orders={orders} onRefresh={fetchData} />;
-    if (activeTab === 'ToDo') return <DummyView title="To Do" />;
+    if (activeTab === 'ToDo') return <TodoModule todos={todos} employees={employees} token={userInfo?.token} onRefresh={fetchData} />;
     if (activeTab === 'Finance') return <DummyView title="Finance" />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;
     if (activeTab === 'Notifications') return <DummyView title="Notifications" />;
@@ -313,6 +322,29 @@ function AdminApp() {
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">{renderView()}</div>
         </main>
       </div>
+
+      <QuickActionFAB 
+        onNewOrder={() => setIsNewOrderModalOpen(true)} 
+        onNewTodo={() => setIsNewTodoModalOpen(true)} 
+      />
+
+      <NewOrderModal 
+        isOpen={isNewOrderModalOpen} 
+        onClose={() => setIsNewOrderModalOpen(false)} 
+        users={users} 
+        employees={employees} 
+        token={userInfo?.token} 
+        onCreated={fetchData} 
+      />
+
+      <NewTodoModal 
+        isOpen={isNewTodoModalOpen} 
+        onClose={() => setIsNewTodoModalOpen(false)} 
+        orders={orders} 
+        employees={employees} 
+        token={userInfo?.token} 
+        onCreated={fetchData} 
+      />
     </div>
   );
 }

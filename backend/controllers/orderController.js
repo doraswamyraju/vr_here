@@ -296,23 +296,24 @@ const createOrder = asyncHandler(async (req, res) => {
         phone = ''
     } = req.body;
 
-    if (!paymentId) {
+    if (!paymentId && req.user.role !== 'admin') {
         res.status(400);
         throw new Error('Payment ID is required');
     }
 
     const order = new Order({
-        user: req.user._id,
-        clientName: clientName || req.user.name || '',
-        email: email || req.user.email || '',
-        phone: phone || req.user.phone || '',
+        user: req.body.userId || req.user._id, // Allow admin to specify customer
+        clientName: clientName || (req.body.userId ? '' : (req.user.name || '')), // Use provided name or user name
+        email: email || (req.body.userId ? '' : (req.user.email || '')),
+        phone: phone || (req.body.userId ? '' : (req.user.phone || '')),
         serviceName,
         packageName,
         price,
-        paymentId,
+        paymentId: paymentId || `MANUAL_BY_ADMIN_${Date.now()}`,
         razorpayOrderId,
         paymentSignature,
-        paymentStatus
+        paymentStatus: paymentId ? paymentStatus : 'Paid', // Default to Paid if manual
+        assignedEmployee: req.body.assignedEmployee || null
     });
 
     const createdOrder = await order.save();

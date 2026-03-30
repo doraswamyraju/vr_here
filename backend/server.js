@@ -54,11 +54,13 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import serviceMenuRoutes from './routes/serviceMenuRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
+import todoRoutes from './routes/todoRoutes.js';
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/todos', todoRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/services', serviceMenuRoutes);
