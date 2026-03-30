@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
     Phone, Menu, X, ChevronDown, Clock, Award, Search,
-    Mail, Users, CheckCircle, LogIn, ArrowUp, List
+    Mail, Users, CheckCircle, LogIn, ArrowUp, List, MessageSquare
 } from 'lucide-react';
 
 /* --- MENU DATA WITH LINKS --- */
@@ -580,22 +580,70 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
 
 export const GlobalFloatingButtons = () => {
     const [isVisible, setIsVisible] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isHome, setIsHome] = useState(window.location.pathname === '/' || window.location.pathname === '/home');
 
     useEffect(() => {
         const toggleVisibility = () => setIsVisible(window.scrollY > 300);
+        const checkPath = () => setIsHome(window.location.pathname === '/' || window.location.pathname === '/home');
+        
         window.addEventListener('scroll', toggleVisibility);
-        return () => window.removeEventListener('scroll', toggleVisibility);
+        // Path check on navigation or interval since it's a SPA
+        const interval = setInterval(checkPath, 1000);
+        
+        return () => {
+            window.removeEventListener('scroll', toggleVisibility);
+            clearInterval(interval);
+        };
     }, []);
 
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    const scrollToSection = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        setIsMenuOpen(false);
+    };
 
     return (
-        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-[100] flex flex-col gap-3">
-            {/* Back to Top */}
+        <div className="fixed right-6 bottom-6 z-[100] flex flex-col gap-3">
+            {/* Page Jump Navigator (Hidden on Home) */}
+            {!isHome && (
+                <div className="relative mb-2">
+                    {isMenuOpen && (
+                        <div className="absolute right-0 bottom-full mb-4 flex flex-col bg-white rounded-xl shadow-2xl border border-slate-100 p-2 min-w-[150px] animate-fade-in text-sm font-bold text-slate-700">
+                            <button onClick={() => scrollToSection('hero')} className="hover:bg-slate-50 hover:text-red-600 px-3 py-2 rounded-lg text-left transition-colors whitespace-nowrap border-b border-slate-50">Top Section</button>
+                            <button onClick={() => scrollToSection('services')} className="hover:bg-slate-50 hover:text-red-600 px-3 py-2 rounded-lg text-left transition-colors whitespace-nowrap border-b border-slate-50">Information</button>
+                            <button onClick={() => scrollToSection('pricing')} className="hover:bg-slate-50 hover:text-red-600 px-3 py-2 rounded-lg text-left transition-colors whitespace-nowrap border-b border-slate-50">Pricing Plan</button>
+                            <button onClick={() => scrollToSection('faq')} className="hover:bg-slate-50 hover:text-red-600 px-3 py-2 rounded-lg text-left transition-colors whitespace-nowrap">Questions</button>
+                        </div>
+                    )}
+                    <button
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-black hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+                        title="Jump to Section"
+                    >
+                        {isMenuOpen ? <X className="w-5 h-5" /> : <List className="w-5 h-5" />}
+                    </button>
+                </div>
+            )}
+
+            {/* Contact WhatsApp */}
+            <a href="https://wa.me/918008530606" target="_blank" rel="noreferrer" className="bg-green-500 hover:bg-green-600 text-white w-12 h-12 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center group relative" title="WhatsApp Us">
+                <MessageSquare className="w-5 h-5" />
+                <span className="absolute right-full mr-3 bg-black text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Chat on WhatsApp</span>
+            </a>
+
+            {/* Contact Phone */}
+            <a href="tel:+918008530606" className="bg-black hover:bg-slate-800 text-white w-12 h-12 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center group relative" title="Call Us">
+                <Phone className="w-5 h-5" />
+                <span className="absolute right-full mr-3 bg-black text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Call Expert</span>
+            </a>
+
+            {/* Back to Top (Positioned at bottom per user request) */}
             {isVisible && (
                 <button
                     onClick={scrollToTop}
-                    className="w-12 h-12 bg-white text-slate-900 rounded-full flex items-center justify-center shadow-lg border border-slate-100 hover:bg-slate-50 hover:text-red-600 transition-all duration-300 transform hover:scale-110 animate-fade-in"
+                    className="w-12 h-12 bg-white text-slate-900 rounded-full flex items-center justify-center shadow-lg border border-slate-200 hover:bg-slate-50 hover:text-red-600 transition-all duration-300 transform hover:scale-110 animate-fade-in"
                     title="Back to Top"
                 >
                     <ArrowUp className="w-5 h-5" />

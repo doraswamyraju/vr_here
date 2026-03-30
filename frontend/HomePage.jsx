@@ -232,19 +232,6 @@ const HomePage = () => {
 
   // Header removed (using SharedHeader)
 
-  const FloatingButtons = () => (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
-      <a href="https://wa.me/918008530606" target="_blank" rel="noreferrer" className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center group relative">
-        <MessageSquare className="w-6 h-6" />
-        <span className="absolute right-full mr-3 bg-black text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Chat on WhatsApp</span>
-      </a>
-      <a href="tel:+918008530606" className="bg-black hover:bg-slate-800 text-white p-4 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center group relative">
-        <Phone className="w-6 h-6" />
-        <span className="absolute right-full mr-3 bg-black text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Call Expert</span>
-      </a>
-    </div>
-  );
-
   return (
     <div className="font-sans text-slate-800 bg-white min-h-screen selection:bg-red-100 selection:text-red-900 overflow-x-hidden">
       <SharedHeader isScrolled={isScrolled} />
@@ -259,7 +246,6 @@ const HomePage = () => {
         title={selectedPlan?.buttonText || 'Book Consultation'}
         initialTermsAccepted={false}
       />
-      <FloatingButtons />
 
       {/* HERO SECTION - RED/DARK THEME */}
       <section className="relative bg-[#0f172a] pb-32 pt-20 lg:pt-32 overflow-hidden -mt-[0px]">
