@@ -1,5 +1,5 @@
-// Header Version: 1.4 - Layout Fixes
-import React, { useState, useEffect } from 'react';
+// Header Version: 1.5 - Logo + Menu Merge + Dropdown Fix
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
     Phone, Menu, X, ChevronDown, Clock, Award, Search,
@@ -151,13 +151,13 @@ export const MENU_DATA = [
         offers: [],
     },
     {
-        id: 'government-portal-registrations',
-        title: 'Government Portal Registrations',
+        id: 'government-msme-services',
+        title: 'Government & MSME Services',
         iconKey: 'Globe',
         icon: Globe,
         columns: [
             {
-                title: 'GeM (Government e-Marketplace)',
+                title: 'GeM (Govt e-Marketplace)',
                 items: [
                     'GeM Seller Registration',
                     'OEM Panel Registration',
@@ -167,7 +167,7 @@ export const MENU_DATA = [
                 ],
             },
             {
-                title: 'Other Modern Platforms',
+                title: 'Other Portal Registrations',
                 items: [
                     'TReDS Registration',
                     'RERA Registration',
@@ -176,15 +176,6 @@ export const MENU_DATA = [
                     'Amazon/Flipkart Seller Registration Support',
                 ],
             },
-        ],
-        offers: [],
-    },
-    {
-        id: 'industrial-msme-consultancy',
-        title: 'Industrial & MSME Consultancy',
-        iconKey: 'IndianRupee',
-        icon: IndianRupee,
-        columns: [
             {
                 title: 'Project & Finance Support',
                 items: [
@@ -198,9 +189,8 @@ export const MENU_DATA = [
                 ],
             },
             {
-                title: 'MSME & Industrial Subsidy Guidance',
+                title: 'MSME & Subsidy Schemes',
                 items: [
-                    'Updated MSME & Industrial Subsidy Guidance',
                     'CLCSS / ZED Scheme Support',
                     'PMFME (Food Processing Units)',
                     'NSIC Schemes',
@@ -213,13 +203,13 @@ export const MENU_DATA = [
         offers: [],
     },
     {
-        id: 'branding-documentation-startup-support',
-        title: 'Branding, Documentation & Startup Support',
+        id: 'branding-industrial-setup',
+        title: 'Branding & Industrial Setup',
         iconKey: 'Lightbulb',
         icon: Lightbulb,
         columns: [
             {
-                title: 'Startup Support',
+                title: 'Startup & Branding Support',
                 items: [
                     'Business Plan Preparation',
                     'Pitch Decks for Funding',
@@ -240,17 +230,8 @@ export const MENU_DATA = [
                     'Wealth Portfolio Management',
                 ],
             },
-        ],
-        offers: [],
-    },
-    {
-        id: 'machinery-industrial-support',
-        title: 'Machinery & Industrial Support',
-        iconKey: 'Factory',
-        icon: Factory,
-        columns: [
             {
-                title: 'Industrial Support Services',
+                title: 'Industrial Support',
                 items: [
                     'Machinery Sourcing & Imports',
                     'Vendor Identification & Supplier Verification',
@@ -277,13 +258,11 @@ const ICON_MAP = {
 
 const REQUIRED_CATEGORY_IDS = MENU_DATA.map((service) => service.id);
 const TAB_LABEL_LINES = {
-    'accounting-compliance-taxation': ['Accounting,', 'Compliance &', 'Taxation'],
-    'certification-quality-management': ['Certification &', 'Quality', 'Management'],
-    'business-registration-licensing-corporate': ['Business', 'Registrations &', 'Corporate'],
-    'government-portal-registrations': ['Government', 'Portal', 'Registrations'],
-    'industrial-msme-consultancy': ['Industrial &', 'MSME', 'Consultancy'],
-    'branding-documentation-startup-support': ['Branding &', 'Startup', 'Support'],
-    'machinery-industrial-support': ['Machinery &', 'Industrial', 'Support'],
+    'accounting-compliance-taxation': ['Accounting &', 'Taxation'],
+    'certification-quality-management': ['Certifications &', 'Quality'],
+    'business-registration-licensing-corporate': ['Business', 'Registrations'],
+    'government-msme-services': ['Govt & MSME', 'Services'],
+    'branding-industrial-setup': ['Branding &', 'Industrial Setup'],
 };
 const SAMPLE_OFFERS_BY_CATEGORY = {
     'accounting-compliance-taxation': [
@@ -295,17 +274,11 @@ const SAMPLE_OFFERS_BY_CATEGORY = {
     'business-registration-licensing-corporate': [
         { title: 'Private Limited Launch Deal', imageUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=1200&q=80', ctaLink: '/pvt-ltd-registration' },
     ],
-    'government-portal-registrations': [
+    'government-msme-services': [
         { title: 'GeM Fast-Track Enrollment', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=GeM%20Fast%20Track' },
     ],
-    'industrial-msme-consultancy': [
-        { title: 'MSME Loan Support Offer', imageUrl: 'https://images.unsplash.com/photo-1593672715438-d88a70629abe?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=MSME%20Loan%20Support' },
-    ],
-    'branding-documentation-startup-support': [
+    'branding-industrial-setup': [
         { title: 'Startup Branding Booster', imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=Startup%20Branding%20Booster' },
-    ],
-    'machinery-industrial-support': [
-        { title: 'Factory Setup Advantage', imageUrl: 'https://images.unsplash.com/photo-1565608087341-404b25492fee?auto=format&fit=crop&w=1200&q=80', ctaLink: '/contact?service=Factory%20Setup%20Advantage' },
     ],
 };
 
@@ -329,6 +302,18 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
     const [activeMobileCategory, setActiveMobileCategory] = useState(null);
     const [activeDesktopServiceId, setActiveDesktopServiceId] = useState(null);
     const [localIsScrolled, setLocalIsScrolled] = useState(false);
+    const closeMenuTimeout = useRef(null);
+
+    const openMenu = (serviceId) => {
+        if (closeMenuTimeout.current) clearTimeout(closeMenuTimeout.current);
+        setActiveDesktopServiceId(serviceId);
+    };
+    const closeMenuWithDelay = () => {
+        closeMenuTimeout.current = setTimeout(() => setActiveDesktopServiceId(null), 200);
+    };
+    const cancelClose = () => {
+        if (closeMenuTimeout.current) clearTimeout(closeMenuTimeout.current);
+    };
     const [menuConfig, setMenuConfig] = useState(normalizeServiceConfig(MENU_DATA));
     const [tickerMessages, setTickerMessages] = useState([
         'New: Income Tax return filing support now available.',
@@ -427,10 +412,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                     <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 relative">
                         {/* LOGO: Points to / (Home) */}
                         <a href="/" className="flex items-center flex-shrink-0 group cursor-pointer">
-                            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center mr-3 shadow-lg group-hover:bg-red-600 transition duration-300 relative overflow-hidden transform group-hover:scale-105">
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition duration-300"></div>
-                                <span className="text-white font-black text-xl tracking-tighter">VR</span>
-                            </div>
+                            <img src="/logo.png" alt="VR HERE" className="h-12 w-auto object-contain mr-2 group-hover:scale-105 transition-transform duration-300" />
                             <div className="flex flex-col">
                                 <span className="text-2xl font-extrabold text-black leading-none tracking-tight group-hover:text-red-600 transition-colors">VR HERE</span>
                                 <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-0.5">Business Solutions</span>
@@ -438,16 +420,16 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                         </a>
 
                         <nav className="hidden lg:flex items-center justify-center min-w-0">
-                            <div className="relative" onMouseLeave={() => setActiveDesktopServiceId(null)}>
+                            <div className="relative" onMouseLeave={closeMenuWithDelay}>
                                 <div className="max-w-[980px]">
                                     <div className="flex items-stretch gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
                                     {menuConfig.map((service) => (
                                         <div
                                             key={service.id}
                                             className="relative"
-                                            onMouseEnter={() => setActiveDesktopServiceId(service.id)}
+                                            onMouseEnter={() => openMenu(service.id)}
                                         >
-                                            <button className={`h-full flex items-center px-2 py-2 text-[10px] font-bold rounded-xl transition-all duration-300 min-w-[100px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
+                                            <button className={`h-full flex items-center px-3 py-2 text-[10px] font-bold rounded-xl transition-all duration-300 min-w-[110px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
                                                 <span className="text-left leading-[1.05]">
                                                     {(TAB_LABEL_LINES[service.id] || [service.title]).map((line, idx) => (
                                                         <span key={`${service.id}-line-${idx}`} className="block">{line}</span>
@@ -460,7 +442,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                     </div>
                                 </div>
 
-                                <div className={`absolute top-full left-1/2 -translate-x-1/2 w-[92vw] max-w-[1240px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_30px_80px_-25px_rgba(0,0,0,0.4)] border border-slate-200 overflow-hidden transition-all duration-300 origin-top z-50 mt-3 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
+                                <div onMouseEnter={cancelClose} onMouseLeave={closeMenuWithDelay} className={`absolute top-full left-1/2 -translate-x-1/2 w-[92vw] max-w-[1240px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_30px_80px_-25px_rgba(0,0,0,0.4)] border border-slate-200 overflow-hidden transition-all duration-300 origin-top z-50 mt-1 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
                                     {activeDesktopService && (
                                         <div className="flex min-h-[360px]">
                                             <div className="flex-1 p-8 bg-gradient-to-br from-white via-white to-slate-50">
@@ -543,7 +525,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
             <div className={`fixed inset-0 bg-white z-[60] transform transition-transform duration-300 lg:hidden overflow-y-auto ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
                     <div className="flex items-center">
-                        <div className="w-8 h-8 bg-black rounded flex items-center justify-center mr-2"><span className="text-white font-bold">VR</span></div>
+                        <img src="/logo.png" alt="VR HERE" className="h-8 w-auto object-contain mr-2" />
                         <span className="font-bold text-lg">Menu</span>
                     </div>
                     <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 rounded-full hover:bg-red-100 hover:text-red-600 transition"><X className="w-6 h-6" /></button>

@@ -385,7 +385,7 @@ const HomePage = () => {
             <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Loans Facilitated</div>
           </div>
           <div className="py-6">
-            <div className="text-red-500 text-3xl font-black">150+</div>
+            <div className="text-red-500 text-3xl font-black">30+</div>
             <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Experts Team</div>
           </div>
           <div className="py-6">
