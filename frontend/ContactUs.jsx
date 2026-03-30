@@ -3,6 +3,7 @@ import {
     Phone, Mail, MapPin, Clock, ArrowRight, CheckCircle2,
     Send, Loader2, MessageSquare, ChevronDown, Menu, X
 } from 'lucide-react';
+import axios from 'axios';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 
 const ContactUsPage = () => {
@@ -34,17 +35,20 @@ const ContactUsPage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Simulate API call
-        setTimeout(() => {
-            setIsSubmitting(false);
+        try {
+            await axios.post('/api/contact', formData);
             setSubmitted(true);
-            // Reset after showing success
             setTimeout(() => setSubmitted(false), 5000);
             setFormData({ name: '', phone: '', email: '', service: '', message: '' });
-        }, 1500);
+        } catch (error) {
+            console.error('Submission error:', error);
+            alert('Something went wrong. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // Header and Footer definitions removed

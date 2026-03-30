@@ -109,24 +109,19 @@ const FAQS = [
 
 /* --- TESTIMONIALS DATA --- */
 const TESTIMONIALS = [
-  {
-    name: "Rajesh Kumar",
-    role: "MD, TechnoPlast Industries",
-    content: "VR HERE helped us setup our manufacturing unit in Jeedimetla. From company registration to machinery sourcing and bank loan, they handled everything. A true single-window solution.",
-    rating: 5
-  },
-  {
-    name: "Sneha Reddy",
-    role: "Founder, GreenEarth Organics",
-    content: "I didn't know anything about compliances. The team at VR HERE explained everything clearly and got my Pvt Ltd registered in just 8 days. Highly recommended for new entrepreneurs!",
-    rating: 5
-  },
-  {
-    name: "Anil Gupta",
-    role: "Director, Gupta Logistics",
-    content: "Their knowledge of Industrial Subsidies is excellent. They helped us get a significant subsidy on our new warehouse project. Professional and transparent service.",
-    rating: 5
-  }
+  { name: "Srikanth M", role: "Paints & hardware", business: "Bluecat Hardware" },
+  { name: "Prashanth B", role: "Sports Event", business: "T Fight club" },
+  { name: "PD Manohar", role: "Portfolio Management", business: "ELP Wealth Managers" },
+  { name: "Sai Kumar M", role: "Cyber Security services", business: "Cyber Combat" },
+  { name: "Santosh G", role: "Food Industry", business: "Swadha Sudha" },
+  { name: "Mounica R D", role: "Interior Designing", business: "Mr Dimensions" },
+  { name: "Venkatesh A", role: "Constructions", business: "Sai Manogna Constructions" },
+  { name: "Radhika P", role: "Manufacturing", business: "Trishul Industries" },
+  { name: "Jyothi", role: "Software", business: "Byte weave" },
+  { name: "Amit S R", role: "Interview training", business: "Career Egnitor" },
+  { name: "Sai Sudha G", role: "Corporate training", business: "Rocksvel" },
+  { name: "Moinudeen", role: "AC supporting services", business: "Zain Infra" },
+  { name: "Jyasree D", role: "Software & Ocupenture", business: "Sri Urjith" }
 ];
 
 /* --- SEARCH DATA --- */
@@ -503,20 +498,26 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-black text-center text-slate-900 mb-12">Success Stories</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-all">
+      {/* SUCCESS STORIES (TESTIMONIALS) */}
+      <section className="py-24 bg-slate-50 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 mb-12 flex flex-col items-center">
+          <h2 className="text-3xl font-black text-center text-slate-900 mb-2">Success Stories</h2>
+          <p className="text-slate-500 text-center max-w-2xl">Trusted by emerging businesses and ambitious founders across industries.</p>
+        </div>
+        
+        {/* Marquee Wrapper */}
+        <div className="relative flex overflow-x-hidden group">
+          <div className="flex animate-[tickerScroll_40s_linear_infinite] group-hover:[animation-play-state:paused] whitespace-nowrap will-change-transform">
+            {/* Duplicate list for seamless infinite scroll */}
+            {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+              <div key={i} className="inline-block w-[320px] whitespace-normal bg-white p-6 mx-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-all flex-shrink-0">
                 <div className="flex text-yellow-400 mb-4">
-                  {[...Array(t.rating)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                  {[...Array(5)].map((_, idx) => <Star key={idx} className="w-4 h-4 fill-current" />)}
                 </div>
-                <p className="text-slate-600 mb-6 text-sm leading-relaxed">"{t.content}"</p>
                 <div>
-                  <div className="font-bold text-slate-900">{t.name}</div>
-                  <div className="text-xs text-slate-500">{t.role}</div>
+                  <div className="font-bold text-lg text-slate-900">{t.business}</div>
+                  <div className="text-sm font-semibold text-slate-700 mt-1">{t.name}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{t.role}</div>
                 </div>
               </div>
             ))}

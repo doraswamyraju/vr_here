@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
     Phone, Menu, X, ChevronDown, Clock, Award, Search,
-    Mail, Users, CheckCircle, LogIn
+    Mail, Users, CheckCircle, LogIn, ArrowUp, List
 } from 'lucide-react';
 
 /* --- MENU DATA WITH LINKS --- */
@@ -578,8 +578,61 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
     );
 };
 
+export const GlobalFloatingButtons = () => {
+    const [isVisible, setIsVisible] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    useEffect(() => {
+        const toggleVisibility = () => setIsVisible(window.scrollY > 300);
+        window.addEventListener('scroll', toggleVisibility);
+        return () => window.removeEventListener('scroll', toggleVisibility);
+    }, []);
+
+    const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    const scrollToSection = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        setIsMenuOpen(false);
+    };
+
+    return (
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-[100] flex flex-col gap-3">
+            {/* Page Jump Navigator */}
+            <div className="relative group">
+                {isMenuOpen && (
+                    <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 flex flex-col bg-white rounded-xl shadow-2xl border border-slate-100 p-2 min-w-[150px] animate-fade-in text-sm font-bold text-slate-700">
+                        <button onClick={() => scrollToSection('hero')} className="hover:bg-slate-50 hover:text-red-600 px-3 py-2 rounded-lg text-left transition-colors whitespace-nowrap">Hero Unit</button>
+                        <button onClick={() => scrollToSection('services')} className="hover:bg-slate-50 hover:text-red-600 px-3 py-2 rounded-lg text-left transition-colors whitespace-nowrap">Services Overview</button>
+                        <button onClick={() => scrollToSection('pricing')} className="hover:bg-slate-50 hover:text-red-600 px-3 py-2 rounded-lg text-left transition-colors whitespace-nowrap">Pricing Packages</button>
+                        <button onClick={() => scrollToSection('faq')} className="hover:bg-slate-50 hover:text-red-600 px-3 py-2 rounded-lg text-left transition-colors whitespace-nowrap">FAQ</button>
+                    </div>
+                )}
+                <button
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 hover:shadow-red-600/30 transition-all duration-300 transform hover:scale-110"
+                    title="Jump to Section"
+                >
+                    {isMenuOpen ? <X className="w-5 h-5" /> : <List className="w-5 h-5" />}
+                </button>
+            </div>
+
+            {/* Back to Top */}
+            {isVisible && (
+                <button
+                    onClick={scrollToTop}
+                    className="w-12 h-12 bg-white text-slate-900 rounded-full flex items-center justify-center shadow-lg border border-slate-100 hover:bg-slate-50 hover:text-red-600 transition-all duration-300 transform hover:scale-110 animate-fade-in"
+                    title="Back to Top"
+                >
+                    <ArrowUp className="w-5 h-5" />
+                </button>
+            )}
+        </div>
+    );
+};
+
 export const SharedFooter = () => (
-    <footer className="bg-[#0f172a] text-slate-300 pt-16 pb-8 border-t border-slate-800 font-sans">
+    <footer className="bg-[#0f172a] text-slate-300 pt-16 pb-8 border-t border-slate-800 font-sans relative">
+        <GlobalFloatingButtons />
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
 
