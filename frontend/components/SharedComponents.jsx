@@ -429,7 +429,7 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                             className="relative"
                                             onMouseEnter={() => openMenu(service.id)}
                                         >
-                                            <button className={`h-full flex items-center px-3 py-2 text-[10px] font-bold rounded-xl transition-all duration-300 min-w-[110px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
+                                            <button className={`h-full flex items-center px-3 py-2 text-[12px] font-bold rounded-xl transition-all duration-300 min-w-[110px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
                                                 <span className="text-left leading-[1.05]">
                                                     {(TAB_LABEL_LINES[service.id] || [service.title]).map((line, idx) => (
                                                         <span key={`${service.id}-line-${idx}`} className="block">{line}</span>
