@@ -234,17 +234,63 @@ const OrderProcessingModule = ({
               <div className="space-y-2">
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Workflow Assignments</p>
                 {selectedOrderAssignedTasks.map((task) => (
-                  <div key={task._id} className="rounded-lg border border-slate-200 p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-slate-800">{task.taskCode ? `${task.taskCode} - ${task.title}` : task.title}</p>
-                      <StatusBadge status={task.status || 'Pending'} />
+                  <div key={task._id} className="rounded-lg border border-slate-200 p-4 bg-slate-50/50">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-semibold text-slate-800">{task.taskCode ? `${task.taskCode} - ${task.title}` : task.title}</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-black">Main Task</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={task.status || 'Pending'} />
+                        {task.status === 'Pending' && (
+                          <button 
+                            onClick={() => {
+                              if (!isClockedIn) return alert('Please clock in first.');
+                              onTaskStatusChange(selectedOrder._id, task._id, 'In Progress');
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${isClockedIn ? 'bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white' : 'bg-slate-100 text-slate-300 opacity-50'}`}
+                          >
+                            Start
+                          </button>
+                        )}
+                        {task.status !== 'Completed' && (
+                          <button 
+                            onClick={() => {
+                              if (!isClockedIn) return alert('Please clock in first.');
+                              onTaskStatusChange(selectedOrder._id, task._id, 'Completed');
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${isClockedIn ? 'bg-white border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white' : 'bg-slate-100 text-slate-300 opacity-50'}`}
+                          >
+                            Done
+                          </button>
+                        )}
+                      </div>
                     </div>
+                    
                     {(task.subtasks || []).length > 0 && (
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-3 space-y-2 border-t border-slate-200 pt-3">
+                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Sub-steps</p>
                         {task.subtasks.map((subtask) => (
-                          <p key={subtask._id} className="text-xs text-slate-600">
-                            • {subtask.subTaskCode ? `${subtask.subTaskCode} - ` : ''}{subtask.title} ({subtask.status || 'Pending'})
-                          </p>
+                          <div key={subtask._id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-100">
+                            <p className="text-xs text-slate-700 font-medium">
+                              • {subtask.subTaskCode ? `${subtask.subTaskCode} - ` : ''}{subtask.title}
+                            </p>
+                            <div className="flex items-center gap-2">
+                               <StatusBadge status={subtask.status || 'Pending'} />
+                               {subtask.status !== 'Completed' && (
+                                 <button 
+                                   onClick={() => {
+                                      if (!isClockedIn) return alert('Please clock in first.');
+                                      onUpdateSubtask(selectedOrder._id, task._id, subtask._id, { status: 'Completed', isCompleted: true });
+                                   }}
+                                   className={`p-1 rounded-md transition-all ${isClockedIn ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-300'}`}
+                                   title="Mark Done"
+                                 >
+                                    <CheckCircle size={16} />
+                                 </button>
+                               )}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     )}

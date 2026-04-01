@@ -59,6 +59,7 @@ function AdminApp() {
   const [isNewTodoModalOpen, setIsNewTodoModalOpen] = useState(false);
   const [isMakeRecurringModalOpen, setIsMakeRecurringModalOpen] = useState(false);
   const [todoToEdit, setTodoToEdit] = useState(null);
+  const [orderToDelete, setOrderToDelete] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
@@ -127,11 +128,11 @@ function AdminApp() {
   };
 
   const deleteOrder = async (order) => {
-    if (!window.confirm(`Delete order for ${order.serviceName}?`)) return;
     await axios.delete(`/api/orders/${order._id}`, config);
     if (selectedOrderId === order._id) {
       setSelectedOrderId(null);
     }
+    setOrderToDelete(null);
     fetchData();
   };
 
@@ -214,21 +215,25 @@ function AdminApp() {
 
   const DashboardView = () => (
     <div className="space-y-6">
-      <Card className="p-6 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white">
-        <p className="text-cyan-200 text-sm">Admin Command Center (v1.1.4 - Manual + Recurring)</p>
+      <Card className="p-6 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white shadow-xl shadow-blue-900/20">
+        <p className="text-cyan-200 text-xs font-black uppercase tracking-widest">Admin Command Center (v1.1.7 - Enhanced Controls)</p>
         <h2 className="text-3xl font-black mt-1">Operations Studio</h2>
         <p className="text-slate-200 mt-2">Service delivery, consultation conversion, and execution status in one place.</p>
       </Card>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { l: 'Total Orders', v: orders.length },
-          { l: 'Pending', v: orders.filter((o) => o.status !== 'Completed').length },
-          { l: 'Completed', v: orders.filter((o) => o.status === 'Completed').length },
-          { l: 'Order Value', v: `Rs. ${orders.reduce((s, o) => s + Number(o.price || 0), 0).toLocaleString()}` }
+          { l: 'Total Orders', v: orders.length, key: 'Orders' },
+          { l: 'Pending', v: orders.filter((o) => o.status !== 'Completed').length, key: 'Orders' },
+          { l: 'Completed', v: orders.filter((o) => o.status === 'Completed').length, key: 'Orders' },
+          { l: 'Order Value', v: `Rs. ${orders.reduce((s, o) => s + Number(o.price || 0), 0).toLocaleString()}`, key: 'Reports' }
         ].map((item) => (
-          <Card key={item.l} className="p-4">
-            <p className="text-xs text-slate-500">{item.l}</p>
-            <p className="text-2xl font-bold mt-1">{item.v}</p>
+          <Card 
+            key={item.l} 
+            className="p-5 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer group hover:ring-2 hover:ring-indigo-600/20"
+            onClick={() => setActiveTab(item.key)}
+          >
+            <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest group-hover:text-indigo-600 transition-colors">{item.l}</p>
+            <p className="text-3xl font-black mt-1 text-slate-900 tracking-tighter">{item.v}</p>
           </Card>
         ))}
       </div>
@@ -279,7 +284,7 @@ function AdminApp() {
           invoiceForm={invoiceForm}
           setInvoiceForm={setInvoiceForm}
           onSaveCommercials={saveCommercials}
-          onDeleteOrder={deleteOrder}
+          onDeleteOrder={(order) => setOrderToDelete(order)}
           onQuickUpdateOrder={quickUpdateOrder}
           onUpdateOrderStatus={updateOrderStatus}
           onAssignOrder={assignOrder}
@@ -388,9 +393,52 @@ function AdminApp() {
         </main>
       </div>
 
+      {isMakeRecurringModalOpen && selectedOrder && (
+        <MakeRecurringModal 
+          isOpen={isMakeRecurringModalOpen} 
+          onClose={() => setIsMakeRecurringModalOpen(false)} 
+          selectedOrder={selectedOrder} 
+          token={userInfo?.token}
+          onSuccess={fetchData}
+        />
+      )}
+
+      {orderToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in shadow-2xl">
+          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-indigo-100/50 space-y-6">
+            <div className="w-20 h-20 bg-rose-50 rounded-[2rem] mx-auto flex items-center justify-center text-rose-500 shadow-inner">
+               <Trash2 size={40} />
+            </div>
+            <div className="text-center space-y-2">
+               <h3 className="text-2xl font-black text-slate-900">Delete Project?</h3>
+               <p className="text-sm text-slate-500 font-medium">Are you sure you want to permanently delete the project for <span className="font-black text-indigo-600">"{orderToDelete.serviceName}"</span>? This action cannot be undone.</p>
+            </div>
+            <div className="flex flex-col gap-3">
+               <button 
+                 onClick={() => deleteOrder(orderToDelete)}
+                 className="w-full py-4 bg-rose-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-[0.98]"
+               >
+                 Yes, Delete Project
+               </button>
+               <button 
+                 onClick={() => setOrderToDelete(null)}
+                 className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-sm hover:bg-slate-200 transition-all active:scale-[0.98]"
+               >
+                 Go Back
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <QuickActionFAB 
-        onNewOrder={() => setIsNewOrderModalOpen(true)} 
-        onNewTodo={() => setIsNewTodoModalOpen(true)} 
+        onNewOrder={() => setIsNewOrderModalOpen(true)}
+        onNewTodo={() => {
+          setTodoToEdit(null);
+          setIsNewTodoModalOpen(true);
+        }}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
       />
 
       <NewOrderModal 
@@ -414,13 +462,6 @@ function AdminApp() {
         onCreated={fetchData} 
         todoToEdit={todoToEdit}
       />
-
-      <MakeRecurringModal 
-        isOpen={isMakeRecurringModalOpen}
-        onClose={() => setIsMakeRecurringModalOpen(false)}
-        order={selectedOrder}
-        token={userInfo?.token}
-        onCreated={fetchData}
       />
     </div>
   );

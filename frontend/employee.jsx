@@ -400,6 +400,8 @@ const EmployeeApp = () => {
             linkedTodos={todos.filter(t => t.orderId?._id === selectedOrderId || t.orderId === selectedOrderId)}
             onTodoStatusChange={handleTodoStatusChange}
             isClockedIn={isClockedIn}
+            onTaskStatusChange={handleTaskStatusChange}
+            onUpdateSubtask={handleUpdateSubtask}
           />
         );
       case 'tasks':
