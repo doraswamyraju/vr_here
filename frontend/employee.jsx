@@ -382,9 +382,9 @@ const EmployeeApp = () => {
   const renderActiveModule = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardOverviewModule userInfo={userInfo} orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} />;
+        return <DashboardOverviewModule userInfo={userInfo} orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} isClockedIn={isClockedIn} onTodoStatusChange={handleTodoStatusChange} />;
       case 'queue':
-        return <WorkQueueModule orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} onTodoStatusChange={handleTodoStatusChange} />;
+        return <WorkQueueModule orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} onTodoStatusChange={handleTodoStatusChange} isClockedIn={isClockedIn} />;
       case 'processing':
         return (
           <OrderProcessingModule
@@ -397,6 +397,9 @@ const EmployeeApp = () => {
             userInfo={userInfo}
             onUpdateRequirementStatus={handleUpdateRequirementStatus}
             onRaiseRequirement={handleRaiseRequirement}
+            linkedTodos={todos.filter(t => t.orderId?._id === selectedOrderId || t.orderId === selectedOrderId)}
+            onTodoStatusChange={handleTodoStatusChange}
+            isClockedIn={isClockedIn}
           />
         );
       case 'tasks':

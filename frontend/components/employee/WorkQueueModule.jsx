@@ -2,7 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { getOrderClientLabel, StatusBadge } from './helpers';
 
-const WorkQueueModule = ({ orders, todos = [], onOpenOrder }) => {
+const WorkQueueModule = ({ orders, todos = [], onOpenOrder, onTodoStatusChange, isClockedIn }) => {
+  const handleUpdate = (id, status) => {
+    if (!isClockedIn) {
+      alert('Please clock in before starting work.');
+      return;
+    }
+    onTodoStatusChange(id, status);
+  };
   const [view, setView] = useState('orders'); // 'orders' or 'tasks'
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -165,16 +172,16 @@ const WorkQueueModule = ({ orders, todos = [], onOpenOrder }) => {
                     <div className="flex items-center justify-end gap-2">
                        {todo.status === 'Pending' && (
                           <button 
-                            onClick={() => onTodoStatusChange(todo._id, 'In Progress')}
-                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm group-hover:scale-105 active:scale-95 text-[10px] font-black uppercase tracking-wider"
+                            onClick={() => handleUpdate(todo._id, 'In Progress')}
+                            className={`p-2 rounded-lg transition-all shadow-sm group-hover:scale-105 active:scale-95 text-[10px] font-black uppercase tracking-wider ${isClockedIn ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white' : 'bg-slate-100 text-slate-400 opacity-50'}`}
                           >
                              Start
                           </button>
                        )}
                        {todo.status !== 'Completed' && (
                           <button 
-                            onClick={() => onTodoStatusChange(todo._id, 'Completed')}
-                            className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm group-hover:scale-105 active:scale-95 text-[10px] font-black uppercase tracking-wider"
+                            onClick={() => handleUpdate(todo._id, 'Completed')}
+                            className={`p-2 rounded-lg transition-all shadow-sm group-hover:scale-105 active:scale-95 text-[10px] font-black uppercase tracking-wider ${isClockedIn ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white' : 'bg-slate-100 text-slate-400 opacity-50'}`}
                           >
                              Finish
                           </button>

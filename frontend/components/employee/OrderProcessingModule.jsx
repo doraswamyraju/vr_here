@@ -16,8 +16,16 @@ const OrderProcessingModule = ({
   onUpdateRequirementStatus,
   onRaiseRequirement,
   linkedTodos = [],
-  onTodoStatusChange
+  onTodoStatusChange,
+  isClockedIn
 }) => {
+  const handleTodoUpdate = (id, status) => {
+    if (!isClockedIn) {
+      alert('Please clock in before starting work.');
+      return;
+    }
+    onTodoStatusChange(id, status);
+  };
   const [file, setFile] = useState(null);
   const [detailTab, setDetailTab] = useState('Tasks');
 
@@ -269,16 +277,16 @@ const OrderProcessingModule = ({
                       <div className="flex items-center gap-2">
                           {todo.status === 'Pending' && (
                              <button 
-                               onClick={() => onTodoStatusChange(todo._id, 'In Progress')}
-                               className="px-3 py-1.5 bg-white border border-indigo-200 text-indigo-600 rounded-lg text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                               onClick={() => handleTodoUpdate(todo._id, 'In Progress')}
+                               className={`px-3 py-1.5 border rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${isClockedIn ? 'bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-300 opacity-50 cursor-not-allowed'}`}
                              >
                                 Start
                              </button>
                           )}
                           {todo.status !== 'Completed' && (
                              <button 
-                               onClick={() => onTodoStatusChange(todo._id, 'Completed')}
-                               className="px-3 py-1.5 bg-white border border-emerald-200 text-emerald-600 rounded-lg text-[10px] font-black uppercase hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                               onClick={() => handleTodoUpdate(todo._id, 'Completed')}
+                               className={`px-3 py-1.5 border rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${isClockedIn ? 'bg-white border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-300 opacity-50 cursor-not-allowed'}`}
                              >
                                 Done
                              </button>
