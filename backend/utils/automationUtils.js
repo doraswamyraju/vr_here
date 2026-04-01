@@ -65,6 +65,8 @@ export const generateOrderFromSubscription = async (sub, session = null) => {
     // 4. EMAIL NOTIFICATIONS (Async, don't wait for completion)
     const sendEmails = async () => {
         try {
+            console.log(`[Automation] Dispatching emails for ${sub.serviceName} to: ${sub.user?.email || 'No Client Email'}, Admin, and Staff`.white);
+            
             // Email to Client
             if (sub.user?.email) {
                 await sendEmail({
@@ -77,6 +79,9 @@ export const generateOrderFromSubscription = async (sub, session = null) => {
                         <p>Thank you for choosing VR HERE!</p>
                     `
                 });
+                console.log(`[Automation] Email sent to client: ${sub.user.email}`.green);
+            } else {
+                console.warn(`[Automation] Skipping client email: No email address found for User ${sub.user?._id || sub.user}`.yellow);
             }
 
             // Email to Admin
@@ -94,6 +99,7 @@ export const generateOrderFromSubscription = async (sub, session = null) => {
                     <p>Please review the assignment in the Admin Studio.</p>
                 `
             });
+            console.log(`[Automation] Email sent to admin: ${adminEmail}`.green);
 
             // Email to Staff
             for (const staff of staffToNotify) {
@@ -108,10 +114,11 @@ export const generateOrderFromSubscription = async (sub, session = null) => {
                             <p>Please check your work queue to start processing.</p>
                         `
                     });
+                    console.log(`[Automation] Email sent to staff: ${staff.email}`.green);
                 }
             }
         } catch (emailErr) {
-            console.error('[Automation] Email dispatch failed:', emailErr.message);
+            console.error('[Automation] Email dispatch failed:'.red, emailErr.message);
         }
     };
     

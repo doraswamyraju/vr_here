@@ -25,6 +25,7 @@ const RecurringServicesModule = ({ token, onViewOrder }) => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // stores sub to delete
 
   const config = useMemo(() => ({
     headers: { Authorization: `Bearer ${token}` }
@@ -57,9 +58,9 @@ const RecurringServicesModule = ({ token, onViewOrder }) => {
   };
 
   const deleteSub = async (sub) => {
-    if (!window.confirm(`Stop and Delete recurring service for ${sub.clientName}?`)) return;
     try {
       await axios.delete(`/api/recurring/${sub._id}`, config);
+      setConfirmDelete(null);
       fetchSubscriptions();
     } catch (err) {
       alert('Error deleting service');
@@ -88,6 +89,34 @@ const RecurringServicesModule = ({ token, onViewOrder }) => {
       {error && (
         <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl flex items-center gap-2 font-bold text-sm">
           <AlertCircle size={18} /> {error}
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in shadow-2xl">
+          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-indigo-100/50 space-y-6">
+            <div className="w-20 h-20 bg-rose-50 rounded-[2rem] mx-auto flex items-center justify-center text-rose-500 shadow-inner">
+               <Trash2 size={40} />
+            </div>
+            <div className="text-center space-y-2">
+               <h3 className="text-2xl font-black text-slate-900">Stop Automation?</h3>
+               <p className="text-sm text-slate-500 font-medium">Are you sure you want to delete the recurring service for <span className="font-black text-indigo-600">"{confirmDelete.clientName}"</span>? This will stop all future order generations.</p>
+            </div>
+            <div className="flex flex-col gap-3">
+               <button 
+                 onClick={() => deleteSub(confirmDelete)}
+                 className="w-full py-4 bg-rose-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-[0.98]"
+               >
+                 Yes, Delete Everything
+               </button>
+               <button 
+                 onClick={() => setConfirmDelete(null)}
+                 className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-sm hover:bg-slate-200 transition-all active:scale-[0.98]"
+               >
+                 Keep It Running
+               </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -141,7 +170,10 @@ const RecurringServicesModule = ({ token, onViewOrder }) => {
                               {sub.isActive ? <Pause size={18} /> : <Play size={18} />}
                            </button>
                            <button 
-                             onClick={() => deleteSub(sub)}
+                             onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmDelete(sub);
+                             }}
                              className="p-2.5 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 hover:bg-rose-600 hover:text-white transition-all outline-none shadow-sm"
                              title="Delete Subscription"
                            >
