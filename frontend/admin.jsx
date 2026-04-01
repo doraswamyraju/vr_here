@@ -15,7 +15,8 @@ import {
   X,
   Briefcase,
   BookOpen,
-  MessageSquare
+  MessageSquare,
+  RefreshCcw
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -55,6 +56,7 @@ function AdminApp() {
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isNewTodoModalOpen, setIsNewTodoModalOpen] = useState(false);
   const [todoToEdit, setTodoToEdit] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const user = localStorage.getItem('userInfo');
@@ -99,6 +101,15 @@ function AdminApp() {
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
     navigate('/login');
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchData();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 600);
+    }
   };
 
   const updateOrderStatus = async (orderId, status) => {
@@ -329,7 +340,21 @@ function AdminApp() {
               <button className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-600" onClick={() => setMobileSidebarOpen(true)}><Menu size={18} /></button>
               <div><p className="text-xs text-slate-500">VR Here Admin Panel</p><h1 className="font-bold text-xl sm:text-2xl text-slate-900">{activeTab}</h1></div>
             </div>
-            <div className="flex items-center gap-3"><div className="hidden sm:flex rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 items-center gap-1"><Clock3 size={14} /> Live</div><div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 text-white flex items-center justify-center text-xs font-semibold">{userInfo?.name?.charAt(0) || 'A'}</div></div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleRefresh}
+                className={`p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all ${isRefreshing ? 'animate-spin' : ''}`}
+                title="Refresh Data"
+              >
+                <RefreshCcw size={16} />
+              </button>
+              <div className="hidden sm:flex rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 items-center gap-1">
+                <Clock3 size={14} /> Live
+              </div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 text-white flex items-center justify-center text-xs font-semibold">
+                {userInfo?.name?.charAt(0) || 'A'}
+              </div>
+            </div>
           </header>
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">{renderView()}</div>
         </main>

@@ -79,6 +79,17 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
     alert(`Password link sent to ${user.email}`);
   };
 
+  const deleteUser = async (user) => {
+    if (!window.confirm(`Are you sure you want to PERMANENTLY DELETE user ${user.name}? This cannot be undone.`)) return;
+    try {
+      await axios.delete(`/api/auth/users/${user._id}`, config);
+      await onRefresh();
+      await loadSummary();
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to delete user');
+    }
+  };
+
   React.useEffect(() => {
     loadSummary().catch(() => setAttendanceSummary({ items: [] }));
   }, []);
@@ -105,6 +116,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
         onCancelEdit={() => setEditingUserId('')}
         onToggleActive={toggleActive}
         onSendPasswordLink={sendPasswordLink}
+        onDeleteUser={deleteUser}
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pencil, Power, Send } from 'lucide-react';
+import { Pencil, Power, Send, Trash2 } from 'lucide-react';
 
-const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit, onSaveEdit, onCancelEdit, onToggleActive, onSendPasswordLink }) => (
+const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit, onSaveEdit, onCancelEdit, onToggleActive, onSendPasswordLink, onDeleteUser }) => (
   <div className="rounded-xl border border-slate-200 bg-white overflow-x-auto">
     <table className="w-full text-sm min-w-[880px]">
       <thead className="bg-slate-100 text-slate-600 text-xs uppercase">
@@ -66,6 +66,9 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
                       </button>
                       <button onClick={() => onSendPasswordLink(user)} className="px-2 py-1 rounded bg-sky-100 text-sky-700 text-xs font-semibold inline-flex items-center gap-1">
                         <Send size={12} /> Password Link
+                      </button>
+                      <button onClick={() => onDeleteUser(user)} className="px-2 py-1 rounded bg-rose-100 text-rose-700 text-xs font-semibold inline-flex items-center gap-1">
+                        <Trash2 size={12} /> Delete
                       </button>
                     </>
                   )}

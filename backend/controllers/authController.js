@@ -338,6 +338,27 @@ const sendPasswordLinkByAdmin = asyncHandler(async (req, res) => {
     res.json({ message: 'Password setup email sent' });
 });
 
+// @desc    Delete user
+// @route   DELETE /api/auth/users/:id
+// @access  Private/Admin
+const deleteUserByAdmin = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    if (user.role === 'admin' && user._id.toString() === req.user._id.toString()) {
+        res.status(400);
+        throw new Error('You cannot delete your own admin account');
+    }
+
+    await User.deleteOne({ _id: req.params.id });
+
+    res.json({ message: 'User removed' });
+});
+
 export {
     authUser,
     registerUser,
@@ -349,5 +370,6 @@ export {
     createUserByAdmin,
     updateUserByAdmin,
     toggleUserActiveByAdmin,
-    sendPasswordLinkByAdmin
+    sendPasswordLinkByAdmin,
+    deleteUserByAdmin
 };
