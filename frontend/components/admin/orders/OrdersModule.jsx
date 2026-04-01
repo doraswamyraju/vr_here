@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FileSpreadsheet, Kanban, List } from 'lucide-react';
+import { FileSpreadsheet, Kanban, List, RefreshCcw } from 'lucide-react';
 import {
   INVOICE_STATUSES,
   ORDER_STATUSES,
@@ -148,7 +148,15 @@ const OrdersModule = ({
                   )}
                 </div>
               </div>
-              <button onClick={() => setSelectedOrderId(null)} className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200">Back to Orders</button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={onOpenRecurringModal} 
+                  className="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-bold hover:bg-slate-900 hover:text-white transition-all flex items-center gap-1.5 shadow-sm shadow-indigo-100"
+                >
+                  <RefreshCcw size={14} /> Make Recurring
+                </button>
+                <button onClick={() => setSelectedOrderId(null)} className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200">Back to Orders</button>
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">

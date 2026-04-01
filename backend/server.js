@@ -55,6 +55,8 @@ import serviceMenuRoutes from './routes/serviceMenuRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import todoRoutes from './routes/todoRoutes.js';
+import recurringRoutes from './routes/recurringRoutes.js';
+import { initCronJobs } from './services/cronService.js';
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -66,6 +68,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/services', serviceMenuRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/recurring', recurringRoutes);
 
 // Serve Frontend in Production
 
@@ -94,6 +97,8 @@ app.use((err, req, res, next) => {
         stack: process.env.NODE_ENV === 'production' ? null : err.stack,
     });
 });
+
+initCronJobs();
 
 const PORT = process.env.PORT || 5002;
 

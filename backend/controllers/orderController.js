@@ -1095,5 +1095,10 @@ export {
     addTaskTimeLog,
     importRequirements,
     updateRequirement,
-    addRequirement
+    addRequirement,
+    // Export utilities for reuse in Recurring Services
+    parseTasksFromText,
+    parseRequirementsFromText,
+    mapStructuredTasks,
+    mapStructuredRequirements
 };

@@ -30,6 +30,8 @@ import QuickActionFAB from './components/admin/QuickActionFAB';
 import NewOrderModal from './components/admin/modals/NewOrderModal';
 import NewTodoModal from './components/admin/modals/NewTodoModal';
 import TodoModule from './components/admin/TodoModule';
+import RecurringServicesModule from './components/admin/RecurringServicesModule';
+import MakeRecurringModal from './components/admin/modals/MakeRecurringModal';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -55,6 +57,7 @@ function AdminApp() {
   const [todos, setTodos] = useState([]);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isNewTodoModalOpen, setIsNewTodoModalOpen] = useState(false);
+  const [isMakeRecurringModalOpen, setIsMakeRecurringModalOpen] = useState(false);
   const [todoToEdit, setTodoToEdit] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -254,6 +257,7 @@ function AdminApp() {
     { key: 'Knowledge', label: 'Knowledge Base', icon: BookOpen },
     { key: 'Support', label: 'Support Inbox', icon: MessageSquare },
     { key: 'Services', label: 'Services Master', icon: FileText },
+    { key: 'Recurring', label: 'Recurring Hub', icon: RefreshCcw },
     { key: 'Settings', label: 'Settings', icon: Settings }
   ];
 
@@ -288,6 +292,7 @@ function AdminApp() {
           onUpdateRequirementStatus={updateRequirementStatus}
           onAddInvoice={addInvoice}
           onUpdateInvoiceStatus={updateInvoiceStatus}
+          onOpenRecurringModal={() => setIsMakeRecurringModalOpen(true)}
         />
       );
     }
@@ -311,6 +316,7 @@ function AdminApp() {
     if (activeTab === 'Knowledge') return <DummyView title="Knowledge Base" />;
     if (activeTab === 'Support') return <DummyView title="Support Inbox" />;
     if (activeTab === 'Services') return <ServicesMasterView token={userInfo?.token} />;
+    if (activeTab === 'Recurring') return <RecurringServicesModule token={userInfo?.token} />;
     return <DummyView title="Settings" />;
   };
 
@@ -386,6 +392,14 @@ function AdminApp() {
         token={userInfo?.token} 
         onCreated={fetchData} 
         todoToEdit={todoToEdit}
+      />
+
+      <MakeRecurringModal 
+        isOpen={isMakeRecurringModalOpen}
+        onClose={() => setIsMakeRecurringModalOpen(false)}
+        order={selectedOrder}
+        token={userInfo?.token}
+        onCreated={fetchData}
       />
     </div>
   );
