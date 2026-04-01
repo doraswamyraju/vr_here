@@ -16,7 +16,8 @@ import {
   Briefcase,
   BookOpen,
   MessageSquare,
-  RefreshCcw
+  RefreshCcw,
+  Trash2
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -461,7 +462,6 @@ function AdminApp() {
         token={userInfo?.token} 
         onCreated={fetchData} 
         todoToEdit={todoToEdit}
-      />
       />
     </div>
   );
