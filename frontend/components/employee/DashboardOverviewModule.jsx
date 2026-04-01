@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle } from 'lucide-react';
 import { getOrderClientLabel, StatusBadge } from './helpers';
 
 const DashboardOverviewModule = ({ userInfo, orders, todos = [], onOpenOrder, onTodoStatusChange, isClockedIn }) => {
@@ -43,80 +44,106 @@ const DashboardOverviewModule = ({ userInfo, orders, todos = [], onOpenOrder, on
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400 mb-4 ml-1">Current Assignments</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Recent Orders */}
-          {orders.slice(0, 4).filter(o => o.status !== 'Completed').map((order) => (
-            <div key={order._id} className="rounded-3xl border border-white/80 bg-white/70 backdrop-blur-md p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] flex flex-col justify-between hover:shadow-indigo-100 transition-all group overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full -mr-12 -mt-12 opacity-50 group-hover:scale-110 transition-transform"></div>
-              <div className="flex justify-between items-start mb-4 relative">
-                <div>
-                  <div className="text-[10px] font-black uppercase text-indigo-400 mb-1 tracking-widest">Active Project</div>
-                  <h4 className="font-black text-xl text-slate-800 leading-tight">{order.serviceName}</h4>
-                  <p className="text-sm font-bold text-slate-400 mt-1">Client: <span className="text-slate-600">{getOrderClientLabel(order)}</span></p>
-                </div>
-                <div className="scale-90"><StatusBadge status={order.status} /></div>
-              </div>
-              <button
-                onClick={() => onOpenOrder(order)}
-                className="mt-6 w-full py-3.5 bg-indigo-50 text-indigo-700 font-black rounded-2xl hover:bg-slate-900 hover:text-white transition-all shadow-md shadow-indigo-50 active:scale-95 text-xs uppercase tracking-widest"
-              >
-                Launch Process Control
-              </button>
-            </div>
-          ))}
-
-          {/* Recent TODOs */}
-          {pendingTodos.slice(0, 4).map((todo) => (
-            <div key={todo._id} className="rounded-3xl border border-indigo-100/50 bg-indigo-50/20 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.04)] flex flex-col justify-between border-dashed hover:border-indigo-300 transition-all group">
-               <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="text-[10px] font-black uppercase text-indigo-500 mb-1 tracking-widest">Task / Todo</div>
-                  <h4 className="font-black text-xl text-slate-800 leading-tight">{todo.title}</h4>
-                  {todo.orderId ? (
-                    <button 
-                       onClick={() => onOpenOrder(todo.orderId)}
-                       className="text-xs font-bold text-indigo-600 mt-2 hover:underline inline-flex items-center gap-1"
-                    >
-                       Linked to: {todo.orderId.serviceName}
-                    </button>
-                  ) : (
-                    <p className="text-[10px] font-black uppercase text-slate-400 mt-2 tracking-widest">Standalone Workflow</p>
-                  )}
-                </div>
-                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border ${
-                  todo.priority === 'Urgent' ? 'bg-rose-50 text-rose-700 border-rose-100' : 
-                  todo.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' : 'bg-blue-50 text-blue-700 border-blue-100'
-                }`}>
-                  {todo.priority}
-                </span>
-              </div>
-              
-              <div className="mt-6 flex items-center gap-3">
-                 {todo.status === 'Pending' && (
-                    <button 
-                      onClick={() => handleTodoAction(todo._id, 'In Progress')}
-                      className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm ${isClockedIn ? 'bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-600 hover:text-white' : 'bg-slate-100 text-slate-300 opacity-50 cursor-not-allowed'}`}
-                    >
-                       Start task
-                    </button>
-                 )}
-                 <button 
-                   onClick={() => handleTodoAction(todo._id, 'Completed')}
-                   className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm ${isClockedIn ? 'bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-600 hover:text-white' : 'bg-slate-100 text-slate-300 opacity-50 cursor-not-allowed'}`}
-                 >
-                    Mark Done
-                 </button>
-              </div>
-            </div>
-          ))}
-
-          {orders.length === 0 && pendingTodos.length === 0 && (
-            <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white/50 rounded-[40px] border border-dashed border-slate-200">
-               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 italic text-slate-200 font-black">?</div>
-               <p className="text-slate-400 font-bold tracking-tight">No active assignments on your desk.</p>
-            </div>
-          )}
+        <h3 className="font-extrabold text-xs uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">Current Assignments</h3>
+        <div className="rounded-[32px] border border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_20px_50px_rgba(15,23,42,0.05)] overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="text-[10px] uppercase font-black text-slate-400 tracking-widest border-b border-slate-100/50">
+              <tr>
+                <th className="px-6 py-4">Title / Context</th>
+                <th className="px-6 py-4">Linked Project</th>
+                <th className="px-6 py-4">Status / Priority</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100/50">
+              {/* Combine and Sort Assignments */}
+              {[
+                ...orders.filter(o => o.status !== 'Completed').map(o => ({ ...o, type: 'order' })),
+                ...pendingTodos.map(t => ({ ...t, type: 'todo' }))
+              ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 8).map((item) => (
+                <tr key={item._id} className="group hover:bg-white/80 transition-colors">
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-1.5 h-8 rounded-full ${item.type === 'order' ? 'bg-indigo-500' : 'bg-amber-500'}`}></div>
+                      <div>
+                         <p className="font-black text-slate-800 leading-tight">{item.serviceName || item.title}</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                           {item.type === 'order' ? 'Project' : 'Standalone Task'}
+                         </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    {item.type === 'order' ? (
+                       <p className="text-sm font-bold text-slate-600">{getOrderClientLabel(item)}</p>
+                    ) : (
+                       item.orderId ? (
+                         <button 
+                            onClick={() => onOpenOrder(item.orderId)}
+                            className="text-sm font-bold text-indigo-600 hover:underline text-left leading-tight"
+                         >
+                            {item.orderId.serviceName}
+                         </button>
+                       ) : (
+                         <span className="text-xs text-slate-300 font-bold tracking-widest uppercase">Internal</span>
+                       )
+                    )}
+                  </td>
+                  <td className="px-6 py-5">
+                     <div className="flex items-center gap-3">
+                        {item.type === 'order' ? <StatusBadge status={item.status} /> : (
+                           <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${
+                              item.priority === 'Urgent' ? 'bg-rose-100 text-rose-700' : 
+                              item.priority === 'High' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                           }`}>
+                              {item.priority}
+                           </span>
+                        )}
+                        {item.type === 'todo' && (
+                           <span className="text-[10px] font-bold text-slate-400 capitalize">{item.status}</span>
+                        )}
+                     </div>
+                  </td>
+                  <td className="px-6 py-5 text-right">
+                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {item.type === 'order' ? (
+                        <button
+                          onClick={() => onOpenOrder(item)}
+                          className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                        >
+                          Control
+                        </button>
+                      ) : (
+                        <>
+                          {item.status === 'Pending' && (
+                            <button
+                              onClick={() => handleTodoAction(item._id, 'In Progress')}
+                              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg ${isClockedIn ? 'bg-indigo-600 text-white shadow-indigo-100 hover:bg-slate-900' : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'}`}
+                            >
+                              Start
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleTodoAction(item._id, 'Completed')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg ${isClockedIn ? 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-slate-900' : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'}`}
+                          >
+                            Done
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {(orders.length === 0 && pendingTodos.length === 0) && (
+                <tr>
+                  <td colSpan="4" className="py-20 text-center">
+                    <p className="text-slate-400 font-bold tracking-tight">No active assignments on your desk.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

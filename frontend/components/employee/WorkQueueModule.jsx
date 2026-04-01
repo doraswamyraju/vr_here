@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, CheckCircle } from 'lucide-react';
 import { getOrderClientLabel, StatusBadge } from './helpers';
 
 const WorkQueueModule = ({ orders, todos = [], onOpenOrder, onTodoStatusChange, isClockedIn }) => {
