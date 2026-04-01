@@ -320,7 +320,16 @@ function AdminApp() {
     if (activeTab === 'Knowledge') return <DummyView title="Knowledge Base" />;
     if (activeTab === 'Support') return <DummyView title="Support Inbox" />;
     if (activeTab === 'Services') return <ServicesMasterView token={userInfo?.token} />;
-    if (activeTab === 'Recurring') return <RecurringServicesModule token={userInfo?.token} />;
+    if (activeTab === 'Recurring') return (
+      <RecurringServicesModule 
+        token={userInfo?.token} 
+        onViewOrder={(orderId) => {
+          setSelectedOrderId(orderId);
+          setActiveTab('Orders');
+          setOrderDetailTab('Overview');
+        }}
+      />
+    );
     return <DummyView title="Settings" />;
   };
 
@@ -352,6 +361,14 @@ function AdminApp() {
               <div><p className="text-xs text-slate-500">VR Here Admin Panel</p><h1 className="font-bold text-xl sm:text-2xl text-slate-900">{activeTab}</h1></div>
             </div>
             <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setActiveTab('Notifications')}
+                className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all relative group"
+                title="Notifications"
+              >
+                <Bell size={20} />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white group-hover:animate-ping"></div>
+              </button>
               <button 
                 onClick={handleRefresh}
                 className={`p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all ${isRefreshing ? 'animate-spin' : ''}`}

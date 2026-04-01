@@ -11,7 +11,8 @@ import {
   Briefcase,
   AlertCircle,
   CheckCircle2,
-  Clock
+  Clock,
+  IndianRupee
 } from 'lucide-react';
 
 const Card = ({ children, className = '' }) => (
@@ -20,7 +21,7 @@ const Card = ({ children, className = '' }) => (
   </div>
 );
 
-const RecurringServicesModule = ({ token }) => {
+const RecurringServicesModule = ({ token, onViewOrder }) => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -90,9 +91,9 @@ const RecurringServicesModule = ({ token }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {subscriptions.length === 0 ? (
-          <Card className="col-span-full py-20 text-center">
+          <Card className="py-20 text-center">
             <div className="w-16 h-16 bg-slate-100 rounded-3xl mx-auto flex items-center justify-center mb-4 text-slate-400">
                <Calendar size={32} />
             </div>
@@ -101,75 +102,96 @@ const RecurringServicesModule = ({ token }) => {
           </Card>
         ) : (
           subscriptions.map((sub) => (
-            <Card key={sub._id} className="overflow-hidden group">
-               <div className="p-5 flex flex-col sm:flex-row gap-5">
-                  <div className={`p-4 rounded-2xl flex flex-col items-center justify-center min-w-[100px] ${sub.isActive ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
-                     <p className="text-[10px] font-black uppercase tracking-widest mb-1">{sub.frequency}</p>
-                     <p className="text-2xl font-black">{sub.dayOfMonth}</p>
-                     <p className="text-[10px] font-bold">Day of Month</p>
+            <Card 
+              key={sub._id} 
+              className={`overflow-hidden group transition-all hover:ring-2 hover:ring-indigo-600/20 active:scale-[0.99] ${sub.lastOrderId ? 'cursor-pointer' : ''}`}
+              onClick={() => sub.lastOrderId && onViewOrder(sub.lastOrderId)}
+            >
+               <div className="p-5 flex flex-col sm:flex-row gap-6 items-center">
+                  <div className={`p-4 rounded-2xl flex flex-col items-center justify-center min-w-[120px] ${sub.isActive ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1">{sub.frequency}</p>
+                     <p className="text-3xl font-black">{sub.dayOfMonth}</p>
+                     <p className="text-[10px] font-bold opacity-60">Day of Month</p>
                   </div>
 
-                  <div className="flex-1 space-y-3">
-                     <div className="flex items-start justify-between">
-                        <div>
-                           <h4 className="font-black text-slate-900 text-lg leading-tight">{sub.serviceName}</h4>
-                           <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500 uppercase">{sub.packageName}</span>
-                              <span className="text-[10px] font-bold text-emerald-600">Rs. {sub.price?.toLocaleString()}</span>
+                  <div className="flex-1 w-full space-y-4">
+                     <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                           <h4 className="font-black text-slate-900 text-xl leading-tight group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{sub.serviceName}</h4>
+                           <div className="flex items-center gap-3">
+                              <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500 uppercase flex items-center gap-1">
+                                <Briefcase size={10} /> {sub.packageName}
+                              </span>
+                              <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                < IndianRupee size={10} /> {sub.price?.toLocaleString()}
+                              </span>
+                              {sub.lastOrderId && (
+                                <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 flex items-center gap-1">
+                                   <Clock size={10} /> Click to View Last Order
+                                </span>
+                              )}
                            </div>
                         </div>
-                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                            <button 
                              onClick={() => toggleStatus(sub)}
-                             className={`p-2 rounded-xl transition-all ${sub.isActive ? 'bg-amber-100 text-amber-600 hover:bg-amber-600 hover:text-white' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'}`}
-                             title={sub.isActive ? "Pause" : "Resume"}
+                             className={`p-2.5 rounded-xl transition-all shadow-sm ${sub.isActive ? 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white border border-amber-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-100'}`}
+                             title={sub.isActive ? "Pause Automation" : "Resume Automation"}
                            >
-                              {sub.isActive ? <Pause size={16} /> : <Play size={16} />}
+                              {sub.isActive ? <Pause size={18} /> : <Play size={18} />}
                            </button>
                            <button 
                              onClick={() => deleteSub(sub)}
-                             className="p-2 bg-rose-100 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all outline-none"
-                             title="Remove"
+                             className="p-2.5 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 hover:bg-rose-600 hover:text-white transition-all outline-none shadow-sm"
+                             title="Delete Subscription"
                            >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} />
                            </button>
                         </div>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-3 pb-2">
-                        <div className="flex items-center gap-2">
-                           <div className="p-1.5 bg-slate-100 rounded-lg text-slate-500"><UserIcon size={12} /></div>
-                           <p className="text-[11px] font-bold text-slate-600 truncate">{sub.user?.name || sub.clientName}</p>
+                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 py-1">
+                        <div className="space-y-1">
+                           <p className="text-[9px] uppercase font-black text-slate-400">Client Name</p>
+                           <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500"><UserIcon size={12} /></div>
+                              <p className="text-xs font-bold text-slate-700 truncate">{sub.user?.name || sub.clientName}</p>
+                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                           <div className="p-1.5 bg-slate-100 rounded-lg text-slate-500"><Clock size={12} /></div>
-                           <p className="text-[11px] font-bold text-slate-600">Next: {new Date(sub.nextRunDate).toLocaleDateString()}</p>
+                        <div className="space-y-1">
+                           <p className="text-[9px] uppercase font-black text-slate-400">Next Order Date</p>
+                           <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500"><Calendar size={12} /></div>
+                              <p className="text-xs font-bold text-slate-700">{new Date(sub.nextRunDate).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                           </div>
                         </div>
-                     </div>
-
-                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                        <div className="flex -space-x-2">
-                           {sub.assignedEmployee && (
-                              <div title={sub.assignedEmployee.name} className="w-6 h-6 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
-                                {sub.assignedEmployee.name.charAt(0)}
-                              </div>
-                           )}
-                           {sub.assignedMaker && (
-                              <div title={`Maker: ${sub.assignedMaker.name}`} className="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
-                                {sub.assignedMaker.name.charAt(0)}
-                              </div>
-                           )}
-                           {sub.assignedChecker && (
-                              <div title={`Checker: ${sub.assignedChecker.name}`} className="w-6 h-6 rounded-full bg-amber-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
-                                {sub.assignedChecker.name.charAt(0)}
-                              </div>
-                           )}
+                        <div className="space-y-1">
+                           <p className="text-[9px] uppercase font-black text-slate-400">Assigned Staff</p>
+                           <div className="flex -space-x-2">
+                              {sub.assignedEmployee && (
+                                 <div title={`Owner: ${sub.assignedEmployee.name}`} className="w-7 h-7 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center text-[10px] text-white font-black shadow-sm ring-1 ring-slate-100">
+                                   {sub.assignedEmployee.name.charAt(0)}
+                                 </div>
+                              )}
+                              {sub.assignedMaker && (
+                                 <div title={`Maker: ${sub.assignedMaker.name}`} className="w-7 h-7 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[10px] text-white font-black shadow-sm ring-1 ring-slate-100">
+                                   {sub.assignedMaker.name.charAt(0)}
+                                 </div>
+                              )}
+                              {sub.assignedChecker && (
+                                 <div title={`Checker: ${sub.assignedChecker.name}`} className="w-7 h-7 rounded-full bg-amber-500 border-2 border-white flex items-center justify-center text-[10px] text-white font-black shadow-sm ring-1 ring-slate-100">
+                                   {sub.assignedChecker.name.charAt(0)}
+                                 </div>
+                              )}
+                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                           <div className={`w-2 h-2 rounded-full ${sub.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
-                           <span className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
-                             {sub.isActive ? 'Autopilot Active' : 'Operation Paused'}
-                           </span>
+                        <div className="flex flex-col justify-end items-end">
+                           <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-100 rounded-full shadow-sm">
+                              <div className={`w-2 h-2 rounded-full ${sub.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                              <span className="text-[9px] font-black uppercase tracking-tight text-slate-500 italic">
+                                {sub.isActive ? 'Autopilot Active' : 'Operation Paused'}
+                              </span>
+                           </div>
                         </div>
                      </div>
                   </div>

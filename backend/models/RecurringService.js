@@ -78,6 +78,11 @@ const recurringServiceSchema = mongoose.Schema({
     checklistsTemplate: {
         type: Array,
         default: []
+    },
+    lastOrderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order',
+        default: null
     }
 }, {
     timestamps: true

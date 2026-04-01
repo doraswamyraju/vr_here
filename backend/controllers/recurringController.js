@@ -4,6 +4,7 @@ import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 
 import { calculateNextRunDate } from '../utils/dateUtils.js';
+import { generateOrderFromSubscription } from '../utils/automationUtils.js';
 
 // Internal function to create a subscription
 const createSubscriptionInternal = async (data) => {
@@ -44,7 +45,27 @@ const createSubscriptionInternal = async (data) => {
         checklistsTemplate: checklistsTemplate || []
     });
 
-    return await subscription.save();
+    const savedSubscription = await subscription.save();
+
+    // Check if it should run IMMEDIATELY (e.g., if today is the scheduled day)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const scheduledDate = new Date(savedSubscription.nextRunDate);
+    scheduledDate.setHours(0, 0, 0, 0);
+
+    if (scheduledDate <= today) {
+        console.log(`[Automation] Triggering immediate first-run for subscription ${savedSubscription._id}`);
+        // Populate for automation
+        const populatedSub = await RecurringService.findById(savedSubscription._id)
+            .populate('user', 'name email phone')
+            .populate('assignedEmployee', 'name email role')
+            .populate('assignedMaker', 'name email role')
+            .populate('assignedChecker', 'name email role');
+            
+        await generateOrderFromSubscription(populatedSub);
+    }
+
+    return savedSubscription;
 };
 
 // @desc    Create new recurring service
