@@ -347,7 +347,16 @@ const getOrders = asyncHandler(async (req, res) => {
     }
 
     const orders = await populateOrderQuery(orderQuery.sort({ createdAt: -1 }));
-    res.json(orders);
+
+    // Add linked todos for EACH order in the list
+    const ordersWithTodos = await Promise.all(orders.map(async (order) => {
+        const orderObj = order.toObject();
+        const linkedTodos = await Todo.find({ orderId: order._id }).populate('assignedTo', 'name email role');
+        orderObj.linkedTodos = linkedTodos;
+        return orderObj;
+    }));
+
+    res.json(ordersWithTodos);
 });
 
 // @desc    Get order by ID
