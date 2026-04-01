@@ -62,7 +62,7 @@ function AdminApp() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    console.log("VR HERE Admin Dashboard Loaded - v1.1.2 (Search + Refresh + Delete)");
+    console.log("VR HERE Admin Dashboard Loaded - v1.1.4 (Manual + Recurring)");
     const user = localStorage.getItem('userInfo');
     if (!user) return navigate('/');
     const parsed = JSON.parse(user);
@@ -215,7 +215,7 @@ function AdminApp() {
   const DashboardView = () => (
     <div className="space-y-6">
       <Card className="p-6 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white">
-        <p className="text-cyan-200 text-sm">Admin Command Center (v1.1.2 - Search + Refresh + Delete)</p>
+        <p className="text-cyan-200 text-sm">Admin Command Center (v1.1.4 - Manual + Recurring)</p>
         <h2 className="text-3xl font-black mt-1">Operations Studio</h2>
         <p className="text-slate-200 mt-2">Service delivery, consultation conversion, and execution status in one place.</p>
       </Card>
@@ -287,6 +287,10 @@ function AdminApp() {
           onTaskStatusChange={updateTaskStatus}
           onTaskAssign={assignTask}
           onSubtaskUpdate={updateSubtask}
+          onAddTask={async (orderId, payload) => {
+            await axios.post(`/api/orders/${orderId}/tasks`, payload, config);
+            fetchData();
+          }}
           onImportRequirementsWorkbook={importRequirementsWorkbook}
           onRaiseRequirement={raiseRequirement}
           onUpdateRequirementStatus={updateRequirementStatus}

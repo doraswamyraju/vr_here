@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Upload, FileText, CheckCircle2 } from 'lucide-react';
+import { Upload, Plus, Trash2, FileText, Fingerprint, Send, CheckCircle2 } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { REQUIREMENT_STATUSES } from './constants';
 
@@ -12,9 +12,12 @@ const OrderRequirementsTab = ({
   const [activeSubTab, setActiveSubTab] = useState('details');
   const [requirementFile, setRequirementFile] = useState(null);
   const [replaceExisting, setReplaceExisting] = useState(true);
-  const [quickRequirementText, setQuickRequirementText] = useState('');
-  const [quickRequirementType, setQuickRequirementType] = useState('Detail');
   const [isImporting, setIsImporting] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newType, setNewType] = useState('Document');
+  const [manualLoading, setManualLoading] = useState(false);
 
   const requirements = selectedOrder?.customerRequirements || [];
 
@@ -33,17 +36,6 @@ const OrderRequirementsTab = ({
     } finally {
       setIsImporting(false);
     }
-  };
-
-  const handleRaise = async () => {
-    if (!quickRequirementText.trim()) return;
-    await onRaiseRequirement({
-      title: quickRequirementText,
-      description: '',
-      type: quickRequirementType
-    });
-    setQuickRequirementText('');
-    setQuickRequirementType('Detail');
   };
 
   const renderRequirementList = (list) => {
@@ -105,7 +97,76 @@ const OrderRequirementsTab = ({
             <Upload size={14} />
             {isImporting ? 'Importing...' : 'Import Workbook'}
           </button>
+
+          <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+          <button
+            onClick={() => setShowManualForm(!showManualForm)}
+            className="px-4 py-2 rounded-lg bg-white border border-indigo-600 text-indigo-700 text-sm font-bold hover:bg-slate-900 hover:text-white transition-all inline-flex items-center gap-1"
+          >
+            <Plus size={14} />
+            {showManualForm ? 'Discard Manual' : 'Add Manual Item'}
+          </button>
         </div>
+
+        {showManualForm && (
+           <div className="mt-4 p-5 bg-white rounded-2xl border border-indigo-100 space-y-4 animate-fade-in shadow-sm shadow-indigo-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Requirement Title</label>
+                    <input 
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      placeholder="e.g. PAN Card Copy"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                 </div>
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Type</label>
+                    <select 
+                      value={newType}
+                      onChange={(e) => setNewType(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                       <option value="Document">File Upload (Document)</option>
+                       <option value="Detail">Text Input (Detail)</option>
+                    </select>
+                 </div>
+              </div>
+              <div className="space-y-1.5">
+                 <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Instructions (Optional)</label>
+                 <textarea 
+                   value={newDesc}
+                   onChange={(e) => setNewDesc(e.target.value)}
+                   placeholder="Add any specific instructions for the client..."
+                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none resize-none h-20"
+                 />
+              </div>
+              <div className="pt-2">
+                 <button 
+                    disabled={!newTitle || manualLoading}
+                    onClick={async () => {
+                       setManualLoading(true);
+                       try {
+                          await onRaiseRequirement({
+                             title: newTitle,
+                             description: newDesc,
+                             type: newType
+                          });
+                          setNewTitle('');
+                          setNewDesc('');
+                          setShowManualForm(false);
+                       } finally {
+                          setManualLoading(false);
+                       }
+                    }}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm shadow-xl shadow-indigo-100 hover:bg-slate-900 transition-all flex items-center justify-center gap-2"
+                 >
+                    {manualLoading ? 'Creating...' : <><Send size={18} /> Publish Requirement</>}
+                 </button>
+              </div>
+           </div>
+        )}
       </div>
 
       {/* Sub Tabs */}

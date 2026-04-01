@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/Order.js';
 import Todo from '../models/Todo.js';
+import { createSubscriptionInternal } from './recurringController.js';
 
 const ORDER_POPULATE = [
     { path: 'user', select: 'name email phone' },
@@ -318,6 +319,30 @@ const createOrder = asyncHandler(async (req, res) => {
     });
 
     const createdOrder = await order.save();
+
+    // If isRecurring is true, also create a Subscription record
+    if (req.body.isRecurring) {
+        try {
+            await createSubscriptionInternal({
+                userId: createdOrder.user,
+                clientName: createdOrder.clientName,
+                serviceName: createdOrder.serviceName,
+                packageName: createdOrder.packageName,
+                price: createdOrder.price,
+                frequency: req.body.frequency || 'Monthly',
+                dayOfMonth: req.body.dayOfMonth || 1,
+                dayOfWeek: req.body.dayOfWeek || 1,
+                startDate: new Date(),
+                assignedEmployee: createdOrder.assignedEmployee,
+                assignedMaker: createdOrder.assignedMaker,
+                assignedChecker: createdOrder.assignedChecker
+            });
+        } catch (subErr) {
+            console.error('Error creating linked subscription:', subErr.message);
+            // We don't fail the order creation if subscription fails, but we log it
+        }
+    }
+
     res.status(201).json(createdOrder);
 });
 

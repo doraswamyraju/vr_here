@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Plus, Trash2, CheckCircle2, ListPlus } from 'lucide-react';
 import { TASK_STATUSES } from './constants';
 
 const AssignmentSelect = ({ value, employees, onChange, label = 'Unassigned' }) => (
@@ -21,11 +21,16 @@ const OrderTasksTab = ({
   onTaskStatusChange,
   onTaskAssign,
   onSubtaskUpdate,
-  onImportTaskWorkbook
+  onImportTaskWorkbook,
+  onAddTask
 }) => {
   const [taskFile, setTaskFile] = useState(null);
   const [replaceExisting, setReplaceExisting] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newSubtasks, setNewSubtasks] = useState([]);
+  const [manualLoading, setManualLoading] = useState(false);
 
   const handleImport = async () => {
     if (!taskFile) return;
@@ -57,7 +62,89 @@ const OrderTasksTab = ({
             <Upload size={14} />
             {isImporting ? 'Importing...' : 'Import Workbook'}
           </button>
+          
+          <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+          
+          <button
+            onClick={() => setShowManualForm(!showManualForm)}
+            className="px-4 py-2 rounded-lg bg-white border border-indigo-600 text-indigo-700 text-sm font-bold hover:bg-slate-900 hover:text-white transition-all inline-flex items-center gap-1"
+          >
+            <Plus size={14} />
+            {showManualForm ? 'Discard Manual' : 'Add Manual Task'}
+          </button>
         </div>
+
+        {showManualForm && (
+           <div className="mt-4 p-4 bg-white rounded-xl border border-indigo-100 space-y-4 animate-fade-in shadow-sm shadow-indigo-100">
+              <div className="space-y-2">
+                 <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Main Task Title</label>
+                 <input 
+                   value={newTaskTitle}
+                   onChange={(e) => setNewTaskTitle(e.target.value)}
+                   placeholder="e.g. GST Returns Preparation"
+                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                 />
+              </div>
+
+              <div className="space-y-2">
+                 <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest flex items-center justify-between">
+                    Sub-Tasks
+                    <button 
+                      onClick={() => setNewSubtasks([...newSubtasks, { title: '', id: Math.random() }])}
+                      className="text-indigo-600 hover:underline normal-case font-bold"
+                    >
+                      + Add Item
+                    </button>
+                 </label>
+                 <div className="space-y-2">
+                    {newSubtasks.map((sub, idx) => (
+                       <div key={sub.id} className="flex gap-2">
+                          <input 
+                            value={sub.title}
+                            onChange={(e) => {
+                               const updated = [...newSubtasks];
+                               updated[idx].title = e.target.value;
+                               setNewSubtasks(updated);
+                            }}
+                            placeholder={`Component ${idx + 1}`}
+                            className="flex-1 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs outline-none"
+                          />
+                          <button 
+                            onClick={() => setNewSubtasks(newSubtasks.filter((_, i) => i !== idx))}
+                            className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
+                          >
+                             <Trash2 size={14} />
+                          </button>
+                       </div>
+                    ))}
+                    {newSubtasks.length === 0 && <p className="text-[11px] text-slate-400 italic">No sub-tasks added yet.</p>}
+                 </div>
+              </div>
+
+              <div className="pt-2">
+                 <button 
+                    disabled={!newTaskTitle || manualLoading}
+                    onClick={async () => {
+                       setManualLoading(true);
+                       try {
+                          await onAddTask(selectedOrder._id, {
+                             title: newTaskTitle,
+                             subtasks: newSubtasks.map(s => ({ title: s.title }))
+                          });
+                          setNewTaskTitle('');
+                          setNewSubtasks([]);
+                          setShowManualForm(false);
+                       } finally {
+                          setManualLoading(false);
+                       }
+                    }}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm shadow-xl shadow-indigo-100 hover:bg-slate-900 transition-all flex items-center justify-center gap-2"
+                 >
+                    {manualLoading ? 'Processing...' : <><ListPlus size={18} /> Confirm Add Task</>}
+                 </button>
+              </div>
+           </div>
+        )}
       </div>
 
       <div className="space-y-3">

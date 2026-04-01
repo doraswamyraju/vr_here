@@ -5,10 +5,8 @@ import User from '../models/User.js';
 
 import { calculateNextRunDate } from '../utils/dateUtils.js';
 
-// @desc    Create new recurring service
-// @route   POST /api/recurring
-// @access  Private/Admin
-const createSubscription = asyncHandler(async (req, res) => {
+// Internal function to create a subscription
+const createSubscriptionInternal = async (data) => {
     const {
         userId,
         clientName,
@@ -25,7 +23,7 @@ const createSubscription = asyncHandler(async (req, res) => {
         tasksTemplate,
         requirementsTemplate,
         checklistsTemplate
-    } = req.body;
+    } = data;
 
     const subscription = new RecurringService({
         user: userId,
@@ -34,10 +32,10 @@ const createSubscription = asyncHandler(async (req, res) => {
         packageName,
         price,
         frequency,
-        dayOfMonth,
-        dayOfWeek,
+        dayOfMonth: dayOfMonth || 1,
+        dayOfWeek: dayOfWeek || 1,
         startDate: startDate || new Date(),
-        nextRunDate: calculateNextRunDate(frequency, dayOfMonth, dayOfWeek, startDate || new Date()),
+        nextRunDate: calculateNextRunDate(frequency, dayOfMonth || 1, dayOfWeek || 1, startDate || new Date()),
         assignedEmployee,
         assignedMaker,
         assignedChecker,
@@ -46,7 +44,14 @@ const createSubscription = asyncHandler(async (req, res) => {
         checklistsTemplate: checklistsTemplate || []
     });
 
-    const createdSubscription = await subscription.save();
+    return await subscription.save();
+};
+
+// @desc    Create new recurring service
+// @route   POST /api/recurring
+// @access  Private/Admin
+const createSubscription = asyncHandler(async (req, res) => {
+    const createdSubscription = await createSubscriptionInternal(req.body);
     res.status(201).json(createdSubscription);
 });
 
@@ -127,6 +132,7 @@ const deleteSubscription = asyncHandler(async (req, res) => {
 
 export {
     createSubscription,
+    createSubscriptionInternal,
     getSubscriptions,
     getSubscriptionById,
     updateSubscription,

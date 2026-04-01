@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Search, ShieldCheck, Briefcase, Zap, IndianRupee, UserPlus, UserCheck, Trash2 } from 'lucide-react';
+import { X, Search, ShieldCheck, Briefcase, Zap, IndianRupee, UserPlus, UserCheck, Trash2, RefreshCcw, Calendar } from 'lucide-react';
 import axios from 'axios';
 import { MENU_DATA } from '../../SharedComponents';
 
@@ -28,7 +28,11 @@ const NewOrderModal = ({ isOpen, onClose, users, employees, token, onCreated }) 
     price: '',
     clientName: '',
     email: '',
-    phone: ''
+    phone: '',
+    isRecurring: false,
+    frequency: 'Monthly',
+    dayOfMonth: 1,
+    dayOfWeek: 1
   });
 
   useEffect(() => {
@@ -45,7 +49,11 @@ const NewOrderModal = ({ isOpen, onClose, users, employees, token, onCreated }) 
         price: '',
         clientName: '',
         email: '',
-        phone: ''
+        phone: '',
+        isRecurring: false,
+        frequency: 'Monthly',
+        dayOfMonth: 1,
+        dayOfWeek: 1
       });
     }
   }, [isOpen]);
@@ -303,6 +311,73 @@ const NewOrderModal = ({ isOpen, onClose, users, employees, token, onCreated }) 
                 <p className="text-[10px] text-slate-400 mt-1 font-medium italic">* You can select from suggested services or type a custom one.</p>
               </div>
             </div>
+          </div>
+
+          <hr className="border-slate-100" />
+
+          {/* Recurring Options */}
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                checked={formData.isRecurring}
+                onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+              />
+              <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                <RefreshCcw size={14} className="text-indigo-600" /> Schedule as Recurring Service
+              </span>
+            </label>
+
+            {formData.isRecurring && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 animate-fade-in">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Frequency</label>
+                  <select 
+                    value={formData.frequency}
+                    onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold"
+                  >
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Quarterly">Quarterly</option>
+                    <option value="Half-Yearly">Half-Yearly</option>
+                    <option value="Yearly">Yearly</option>
+                  </select>
+                </div>
+
+                {formData.frequency === 'Weekly' ? (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Day of Week</label>
+                    <select 
+                      value={formData.dayOfWeek}
+                      onChange={(e) => setFormData({ ...formData, dayOfWeek: Number(e.target.value) })}
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold"
+                    >
+                      <option value={1}>Monday</option>
+                      <option value={2}>Tuesday</option>
+                      <option value={3}>Wednesday</option>
+                      <option value={4}>Thursday</option>
+                      <option value={5}>Friday</option>
+                      <option value={6}>Saturday</option>
+                      <option value={0}>Sunday</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Day of Month</label>
+                    <input 
+                      type="number"
+                      min="1"
+                      max="31"
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold"
+                      value={formData.dayOfMonth}
+                      onChange={(e) => setFormData({ ...formData, dayOfMonth: Number(e.target.value) })}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </form>
 
