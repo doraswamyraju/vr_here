@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, CheckSquare, Users, Calendar, Link, Zap } from 'lucide-react';
 import axios from 'axios';
 
-const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated }) => {
+const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, todoToEdit = null }) => {
   const [loading, setLoading] = useState(false);
   const [taskType, setTaskType] = useState('standalone'); // 'standalone' or 'order'
   
@@ -16,6 +16,40 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated }) 
     dueDate: ''
   });
 
+  React.useEffect(() => {
+    if (todoToEdit) {
+      setFormData({
+        title: todoToEdit.title || '',
+        description: todoToEdit.description || '',
+        status: todoToEdit.status || 'Pending',
+        priority: todoToEdit.priority || 'Medium',
+        assignedTo: todoToEdit.assignedTo?._id || todoToEdit.assignedTo || '',
+        orderId: todoToEdit.orderId?._id || todoToEdit.orderId || '',
+        dueDate: todoToEdit.dueDate ? new Date(todoToEdit.dueDate).toISOString().split('T')[0] : ''
+      });
+      setTaskType(todoToEdit.orderId ? 'order' : 'standalone');
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        status: 'Pending',
+        priority: 'Medium',
+        assignedTo: '',
+        orderId: '',
+        dueDate: ''
+      });
+      setTaskType('standalone');
+    }
+  }, [todoToEdit, isOpen]);
+
+  const [searchTermOrder, setSearchTermOrder] = useState('');
+  const [showOrderResults, setShowOrderResults] = useState(false);
+
+  const filteredOrders = (orders || []).filter(order => 
+    order.serviceName?.toLowerCase().includes(searchTermOrder.toLowerCase()) ||
+    order.clientName?.toLowerCase().includes(searchTermOrder.toLowerCase())
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title) {
@@ -27,9 +61,11 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated }) 
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      // If linked to order, we can also add it to the Todo collection with orderId
-      // This allows the unified Todo view to work efficiently.
-      await axios.post('/api/todos', formData, config);
+      if (todoToEdit) {
+        await axios.put(`/api/todos/${todoToEdit._id}`, formData, config);
+      } else {
+        await axios.post('/api/todos', formData, config);
+      }
       
       onCreated();
       onClose();
@@ -42,8 +78,9 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated }) 
         orderId: '',
         dueDate: ''
       });
+      setSearchTermOrder('');
     } catch (error) {
-      alert(error.response?.data?.message || 'Error creating task');
+      alert(error.response?.data?.message || 'Error saving task');
     } finally {
       setLoading(false);
     }
@@ -51,13 +88,15 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated }) 
 
   if (!isOpen) return null;
 
+  const selectedOrder = (orders || []).find(o => o._id === formData.orderId);
+
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
-            <h2 className="text-2xl font-black text-slate-900">Assign New Task</h2>
-            <p className="text-slate-500 text-sm">Direct task assignment to your team.</p>
+            <h2 className="text-2xl font-black text-slate-900">{todoToEdit ? 'Edit Task' : 'Assign New Task'}</h2>
+            <p className="text-slate-500 text-sm">{todoToEdit ? 'Update task details' : 'Direct task assignment to your team.'}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
             <X size={20} className="text-slate-500" />
@@ -114,19 +153,56 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated }) 
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
                   <Link size={12} /> Select Related Order
                 </label>
-                <select 
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none bg-slate-50"
-                  value={formData.orderId}
-                  onChange={(e) => setFormData({ ...formData, orderId: e.target.value })}
-                  required={taskType === 'order'}
-                >
-                  <option value="">-- Choose an active order --</option>
-                  {(orders || []).map(order => (
-                    <option key={order._id} value={order._id}>
-                      {order.serviceName} - {order.clientName}
-                    </option>
-                  ))}
-                </select>
+                
+                {formData.orderId ? (
+                  <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl flex justify-between items-center">
+                    <div className="text-sm">
+                      <p className="font-bold text-indigo-900">{selectedOrder?.serviceName}</p>
+                      <p className="text-xs text-indigo-600">{selectedOrder?.clientName}</p>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData({ ...formData, orderId: '' })}
+                      className="text-xs font-bold text-rose-500 hover:underline"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Search order by service or client name..."
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      value={searchTermOrder}
+                      onFocus={() => setShowOrderResults(true)}
+                      onChange={(e) => setSearchTermOrder(e.target.value)}
+                    />
+                    {showOrderResults && searchTermOrder.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto">
+                        {filteredOrders.length > 0 ? (
+                          filteredOrders.map(order => (
+                            <button
+                              key={order._id}
+                              type="button"
+                              className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0"
+                              onClick={() => {
+                                setFormData({ ...formData, orderId: order._id });
+                                setShowOrderResults(false);
+                                setSearchTermOrder('');
+                              }}
+                            >
+                              <p className="font-bold text-slate-900 text-sm">{order.serviceName}</p>
+                              <p className="text-xs text-slate-500">{order.clientName}</p>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-slate-500 text-xs italic">No matching orders found.</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

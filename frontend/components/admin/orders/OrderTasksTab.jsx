@@ -163,6 +163,36 @@ const OrderTasksTab = ({
             </div>
           </div>
         ))}
+
+        {/* Render Linked TODOs */}
+        {(selectedOrder.linkedTodos || []).map((todo) => (
+          <div key={todo._id} className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-4 border-dashed">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Linked TODO Task</p>
+                <p className="font-bold text-slate-800">{todo.title}</p>
+                {todo.description && <p className="text-xs text-slate-500">{todo.description}</p>}
+                {todo.priority && <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded-full mt-1 inline-block">{todo.priority}</span>}
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                   <p className="text-[10px] uppercase font-bold text-slate-400">Status</p>
+                   <p className="text-sm font-bold text-slate-700">{todo.status}</p>
+                </div>
+                <div className="text-right border-l pl-3 border-indigo-100">
+                   <p className="text-[10px] uppercase font-bold text-slate-400">Assigned To</p>
+                   <p className="text-sm font-bold text-slate-700">{todo.assignedTo?.name || 'Unassigned'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {(selectedOrder.tasks || []).length === 0 && (selectedOrder.linkedTodos || []).length === 0 && (
+          <div className="py-20 flex flex-col items-center justify-center bg-slate-50 border-2 border-dashed rounded-3xl">
+            <p className="text-slate-400 font-bold">No tasks assigned yet.</p>
+          </div>
+        )}
       </div>
     </div>
   );

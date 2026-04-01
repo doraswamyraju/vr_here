@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/Order.js';
+import Todo from '../models/Todo.js';
 
 const ORDER_POPULATE = [
     { path: 'user', select: 'name email phone' },
@@ -365,7 +366,12 @@ const getOrderById = asyncHandler(async (req, res) => {
         throw new Error('Not authorized to view this order');
     }
 
-    res.json(order);
+    // Add linked todos to the response
+    const linkedTodos = await Todo.find({ orderId: order._id }).populate('assignedTo', 'name email role');
+    const orderObj = order.toObject();
+    orderObj.linkedTodos = linkedTodos;
+
+    res.json(orderObj);
 });
 
 // @desc    Update order status (Employee/Admin)

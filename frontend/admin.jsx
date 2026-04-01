@@ -54,6 +54,7 @@ function AdminApp() {
   const [todos, setTodos] = useState([]);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isNewTodoModalOpen, setIsNewTodoModalOpen] = useState(false);
+  const [todoToEdit, setTodoToEdit] = useState(null);
 
   useEffect(() => {
     const user = localStorage.getItem('userInfo');
@@ -279,7 +280,18 @@ function AdminApp() {
       );
     }
     if (activeTab === 'Users') return <UsersModule token={userInfo?.token} users={users} orders={orders} onRefresh={fetchData} />;
-    if (activeTab === 'ToDo') return <TodoModule todos={todos} employees={employees} token={userInfo?.token} onRefresh={fetchData} />;
+    if (activeTab === 'ToDo') return (
+      <TodoModule 
+        todos={todos} 
+        employees={employees} 
+        token={userInfo?.token} 
+        onRefresh={fetchData} 
+        onEdit={(todo) => {
+          setTodoToEdit(todo);
+          setIsNewTodoModalOpen(true);
+        }}
+      />
+    );
     if (activeTab === 'Finance') return <DummyView title="Finance" />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;
     if (activeTab === 'Notifications') return <DummyView title="Notifications" />;
@@ -339,11 +351,15 @@ function AdminApp() {
 
       <NewTodoModal 
         isOpen={isNewTodoModalOpen} 
-        onClose={() => setIsNewTodoModalOpen(false)} 
+        onClose={() => {
+          setIsNewTodoModalOpen(false);
+          setTodoToEdit(null);
+        }} 
         orders={orders} 
         employees={employees} 
         token={userInfo?.token} 
         onCreated={fetchData} 
+        todoToEdit={todoToEdit}
       />
     </div>
   );

@@ -32,6 +32,7 @@ const EmployeeApp = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [userInfo, setUserInfo] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [todos, setTodos] = useState([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [tickets, setTickets] = useState([]);
@@ -76,6 +77,16 @@ const EmployeeApp = () => {
       setOrders(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch employee orders:', error);
+    }
+  }, [authConfig]);
+
+  const fetchTodos = useCallback(async () => {
+    if (!authConfig) return;
+    try {
+      const { data } = await axios.get('/api/todos', authConfig);
+      setTodos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to fetch employee tasks:', error);
     }
   }, [authConfig]);
 
@@ -137,9 +148,10 @@ const EmployeeApp = () => {
   useEffect(() => {
     if (!userInfo) return;
     fetchOrders();
+    fetchTodos();
     fetchExtras();
     fetchAttendanceStatus();
-  }, [userInfo, fetchOrders, fetchExtras, fetchAttendanceStatus]);
+  }, [userInfo, fetchOrders, fetchTodos, fetchExtras, fetchAttendanceStatus]);
 
   useEffect(() => {
     const rawTask = localStorage.getItem(ACTIVE_TASK_STORAGE_KEY);
@@ -189,6 +201,7 @@ const EmployeeApp = () => {
 
   const refreshAll = () => {
     fetchOrders();
+    fetchTodos();
     fetchExtras();
     fetchAttendanceStatus();
   };
@@ -228,6 +241,7 @@ const EmployeeApp = () => {
     try {
       await axios.put(`/api/orders/${orderId}/status`, { status }, authConfig);
       await fetchOrders();
+      await fetchTodos();
     } catch (error) {
       alert('Unable to update order status.');
     }
@@ -358,9 +372,9 @@ const EmployeeApp = () => {
   const renderActiveModule = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardOverviewModule userInfo={userInfo} orders={orders} onOpenOrder={openOrderInProcessing} />;
+        return <DashboardOverviewModule userInfo={userInfo} orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} />;
       case 'queue':
-        return <WorkQueueModule orders={orders} onOpenOrder={openOrderInProcessing} />;
+        return <WorkQueueModule orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} />;
       case 'processing':
         return (
           <OrderProcessingModule
