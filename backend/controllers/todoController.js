@@ -33,12 +33,30 @@ const getTodos = asyncHandler(async (req, res) => {
         return res.status(403).json({ message: 'Not authorized to view todos' });
     }
 
-    // If employee, see only assigned todos or standalone todos (or all if specified)
+    // If employee, see assigned todos OR todos linked to orders they are part of
     if (req.user.role === 'employee') {
+        // 1. Get IDs of orders where employee is assigned
+        const Order = (await import('../models/Order.js')).default;
+        const employeeOrders = await Order.find({
+            $or: [
+                { assignedEmployee: req.user._id },
+                { assignedMaker: req.user._id },
+                { assignedChecker: req.user._id },
+                { 'tasks.assignedTo': req.user._id },
+                { 'tasks.assignedMaker': req.user._id },
+                { 'tasks.assignedChecker': req.user._id },
+                { 'tasks.subtasks.assignedToMaker': req.user._id },
+                { 'tasks.subtasks.assignedToChecker': req.user._id }
+            ]
+        }).select('_id');
+        
+        const orderIds = employeeOrders.map(o => o._id);
+
         query = {
             $or: [
-                { assignedTo: req.user._id },
-                { assignedTo: null } // Optionally allow employees to see unassigned todos
+                { assignedTo: req.user._id }, // Explicitly assigned to todo
+                { orderId: { $in: orderIds } }, // Linked to employee's orders
+                { assignedTo: null, orderId: null } // Optionally allow employees to see unassigned standalone todos
             ]
         };
     }

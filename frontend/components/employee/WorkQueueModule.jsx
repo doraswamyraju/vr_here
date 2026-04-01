@@ -135,31 +135,57 @@ const WorkQueueModule = ({ orders, todos = [], onOpenOrder }) => {
                     </span>
                   </td>
                   <td className="p-3">
-                    <p className="font-bold text-slate-800">{todo.title}</p>
-                    <p className="text-[10px] text-slate-500 line-clamp-1">{todo.description || 'No description'}</p>
+                    <p className="font-bold text-slate-800 leading-none mb-1">{todo.title}</p>
+                    <p className="text-[10px] text-slate-400 line-clamp-1">{todo.description || 'No description'}</p>
                   </td>
                   <td className="p-3">
                     {todo.orderId ? (
-                      <div>
-                        <p className="text-xs font-bold text-indigo-700">{todo.orderId.serviceName}</p>
-                        <p className="text-[10px] text-indigo-400">{todo.orderId.clientName}</p>
+                      <div className="flex flex-col">
+                        <p className="text-xs font-bold text-indigo-700 tracking-tight leading-none mb-1">{todo.orderId.serviceName}</p>
+                        <p className="text-[10px] text-indigo-400 font-bold">{todo.orderId.clientName || 'Project Client'}</p>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400 font-bold bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">Standalone</span>
+                      <div className="inline-flex items-center gap-1.5 py-1 px-2 rounded bg-slate-50 border border-slate-100 text-slate-400">
+                         <span className="text-[9px] font-black uppercase tracking-widest">Standalone</span>
+                      </div>
                     )}
                   </td>
                   <td className="p-3 text-slate-700 text-xs font-bold">
-                    {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : 'No date'}
+                    {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : '-'}
                   </td>
                   <td className="p-3">
-                    <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider ${
-                      todo.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 
-                      todo.status === 'In Progress' ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-600'
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                       todo.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
+                       todo.status === 'In Progress' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-blue-50 text-blue-600 border-blue-100'
                     }`}>
                       {todo.status}
                     </span>
                   </td>
-                  <td className="p-3 text-right text-slate-400 text-[10px] font-black">{new Date(todo.createdAt).toLocaleDateString()}</td>
+                  <td className="p-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                       {todo.status === 'Pending' && (
+                          <button 
+                            onClick={() => onTodoStatusChange(todo._id, 'In Progress')}
+                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm group-hover:scale-105 active:scale-95 text-[10px] font-black uppercase tracking-wider"
+                          >
+                             Start
+                          </button>
+                       )}
+                       {todo.status !== 'Completed' && (
+                          <button 
+                            onClick={() => onTodoStatusChange(todo._id, 'Completed')}
+                            className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm group-hover:scale-105 active:scale-95 text-[10px] font-black uppercase tracking-wider"
+                          >
+                             Finish
+                          </button>
+                       )}
+                       {todo.status === 'Completed' && (
+                          <div className="p-2 text-emerald-500">
+                             <CheckCircle size={18} />
+                          </div>
+                       )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

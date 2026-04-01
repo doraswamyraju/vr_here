@@ -340,6 +340,16 @@ const EmployeeApp = () => {
     await handleTaskStatusChange(activeTaskSession.orderId, activeTaskSession.taskId, 'Completed');
   };
 
+  const handleTodoStatusChange = async (todoId, status) => {
+    if (!authConfig) return;
+    try {
+      await axios.put(`/api/todos/${todoId}`, { status }, authConfig);
+      await fetchTodos();
+    } catch (error) {
+      alert('Unable to update todo status.');
+    }
+  };
+
   const handleUploadCertificate = async (file) => {
     if (!authConfig || !selectedOrder) return;
 
@@ -374,7 +384,7 @@ const EmployeeApp = () => {
       case 'dashboard':
         return <DashboardOverviewModule userInfo={userInfo} orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} />;
       case 'queue':
-        return <WorkQueueModule orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} />;
+        return <WorkQueueModule orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} onTodoStatusChange={handleTodoStatusChange} />;
       case 'processing':
         return (
           <OrderProcessingModule

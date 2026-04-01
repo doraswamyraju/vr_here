@@ -14,7 +14,9 @@ const OrderProcessingModule = ({
   isUploading,
   userInfo,
   onUpdateRequirementStatus,
-  onRaiseRequirement
+  onRaiseRequirement,
+  linkedTodos = [],
+  onTodoStatusChange
 }) => {
   const [file, setFile] = useState(null);
   const [detailTab, setDetailTab] = useState('Tasks');
@@ -217,31 +219,80 @@ const OrderProcessingModule = ({
           ))}
         </div>
 
-        <div className="p-5 space-y-3">
+        <div className="p-5 space-y-4">
           {detailTab === 'Tasks' && (
-            <div className="space-y-2">
-              {selectedOrderAssignedTasks.map((task) => (
-                <div key={task._id} className="rounded-lg border border-slate-200 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-slate-800">{task.taskCode ? `${task.taskCode} - ${task.title}` : task.title}</p>
-                    <StatusBadge status={task.status || 'Pending'} />
-                  </div>
-                  {(task.subtasks || []).length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {task.subtasks.map((subtask) => (
-                        <p key={subtask._id} className="text-xs text-slate-600">
-                          • {subtask.subTaskCode ? `${subtask.subTaskCode} - ` : ''}{subtask.title} ({subtask.status || 'Pending'})
-                        </p>
-                      ))}
+            <div className="space-y-6">
+              {/* Workflow Tasks */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Workflow Assignments</p>
+                {selectedOrderAssignedTasks.map((task) => (
+                  <div key={task._id} className="rounded-lg border border-slate-200 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-slate-800">{task.taskCode ? `${task.taskCode} - ${task.title}` : task.title}</p>
+                      <StatusBadge status={task.status || 'Pending'} />
                     </div>
-                  )}
-                </div>
-              ))}
-              {selectedOrderAssignedTasks.length === 0 && (
-                <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4">
-                  No tasks currently assigned to you in this project.
-                </div>
-              )}
+                    {(task.subtasks || []).length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {task.subtasks.map((subtask) => (
+                          <p key={subtask._id} className="text-xs text-slate-600">
+                            • {subtask.subTaskCode ? `${subtask.subTaskCode} - ` : ''}{subtask.title} ({subtask.status || 'Pending'})
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {selectedOrderAssignedTasks.length === 0 && (
+                  <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4 italic">
+                    No workflow tasks currently assigned to you.
+                  </div>
+                )}
+              </div>
+
+              {/* Linked Standalone TODOS */}
+              <div className="pt-4 border-t border-slate-100">
+                <p className="text-[10px] font-black uppercase text-indigo-500 tracking-widest mb-3">Linked Projects Tasks (TODOs)</p>
+                {linkedTodos.map(todo => (
+                   <div key={todo._id} className="rounded-xl border border-indigo-100 bg-indigo-50/20 p-4 mb-2 flex items-center justify-between gap-4">
+                      <div>
+                         <div className="flex items-center gap-2 mb-1">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                               todo.priority === 'Urgent' ? 'bg-rose-100 text-rose-700' : 
+                               todo.priority === 'High' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                            }`}>
+                               {todo.priority}
+                            </span>
+                            <p className="font-bold text-slate-800 text-sm">{todo.title}</p>
+                         </div>
+                         <p className="text-xs text-slate-500 line-clamp-1">{todo.description || 'No description'}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                          {todo.status === 'Pending' && (
+                             <button 
+                               onClick={() => onTodoStatusChange(todo._id, 'In Progress')}
+                               className="px-3 py-1.5 bg-white border border-indigo-200 text-indigo-600 rounded-lg text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                             >
+                                Start
+                             </button>
+                          )}
+                          {todo.status !== 'Completed' && (
+                             <button 
+                               onClick={() => onTodoStatusChange(todo._id, 'Completed')}
+                               className="px-3 py-1.5 bg-white border border-emerald-200 text-emerald-600 rounded-lg text-[10px] font-black uppercase hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                             >
+                                Done
+                             </button>
+                          )}
+                          {todo.status === 'Completed' && (
+                             <div className="text-emerald-500 p-2"><CheckCircle size={18} /></div>
+                          )}
+                      </div>
+                   </div>
+                ))}
+                {linkedTodos.length === 0 && (
+                   <p className="text-xs text-slate-400 italic pl-4">No linked TODO tasks for this project.</p>
+                )}
+              </div>
             </div>
           )}
 
@@ -265,7 +316,7 @@ const OrderProcessingModule = ({
                 </div>
               ))}
               {(selectedOrder.invoices || []).length === 0 && (
-                <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4">
+                <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4 italic">
                   No invoices for this project yet.
                 </div>
               )}
