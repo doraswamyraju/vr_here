@@ -76,7 +76,9 @@ const OrdersModule = ({
   onRaiseRequirement,
   onUpdateRequirementStatus,
   onAddInvoice,
-  onUpdateInvoiceStatus
+  onUpdateInvoiceStatus,
+  onOpenRecurringModal,
+  onAddTask
 }) => {
   const selectedOrder = useMemo(() => orders.find((order) => order._id === selectedOrderId) || null, [orders, selectedOrderId]);
 
