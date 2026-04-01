@@ -29,6 +29,8 @@ const OrderTasksTab = ({
   const [isImporting, setIsImporting] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskMaker, setNewTaskMaker] = useState('');
+  const [newTaskChecker, setNewTaskChecker] = useState('');
   const [newSubtasks, setNewSubtasks] = useState([]);
   const [manualLoading, setManualLoading] = useState(false);
 
@@ -86,11 +88,32 @@ const OrderTasksTab = ({
                  />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Main Task Maker</label>
+                     <AssignmentSelect 
+                       value={newTaskMaker} 
+                       employees={employees} 
+                       onChange={setNewTaskMaker} 
+                       label="Select Maker"
+                     />
+                  </div>
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Main Task Checker</label>
+                     <AssignmentSelect 
+                       value={newTaskChecker} 
+                       employees={employees} 
+                       onChange={setNewTaskChecker} 
+                       label="Select Checker"
+                     />
+                  </div>
+               </div>
+
               <div className="space-y-2">
                  <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest flex items-center justify-between">
-                    Sub-Tasks
+                    Sub-Tasks & Assignments
                     <button 
-                      onClick={() => setNewSubtasks([...newSubtasks, { title: '', id: Math.random() }])}
+                      onClick={() => setNewSubtasks([...newSubtasks, { title: '', makerId: '', checkerId: '', id: Math.random() }])}
                       className="text-indigo-600 hover:underline normal-case font-bold"
                     >
                       + Add Item
@@ -106,9 +129,29 @@ const OrderTasksTab = ({
                                updated[idx].title = e.target.value;
                                setNewSubtasks(updated);
                             }}
-                            placeholder={`Component ${idx + 1}`}
+                            placeholder={`Step ${idx + 1}`}
                             className="flex-1 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs outline-none"
                           />
+                          <AssignmentSelect 
+                             value={sub.makerId} 
+                             employees={employees} 
+                             onChange={(id) => {
+                                const updated = [...newSubtasks];
+                                updated[idx].makerId = id;
+                                setNewSubtasks(updated);
+                             }} 
+                             label="Maker"
+                           />
+                           <AssignmentSelect 
+                             value={sub.checkerId} 
+                             employees={employees} 
+                             onChange={(id) => {
+                                const updated = [...newSubtasks];
+                                updated[idx].checkerId = id;
+                                setNewSubtasks(updated);
+                             }} 
+                             label="Checker"
+                           />
                           <button 
                             onClick={() => setNewSubtasks(newSubtasks.filter((_, i) => i !== idx))}
                             className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
@@ -129,9 +172,17 @@ const OrderTasksTab = ({
                        try {
                           await onAddTask(selectedOrder._id, {
                              title: newTaskTitle,
-                             subtasks: newSubtasks.map(s => ({ title: s.title }))
+                             assignedMaker: newTaskMaker || null,
+                             assignedChecker: newTaskChecker || null,
+                             subtasks: newSubtasks.map(s => ({ 
+                                title: s.title,
+                                assignedToMaker: s.makerId || null,
+                                assignedToChecker: s.checkerId || null
+                             }))
                           });
                           setNewTaskTitle('');
+                          setNewTaskMaker('');
+                          setNewTaskChecker('');
                           setNewSubtasks([]);
                           setShowManualForm(false);
                        } finally {

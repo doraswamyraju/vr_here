@@ -231,6 +231,7 @@ const OrdersModule = ({
                   onTaskAssign={(taskId, payload) => onTaskAssign(selectedOrder._id, taskId, payload)}
                   onSubtaskUpdate={(taskId, subtaskId, payload) => onSubtaskUpdate(selectedOrder._id, taskId, subtaskId, payload)}
                   onImportTaskWorkbook={(file, replaceExisting) => onImportTaskWorkbook(selectedOrder._id, file, replaceExisting)}
+                  onAddTask={onAddTask}
                 />
               )}
               {orderDetailTab === 'Requirements' && (
