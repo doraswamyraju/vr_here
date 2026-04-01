@@ -59,6 +59,7 @@ function AdminApp() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
+    console.log("VR HERE Admin Dashboard Loaded - v1.1.2 (Search + Refresh + Delete)");
     const user = localStorage.getItem('userInfo');
     if (!user) return navigate('/');
     const parsed = JSON.parse(user);
@@ -211,8 +212,8 @@ function AdminApp() {
   const DashboardView = () => (
     <div className="space-y-6">
       <Card className="p-6 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white">
-        <p className="text-cyan-200 text-sm">Admin Command Center</p>
-        <h2 className="text-3xl font-black mt-1">Operations Pulse</h2>
+        <p className="text-cyan-200 text-sm">Admin Command Center (v1.1.2 - Search + Refresh + Delete)</p>
+        <h2 className="text-3xl font-black mt-1">Operations Studio</h2>
         <p className="text-slate-200 mt-2">Service delivery, consultation conversion, and execution status in one place.</p>
       </Card>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
