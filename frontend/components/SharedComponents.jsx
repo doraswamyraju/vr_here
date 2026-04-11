@@ -12,6 +12,7 @@ export const getServiceLink = (serviceName) => {
     if (normalized.includes('private limited')) return '/pvt-ltd-registration';
     if (normalized.includes('gst registration') || normalized.includes('gst return')) return '/gst-registration';
     if (normalized.includes('income tax')) return '/income-tax-return';
+    if (normalized.includes('compliance scheme 2026') || normalized.includes('ccfs')) return '/compliance-scheme-2026';
     if (normalized.includes('partnership')) return '/partnership-firm';
     return `/contact?service=${encodeURIComponent(serviceName)}`;
 };
@@ -134,6 +135,7 @@ export const MENU_DATA = [
                 title: 'Corporate Compliances',
                 items: [
                     'ROC Annual Filings (AOC-4, MGT-7)',
+                    'Companies Compliance Scheme 2026 (CCFS)',
                     'Director KYC (DIR-3 KYC)',
                     'ROC Search Certificate',
                     'Charge Creation',
