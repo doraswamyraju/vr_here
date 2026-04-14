@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, FileText, CheckCircle2, ShieldCheck, AlertTriangle, Calendar, Layers, Activity, Phone } from 'lucide-react';
 import { SharedFooter, SharedHeader } from './components/SharedComponents';
+import ConsultationPaymentModal from './components/ConsultationPaymentModal';
+import { launchRazorpayCheckout } from './utils/razorpayCheckout';
+import { showPaymentSuccessPopup } from './utils/paymentSuccessPopup';
 
 const CompaniesComplianceScheme = () => {
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
 
     useEffect(() => {
         const onScroll = () => setIsScrolled(window.scrollY > 20);
@@ -11,9 +18,69 @@ const CompaniesComplianceScheme = () => {
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
+    const handleConsultationBook = () => {
+        setSelectedPlan({
+            id: 'consultation',
+            name: 'Expert Consultation',
+            price: 499,
+            isAdjustable: true,
+            description: 'Start here if you are unsure. Fee fully adjustable against registration.',
+            features: ['30 Mins CA/CS Call', 'Eligibility Check', 'Compliance Roadmap'],
+            buttonText: 'Book Consultation'
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleFormSubmit = ({ formData: submittedFormData, termsAccepted }) => {
+        if (!termsAccepted) {
+            alert('Please accept the Terms & Conditions before proceeding.');
+            return;
+        }
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+        setFormData(submittedFormData);
+
+        launchRazorpayCheckout({
+            serviceName: 'CCFS Consultation',
+            selectedPlan,
+            formData: submittedFormData,
+            token: userInfo?.token,
+            onSubmittingChange: setIsSubmitting,
+            onSuccess: async (data) => {
+                const requiresEmailLogin = Boolean(data?.resetLinkSent);
+                await showPaymentSuccessPopup({
+                    serviceName: selectedPlan?.name || data?.order?.serviceName,
+                    paymentId: data?.payment?.paymentId,
+                    requiresEmailLogin
+                });
+                setIsModalOpen(false);
+                setFormData({ name: '', email: '', phone: '' });
+                window.location.href = requiresEmailLogin ? '/login' : '/customer-dashboard';
+            },
+            onFailure: (error) => {
+                console.error('Payment Flow Error:', error);
+                alert(error?.response?.data?.message || error?.description || error?.message || 'Something went wrong while processing payment.');
+            }
+        });
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-800">
             <SharedHeader isScrolled={isScrolled} />
+            <ConsultationPaymentModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                selectedPlan={selectedPlan}
+                initialFormData={formData}
+                onSubmit={handleFormSubmit}
+                isSubmitting={isSubmitting}
+                formatCurrency={formatCurrency}
+                title={selectedPlan?.buttonText || 'Book Consultation'}
+                initialTermsAccepted={false}
+            />
 
             {/* Hero Section */}
             <section className="relative overflow-hidden bg-slate-900 text-white pt-24 pb-20">
@@ -37,9 +104,9 @@ const CompaniesComplianceScheme = () => {
                         <a href="/contact?service=CCFS-2026 Filing Support" className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl shadow-red-600/20 transition-all hover:-translate-y-1">
                             Get Help with CCFS Filing <ArrowRight className="w-4 h-4" />
                         </a>
-                        <a href="/contact?service=CCFS Consultation" className="inline-flex items-center gap-2 bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl shadow-black/5 transition-all hover:-translate-y-1">
+                        <button onClick={handleConsultationBook} className="inline-flex items-center gap-2 bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl shadow-black/5 transition-all hover:-translate-y-1">
                             <Phone className="w-4 h-4 text-red-600" /> Book Consultation @ ₹499
-                        </a>
+                        </button>
                     </div>
                 </div>
             </section>
@@ -161,9 +228,9 @@ const CompaniesComplianceScheme = () => {
                             <p className="text-slate-400 text-sm mb-6 max-w-[90%]">
                                 Unclear if your past pending forms qualify? Not sure about the process? Talk to our compliance experts directly.
                             </p>
-                            <a href="/contact?service=CCFS Consultation" className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5">
+                            <button onClick={handleConsultationBook} className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5">
                                 <Phone className="w-5 h-5" /> Book Now @ ₹499
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
