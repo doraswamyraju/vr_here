@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, FileText, CheckCircle2, ShieldCheck, AlertTriangle, Calendar, Layers, Activity } from 'lucide-react';
+import { ArrowRight, FileText, CheckCircle2, ShieldCheck, AlertTriangle, Calendar, Layers, Activity, Phone } from 'lucide-react';
 import { SharedFooter, SharedHeader } from './components/SharedComponents';
 
 const CompaniesComplianceScheme = () => {
@@ -36,6 +36,9 @@ const CompaniesComplianceScheme = () => {
                     <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
                         <a href="/contact?service=CCFS-2026 Filing Support" className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl shadow-red-600/20 transition-all hover:-translate-y-1">
                             Get Help with CCFS Filing <ArrowRight className="w-4 h-4" />
+                        </a>
+                        <a href="/contact?service=CCFS Consultation" className="inline-flex items-center gap-2 bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl shadow-black/5 transition-all hover:-translate-y-1">
+                            <Phone className="w-4 h-4 text-red-600" /> Book Consultation @ ₹499
                         </a>
                     </div>
                 </div>
@@ -142,6 +145,26 @@ const CompaniesComplianceScheme = () => {
                         <a href="/contact?service=CCFS Form Verification" className="w-full block text-center bg-white text-red-600 py-2.5 rounded-lg text-sm font-bold border border-red-200 hover:border-red-300 hover:bg-slate-50 transition">
                             Verify Your Eligibility
                         </a>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 border border-slate-700 shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all">
+                        <div className="absolute -top-6 -right-6 p-4 opacity-10 group-hover:opacity-20 group-hover:rotate-12 transition-all duration-500">
+                            <Phone className="w-32 h-32 text-orange-400" />
+                        </div>
+                        <div className="relative z-10">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-orange-500/20 text-orange-300 border border-orange-500/30 text-xs font-black uppercase tracking-wider mb-4">
+                                <Activity className="w-3.5 h-3.5" /> Expert Advice
+                            </div>
+                            <h3 className="text-2xl font-black mb-2 leading-tight">
+                                Book a CCFS <br/> Consultation
+                            </h3>
+                            <p className="text-slate-400 text-sm mb-6 max-w-[90%]">
+                                Unclear if your past pending forms qualify? Not sure about the process? Talk to our compliance experts directly.
+                            </p>
+                            <a href="/contact?service=CCFS Consultation" className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5">
+                                <Phone className="w-5 h-5" /> Book Now @ ₹499
+                            </a>
+                        </div>
                     </div>
                 </div>
 
