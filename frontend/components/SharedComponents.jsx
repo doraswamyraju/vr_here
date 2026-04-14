@@ -43,6 +43,7 @@ export const MENU_DATA = [
             {
                 title: 'Taxation & Legal Compliance',
                 items: [
+                    'Companies Compliance Scheme 2026 (CCFS)',
                     'GST Registration',
                     'Income Tax Return Filing (ITR 1-7)',
                     '12AA/80G Certificates',

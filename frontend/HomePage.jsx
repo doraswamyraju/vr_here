@@ -126,6 +126,7 @@ const TESTIMONIALS = [
 
 /* --- SEARCH DATA --- */
 const ALL_SERVICES = [
+  { name: 'Companies Compliance Scheme 2026 (CCFS)', link: '/compliance-scheme-2026', type: 'page' },
   { name: 'Private Limited Registration', link: '/pvt-ltd-registration', type: 'page' },
   { name: 'Partnership Firm Registration', link: '/partnership-firm', type: 'page' },
   { name: 'GST Registration', link: '/gst-registration', type: 'page' },
@@ -133,6 +134,7 @@ const ALL_SERVICES = [
   { name: 'One Person Company (OPC)', link: '/contact?service=OPC Registration', type: 'inquiry' },
   { name: 'Section 8 Company (NGO)', link: '/contact?service=Section 8 NGO', type: 'inquiry' },
   { name: 'GST Filing', link: '/contact?service=GST Filing', type: 'inquiry' },
+  { name: 'CCFS Form Verification', link: '/contact?service=CCFS Form Verification', type: 'inquiry' },
   { name: 'Trademark Registration', link: '/contact?service=Trademark', type: 'inquiry' },
   { name: 'ISO Certification', link: '/contact?service=ISO Certification', type: 'inquiry' },
   { name: 'MSME Loan / Project Report', link: '/contact?service=MSME Loan', type: 'inquiry' },
