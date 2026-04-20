@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
     Phone, Menu, X, ChevronDown, Clock, Award, Search,
-    Mail, Users as UsersIcon, CheckCircle, LogIn, ArrowUp, List, MessageSquare
+    Mail, User as UsersIcon, CheckCircle, LogIn, ArrowUp, List, MessageSquare
 } from 'lucide-react';
 
 /* --- MENU DATA WITH LINKS --- */

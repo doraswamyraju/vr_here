@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckSquare, Users as UsersIcon, Calendar, Link, Zap } from 'lucide-react';
+import { X, CheckSquare, User as UsersIcon, Calendar, Link, Zap } from 'lucide-react';
 import axios from 'axios';
 
 const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, todoToEdit = null }) => {

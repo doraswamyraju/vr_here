@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard,
-  Users as UsersIcon,
+  User as UsersIcon,
   Layers,
   FileText,
   CheckSquare,

@@ -3,7 +3,7 @@ import {
     Upload, Briefcase, CreditCard, ChevronRight, AlertTriangle, Bell, Plus,
     Search, Gift, Newspaper, Building2, FileCheck, Shield,
     ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink, ArrowRight,
-    Users as UsersIcon
+    User as UsersIcon
 } from 'lucide-react';
 
 const getStatusProgress = (status) => {

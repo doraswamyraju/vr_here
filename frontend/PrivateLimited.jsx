@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
   Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
-  Building2, Mail, MapPin, CheckCircle, FileText, Star, Users as UsersIcon, Check, HelpCircle,
+  Building2, Mail, MapPin, CheckCircle, FileText, Star, User as UsersIcon, Check, HelpCircle,
   MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
   ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw
 } from 'lucide-react';

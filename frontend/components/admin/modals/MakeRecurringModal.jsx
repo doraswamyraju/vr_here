@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, RefreshCcw, Calendar, Users as UsersIcon, Zap, CheckCircle2 } from 'lucide-react';
+import { X, RefreshCcw, Calendar, User as UsersIcon, Zap, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 
 const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {

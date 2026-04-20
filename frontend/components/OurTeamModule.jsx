@@ -5,7 +5,7 @@ import {
   Briefcase, 
   FileText, 
   Award,
-  Users as UsersIcon,
+  User as UsersIcon,
   PieChart,
   HardHat,
   Scale

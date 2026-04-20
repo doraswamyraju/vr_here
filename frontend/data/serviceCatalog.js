@@ -1,5 +1,5 @@
 import { 
-    Building2, FileCheck, Users as UsersIcon, PieChart, ShieldCheck, Mail, Calculator, Briefcase, Globe
+    Building2, FileCheck, User as UsersIcon, PieChart, ShieldCheck, Mail, Calculator, Briefcase, Globe
 } from 'lucide-react';
 
 export const SERVICE_CATALOG = {
