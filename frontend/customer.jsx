@@ -29,6 +29,7 @@ export default function CustomerApp() {
    const [notifications, setNotifications] = useState([]);
    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+   const [serviceSearchQuery, setServiceSearchQuery] = useState('');
    const navigate = useNavigate();
 
    // -- Authentication --
@@ -85,7 +86,10 @@ export default function CustomerApp() {
       switch (activeTab) {
          case 'Home': return (
             <DashboardView
-               setActiveTab={setActiveTab}
+               setActiveTab={(tab, query) => {
+                  if (query) setServiceSearchQuery(query);
+                  setActiveTab(tab);
+               }}
                orders={orders}
                notifications={notifications}
                userInfo={userInfo}
@@ -95,7 +99,11 @@ export default function CustomerApp() {
                }}
             />
          );
-         case 'Services': return <ServicesView setActiveTab={setActiveTab} />;
+         case 'Services': {
+            const q = serviceSearchQuery;
+            if (q) setServiceSearchQuery(''); // consume once
+            return <ServicesView setActiveTab={setActiveTab} initialQuery={q} />;
+         }
          case 'Accounting': return <AccountingServicesView setActiveTab={setActiveTab} userInfo={userInfo} />;
          case 'Orders': return (
             <OrdersView
@@ -105,6 +113,7 @@ export default function CustomerApp() {
                setSelectedOrderId={setSelectedOrderId}
                payments={payments}
                onOpenVault={() => setActiveTab('Documents')}
+               setActiveTab={setActiveTab}
             />
          );
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;

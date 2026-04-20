@@ -99,7 +99,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                     <p className="text-slate-500 text-sm">Here's what's happening today.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="hidden lg:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 text-xs font-bold hover:bg-indigo-700 transition-all">
+                    <button onClick={() => setActiveTab('Services')} className="hidden lg:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 text-xs font-bold hover:bg-indigo-700 transition-all">
                         <Plus size={16} /> New Engagement
                     </button>
                     <div className="relative">
@@ -135,7 +135,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                 className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400"
                             />
                             <div className="w-px h-4 bg-slate-100 mx-1"></div>
-                            <button onClick={() => setActiveTab('Services')} className="text-indigo-600 font-black text-xs uppercase tracking-wider hover:text-indigo-700">Find</button>
+                            <button onClick={() => setActiveTab('Services', searchQuery)} className="text-indigo-600 font-black text-xs uppercase tracking-wider hover:text-indigo-700">Find</button>
                         </div>
                         
                         {/* Dropdown Suggestions */}

@@ -31,7 +31,7 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId, onOpenVault, payments }) => {
+const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId, onOpenVault, payments, setActiveTab }) => {
     if (selectedOrderId) {
         const order = orders.find(o => o._id === selectedOrderId);
         if (order) {
@@ -132,7 +132,7 @@ const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId
                         </div>
                         <h4 className="text-slate-800 font-black mb-1">No Orders Found</h4>
                         <p className="text-slate-400 text-xs font-medium mb-6">Looks like you haven't started any projects yet.</p>
-                        <button className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                        <button onClick={() => setActiveTab?.('Services')} className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
                             Browse Services
                         </button>
                     </div>
