@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckSquare, Users, Calendar, Link, Zap } from 'lucide-react';
+import { X, CheckSquare, Users as UsersIcon, Calendar, Link, Zap } from 'lucide-react';
 import axios from 'axios';
 
 const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, todoToEdit = null }) => {
@@ -209,7 +209,7 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, to
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                  <Users size={12} /> Assign Employee
+                  <UsersIcon size={12} /> Assign Employee
                 </label>
                 <select 
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none bg-slate-50"

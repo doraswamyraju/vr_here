@@ -4,7 +4,7 @@ import {
   Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
   Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
   Building2, Mail, MapPin, CheckCircle, Smartphone, ShieldCheck, RefreshCw,
-  CreditCard, Loader2, MessageSquare, Users, Star, Quote, HelpCircle, ChevronUp
+  CreditCard, Loader2, MessageSquare, Users as UsersIcon, Star, Quote, HelpCircle, ChevronUp
 } from 'lucide-react';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';

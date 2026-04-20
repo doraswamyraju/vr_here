@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, RefreshCcw, Calendar, Users, Zap, CheckCircle2 } from 'lucide-react';
+import { X, RefreshCcw, Calendar, Users as UsersIcon, Zap, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 
 const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {
@@ -137,7 +137,7 @@ const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {
 
            <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                 <Users size={12} /> Confirm Assignments
+                 <UsersIcon size={12} /> Confirm Assignments
               </label>
               <div className="p-3 border border-slate-100 rounded-2xl space-y-2 bg-slate-50/30">
                  <div className="flex justify-between text-xs">

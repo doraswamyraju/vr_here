@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
     Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
-    Building2, Mail, MapPin, CheckCircle, FileText, Star, Users, Check, HelpCircle,
+    Building2, Mail, MapPin, CheckCircle, FileText, Star, Users as UsersIcon, Check, HelpCircle,
     MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
     ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw
 } from 'lucide-react';
@@ -287,7 +287,7 @@ const PartnershipFirmPage = () => {
                                         "Identity Proof of Partners"
                                     ].map((req, i) => (
                                         <li key={i} className="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg">
-                                            <Users className="w-5 h-5 text-red-600 mr-3" /> {req}
+                                            <UsersIcon className="w-5 h-5 text-red-600 mr-3" /> {req}
                                         </li>
                                     ))}
                                 </ul>
