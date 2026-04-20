@@ -141,7 +141,7 @@ const ALL_SERVICES = [
   { name: 'Factory License', link: '/contact?service=Factory License', type: 'inquiry' },
   { name: 'Import Export Code (IEC)', link: '/contact?service=IEC Code', type: 'inquiry' },
   { name: 'Digital Signature (DSC)', link: '/contact?service=DSC', type: 'inquiry' },
-  { name: 'Accounting Services', link: '/contact?service=Accounting', type: 'inquiry' },
+  { name: 'Accounting Services', link: '/accounting-services', type: 'page' },
 ];
 
 const HomePage = () => {

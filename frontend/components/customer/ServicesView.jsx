@@ -1,59 +1,6 @@
 import React from 'react';
-import {
-    Briefcase, Factory, Stamp, Calculator, Globe,
-    IndianRupee, Lightbulb, ArrowRight, Search
-} from 'lucide-react';
-
-const SERVICES = [
-    {
-        id: 'registration',
-        title: 'Start Business',
-        icon: Briefcase,
-        color: 'bg-rose-50 text-rose-600',
-        description: 'Pvt Ltd, LLP, Section 8, FSSAI, Trade License',
-        price: 'From ₹1,999'
-    },
-    {
-        id: 'machinery',
-        title: 'Machinery & Industrial',
-        icon: Factory,
-        color: 'bg-blue-50 text-blue-600',
-        description: 'Sourcing, Vendor Verification, Turnkey Setup',
-        price: 'Quote Based'
-    },
-    {
-        id: 'iso',
-        title: 'Certifications',
-        icon: Stamp,
-        color: 'bg-amber-50 text-amber-600',
-        description: 'ISO 9001, FDA, CE, BIS, HACCP, Halal',
-        price: 'From ₹2,499'
-    },
-    {
-        id: 'accounting',
-        title: 'Accounting & Tax',
-        icon: Calculator,
-        color: 'bg-emerald-50 text-emerald-600',
-        description: 'GST Returns, Income Tax, Audits, RoC Filings',
-        price: 'From ₹499/mo'
-    },
-    {
-        id: 'govt',
-        title: 'Govt Portals',
-        icon: Globe,
-        color: 'bg-indigo-50 text-indigo-600',
-        description: 'GeM, TReDS, RERA, Import Export Code',
-        price: 'From ₹999'
-    },
-    {
-        id: 'msme',
-        title: 'Industrial Consultancy',
-        icon: IndianRupee,
-        color: 'bg-orange-50 text-orange-600',
-        description: 'Project Reports (DPR), Loans, Subsidies',
-        price: 'Quote Based'
-    }
-];
+import { Lightbulb, Search, ChevronRight } from 'lucide-react';
+import { MENU_DATA, getServiceLink } from '../SharedComponents';
 
 const ServicesView = () => {
     return (
@@ -77,27 +24,42 @@ const ServicesView = () => {
                 />
             </div>
 
-            {/* Services Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                {SERVICES.map((service) => (
-                    <button
-                        key={service.id}
-                        className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all flex flex-col md:flex-row lg:flex-col items-center md:items-start lg:items-center text-center md:text-left lg:text-center gap-4 group"
-                    >
-                        <div className={`w-16 h-16 ${service.color} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                            <service.icon size={28} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <h3 className="font-black text-slate-800 text-sm lg:text-base mb-1 group-hover:text-indigo-600 transition-colors">{service.title}</h3>
-                            <p className="text-[11px] lg:text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">{service.description}</p>
-                            <div className="flex items-center justify-center md:justify-start lg:justify-center gap-2">
-                                <span className="px-3 py-1 bg-slate-50 text-[10px] font-black text-slate-500 rounded-lg uppercase tracking-widest">{service.price}</span>
-                                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 transition-all group-hover:translate-x-1 lg:hidden">
-                                    <ArrowRight size={14} />
-                                </div>
+            {/* Structured Catalog matching Home Page Menu */}
+            <div className="space-y-8 mt-8">
+                {MENU_DATA.map((category) => (
+                    <div key={category.id} className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0">
+                                <category.icon size={26} />
                             </div>
+                            <h2 className="text-xl lg:text-2xl font-black text-slate-800">{category.title}</h2>
                         </div>
-                    </button>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {category.columns.map((col, cIdx) => (
+                                <div key={cIdx} className="space-y-4">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3">{col.heading}</h3>
+                                    <ul className="space-y-1">
+                                        {col.links.map((link, lIdx) => {
+                                            const computedLink = getServiceLink(link.name);
+                                            return (
+                                                <li key={lIdx}>
+                                                    <a href={computedLink} className="flex flex-col group block p-3 rounded-xl hover:bg-slate-50 hover:border-indigo-100 border border-transparent transition-all">
+                                                        <span className="font-bold text-slate-700 text-sm flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
+                                                            {link.name} <ChevronRight size={14} className="opacity-0 -ml-3 group-hover:opacity-100 group-hover:ml-0 transition-all text-indigo-400" />
+                                                        </span>
+                                                        {link.badge && (
+                                                            <span className="inline-block mt-1 px-2 py-0.5 bg-rose-50 text-rose-600 text-[9px] font-black uppercase rounded w-max tracking-widest">{link.badge}</span>
+                                                        )}
+                                                    </a>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 ))}
             </div>
 
@@ -106,7 +68,7 @@ const ServicesView = () => {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
                 <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
                     <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
-                        <div className="w-16 h-16 bg-white/10 rounded-[24px] flex items-center justify-center shadow-xl">
+                        <div className="w-16 h-16 bg-white/10 rounded-[24px] flex items-center justify-center shadow-xl shrink-0">
                             <Lightbulb className="text-amber-400" size={32} />
                         </div>
                         <div className="text-center lg:text-left">

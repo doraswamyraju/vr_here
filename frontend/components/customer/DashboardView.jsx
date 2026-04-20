@@ -33,14 +33,14 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
     const unreadNotifications = notifications.filter(n => !n.isRead);
 
     const topServices = [
-        { id: 1, name: 'Pvt Ltd', icon: Building2, color: 'bg-blue-50 text-blue-600' },
-        { id: 2, name: 'GST', icon: FileCheck, color: 'bg-green-50 text-green-600' },
-        { id: 3, name: 'IT Return', icon: Monitor, color: 'bg-indigo-50 text-indigo-600' },
-        { id: 4, name: 'MSME', icon: Stamp, color: 'bg-amber-50 text-amber-600' },
-        { id: 5, name: 'Trademark', icon: Shield, color: 'bg-purple-50 text-purple-600' },
-        { id: 6, name: 'Audit', icon: ClipboardCheck, color: 'bg-rose-50 text-rose-600' },
-        { id: 7, name: 'Funding', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600' },
-        { id: 8, name: 'Compliance', icon: Settings, color: 'bg-slate-50 text-slate-600' },
+        { id: 1, name: 'Pvt Ltd', icon: Building2, color: 'bg-blue-50 text-blue-600', link: '/pvt-ltd-registration' },
+        { id: 2, name: 'GST', icon: FileCheck, color: 'bg-green-50 text-green-600', link: '/gst-registration' },
+        { id: 3, name: 'IT Return', icon: Monitor, color: 'bg-indigo-50 text-indigo-600', link: '/income-tax-return' },
+        { id: 4, name: 'MSME', icon: Stamp, color: 'bg-amber-50 text-amber-600', link: '/contact?service=MSME' },
+        { id: 5, name: 'Trademark', icon: Shield, color: 'bg-purple-50 text-purple-600', link: '/contact?service=Trademark' },
+        { id: 6, name: 'Audit', icon: ClipboardCheck, color: 'bg-rose-50 text-rose-600', link: '/contact?service=Audit' },
+        { id: 7, name: 'Funding', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600', link: '/contact?service=Funding' },
+        { id: 8, name: 'Compliance', icon: Settings, color: 'bg-slate-50 text-slate-600', link: '/compliance-scheme-2026' },
     ];
 
     const SEARCH_SUGGESTIONS = [
@@ -193,7 +193,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                             {topServices.map(service => (
                                 <button
                                     key={service.id}
-                                    onClick={() => setActiveTab('Services')}
+                                    onClick={() => service.link ? (window.location.href = service.link) : setActiveTab('Services')}
                                     className="flex flex-col items-center gap-3 group"
                                 >
                                     <div className={`w-14 h-14 lg:w-16 lg:h-16 ${service.color} rounded-3xl flex items-center justify-center shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300`}>
@@ -275,6 +275,23 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                 <h3 className="text-2xl font-black text-slate-800">₹{(orders.reduce((acc, curr) => acc + curr.price, 0) / 1000).toFixed(1)}k</h3>
                                 <p className="text-slate-500 text-[10px] font-medium leading-none">Total Value</p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Accounting Services CTA */}
+                    <div className="bg-emerald-900 rounded-[32px] p-6 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-emerald-500/30 transition-all duration-700"></div>
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-12 h-12 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 transform -rotate-3 transition-transform group-hover:rotate-0">
+                                    <ClipboardCheck className="text-white" size={24} />
+                                </div>
+                                <h3 className="text-white font-black text-lg leading-tight">Accounting Services</h3>
+                            </div>
+                            <p className="text-emerald-200 text-xs font-medium mb-5 leading-relaxed">Customize your own GST, TDS, and Payroll packages with our multi-select builder.</p>
+                            <button onClick={() => window.location.href = '/accounting-services'} className="w-full bg-white text-emerald-900 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-xl">
+                                Build Package
+                            </button>
                         </div>
                     </div>
 
