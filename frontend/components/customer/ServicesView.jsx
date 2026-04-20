@@ -1,6 +1,7 @@
 import React from 'react';
 import { Lightbulb, Search, ChevronRight } from 'lucide-react';
 import { MENU_DATA, getServiceLink } from '../SharedComponents';
+import { SERVICE_CATALOG } from '../../data/serviceCatalog';
 
 const ServicesView = ({ setActiveTab }) => {
     return (
@@ -41,17 +42,17 @@ const ServicesView = ({ setActiveTab }) => {
                                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3">{col.heading}</h3>
                                     <ul className="space-y-1">
                                         {col.items.map((item, lIdx) => {
-                                            const isAccountingRelated = 
-                                                item.toLowerCase().includes('accounting') || 
-                                                item.toLowerCase().includes('gst return') || 
-                                                item.toLowerCase().includes('payroll') ||
-                                                item.toLowerCase().includes('tds');
+                                            const computedLink = getServiceLink(item);
+                                            const serviceKey = computedLink.replace('/', '');
+                                            const hasNativeView = SERVICE_CATALOG[serviceKey];
+                                            const isAccounting = item.toLowerCase().includes('accounting') || item.toLowerCase().includes('gst return');
 
                                             return (
                                                 <li key={lIdx}>
                                                     <button 
                                                         onClick={() => {
-                                                            if (isAccountingRelated) setActiveTab('Accounting');
+                                                            if (hasNativeView) setActiveTab(serviceKey);
+                                                            else if (isAccounting) setActiveTab('Accounting');
                                                             else setActiveTab('New'); 
                                                         }} 
                                                         className="w-full text-left flex flex-col group block p-3 rounded-xl hover:bg-slate-50 hover:border-indigo-100 border border-transparent transition-all"
@@ -84,7 +85,10 @@ const ServicesView = ({ setActiveTab }) => {
                             <p className="text-slate-400 text-sm leading-relaxed max-w-xl">Our multidisciplinary experts can create tailored end-to-end setups, feasiblity reports, and turnkey projects specifically for your industry.</p>
                         </div>
                     </div>
-                    <button className="whitespace-nowrap bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-2xl text-sm font-black transition-all shadow-2xl shadow-indigo-900/40 hover:-translate-y-1 active:translate-y-0">
+                    <button 
+                        onClick={() => setActiveTab('New')}
+                        className="whitespace-nowrap bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-2xl text-sm font-black transition-all shadow-2xl shadow-indigo-900/40 hover:-translate-y-1 active:translate-y-0"
+                    >
                         Consult Expert
                     </button>
                 </div>

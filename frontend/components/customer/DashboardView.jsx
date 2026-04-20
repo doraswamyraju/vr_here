@@ -33,14 +33,14 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
     const unreadNotifications = notifications.filter(n => !n.isRead);
 
     const topServices = [
-        { id: 1, name: 'Pvt Ltd', icon: Building2, color: 'bg-blue-50 text-blue-600', link: '/pvt-ltd-registration' },
-        { id: 2, name: 'GST', icon: FileCheck, color: 'bg-green-50 text-green-600', link: '/gst-registration' },
-        { id: 3, name: 'IT Return', icon: Monitor, color: 'bg-indigo-50 text-indigo-600', link: '/income-tax-return' },
-        { id: 4, name: 'MSME', icon: Stamp, color: 'bg-amber-50 text-amber-600', link: '/contact?service=MSME' },
-        { id: 5, name: 'Trademark', icon: Shield, color: 'bg-purple-50 text-purple-600', link: '/contact?service=Trademark' },
-        { id: 6, name: 'Audit', icon: ClipboardCheck, color: 'bg-rose-50 text-rose-600', link: '/contact?service=Audit' },
-        { id: 7, name: 'Funding', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600', link: '/contact?service=Funding' },
-        { id: 8, name: 'Compliance', icon: Settings, color: 'bg-slate-50 text-slate-600', link: '/compliance-scheme-2026' },
+        { id: 1, name: 'Pvt Ltd', icon: Building2, color: 'bg-blue-50 text-blue-600', key: 'pvt-ltd-registration' },
+        { id: 2, name: 'GST', icon: FileCheck, color: 'bg-green-50 text-green-600', key: 'gst-registration' },
+        { id: 3, name: 'IT Return', icon: Monitor, color: 'bg-indigo-50 text-indigo-600', key: 'income-tax-return' },
+        { id: 4, name: 'Partnership', icon: Users, color: 'bg-amber-50 text-amber-600', key: 'partnership-firm' },
+        { id: 5, name: 'Trademark', icon: Shield, color: 'bg-purple-50 text-purple-600', key: 'New' },
+        { id: 6, name: 'Audit', icon: ClipboardCheck, color: 'bg-rose-50 text-rose-600', key: 'New' },
+        { id: 7, name: 'Funding', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600', key: 'New' },
+        { id: 8, name: 'Compliance', icon: Settings, color: 'bg-slate-50 text-slate-600', key: 'New' },
     ];
 
     const SEARCH_SUGGESTIONS = [
@@ -81,7 +81,12 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
     const handleSelectSuggestion = (suggestion) => {
         setSearchQuery(suggestion);
         setShowSuggestions(false);
-        setActiveTab('Services');
+        const lower = suggestion.toLowerCase();
+        if (lower.includes('pvt ltd') || lower.includes('private limited')) setActiveTab('pvt-ltd-registration');
+        else if (lower.includes('gst reg')) setActiveTab('gst-registration');
+        else if (lower.includes('partnership')) setActiveTab('partnership-firm');
+        else if (lower.includes('income tax') || lower.includes('itr')) setActiveTab('income-tax-return');
+        else setActiveTab('Services');
     };
 
     return (
@@ -150,8 +155,17 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                         ))}
                                     </ul>
                                 ) : (
-                                    <div className="p-5 text-center text-sm font-medium text-slate-400">
-                                        No exact matches. Check our full catalog.
+                                    <div className="p-4">
+                                        <button 
+                                            onClick={() => setActiveTab('New')}
+                                            className="w-full text-left p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 transition-all group"
+                                        >
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Not listed?</p>
+                                            <p className="text-sm font-bold text-slate-700 mb-2">Request '{searchQuery}'</p>
+                                            <div className="flex items-center gap-2 text-indigo-600 text-xs font-black uppercase tracking-widest">
+                                                Contact Us <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                            </div>
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -193,14 +207,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                             {topServices.map(service => (
                                 <button
                                     key={service.id}
-                                    onClick={() => {
-                                        const name = service.name.toLowerCase();
-                                        if (name === 'gst' || name === 'it return') {
-                                            setActiveTab('Accounting');
-                                        } else {
-                                            setActiveTab('New');
-                                        }
-                                    }}
+                                    onClick={() => setActiveTab(service.key)}
                                     className="flex flex-col items-center gap-3 group"
                                 >
                                     <div className={`w-14 h-14 lg:w-16 lg:h-16 ${service.color} rounded-3xl flex items-center justify-center shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300`}>

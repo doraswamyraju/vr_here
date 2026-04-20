@@ -15,6 +15,8 @@ import DocumentsView from './components/customer/DocumentsView';
 import AccountsView from './components/customer/AccountsView';
 import SupportView from './components/customer/SupportView';
 import AccountingServicesView from './components/customer/AccountingServicesView';
+import ServiceDetailView from './components/customer/ServiceDetailView';
+import { SERVICE_CATALOG } from './data/serviceCatalog';
 
 export default function CustomerApp() {
    const [activeTab, setActiveTab] = useState('Home');
@@ -108,7 +110,11 @@ export default function CustomerApp() {
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
          case 'Account': return <AccountsView orders={orders} payments={payments} />;
          case 'New': return <SupportView userInfo={userInfo} />;
-         default: return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} />;
+         default: 
+            if (SERVICE_CATALOG[activeTab]) {
+                return <ServiceDetailView serviceKey={activeTab} setActiveTab={setActiveTab} userInfo={userInfo} />;
+            }
+            return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} />;
       }
    };
 
