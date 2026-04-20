@@ -2,6 +2,21 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
+import ConsultationPaymentModal from '../components/ConsultationPaymentModal';
+import { launchRazorpayCheckout } from '../utils/razorpayCheckout';
+import { showPaymentSuccessPopup } from '../utils/paymentSuccessPopup';
+
+const PACKAGES = [
+  {
+    id: 'consultation',
+    name: 'Expert Consultation',
+    price: 499,
+    isAdjustable: true,
+    description: 'Start here if you are unsure. Fee fully adjusted against registration.',
+    features: ['30 Mins CA/CS Call', 'Business Structure Advice', 'Name Availability Check'],
+    buttonText: 'Book Consultation'
+  }
+];
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -9,8 +24,59 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: ''
+    });
+
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    const handleConsultationBook = (e) => {
+        e?.preventDefault();
+        setSelectedPlan(PACKAGES[0]);
+        setIsModalOpen(true);
+    };
+
+    const handleFormSubmit = ({ formData: submittedFormData, termsAccepted }) => {
+        if (!termsAccepted) {
+            alert('Please accept the Terms & Conditions before proceeding.');
+            return;
+        }
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+        setFormData(submittedFormData);
+
+        launchRazorpayCheckout({
+            serviceName: 'Expert Consultation',
+            selectedPlan,
+            formData: submittedFormData,
+            token: userInfo?.token,
+            onSubmittingChange: setIsSubmitting,
+            onSuccess: async (data) => {
+                const requiresEmailLogin = Boolean(data?.resetLinkSent);
+                await showPaymentSuccessPopup({
+                    serviceName: selectedPlan?.name || data?.order?.serviceName,
+                    paymentId: data?.payment?.paymentId,
+                    requiresEmailLogin
+                });
+                setIsModalOpen(false);
+                setFormData({ name: '', email: '', phone: '' });
+                window.location.href = requiresEmailLogin ? '/login' : '/customer-dashboard';
+            },
+            onFailure: (error) => {
+                console.error('Payment Flow Error:', error);
+                alert(error?.response?.data?.message || error?.description || error?.message || 'Something went wrong while processing payment.');
+            }
+        });
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -30,6 +96,17 @@ const LoginPage = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
+            <ConsultationPaymentModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                selectedPlan={selectedPlan}
+                initialFormData={formData}
+                onSubmit={handleFormSubmit}
+                isSubmitting={isSubmitting}
+                formatCurrency={formatCurrency}
+                title={selectedPlan?.buttonText || 'Sign Up'}
+                initialTermsAccepted={false}
+            />
             {/* Left Side - Hero Visual */}
             <div className="hidden lg:flex w-1/2 bg-slate-900 relative overflow-hidden items-center justify-center">
                 <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 to-slate-900/40 z-10" />
@@ -109,9 +186,9 @@ const LoginPage = () => {
                         </button>
                     </form>
 
-                    {/* <div className="mt-8 text-center text-slate-500">
-                        Don't have an account? <Link to="/register" className="text-red-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1">Create Account</Link>
-                    </div> */}
+                    <div className="mt-8 text-center text-slate-500">
+                        Don't have an account? <button type="button" onClick={handleConsultationBook} className="text-red-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1">Sign Up</button>
+                    </div>
                 </div>
             </div>
         </div>
