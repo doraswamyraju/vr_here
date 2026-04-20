@@ -14,6 +14,7 @@ import OrdersView from './components/customer/OrdersView';
 import DocumentsView from './components/customer/DocumentsView';
 import AccountsView from './components/customer/AccountsView';
 import SupportView from './components/customer/SupportView';
+import AccountingServicesView from './components/customer/AccountingServicesView';
 
 export default function CustomerApp() {
    const [activeTab, setActiveTab] = useState('Home');
@@ -92,7 +93,8 @@ export default function CustomerApp() {
                }}
             />
          );
-         case 'Services': return <ServicesView />;
+         case 'Services': return <ServicesView setActiveTab={setActiveTab} />;
+         case 'Accounting': return <AccountingServicesView setActiveTab={setActiveTab} userInfo={userInfo} />;
          case 'Orders': return (
             <OrdersView
                orders={orders}

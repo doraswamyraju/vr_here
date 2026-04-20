@@ -2,7 +2,7 @@ import React from 'react';
 import { Lightbulb, Search, ChevronRight } from 'lucide-react';
 import { MENU_DATA, getServiceLink } from '../SharedComponents';
 
-const ServicesView = () => {
+const ServicesView = ({ setActiveTab }) => {
     return (
         <div className="space-y-6 pb-20 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-end mb-2 px-1">
@@ -44,14 +44,20 @@ const ServicesView = () => {
                                             const computedLink = getServiceLink(link.name);
                                             return (
                                                 <li key={lIdx}>
-                                                    <a href={computedLink} className="flex flex-col group block p-3 rounded-xl hover:bg-slate-50 hover:border-indigo-100 border border-transparent transition-all">
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (computedLink.includes('accounting')) setActiveTab('Accounting');
+                                                            else setActiveTab('New'); // Open Support Ticket logic for other services for now to prevent leaving dashboard
+                                                        }} 
+                                                        className="w-full text-left flex flex-col group block p-3 rounded-xl hover:bg-slate-50 hover:border-indigo-100 border border-transparent transition-all"
+                                                    >
                                                         <span className="font-bold text-slate-700 text-sm flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
                                                             {link.name} <ChevronRight size={14} className="opacity-0 -ml-3 group-hover:opacity-100 group-hover:ml-0 transition-all text-indigo-400" />
                                                         </span>
                                                         {link.badge && (
                                                             <span className="inline-block mt-1 px-2 py-0.5 bg-rose-50 text-rose-600 text-[9px] font-black uppercase rounded w-max tracking-widest">{link.badge}</span>
                                                         )}
-                                                    </a>
+                                                    </button>
                                                 </li>
                                             );
                                         })}

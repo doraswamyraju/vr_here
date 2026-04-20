@@ -289,7 +289,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                 <h3 className="text-white font-black text-lg leading-tight">Accounting Services</h3>
                             </div>
                             <p className="text-emerald-200 text-xs font-medium mb-5 leading-relaxed">Customize your own GST, TDS, and Payroll packages with our multi-select builder.</p>
-                            <button onClick={() => window.location.href = '/accounting-services'} className="w-full bg-white text-emerald-900 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-xl">
+                            <button onClick={() => setActiveTab('Accounting')} className="w-full bg-white text-emerald-900 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-xl">
                                 Build Package
                             </button>
                         </div>
