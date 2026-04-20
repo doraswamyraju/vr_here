@@ -5,7 +5,7 @@ import {
   Briefcase, 
   FileText, 
   Award,
-  Users,
+  Users as UsersIcon,
   PieChart,
   HardHat,
   Scale
@@ -85,7 +85,7 @@ const ProfessionalsModule = ({ sectionId = 'managed-by-professionals' }) => {
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 text-red-400 text-xs font-bold uppercase tracking-widest mb-4 border border-white/10">
-            <Users className="w-4 h-4 mr-2" /> Professional Network
+            <UsersIcon className="w-4 h-4 mr-2" /> Professional Network
           </div>
           <h2 className="text-3xl md:text-6xl font-black text-white tracking-tight leading-[1.1]">
             Managed by <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Professionals</span>

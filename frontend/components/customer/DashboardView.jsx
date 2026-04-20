@@ -3,7 +3,7 @@ import {
     Upload, Briefcase, CreditCard, ChevronRight, AlertTriangle, Bell, Plus,
     Search, Gift, Newspaper, Building2, FileCheck, Shield,
     ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink, ArrowRight,
-    Users
+    Users as UsersIcon
 } from 'lucide-react';
 
 const getStatusProgress = (status) => {
@@ -37,7 +37,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
         { id: 1, name: 'Pvt Ltd', icon: Building2, color: 'bg-blue-50 text-blue-600', key: 'pvt-ltd-registration' },
         { id: 2, name: 'GST', icon: FileCheck, color: 'bg-green-50 text-green-600', key: 'gst-registration' },
         { id: 3, name: 'IT Return', icon: Monitor, color: 'bg-indigo-50 text-indigo-600', key: 'income-tax-return' },
-        { id: 4, name: 'Partnership', icon: Users, color: 'bg-amber-50 text-amber-600', key: 'partnership-firm' },
+        { id: 4, name: 'Partnership', icon: UsersIcon, color: 'bg-amber-50 text-amber-600', key: 'partnership-firm' },
         { id: 5, name: 'Trademark', icon: Shield, color: 'bg-purple-50 text-purple-600', key: 'New' },
         { id: 6, name: 'Audit', icon: ClipboardCheck, color: 'bg-rose-50 text-rose-600', key: 'New' },
         { id: 7, name: 'Funding', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600', key: 'New' },

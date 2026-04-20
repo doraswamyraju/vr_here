@@ -1,5 +1,5 @@
 import { 
-    Building2, FileCheck, Users, PieChart, ShieldCheck, Mail, Calculator, Briefcase, Globe
+    Building2, FileCheck, Users as UsersIcon, PieChart, ShieldCheck, Mail, Calculator, Briefcase, Globe
 } from 'lucide-react';
 
 export const SERVICE_CATALOG = {
@@ -71,7 +71,7 @@ export const SERVICE_CATALOG = {
     'partnership-firm': {
         title: 'Partnership Firm Registration',
         description: 'Ideal for small businesses with multiple owners. Shared responsibilities and faster decision making.',
-        icon: Users,
+        icon: UsersIcon,
         packages: [
             {
                 id: 'consultation',

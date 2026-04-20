@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
     Phone, Menu, X, ChevronDown, Clock, Award, Search,
-    Mail, Users, CheckCircle, LogIn, ArrowUp, List, MessageSquare
+    Mail, Users as UsersIcon, CheckCircle, LogIn, ArrowUp, List, MessageSquare
 } from 'lucide-react';
 
 /* --- MENU DATA WITH LINKS --- */
@@ -685,7 +685,7 @@ export const SharedFooter = () => (
                     </div>
                     <div className="flex space-x-4">
                         <a href="#" className="p-2 bg-slate-800 rounded-full hover:bg-red-600 hover:text-white transition transform hover:scale-110 hover:-translate-y-1">
-                            <Users className="w-4 h-4" />
+                            <UsersIcon className="w-4 h-4" />
                         </a>
                         <a href="#" className="p-2 bg-slate-800 rounded-full hover:bg-red-600 hover:text-white transition transform hover:scale-110 hover:-translate-y-1">
                             <Globe className="w-4 h-4" />

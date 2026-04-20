@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard,
-  Users,
+  Users as UsersIcon,
   Layers,
   FileText,
   CheckSquare,
@@ -254,7 +254,7 @@ function AdminApp() {
   const sidebarItems = [
     { key: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { key: 'Orders', label: 'Orders', icon: Layers },
-    { key: 'Users', label: 'Users', icon: Users },
+    { key: 'Users', label: 'Users', icon: UsersIcon },
     { key: 'ToDo', label: 'To Do', icon: CheckSquare },
     { key: 'Finance', label: 'Finance', icon: DollarSign },
     { key: 'Reports', label: 'Reports', icon: BarChart3 },
