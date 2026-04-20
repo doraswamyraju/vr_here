@@ -193,7 +193,14 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                             {topServices.map(service => (
                                 <button
                                     key={service.id}
-                                    onClick={() => service.link ? (window.location.href = service.link) : setActiveTab('Services')}
+                                    onClick={() => {
+                                        const name = service.name.toLowerCase();
+                                        if (name === 'gst' || name === 'it return') {
+                                            setActiveTab('Accounting');
+                                        } else {
+                                            setActiveTab('New');
+                                        }
+                                    }}
                                     className="flex flex-col items-center gap-3 group"
                                 >
                                     <div className={`w-14 h-14 lg:w-16 lg:h-16 ${service.color} rounded-3xl flex items-center justify-center shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300`}>

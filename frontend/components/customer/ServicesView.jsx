@@ -40,23 +40,25 @@ const ServicesView = ({ setActiveTab }) => {
                                 <div key={cIdx} className="space-y-4">
                                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3">{col.heading}</h3>
                                     <ul className="space-y-1">
-                                        {col.links.map((link, lIdx) => {
-                                            const computedLink = getServiceLink(link.name);
+                                        {col.items.map((item, lIdx) => {
+                                            const isAccountingRelated = 
+                                                item.toLowerCase().includes('accounting') || 
+                                                item.toLowerCase().includes('gst return') || 
+                                                item.toLowerCase().includes('payroll') ||
+                                                item.toLowerCase().includes('tds');
+
                                             return (
                                                 <li key={lIdx}>
                                                     <button 
                                                         onClick={() => {
-                                                            if (computedLink.includes('accounting')) setActiveTab('Accounting');
-                                                            else setActiveTab('New'); // Open Support Ticket logic for other services for now to prevent leaving dashboard
+                                                            if (isAccountingRelated) setActiveTab('Accounting');
+                                                            else setActiveTab('New'); 
                                                         }} 
                                                         className="w-full text-left flex flex-col group block p-3 rounded-xl hover:bg-slate-50 hover:border-indigo-100 border border-transparent transition-all"
                                                     >
                                                         <span className="font-bold text-slate-700 text-sm flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
-                                                            {link.name} <ChevronRight size={14} className="opacity-0 -ml-3 group-hover:opacity-100 group-hover:ml-0 transition-all text-indigo-400" />
+                                                            {item} <ChevronRight size={14} className="opacity-0 -ml-3 group-hover:opacity-100 group-hover:ml-0 transition-all text-indigo-400" />
                                                         </span>
-                                                        {link.badge && (
-                                                            <span className="inline-block mt-1 px-2 py-0.5 bg-rose-50 text-rose-600 text-[9px] font-black uppercase rounded w-max tracking-widest">{link.badge}</span>
-                                                        )}
                                                     </button>
                                                 </li>
                                             );
