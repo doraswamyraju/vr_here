@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
     Upload, Briefcase, CreditCard, ChevronRight, AlertTriangle, Bell, Plus,
     Search, Gift, Newspaper, Building2, FileCheck, Shield,
-    ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink, ArrowRight
+    ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink, ArrowRight,
+    Users
 } from 'lucide-react';
 
 const getStatusProgress = (status) => {
