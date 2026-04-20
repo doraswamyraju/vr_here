@@ -14,6 +14,7 @@ export const getServiceLink = (serviceName) => {
     if (normalized.includes('income tax')) return '/income-tax-return';
     if (normalized.includes('compliance scheme 2026') || normalized.includes('ccfs')) return '/compliance-scheme-2026';
     if (normalized.includes('partnership')) return '/partnership-firm';
+    if (normalized.includes('accounting')) return '/accounting-services';
     return `/contact?service=${encodeURIComponent(serviceName)}`;
 };
 

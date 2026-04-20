@@ -21,6 +21,7 @@ import ServiceCardDesignOptions from './ServiceCardDesignOptions';
 import AllServicesPage from './AllServices';
 import TermsConditionsPage from './TermsConditions';
 import CompaniesComplianceScheme from './CompaniesComplianceScheme';
+import AccountingServices from './AccountingServices';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -52,6 +53,7 @@ const App = () => {
       <Route path="/all-services" element={<AllServicesPage />} />
       <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
       <Route path="/compliance-scheme-2026" element={<CompaniesComplianceScheme />} />
+      <Route path="/accounting-services" element={<AccountingServices />} />
 
       <Route path="/contact" element={<ContactUsPage />} />
 
