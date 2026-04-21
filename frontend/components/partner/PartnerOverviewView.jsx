@@ -6,7 +6,7 @@ import {
     Clock, AlertCircle, IndianRupee, ExternalLink
 } from 'lucide-react';
 
-const PartnerOverviewView = ({ userInfo }) => {
+const PartnerOverviewView = ({ userInfo, mode = 'overview' }) => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -100,8 +100,14 @@ const PartnerOverviewView = ({ userInfo }) => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">Partner Overview</h1>
-                    <p className="text-slate-500 text-sm mt-1">Monitor your referrals and track your commission earnings.</p>
+                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+                        {mode === 'overview' ? 'Partner Overview' : 'Referral List'}
+                    </h1>
+                    <p className="text-slate-500 text-sm mt-1">
+                        {mode === 'overview' 
+                            ? 'Monitor your referrals and track your commission earnings.' 
+                            : 'Detailed list of all successful business referrals associated with your account.'}
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
@@ -118,24 +124,26 @@ const PartnerOverviewView = ({ userInfo }) => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className={`p-3 rounded-2xl ${stat.color}`}>
-                                <stat.icon className="w-6 h-6" />
+            {mode === 'overview' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {stats.map((stat, idx) => (
+                        <div key={idx} className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between mb-4">
+                                <div className={`p-3 rounded-2xl ${stat.color}`}>
+                                    <stat.icon className="w-6 h-6" />
+                                </div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    {stat.trend}
+                                </div>
                             </div>
-                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                {stat.trend}
+                            <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">{stat.label}</h3>
+                            <div className="text-2xl font-black text-slate-900 mt-1">
+                                {stat.isCurrency ? formatCurrency(stat.value) : stat.value}
                             </div>
                         </div>
-                        <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">{stat.label}</h3>
-                        <div className="text-2xl font-black text-slate-900 mt-1">
-                            {stat.isCurrency ? formatCurrency(stat.value) : stat.value}
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* Orders Table Section */}
             <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
@@ -228,42 +236,44 @@ const PartnerOverviewView = ({ userInfo }) => {
             </div>
 
             {/* Payout Info Section */}
-            <div className="grid lg:grid-cols-2 gap-8">
-                <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 rounded-[32px] text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl group-hover:bg-white/20 transition-all"></div>
-                    <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                        <div>
-                            <div className="p-3 bg-white/10 rounded-2xl w-fit mb-6">
-                                <Clock className="w-6 h-6 text-indigo-100" />
+            {mode === 'overview' && (
+                <div className="grid lg:grid-cols-2 gap-8">
+                    <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 rounded-[32px] text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl group-hover:bg-white/20 transition-all"></div>
+                        <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+                            <div>
+                                <div className="p-3 bg-white/10 rounded-2xl w-fit mb-6">
+                                    <Clock className="w-6 h-6 text-indigo-100" />
+                                </div>
+                                <h3 className="text-2xl font-black tracking-tight leading-tight">Payment Cycle Info</h3>
+                                <p className="text-indigo-100 text-sm mt-2 font-medium">Commissions are processed on the 10th of every month for all completed orders of the previous month.</p>
                             </div>
-                            <h3 className="text-2xl font-black tracking-tight leading-tight">Payment Cycle Info</h3>
-                            <p className="text-indigo-100 text-sm mt-2 font-medium">Commissions are processed on the 10th of every month for all completed orders of the previous month.</p>
+                            <button className="bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2 border border-white/20">
+                                Download Payout Policy <ExternalLink className="w-4 h-4" />
+                            </button>
                         </div>
-                        <button className="bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2 border border-white/20">
-                            Download Payout Policy <ExternalLink className="w-4 h-4" />
-                        </button>
                     </div>
-                </div>
 
-                <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-                    <h3 className="text-lg font-black text-slate-900 mb-6">Bank Details</h3>
-                    <div className="space-y-4">
-                        <div className="p-4 bg-slate-50 rounded-2xl">
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Holder</div>
-                            <div className="font-bold text-slate-800">{userInfo.name}</div>
-                        </div>
-                        <div className="p-4 bg-slate-50 rounded-2xl">
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</div>
-                            <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
-                                <CheckCircle2 className="w-4 h-4" /> KYC Verified (PAN: {userInfo.panCard})
+                    <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+                        <h3 className="text-lg font-black text-slate-900 mb-6">Bank Details</h3>
+                        <div className="space-y-4">
+                            <div className="p-4 bg-slate-50 rounded-2xl">
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Holder</div>
+                                <div className="font-bold text-slate-800">{userInfo.name}</div>
                             </div>
+                            <div className="p-4 bg-slate-50 rounded-2xl">
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</div>
+                                <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
+                                    <CheckCircle2 className="w-4 h-4" /> KYC Verified (PAN: {userInfo.panCard})
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-400 font-medium pt-2">
+                               Note: If you need to update your bank details, please contact our support team.
+                            </p>
                         </div>
-                        <p className="text-xs text-slate-400 font-medium pt-2">
-                           Note: If you need to update your bank details, please contact our support team.
-                        </p>
                     </div>
                 </div>
-            </div>
+            )}
 
         </div>
     );

@@ -4,7 +4,7 @@ import {
     Users, IndianRupee, TrendingUp, Search, 
     Filter, RefreshCcw, Edit, ExternalLink,
     CheckCircle2, AlertCircle, Loader2, ArrowUpRight,
-    Briefcase, ShieldCheck, Phone, Mail
+    Briefcase, ShieldCheck, Phone, Mail, X
 } from 'lucide-react';
 
 const ReferralPartnersModule = ({ config, orders }) => {

@@ -155,8 +155,8 @@ const PartnerDashboard = () => {
                 {/* Content Area */}
                 <div className="flex-grow overflow-y-auto custom-scrollbar bg-slate-50/50">
                     <div className="max-w-[1400px] mx-auto p-6 lg:p-10">
-                        {activeTab === 'Overview' && <PartnerOverviewView userInfo={userInfo} />}
-                        {activeTab === 'Referrals' && <PartnerOverviewView userInfo={userInfo} />}
+                        {activeTab === 'Overview' && <PartnerOverviewView userInfo={userInfo} mode="overview" />}
+                        {activeTab === 'Referrals' && <PartnerOverviewView userInfo={userInfo} mode="referrals" />}
                         {activeTab === 'Settings' && (
                             <PartnerSettingsView 
                                 userInfo={userInfo} 
