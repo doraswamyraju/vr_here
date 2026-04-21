@@ -26,9 +26,18 @@ const orderSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    price: {
+        price: {
         type: Number,
         required: true
+    },
+    referralPartner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    partnerCommissionAmount: {
+        type: Number,
+        default: 0
     },
     paymentId: {
         type: String,

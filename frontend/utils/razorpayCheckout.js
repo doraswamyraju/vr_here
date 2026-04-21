@@ -42,7 +42,8 @@ export const launchRazorpayCheckout = async ({
       amount: selectedPlan.price,
       customerName: formData.name,
       email: formData.email,
-      phone: formData.phone
+      phone: formData.phone,
+      referralCode: formData.referralCode || ''
     };
 
     const { data: checkoutOrder } = await axios.post(
@@ -91,7 +92,8 @@ export const launchRazorpayCheckout = async ({
       },
       notes: {
         serviceName,
-        packageName: selectedPlan.name
+        packageName: selectedPlan.name,
+        referralCode: formData.referralCode || ''
       },
       theme: {
         color: '#DC2626'

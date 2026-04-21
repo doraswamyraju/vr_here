@@ -110,6 +110,72 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Register a new referral partner
+// @route   POST /api/auth/register-partner
+// @access  Public
+const registerPartner = asyncHandler(async (req, res) => {
+    const { name, email, password, phone, panCard } = req.body;
+
+    if (!name || !email || !password || !phone || !panCard) {
+        res.status(400);
+        throw new Error('Name, Email, Password, Phone, and PAN Card are strictly required for partners.');
+    }
+
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+        res.status(400);
+        throw new Error('Email already registered');
+    }
+
+    const phoneExists = await User.findOne({ phone, role: 'partner' });
+    if (phoneExists) {
+        res.status(400);
+        throw new Error('This phone number is already registered as a partner');
+    }
+
+    const panExists = await User.findOne({ panCard, role: 'partner' });
+    if (panExists) {
+        res.status(400);
+        throw new Error('This PAN Card is already registered to a partner');
+    }
+
+    const user = await User.create({
+        name,
+        email,
+        password,
+        phone,
+        panCard,
+        role: 'partner',
+        isActive: true,
+        commissionPercentage: 10
+    });
+
+    if (user) {
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'VR HERE Partner Program Registration',
+                message: `<h1>Welcome ${user.name}!</h1><p>Thank you for joining our Referral Partner Program. You can now start earning commissions by sharing your referral code: <b>${user.phone}</b>.</p>`
+            });
+        } catch (error) {
+            console.error('Email send failure:', error);
+        }
+
+        res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            isActive: user.isActive,
+            token: generateToken(user._id)
+        });
+    } else {
+        res.status(400);
+        throw new Error('Invalid partner data');
+    }
+});
+
 // @desc    Forgot Password
 // @route   POST /api/auth/forgotpassword
 // @access  Public
@@ -262,7 +328,7 @@ const createUserByAdmin = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/users/:id
 // @access  Private/Admin
 const updateUserByAdmin = asyncHandler(async (req, res) => {
-    const { name, email, phone, role, isActive } = req.body;
+    const { name, email, phone, role, isActive, commissionPercentage, panCard } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -275,6 +341,8 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
     if (phone !== undefined) user.phone = phone;
     if (role !== undefined) user.role = role;
     if (isActive !== undefined) user.isActive = Boolean(isActive);
+    if (commissionPercentage !== undefined) user.commissionPercentage = Number(commissionPercentage);
+    if (panCard !== undefined) user.panCard = panCard;
 
     await user.save();
 
@@ -287,6 +355,8 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
             phone: user.phone,
             role: user.role,
             isActive: user.isActive,
+            commissionPercentage: user.commissionPercentage,
+            panCard: user.panCard,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         }
@@ -362,6 +432,7 @@ const deleteUserByAdmin = asyncHandler(async (req, res) => {
 export {
     authUser,
     registerUser,
+    registerPartner,
     forgotPassword,
     resetPassword,
     getUserProfile,

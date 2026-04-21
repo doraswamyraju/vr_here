@@ -21,8 +21,23 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'employee', 'client'],
+        enum: ['admin', 'employee', 'client', 'partner'],
         default: 'client'
+    },
+    panCard: {
+        type: String,
+        sparse: true, // Only unique for non-null values
+        default: null
+    },
+    commissionPercentage: {
+        type: Number,
+        default: 10
+    },
+    bankDetails: {
+        accountName: { type: String, default: '' },
+        accountNumber: { type: String, default: '' },
+        ifscCode: { type: String, default: '' },
+        bankName: { type: String, default: '' }
     },
     isActive: {
         type: Boolean,

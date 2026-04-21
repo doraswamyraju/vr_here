@@ -3,6 +3,7 @@ const router = express.Router();
 import {
     authUser,
     registerUser,
+    registerPartner,
     forgotPassword,
     resetPassword,
     getUserProfile,
@@ -17,6 +18,7 @@ import {
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 router.post('/register', registerUser);
+router.post('/register-partner', registerPartner);
 router.post('/login', authUser);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resetToken', resetPassword);

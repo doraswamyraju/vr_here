@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, CreditCard, RefreshCw, Loader2, ShieldCheck } from 'lucide-react';
+import { X, CreditCard, RefreshCw, Loader2, ShieldCheck, Gift } from 'lucide-react';
 
 const ConsultationPaymentModal = ({
   isOpen,
@@ -16,7 +16,8 @@ const ConsultationPaymentModal = ({
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    email: ''
+    email: '',
+    referralCode: ''
   });
   const [termsAccepted, setTermsAccepted] = useState(initialTermsAccepted);
   const hasInitializedForOpen = useRef(false);
@@ -32,7 +33,8 @@ const ConsultationPaymentModal = ({
       setFormData({
         name: initialFormData?.name || '',
         phone: initialFormData?.phone || '',
-        email: initialFormData?.email || ''
+        email: initialFormData?.email || '',
+        referralCode: ''
       });
       setTermsAccepted(Boolean(initialTermsAccepted));
       hasInitializedForOpen.current = true;
@@ -122,6 +124,21 @@ const ConsultationPaymentModal = ({
               placeholder="Email Address"
             />
 
+            {/* Referral Code Field */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <Gift className="w-4 h-4 text-slate-400" />
+              </div>
+              <input
+                name="referralCode"
+                value={formData.referralCode}
+                onChange={handleInputChange}
+                type="tel"
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-dashed border-gray-300 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-shadow hover:shadow-inner text-sm"
+                placeholder="Referral Code (Partner Mobile No.) — Optional"
+              />
+            </div>
+
             <label className="flex items-start gap-2 text-xs text-slate-600">
               <input
                 type="checkbox"
@@ -130,7 +147,7 @@ const ConsultationPaymentModal = ({
                 className="mt-0.5"
               />
               <span>
-                I agree to the <a href="/terms-and-conditions" target="_blank" rel="noreferrer" className="text-red-600 font-bold hover:underline">Terms & Conditions</a>.
+                I agree to the <a href="/terms-and-conditions" target="_blank" rel="noreferrer" className="text-red-600 font-bold hover:underline">Terms &amp; Conditions</a>.
               </span>
             </label>
 

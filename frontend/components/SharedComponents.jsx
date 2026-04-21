@@ -729,6 +729,7 @@ export const SharedFooter = () => (
             <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
                 <p>&copy; {new Date().getFullYear()} VR HERE Business Management Solutions. All rights reserved.</p>
                 <div className="flex space-x-6">
+                    <a href="/partner/signup" className="hover:text-red-500 transition font-medium">Become a Partner</a>
                     <a href="#" className="hover:text-white transition">Privacy Policy</a>
                     <a href="/terms-and-conditions" className="hover:text-white transition">Terms & Conditions</a>
                 </div>

@@ -22,6 +22,8 @@ import AllServicesPage from './AllServices';
 import TermsConditionsPage from './TermsConditions';
 import CompaniesComplianceScheme from './CompaniesComplianceScheme';
 import AccountingServices from './AccountingServices';
+import PartnerSignupPage from './PartnerSignup';
+import PartnerDashboardPage from './partner';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -54,6 +56,7 @@ const App = () => {
       <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
       <Route path="/compliance-scheme-2026" element={<CompaniesComplianceScheme />} />
       <Route path="/accounting-services" element={<AccountingServices />} />
+      <Route path="/partner/signup" element={<PartnerSignupPage />} />
 
       <Route path="/contact" element={<ContactUsPage />} />
 
@@ -87,6 +90,16 @@ const App = () => {
         element={
           <ProtectedRoute allowedRoles={['client', 'admin']}>
             <CustomerPage />
+          </ProtectedRoute>
+        }
+      />
+
+      
+      <Route
+        path="/partner-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['partner', 'admin']}>
+            <PartnerDashboardPage />
           </ProtectedRoute>
         }
       />

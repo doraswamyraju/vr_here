@@ -171,7 +171,8 @@ export const createCheckoutOrder = async (req, res) => {
             amount,
             customerName = '',
             email = '',
-            phone = ''
+            phone = '',
+            referralCode = ''
         } = req.body;
 
         const parsedAmount = Number(amount);
@@ -190,7 +191,8 @@ export const createCheckoutOrder = async (req, res) => {
                 packageName,
                 customerName,
                 email,
-                phone
+                phone,
+                referralCode
             }
         });
 
@@ -222,7 +224,8 @@ export const verifyPayment = async (req, res) => {
             amount,
             customerName = '',
             email = '',
-            phone = ''
+            phone = '',
+            referralCode = ''
         } = req.body;
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -274,6 +277,17 @@ export const verifyPayment = async (req, res) => {
         const resolvedEmail = email || customerUser?.email || req.user?.email || '';
         const resolvedPhone = phone || customerUser?.phone || req.user?.phone || '';
 
+        let referralPartnerId = null;
+        let partnerCommissionAmount = 0;
+
+        if (referralCode) {
+            const partner = await User.findOne({ phone: referralCode, role: 'partner' });
+            if (partner) {
+                referralPartnerId = partner._id;
+                partnerCommissionAmount = Math.round(parsedAmount * (partner.commissionPercentage || 10) / 100);
+            }
+        }
+
         const createdOrder = await Order.create({
             user: customerUser?._id || req.user?._id || null,
             clientName: resolvedCustomerName,
@@ -285,7 +299,9 @@ export const verifyPayment = async (req, res) => {
             paymentId: razorpay_payment_id,
             razorpayOrderId: razorpay_order_id,
             paymentSignature: razorpay_signature,
-            paymentStatus: 'Paid'
+            paymentStatus: 'Paid',
+            referralPartner: referralPartnerId,
+            partnerCommissionAmount
         });
 
         const payment = await Payment.create({

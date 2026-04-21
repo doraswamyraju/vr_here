@@ -17,7 +17,8 @@ import {
   BookOpen,
   MessageSquare,
   RefreshCcw,
-  Trash2
+  Trash2,
+  TrendingUp
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +34,7 @@ import NewTodoModal from './components/admin/modals/NewTodoModal';
 import TodoModule from './components/admin/TodoModule';
 import RecurringServicesModule from './components/admin/RecurringServicesModule';
 import MakeRecurringModal from './components/admin/modals/MakeRecurringModal';
+import ReferralPartnersModule from './components/admin/referrals/ReferralPartnersModule';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -263,6 +265,7 @@ function AdminApp() {
     { key: 'Knowledge', label: 'Knowledge Base', icon: BookOpen },
     { key: 'Support', label: 'Support Inbox', icon: MessageSquare },
     { key: 'Services', label: 'Services Master', icon: FileText },
+    { key: 'Referrals', label: 'Referral Partners', icon: TrendingUp },
     { key: 'Recurring', label: 'Recurring Hub', icon: RefreshCcw },
     { key: 'Settings', label: 'Settings', icon: Settings }
   ];
@@ -326,6 +329,7 @@ function AdminApp() {
     if (activeTab === 'Knowledge') return <DummyView title="Knowledge Base" />;
     if (activeTab === 'Support') return <DummyView title="Support Inbox" />;
     if (activeTab === 'Services') return <ServicesMasterView token={userInfo?.token} />;
+    if (activeTab === 'Referrals') return <ReferralPartnersModule config={config} orders={orders} />;
     if (activeTab === 'Recurring') return (
       <RecurringServicesModule 
         token={userInfo?.token} 
