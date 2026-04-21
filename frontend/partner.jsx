@@ -5,6 +5,7 @@ import {
     Bell, User as UserIcon, Settings, ChevronRight
 } from 'lucide-react';
 import PartnerOverviewView from './components/partner/PartnerOverviewView';
+import PartnerSettingsView from './components/partner/PartnerSettingsView';
 
 const PartnerDashboard = () => {
     const navigate = useNavigate();
@@ -157,11 +158,10 @@ const PartnerDashboard = () => {
                         {activeTab === 'Overview' && <PartnerOverviewView userInfo={userInfo} />}
                         {activeTab === 'Referrals' && <PartnerOverviewView userInfo={userInfo} />}
                         {activeTab === 'Settings' && (
-                            <div className="p-12 text-center bg-white rounded-[32px] border border-slate-100 shadow-sm">
-                                <Settings className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                                <h3 className="text-xl font-bold text-slate-900">Settings Module</h3>
-                                <p className="text-slate-500 mt-1">Account security and profile management coming soon.</p>
-                            </div>
+                            <PartnerSettingsView 
+                                userInfo={userInfo} 
+                                onProfileUpdate={(updated) => setUserInfo(updated)} 
+                            />
                         )}
                     </div>
                 </div>
