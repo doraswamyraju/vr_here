@@ -29,6 +29,7 @@ const UsersFilters = ({
         <option value="admin">Admin</option>
         <option value="employee">Employee</option>
         <option value="client">Client</option>
+        <option value="partner">Partner</option>
       </select>
     </div>
     <p className="text-xs text-slate-500">

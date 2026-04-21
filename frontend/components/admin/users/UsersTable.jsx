@@ -41,6 +41,7 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
                     <option value="employee">employee</option>
                     <option value="client">client</option>
                     <option value="admin">admin</option>
+                    <option value="partner">partner</option>
                   </select>
                 ) : user.role}
               </td>
