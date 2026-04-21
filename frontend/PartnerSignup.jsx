@@ -6,7 +6,7 @@ import {
     ArrowRight, CheckCircle2, AlertCircle, Loader2,
     Users, Briefcase, TrendingUp
 } from 'lucide-react';
-import { SharedHeader, SharedFooter } from '../components/SharedComponents';
+import { SharedHeader, SharedFooter } from './components/SharedComponents';
 
 const PartnerSignup = () => {
     const navigate = useNavigate();
