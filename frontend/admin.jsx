@@ -35,6 +35,7 @@ import TodoModule from './components/admin/TodoModule';
 import RecurringServicesModule from './components/admin/RecurringServicesModule';
 import MakeRecurringModal from './components/admin/modals/MakeRecurringModal';
 import ReferralPartnersModule from './components/admin/referrals/ReferralPartnersModule';
+import FinanceModule from './components/admin/finance/FinanceModule';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -322,7 +323,7 @@ function AdminApp() {
         }}
       />
     );
-    if (activeTab === 'Finance') return <DummyView title="Finance" />;
+    if (activeTab === 'Finance') return <FinanceModule token={userInfo?.token} />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;
     if (activeTab === 'Notifications') return <DummyView title="Notifications" />;
     if (activeTab === 'CRM') return <DummyView title="CRM Pipeline" />;

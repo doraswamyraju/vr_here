@@ -57,6 +57,7 @@ import contactRoutes from './routes/contactRoutes.js';
 import todoRoutes from './routes/todoRoutes.js';
 import recurringRoutes from './routes/recurringRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
+import financeRoutes from './routes/financeRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 
 // Routes
@@ -71,6 +72,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/recurring', recurringRoutes);
 app.use('/api/partner', partnerRoutes);
+app.use('/api/finance', financeRoutes);
 
 // Serve Frontend in Production
 

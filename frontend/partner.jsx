@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, Users, LogOut, Menu, X, 
-    Bell, User as UserIcon, Settings, ChevronRight
+    Bell, User as UserIcon, Settings, ChevronRight, DollarSign
 } from 'lucide-react';
 import PartnerOverviewView from './components/partner/PartnerOverviewView';
 import PartnerSettingsView from './components/partner/PartnerSettingsView';
+import CustomerFinanceView from './components/customer/CustomerFinanceView';
 
 const PartnerDashboard = () => {
     const navigate = useNavigate();
@@ -36,6 +37,7 @@ const PartnerDashboard = () => {
     const sidebarItems = [
         { name: 'Overview', icon: LayoutDashboard },
         { name: 'Referrals', icon: Users },
+        { name: 'Earnings', icon: DollarSign },
         { name: 'Settings', icon: Settings }
     ];
 
@@ -157,6 +159,7 @@ const PartnerDashboard = () => {
                     <div className="max-w-[1400px] mx-auto p-6 lg:p-10">
                         {activeTab === 'Overview' && <PartnerOverviewView userInfo={userInfo} mode="overview" />}
                         {activeTab === 'Referrals' && <PartnerOverviewView userInfo={userInfo} mode="referrals" />}
+                        {activeTab === 'Earnings' && <CustomerFinanceView token={userInfo?.token} />}
                         {activeTab === 'Settings' && (
                             <PartnerSettingsView 
                                 userInfo={userInfo} 

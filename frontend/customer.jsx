@@ -16,6 +16,7 @@ import AccountsView from './components/customer/AccountsView';
 import SupportView from './components/customer/SupportView';
 import AccountingServicesView from './components/customer/AccountingServicesView';
 import ServiceDetailView from './components/customer/ServiceDetailView';
+import CustomerFinanceView from './components/customer/CustomerFinanceView';
 import { SERVICE_CATALOG } from './data/serviceCatalog';
 
 export default function CustomerApp() {
@@ -117,6 +118,7 @@ export default function CustomerApp() {
             />
          );
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
+         case 'Invoices': return <CustomerFinanceView token={userInfo?.token} />;
          case 'Account': return <AccountsView orders={orders} payments={payments} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: 
@@ -131,9 +133,10 @@ export default function CustomerApp() {
       { id: 'Home', icon: LayoutDashboard, label: 'Home' },
       { id: 'Services', icon: Briefcase, label: 'Services' },
       { id: 'Orders', icon: Package, label: 'Orders' },
+      { id: 'Invoices', icon: Wallet, label: 'Invoices' },
       { id: 'Documents', icon: FileText, label: 'Vault' },
       { id: 'New', icon: MessageSquare, label: 'Support' },
-      { id: 'Account', icon: Wallet, label: 'Account' },
+      { id: 'Account', icon: User, label: 'Account' },
    ];
 
    return (

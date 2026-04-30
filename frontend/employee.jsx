@@ -15,6 +15,7 @@ import SupportModule from './components/employee/SupportModule';
 import CommercialsModule from './components/employee/CommercialsModule';
 import NotificationsModule from './components/employee/NotificationsModule';
 import SecurityModule from './components/employee/SecurityModule';
+import FinanceModule from './components/admin/finance/FinanceModule';
 import { dummyNotifications, dummyTickets } from './components/employee/mockData';
 
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
@@ -447,6 +448,8 @@ const EmployeeApp = () => {
         return <SupportModule tickets={tickets} />;
       case 'commercials':
         return <CommercialsModule selectedOrder={selectedOrder} />;
+      case 'finance':
+        return <FinanceModule token={userInfo?.token} />;
       case 'notifications':
         return <NotificationsModule notifications={notifications} />;
       case 'security':
