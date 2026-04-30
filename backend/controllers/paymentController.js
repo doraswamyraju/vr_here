@@ -282,7 +282,7 @@ export const verifyPayment = async (req, res) => {
 
         if (referralCode) {
             const partner = await User.findOne({ phone: referralCode, role: 'partner' });
-            if (partner) {
+            if (partner && partner.isActive) {
                 referralPartnerId = partner._id;
                 partnerCommissionAmount = Math.round(parsedAmount * (partner.commissionPercentage || 10) / 100);
             }

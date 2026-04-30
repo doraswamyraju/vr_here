@@ -48,6 +48,15 @@ const ReferralPartnersModule = ({ config, orders }) => {
         }
     };
 
+    const handleToggleActive = async (partnerId) => {
+        try {
+            const { data } = await axios.patch(`/api/auth/users/${partnerId}/toggle-active`, {}, config);
+            setPartners(partners.map(p => p._id === partnerId ? { ...p, isActive: data.user.isActive } : p));
+        } catch (err) {
+            alert('Failed to update partner status');
+        }
+    };
+
     // Helper to calculate partner-specific stats from orders
     const getPartnerStats = (partnerId) => {
         const partnerOrders = orders.filter(o => o.referralPartner && (o.referralPartner._id === partnerId || o.referralPartner === partnerId));
@@ -97,7 +106,12 @@ const ReferralPartnersModule = ({ config, orders }) => {
                     </button>
                     <div className="px-5 py-3 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200 text-sm font-black flex items-center gap-2">
                         <Users className="w-4 h-4 text-red-500" />
-                        {partners.length} Active Partners
+                        {partners.filter(p => p.isActive).length} Active Partners
+                        {partners.filter(p => !p.isActive).length > 0 && (
+                            <span className="ml-2 px-2 py-0.5 bg-red-600 rounded-full text-[10px]">
+                                {partners.filter(p => !p.isActive).length} Pending
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -130,6 +144,7 @@ const ReferralPartnersModule = ({ config, orders }) => {
                         <thead>
                             <tr className="bg-slate-50/50">
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Partner Details</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Status</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Commission %</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Referrals</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Revenue Brought</th>
@@ -144,17 +159,32 @@ const ReferralPartnersModule = ({ config, orders }) => {
                                     <tr key={partner._id} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-lg shrink-0">
+                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 ${partner.isActive ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
                                                     {partner.name.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <div className="font-black text-slate-900 group-hover:text-red-600 transition-colors">{partner.name}</div>
+                                                    <div className={`font-black transition-colors ${partner.isActive ? 'text-slate-900 group-hover:text-red-600' : 'text-slate-400'}`}>
+                                                        {partner.name}
+                                                        {!partner.isActive && <span className="ml-2 text-[9px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase tracking-widest">Pending Validation</span>}
+                                                    </div>
                                                     <div className="flex items-center gap-3 mt-1 text-[11px] font-bold text-slate-400">
                                                         <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {partner.phone}</span>
                                                         <span className="flex items-center gap-1 uppercase"><ShieldCheck className="w-3 h-3" /> {partner.panCard || 'NO-KYC'}</span>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-center">
+                                            <button 
+                                                onClick={() => handleToggleActive(partner._id)}
+                                                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${
+                                                    partner.isActive 
+                                                    ? 'bg-green-50 text-green-600 border-green-100 hover:bg-green-100' 
+                                                    : 'bg-red-600 text-white border-red-700 hover:bg-red-700 shadow-lg shadow-red-200'
+                                                }`}
+                                            >
+                                                {partner.isActive ? 'Active' : 'Validate Account'}
+                                            </button>
                                         </td>
                                         <td className="px-8 py-6 text-center">
                                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-black border border-red-100">

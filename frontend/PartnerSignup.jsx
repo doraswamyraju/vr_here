@@ -63,9 +63,10 @@ const PartnerSignup = () => {
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <CheckCircle2 className="w-10 h-10 text-green-600" />
                         </div>
-                        <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Welcome Partner!</h2>
+                        <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Application Received!</h2>
                         <p className="text-slate-600 mb-8 leading-relaxed">
-                            Your referral partner account has been created successfully. 
+                            Your referral partner application has been submitted successfully. 
+                            Our team will review your KYC details and activate your account within 24-48 hours.
                             Redirecting you to login...
                         </p>
                         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">

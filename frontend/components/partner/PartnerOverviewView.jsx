@@ -116,12 +116,36 @@ const PartnerOverviewView = ({ userInfo, mode = 'overview' }) => {
                     >
                         <RefreshCw className="w-5 h-5" />
                     </button>
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-200 text-sm font-bold">
-                        <CheckCircle2 className="w-4 h-4 text-green-400" />
-                        Active Partner
+                    <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg shadow-slate-200 text-sm font-bold ${userInfo.isActive ? 'bg-slate-900 text-white' : 'bg-red-600 text-white animate-pulse'}`}>
+                        {userInfo.isActive ? (
+                            <><CheckCircle2 className="w-4 h-4 text-green-400" /> Active Partner</>
+                        ) : (
+                            <><Clock className="w-4 h-4 text-white" /> Pending Validation</>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Validation Banner */}
+            {!userInfo.isActive && (
+                <div className="bg-gradient-to-r from-red-600 to-red-800 p-8 rounded-[32px] text-white shadow-xl shadow-red-100 flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 duration-700">
+                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                        <AlertCircle className="w-8 h-8" />
+                    </div>
+                    <div className="flex-grow text-center md:text-left">
+                        <h2 className="text-xl font-black tracking-tight uppercase">Account Pending Validation</h2>
+                        <p className="text-red-100 font-medium mt-1 leading-relaxed">
+                            Welcome to VR HERE Partner Program! Your account is currently under KYC review. 
+                            You can explore the dashboard, but you will start earning commissions only after your account is validated by our admin team.
+                        </p>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-3">
+                        <div className="px-4 py-2 bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest border border-white/20">
+                            24-48 Hours ETA
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Stats Grid */}
             {mode === 'overview' && (
@@ -263,8 +287,12 @@ const PartnerOverviewView = ({ userInfo, mode = 'overview' }) => {
                             </div>
                             <div className="p-4 bg-slate-50 rounded-2xl">
                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</div>
-                                <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
-                                    <CheckCircle2 className="w-4 h-4" /> KYC Verified (PAN: {userInfo.panCard})
+                                <div className={`flex items-center gap-2 font-bold text-sm ${userInfo.isActive ? 'text-green-600' : 'text-amber-600'}`}>
+                                    {userInfo.isActive ? (
+                                        <><CheckCircle2 className="w-4 h-4" /> KYC Verified (PAN: {userInfo.panCard})</>
+                                    ) : (
+                                        <><Clock className="w-4 h-4" /> KYC Pending (PAN: {userInfo.panCard})</>
+                                    )}
                                 </div>
                             </div>
                             <p className="text-xs text-slate-400 font-medium pt-2">

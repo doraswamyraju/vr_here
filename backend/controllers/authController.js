@@ -50,7 +50,10 @@ const authUser = asyncHandler(async (req, res) => {
 
     if (!user.isActive) {
         res.status(403);
-        throw new Error('User account is inactive. Contact admin.');
+        const message = user.role === 'partner' 
+            ? 'Your partner account is pending validation. Please wait for admin approval.' 
+            : 'User account is inactive. Contact admin.';
+        throw new Error(message);
     }
 
     res.json({
@@ -146,7 +149,7 @@ const registerPartner = asyncHandler(async (req, res) => {
         phone,
         panCard,
         role: 'partner',
-        isActive: true,
+        isActive: false, // Changed to false for validation workflow
         commissionPercentage: 10
     });
 
@@ -154,8 +157,14 @@ const registerPartner = asyncHandler(async (req, res) => {
         try {
             await sendEmail({
                 email: user.email,
-                subject: 'VR HERE Partner Program Registration',
-                message: `<h1>Welcome ${user.name}!</h1><p>Thank you for joining our Referral Partner Program. You can now start earning commissions by sharing your referral code: <b>${user.phone}</b>.</p>`
+                subject: 'VR HERE Partner Program Registration - Pending Validation',
+                message: `
+                    <h1>Welcome ${user.name}!</h1>
+                    <p>Thank you for joining our Referral Partner Program.</p>
+                    <p><b>Status: Pending Validation</b></p>
+                    <p>Our team is currently reviewing your application and KYC details. You will receive another notification once your account is activated.</p>
+                    <p>In the meantime, you can log in to your dashboard to complete your bank details, but your referral code (<b>${user.phone}</b>) will only be active after validation.</p>
+                `
             });
         } catch (error) {
             console.error('Email send failure:', error);
