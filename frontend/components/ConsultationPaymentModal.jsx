@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, CreditCard, RefreshCw, Loader2, ShieldCheck, Gift } from 'lucide-react';
+import axios from 'axios';
+import { X, CreditCard, RefreshCw, Loader2, ShieldCheck, Gift, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const ConsultationPaymentModal = ({
   isOpen,
@@ -20,6 +21,7 @@ const ConsultationPaymentModal = ({
     referralCode: ''
   });
   const [termsAccepted, setTermsAccepted] = useState(initialTermsAccepted);
+  const [validationStatus, setValidationStatus] = useState({ loading: false, error: '', success: '', partnerName: '' });
   const hasInitializedForOpen = useRef(false);
 
   useEffect(() => {
@@ -37,6 +39,7 @@ const ConsultationPaymentModal = ({
         referralCode: ''
       });
       setTermsAccepted(Boolean(initialTermsAccepted));
+      setValidationStatus({ loading: false, error: '', success: '', partnerName: '' });
       hasInitializedForOpen.current = true;
     }
   }, [isOpen, initialFormData, initialTermsAccepted]);
@@ -49,10 +52,39 @@ const ConsultationPaymentModal = ({
       ...prev,
       [name]: value
     }));
+    if (name === 'referralCode') {
+      setValidationStatus({ loading: false, error: '', success: '', partnerName: '' });
+    }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    
+    // Validate Referral Code if present
+    if (formData.referralCode && formData.referralCode.length >= 10) {
+      setValidationStatus({ ...validationStatus, loading: true, error: '' });
+      try {
+        const { data } = await axios.get(`/api/partner/validate/${formData.referralCode}`);
+        setValidationStatus({ loading: false, error: '', success: 'Valid Partner!', partnerName: data.partnerName });
+        
+        // Brief delay to show success before proceeding
+        setTimeout(() => {
+          onSubmit({
+            formData,
+            termsAccepted
+          });
+        }, 800);
+        return;
+      } catch (err) {
+        setValidationStatus({ 
+          loading: false, 
+          success: '', 
+          error: err.response?.data?.message || 'Invalid referral code' 
+        });
+        return;
+      }
+    }
+
     onSubmit({
       formData,
       termsAccepted
@@ -134,10 +166,33 @@ const ConsultationPaymentModal = ({
                 value={formData.referralCode}
                 onChange={handleInputChange}
                 type="tel"
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-dashed border-gray-300 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-shadow hover:shadow-inner text-sm"
+                className={`w-full pl-10 pr-4 py-3 rounded-lg border border-dashed focus:ring-2 outline-none transition-shadow hover:shadow-inner text-sm ${
+                  validationStatus.error 
+                    ? 'border-red-500 bg-red-50 focus:ring-red-200' 
+                    : validationStatus.success 
+                      ? 'border-green-500 bg-green-50 focus:ring-green-200' 
+                      : 'border-gray-300 focus:ring-indigo-400 focus:border-indigo-400'
+                }`}
                 placeholder="Referral Code (Partner Mobile No.) — Optional"
               />
+              {validationStatus.loading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                </div>
+              )}
             </div>
+
+            {validationStatus.error && (
+              <p className="text-[10px] text-red-600 font-bold flex items-center px-1 animate-shake">
+                <AlertCircle className="w-3 h-3 mr-1" /> {validationStatus.error}
+              </p>
+            )}
+
+            {validationStatus.success && (
+              <p className="text-[10px] text-green-700 font-bold flex items-center px-1 animate-in fade-in">
+                <CheckCircle2 className="w-3 h-3 mr-1" /> Verified Partner: {validationStatus.partnerName}
+              </p>
+            )}
 
             <label className="flex items-start gap-2 text-xs text-slate-600">
               <input

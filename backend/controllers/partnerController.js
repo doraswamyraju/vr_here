@@ -68,8 +68,38 @@ const updatePartnerProfile = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Validate referral code (phone number)
+// @route   GET /api/partner/validate/:code
+// @access  Public
+const validateReferralCode = asyncHandler(async (req, res) => {
+    const { code } = req.params;
+    
+    if (!code) {
+        res.status(400);
+        throw new Error('Referral code is required');
+    }
+
+    const partner = await User.findOne({ phone: code, role: 'partner' });
+
+    if (!partner) {
+        res.status(404);
+        throw new Error('Invalid referral code. No partner found with this number.');
+    }
+
+    if (!partner.isActive) {
+        res.status(403);
+        throw new Error('This referral partner account is pending validation and cannot be used yet.');
+    }
+
+    res.json({
+        success: true,
+        partnerName: partner.name
+    });
+});
+
 export { 
     getPartnerOrders,
     getPartnerProfile,
-    updatePartnerProfile
+    updatePartnerProfile,
+    validateReferralCode
 };
