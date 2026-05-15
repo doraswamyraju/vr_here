@@ -18,6 +18,8 @@ const OrderRequirementsTab = ({
   const [newDesc, setNewDesc] = useState('');
   const [newType, setNewType] = useState('Document');
   const [manualLoading, setManualLoading] = useState(false);
+  const [quickRequirementText, setQuickRequirementText] = useState('');
+  const [quickRequirementType, setQuickRequirementType] = useState('Detail');
 
   const requirements = selectedOrder?.customerRequirements || [];
 
@@ -35,6 +37,21 @@ const OrderRequirementsTab = ({
       alert(error?.response?.data?.message || 'Unable to import requirements from this workbook.');
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleRaise = async () => {
+    if (!quickRequirementText.trim()) return;
+    try {
+      await onRaiseRequirement({
+        title: quickRequirementText,
+        type: quickRequirementType,
+        isAdditional: true
+      });
+      setQuickRequirementText('');
+      setQuickRequirementType('Detail');
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to raise requirement.');
     }
   };
 
