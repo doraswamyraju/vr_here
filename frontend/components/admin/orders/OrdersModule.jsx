@@ -79,8 +79,17 @@ const OrdersModule = ({
   onAddInvoice,
   onUpdateInvoiceStatus,
   onOpenRecurringModal,
-  onAddTask
+  onAddTask,
+  orderFilter = 'All',
+  setOrderFilter
 }) => {
+  const filteredOrders = useMemo(() => {
+    if (orderFilter === 'All') return orders;
+    if (orderFilter === 'Pending') return orders.filter(o => o.status !== 'Completed');
+    if (orderFilter === 'Completed') return orders.filter(o => o.status === 'Completed');
+    return orders.filter(o => o.status === orderFilter);
+  }, [orders, orderFilter]);
+
   const selectedOrder = useMemo(() => orders.find((order) => order._id === selectedOrderId) || null, [orders, selectedOrderId]);
 
   const openOrder = (order) => {
@@ -89,16 +98,28 @@ const OrdersModule = ({
   };
 
   const topActions = (
-    <div className="inline-flex rounded-lg border border-slate-200 bg-white overflow-hidden">
-      <button onClick={() => setOrdersViewMode('list')} className={`px-3 py-2 text-sm flex items-center gap-1 ${ordersViewMode === 'list' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600'}`}>
-        <List size={14} /> List
-      </button>
-      <button onClick={() => setOrdersViewMode('board')} className={`px-3 py-2 text-sm flex items-center gap-1 ${ordersViewMode === 'board' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600'}`}>
-        <Kanban size={14} /> Board
-      </button>
-      <button onClick={() => exportOrdersToWorkbook(orders)} className="px-3 py-2 text-sm flex items-center gap-1 text-slate-600 border-l border-slate-200">
-        <FileSpreadsheet size={14} /> Export
-      </button>
+    <div className="flex flex-wrap items-center gap-3">
+      <select 
+        value={orderFilter} 
+        onChange={(e) => setOrderFilter(e.target.value)}
+        className="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white font-medium text-slate-600 focus:ring-2 focus:ring-indigo-500/20"
+      >
+        <option value="All">All Statuses</option>
+        <option value="Pending">All Pending</option>
+        {ORDER_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+        <option value="Completed">Completed</option>
+      </select>
+      <div className="inline-flex rounded-lg border border-slate-200 bg-white overflow-hidden shadow-sm">
+        <button onClick={() => setOrdersViewMode('list')} className={`px-3 py-2 text-sm flex items-center gap-1 transition-colors ${ordersViewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+          <List size={14} /> List
+        </button>
+        <button onClick={() => setOrdersViewMode('board')} className={`px-3 py-2 text-sm flex items-center gap-1 transition-colors ${ordersViewMode === 'board' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+          <Kanban size={14} /> Board
+        </button>
+        <button onClick={() => exportOrdersToWorkbook(filteredOrders)} className="px-3 py-2 text-sm flex items-center gap-1 text-slate-600 border-l border-slate-200 hover:bg-slate-50">
+          <FileSpreadsheet size={14} /> Export
+        </button>
+      </div>
     </div>
   );
 
@@ -116,7 +137,7 @@ const OrdersModule = ({
 
       {!selectedOrder && ordersViewMode === 'list' && (
         <OrdersListTable
-          orders={orders}
+          orders={filteredOrders}
           onOpen={openOrder}
           onQuickUpdate={onQuickUpdateOrder}
           onDelete={onDeleteOrder}
@@ -124,7 +145,7 @@ const OrdersModule = ({
       )}
 
       {!selectedOrder && ordersViewMode === 'board' && (
-        <OrdersBoardView orders={orders} onOpen={openOrder} />
+        <OrdersBoardView orders={filteredOrders} onOpen={openOrder} />
       )}
 
       {selectedOrder && (
