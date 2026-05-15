@@ -18,6 +18,11 @@ import {
   Area
 } from 'recharts';
 
+const getDateKey = (date = new Date()) => {
+  const d = new Date(date);
+  return d.toISOString().split('T')[0];
+};
+
 const EmployeeAnalysisModule = ({ token, users }) => {
   const [selectedId, setSelectedId] = useState('');
   const [dateRange, setDateRange] = useState({
