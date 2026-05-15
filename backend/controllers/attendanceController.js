@@ -175,10 +175,92 @@ const getAdminAttendanceSummary = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Get detailed analysis for a specific employee
+// @route   GET /api/attendance/admin/employee/:id
+// @access  Private/Admin
+const getEmployeeAnalysis = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { from, to } = parseDateRange(req.query);
+
+    // 1. Get Attendance Sessions
+    const sessions = await Attendance.find({
+        employee: id,
+        clockInAt: { $gte: from, $lte: to }
+    }).sort({ clockInAt: 1 });
+
+    // 2. Get Task Time Logs
+    const orders = await Order.find({
+        'tasks.timeLogs.employee': id,
+        'tasks.timeLogs.loggedAt': { $gte: from, $lte: to }
+    }).select('serviceName tasks');
+
+    const taskLogs = [];
+    orders.forEach(order => {
+        order.tasks.forEach(task => {
+            task.timeLogs.forEach(log => {
+                if (log.employee?.toString() === id && log.loggedAt >= from && log.loggedAt <= to) {
+                    taskLogs.push({
+                        orderId: order._id,
+                        serviceName: order.serviceName,
+                        taskId: task._id,
+                        taskTitle: task.title,
+                        minutes: log.minutes,
+                        notes: log.notes,
+                        loggedAt: log.loggedAt
+                    });
+                }
+            });
+        });
+    });
+
+    // 3. Daily Breakdown
+    const days = {};
+    const curr = new Date(from);
+    while (curr <= to) {
+        const key = getDateKey(curr);
+        days[key] = {
+            date: key,
+            workedMinutes: 0,
+            trackedMinutes: 0,
+            sessions: [],
+            logs: []
+        };
+        curr.setDate(curr.getDate() + 1);
+    }
+
+    sessions.forEach(s => {
+        const key = getDateKey(s.clockInAt);
+        if (days[key]) {
+            days[key].workedMinutes += Math.round((s.totalSeconds || 0) / 60);
+            days[key].sessions.push(s);
+        }
+    });
+
+    taskLogs.forEach(l => {
+        const key = getDateKey(l.loggedAt);
+        if (days[key]) {
+            days[key].trackedMinutes += l.minutes;
+            days[key].logs.push(l);
+        }
+    });
+
+    res.json({
+        employeeId: id,
+        from,
+        to,
+        dailyBreakdown: Object.values(days).sort((a, b) => b.date.localeCompare(a.date)),
+        totalWorkedMinutes: sessions.reduce((s, row) => s + Math.round((row.totalSeconds || 0) / 60), 0),
+        totalTrackedMinutes: taskLogs.reduce((s, row) => s + row.minutes, 0),
+        sessionsCount: sessions.length,
+        logsCount: taskLogs.length
+    });
+});
+
 export {
     clockIn,
     clockOut,
     getMyAttendanceStatus,
     getMyAttendanceLogs,
-    getAdminAttendanceSummary
+    getAdminAttendanceSummary,
+    getEmployeeAnalysis
 };

@@ -38,6 +38,7 @@ import RecurringServicesModule from './components/admin/RecurringServicesModule'
 import MakeRecurringModal from './components/admin/modals/MakeRecurringModal';
 import ReferralPartnersModule from './components/admin/referrals/ReferralPartnersModule';
 import FinanceModule from './components/admin/finance/FinanceModule';
+import EmployeeAnalysisModule from './components/admin/users/EmployeeAnalysisModule';
 import { RevenueChart, ServiceDistributionChart, EmployeeWorkloadChart } from './components/admin/DashboardCharts';
 import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, ShieldCheck } from 'lucide-react';
 
@@ -663,7 +664,8 @@ function AdminApp() {
     { key: 'Users', label: 'Users', icon: UsersIcon },
     { key: 'ToDo', label: 'To Do', icon: CheckSquare },
     { key: 'Finance', label: 'Finance', icon: DollarSign },
-    { key: 'Reports', label: 'Reports', icon: BarChart3 },
+    { key: 'Performance', label: 'Performance', icon: BarChart3 },
+    { key: 'Reports', label: 'Reports', icon: Activity },
     { key: 'Notifications', label: 'Notifications', icon: Bell },
     { key: 'CRM', label: 'CRM Pipeline', icon: Briefcase },
     { key: 'Knowledge', label: 'Knowledge Base', icon: BookOpen },
@@ -730,6 +732,7 @@ function AdminApp() {
       />
     );
     if (activeTab === 'Finance') return <FinanceModule token={userInfo?.token} />;
+    if (activeTab === 'Performance') return <EmployeeAnalysisModule token={userInfo?.token} users={users} />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;
     if (activeTab === 'Notifications') return <DummyView title="Notifications" />;
     if (activeTab === 'CRM') return <DummyView title="CRM Pipeline" />;

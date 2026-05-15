@@ -4,7 +4,8 @@ import {
     clockOut,
     getMyAttendanceStatus,
     getMyAttendanceLogs,
-    getAdminAttendanceSummary
+    getAdminAttendanceSummary,
+    getEmployeeAnalysis
 } from '../controllers/attendanceController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -15,5 +16,6 @@ router.route('/clock-out').post(protect, clockOut);
 router.route('/my-status').get(protect, getMyAttendanceStatus);
 router.route('/my-logs').get(protect, getMyAttendanceLogs);
 router.route('/admin/summary').get(protect, admin, getAdminAttendanceSummary);
+router.route('/admin/employee/:id').get(protect, admin, getEmployeeAnalysis);
 
 export default router;
