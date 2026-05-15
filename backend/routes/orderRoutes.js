@@ -22,7 +22,8 @@ import {
     addTaskTimeLog,
     importRequirements,
     updateRequirement,
-    addRequirement
+    addRequirement,
+    deleteRequirement
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -90,6 +91,7 @@ router.route('/:id/requirements')
     .post(protect, addRequirement);
 
 router.route('/:id/requirements/:requirementId')
-    .put(protect, updateRequirement);
+    .put(protect, updateRequirement)
+    .delete(protect, admin, deleteRequirement);
 
 export default router;

@@ -7,7 +7,8 @@ const OrderRequirementsTab = ({
   selectedOrder,
   onImportRequirementsWorkbook,
   onRaiseRequirement,
-  onUpdateRequirementStatus
+  onUpdateRequirementStatus,
+  onDeleteRequirement
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('details');
   const [requirementFile, setRequirementFile] = useState(null);
@@ -87,6 +88,15 @@ const OrderRequirementsTab = ({
                     <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
+                {item.isAdditional && (
+                  <button 
+                    onClick={() => onDeleteRequirement(item._id)}
+                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                    title="Delete Requirement"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -75,6 +75,7 @@ const OrdersModule = ({
   onImportRequirementsWorkbook,
   onRaiseRequirement,
   onUpdateRequirementStatus,
+  onDeleteRequirement,
   onAddInvoice,
   onUpdateInvoiceStatus,
   onOpenRecurringModal,
@@ -240,6 +241,7 @@ const OrdersModule = ({
                   onImportRequirementsWorkbook={(file, replaceExisting) => onImportRequirementsWorkbook(selectedOrder._id, file, replaceExisting)}
                   onRaiseRequirement={(payload) => onRaiseRequirement(selectedOrder._id, payload)}
                   onUpdateRequirementStatus={(requirementId, status) => onUpdateRequirementStatus(selectedOrder._id, requirementId, status)}
+                  onDeleteRequirement={(requirementId) => onDeleteRequirement(selectedOrder._id, requirementId)}
                 />
               )}
               {orderDetailTab === 'Invoices' && (

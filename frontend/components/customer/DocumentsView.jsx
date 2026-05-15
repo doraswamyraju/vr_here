@@ -7,7 +7,7 @@ const DocumentsView = ({ orders, refreshOrders, userInfo }) => {
   const [activeOrder, setActiveOrder] = useState(orders[0]?._id || '');
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState('provided');
+  const [activeTab, setActiveTab] = useState('requirements');
 
   const selectedOrder = useMemo(() => orders.find((order) => order._id === activeOrder), [orders, activeOrder]);
 
@@ -58,9 +58,9 @@ const DocumentsView = ({ orders, refreshOrders, userInfo }) => {
         <div className="space-y-4">
           <div className="flex bg-slate-100/50 p-1.5 rounded-2xl gap-1 overflow-x-auto">
             {[
+              { key: 'requirements', label: 'Checklist' },
               { key: 'provided', label: 'Admin Docs' },
-              { key: 'uploaded', label: 'My Uploads' },
-              { key: 'requirements', label: 'Queries' }
+              { key: 'uploaded', label: 'My uploads' }
             ].map((tab) => (
               <button
                 key={tab.key}

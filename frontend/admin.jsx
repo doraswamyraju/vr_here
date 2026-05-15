@@ -199,6 +199,12 @@ function AdminApp() {
     fetchData();
   };
 
+  const deleteRequirement = async (orderId, requirementId) => {
+    if (!window.confirm('Are you sure you want to delete this requirement?')) return;
+    await axios.delete(`/api/orders/${orderId}/requirements/${requirementId}`, config);
+    fetchData();
+  };
+
   const addInvoice = async (orderId) => {
     if (!invoiceForm.invoiceNumber || !invoiceForm.amount) return;
     await axios.post(`/api/orders/${orderId}/invoices`, {
@@ -304,6 +310,7 @@ function AdminApp() {
           onImportRequirementsWorkbook={importRequirementsWorkbook}
           onRaiseRequirement={raiseRequirement}
           onUpdateRequirementStatus={updateRequirementStatus}
+          onDeleteRequirement={deleteRequirement}
           onAddInvoice={addInvoice}
           onUpdateInvoiceStatus={updateInvoiceStatus}
           onOpenRecurringModal={() => setIsMakeRecurringModalOpen(true)}

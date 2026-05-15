@@ -1097,6 +1097,28 @@ const addRequirement = asyncHandler(async (req, res) => {
     res.status(201).json(order);
 });
 
+// @desc    Delete a customer requirement
+// @route   DELETE /api/orders/:id/requirements/:requirementId
+// @access  Private/Admin
+const deleteRequirement = asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to delete a requirement from this order');
+    }
+
+    order.customerRequirements.pull(req.params.requirementId);
+    await order.save();
+
+    res.json(order);
+});
+
 export {
     createOrder,
     getOrders,
@@ -1121,6 +1143,7 @@ export {
     importRequirements,
     updateRequirement,
     addRequirement,
+    deleteRequirement,
     // Export utilities for reuse in Recurring Services
     parseTasksFromText,
     parseRequirementsFromText,

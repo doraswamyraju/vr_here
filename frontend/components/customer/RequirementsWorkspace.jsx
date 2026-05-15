@@ -143,13 +143,13 @@ const RequirementsWorkspace = ({ selectedOrder, userInfo, refreshOrders }) => {
           onClick={() => setActiveSubTab('details')}
           className={`flex-1 py-3 rounded-xl text-xs font-black transition-all whitespace-nowrap ${activeSubTab === 'details' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          Details ({detailRequirements.length})
+          Text Data ({detailRequirements.length})
         </button>
         <button
           onClick={() => setActiveSubTab('uploads')}
           className={`flex-1 py-3 rounded-xl text-xs font-black transition-all whitespace-nowrap ${activeSubTab === 'uploads' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          Customer Uploads ({documentRequirements.length})
+          Documents ({documentRequirements.length})
         </button>
         <button
           onClick={() => setActiveSubTab('additional')}
@@ -158,7 +158,7 @@ const RequirementsWorkspace = ({ selectedOrder, userInfo, refreshOrders }) => {
           {additionalRequirements.some(r => !r.isClientCompleted) && (
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
           )}
-          Queries ({additionalRequirements.length})
+          Add. Queries ({additionalRequirements.length})
         </button>
       </div>
 
