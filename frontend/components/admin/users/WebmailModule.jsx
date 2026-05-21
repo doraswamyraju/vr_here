@@ -176,46 +176,32 @@ const WebmailModule = ({ token }) => {
   return (
     <div className="space-y-6">
       
-      {/* TOP HEADER SUMMARY CARD */}
-      <div className="rounded-2xl border border-white/70 bg-gradient-to-r from-slate-900 to-indigo-950 p-6 text-white shadow-xl shadow-indigo-900/10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <Mail size={140} />
-        </div>
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <p className="text-cyan-200 text-xs font-black uppercase tracking-widest">Multi-Domain Email Manager</p>
-            <h2 className="text-2xl font-black mt-1">Virtual Mailbox Studio</h2>
-            <p className="text-slate-200 text-sm mt-1.5 max-w-xl">
-              Create professional domain email accounts, forward received mail to external Gmail accounts, and authenticate outgoing SMTP relays securely from inside Gmail.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button 
-              onClick={handleRunDiagnostics}
-              disabled={isDiagnosing}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50 shadow-md"
-            >
-              <Shield size={14} className={isDiagnosing ? 'animate-pulse' : ''} />
-              {isDiagnosing ? 'Running...' : 'Run Diagnostics'}
-            </button>
-            <button 
-              onClick={handleSyncServer}
-              disabled={isSyncing}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50 shadow-md"
-            >
-              <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
-              {isSyncing ? 'Syncing Server...' : 'Sync VPS Config'}
-            </button>
-            <button 
-              onClick={fetchWebmails}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
-            >
-              <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-              Refresh List
-            </button>
-          </div>
-        </div>
+      {/* ACTIONS TOOLBAR */}
+      <div className="flex flex-wrap justify-end gap-2 p-2">
+        <button 
+          onClick={handleRunDiagnostics}
+          disabled={isDiagnosing}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50 shadow-md"
+        >
+          <Shield size={14} className={isDiagnosing ? 'animate-pulse' : ''} />
+          {isDiagnosing ? 'Running...' : 'Run Diagnostics'}
+        </button>
+        <button 
+          onClick={handleSyncServer}
+          disabled={isSyncing}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50 shadow-md"
+        >
+          <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+          {isSyncing ? 'Sync VPS Config'}
+        </button>
+        <button 
+          onClick={fetchWebmails}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50 shadow-sm"
+        >
+          <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+          Refresh List
+        </button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -517,29 +503,24 @@ const WebmailModule = ({ token }) => {
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
                 <span className="font-semibold text-slate-400">SMTP Server</span>
                 <div className="flex items-center gap-2 font-mono text-[11px] text-white">
-                  <span>mail.yourdomain.com</span>
+                  <span>mail.vrhere.in</span>
                   <button 
-                    onClick={() => handleCopy('mail.yourdomain.com')} 
+                    onClick={() => handleCopy('mail.vrhere.in')} 
                     className="p-1 text-slate-500 hover:text-white transition"
                   >
-                    {copiedText === 'mail.yourdomain.com' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                    {copiedText === 'mail.vrhere.in' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
                   </button>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                <span className="font-semibold text-slate-400">Port (TLS)</span>
-                <span className="font-mono text-[11px] text-white">587 (Recommended)</span>
-              </div>
-
-              <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                <span className="font-semibold text-slate-400">Port (SSL)</span>
-                <span className="font-mono text-[11px] text-white">465</span>
+                <span className="font-semibold text-slate-400">Port</span>
+                <span className="font-mono text-[11px] text-white">587</span>
               </div>
 
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
                 <span className="font-semibold text-slate-400">Secured Connection</span>
-                <span className="font-mono text-[11px] text-white">STARTTLS (587) / SSL/TLS (465)</span>
+                <span className="font-mono text-[11px] text-white">TLS / STARTTLS (Recommended)</span>
               </div>
 
               <div className="flex justify-between items-center py-2">
@@ -549,7 +530,7 @@ const WebmailModule = ({ token }) => {
             </div>
 
             <div className="mt-5 p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-[10px] text-slate-400 leading-relaxed">
-              *Note: Replace `mail.yourdomain.com` with `mail.vrhere.in` or the specific custom domain you created the email for.
+              *Pro Tip: For all your custom domains (e.g. any domain configured on this VPS), you can always use **`mail.vrhere.in`** as the working SMTP server with your custom mailbox username & password!
             </div>
           </div>
         </div>
