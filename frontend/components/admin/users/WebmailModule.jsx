@@ -1,0 +1,511 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
+import { Mail, Plus, Trash2, Key, RefreshCw, AlertCircle, Shield, Copy, Check, ExternalLink } from 'lucide-react';
+
+const WebmailModule = ({ token }) => {
+  const [webmails, setWebmails] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  
+  // Create Form State
+  const [emailPrefix, setEmailPrefix] = useState('');
+  const [emailDomain, setEmailDomain] = useState('vrhere.in');
+  const [customDomain, setCustomDomain] = useState('');
+  const [forwardTo, setForwardTo] = useState('');
+  const [password, setPassword] = useState('');
+  const [showCustomDomainInput, setShowCustomDomainInput] = useState(false);
+
+  // Edit / Password Update States
+  const [editingId, setEditingId] = useState('');
+  const [editForwardTo, setEditForwardTo] = useState('');
+  const [changingPasswordId, setChangingPasswordId] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
+  // Copy State
+  const [copiedText, setCopiedText] = useState('');
+
+  // Header authorization config
+  const config = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
+
+  const activeDomain = showCustomDomainInput ? customDomain.trim().toLowerCase() : emailDomain;
+
+  // Fetch webmail accounts
+  const fetchWebmails = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await axios.get('/api/webmail', config);
+      setWebmails(data || []);
+    } catch (err) {
+      console.error('Failed to fetch webmail accounts:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWebmails();
+  }, [config]);
+
+  // Create new webmail mapping
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!emailPrefix || !activeDomain || !forwardTo || !password) {
+      alert('Please fill out all fields.');
+      return;
+    }
+
+    const fullEmail = `${emailPrefix.trim().toLowerCase()}@${activeDomain}`;
+    setIsCreating(true);
+
+    try {
+      await axios.post('/api/webmail', {
+        email: fullEmail,
+        forwardTo: forwardTo.trim().toLowerCase(),
+        password
+      }, config);
+
+      alert(`Webmail account ${fullEmail} successfully created!`);
+      
+      // Clear form
+      setEmailPrefix('');
+      setForwardTo('');
+      setPassword('');
+      setCustomDomain('');
+      setShowCustomDomainInput(false);
+      setEmailDomain('vrhere.in');
+      
+      fetchWebmails();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to create webmail account.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Toggle active/inactive status
+  const handleToggleActive = async (id, currentStatus) => {
+    try {
+      await axios.put(`/api/webmail/${id}`, { isActive: !currentStatus }, config);
+      fetchWebmails();
+    } catch (err) {
+      alert('Failed to update webmail status.');
+    }
+  };
+
+  // Save forwarding target edit
+  const handleSaveForwarding = async (id) => {
+    if (!editForwardTo) return;
+    try {
+      await axios.put(`/api/webmail/${id}`, { forwardTo: editForwardTo.trim().toLowerCase() }, config);
+      setEditingId('');
+      setEditForwardTo('');
+      fetchWebmails();
+    } catch (err) {
+      alert('Failed to update forwarding email.');
+    }
+  };
+
+  // Save password update
+  const handleSavePassword = async (id) => {
+    if (!newPassword) return;
+    try {
+      await axios.put(`/api/webmail/${id}`, { password: newPassword }, config);
+      setChangingPasswordId('');
+      setNewPassword('');
+      alert('Password updated successfully!');
+      fetchWebmails();
+    } catch (err) {
+      alert('Failed to update password.');
+    }
+  };
+
+  // Delete webmail account
+  const handleDelete = async (wm) => {
+    if (!window.confirm(`Are you sure you want to permanently delete ${wm.email}? This will stop all mail forwarding and SMTP access for this email.`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/webmail/${wm._id}`, config);
+      fetchWebmails();
+    } catch (err) {
+      alert('Failed to delete webmail account.');
+    }
+  };
+
+  // Copy helper
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedText(text);
+    setTimeout(() => setCopiedText(''), 2000);
+  };
+
+  return (
+    <div className="space-y-6">
+      
+      {/* TOP HEADER SUMMARY CARD */}
+      <div className="rounded-2xl border border-white/70 bg-gradient-to-r from-slate-900 to-indigo-950 p-6 text-white shadow-xl shadow-indigo-900/10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+          <Mail size={140} />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <p className="text-cyan-200 text-xs font-black uppercase tracking-widest">Multi-Domain Email Manager</p>
+            <h2 className="text-2xl font-black mt-1">Virtual Mailbox Studio</h2>
+            <p className="text-slate-200 text-sm mt-1.5 max-w-xl">
+              Create professional domain email accounts, forward received mail to external Gmail accounts, and authenticate outgoing SMTP relays securely from inside Gmail.
+            </p>
+          </div>
+          <button 
+            onClick={fetchWebmails}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+            Sync Accounts
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        {/* ADD WEBMAIL FORM */}
+        <div className="xl:col-span-1 space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+            <h3 className="text-lg font-extrabold text-slate-900 mb-2 flex items-center gap-2">
+              <Plus className="text-indigo-600" size={20} /> Create Webmail
+            </h3>
+            <p className="text-xs text-slate-500 mb-5">Configure forwarding rules and SMTP relay settings for a custom domain mailbox.</p>
+
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">Custom Email Address</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={emailPrefix}
+                    onChange={(e) => setEmailPrefix(e.target.value.replace(/[^a-zA-Z0-9.-]/g, ''))}
+                    placeholder="e.g. info" 
+                    required
+                    className="flex-1 p-2.5 border rounded-xl border-slate-300 bg-white text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none"
+                  />
+                  <span className="self-center text-slate-400 font-bold">@</span>
+                  {!showCustomDomainInput ? (
+                    <select
+                      value={emailDomain}
+                      onChange={(e) => {
+                        if (e.target.value === 'custom') {
+                          setShowCustomDomainInput(true);
+                          setEmailDomain('');
+                        } else {
+                          setEmailDomain(e.target.value);
+                        }
+                      }}
+                      className="p-2.5 border rounded-xl border-slate-300 bg-white text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none w-[140px]"
+                    >
+                      <option value="vrhere.in">vrhere.in</option>
+                      <option value="custom">+ Custom...</option>
+                    </select>
+                  ) : (
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        value={customDomain}
+                        onChange={(e) => setCustomDomain(e.target.value.replace(/[^a-zA-Z0-9.-]/g, ''))}
+                        placeholder="domain.com"
+                        required
+                        className="p-2.5 border rounded-xl border-slate-300 bg-white text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none w-[110px]"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setShowCustomDomainInput(false);
+                          setEmailDomain('vrhere.in');
+                          setCustomDomain('');
+                        }}
+                        className="px-2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">Forward Inbound Mails To</label>
+                <input 
+                  type="email" 
+                  value={forwardTo}
+                  onChange={(e) => setForwardTo(e.target.value)}
+                  placeholder="e.g. yourname@gmail.com" 
+                  required
+                  className="w-full p-2.5 border rounded-xl border-slate-300 bg-white text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">SMTP Authentication Password</label>
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Secure password for Gmail SMTP" 
+                  required
+                  className="w-full p-2.5 border rounded-xl border-slate-300 bg-white text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none"
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isCreating}
+                className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-sm font-black uppercase tracking-widest shadow-md transition active:scale-95 disabled:opacity-50"
+              >
+                {isCreating ? 'Creating Rule...' : 'Generate Webmail Rule'}
+              </button>
+            </form>
+          </div>
+
+          {/* SYSTEM REQUIREMENTS HIGHLIGHT */}
+          <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-5">
+            <div className="flex gap-3">
+              <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={18} />
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-amber-800">VPS Sync Notice</h4>
+                <p className="text-[11px] text-amber-700/90 leading-relaxed mt-1">
+                  New mail mappings and passwords take up to **5 minutes** to sync onto the live VPS mail servers. All generated files are securely mapped to local configs on the server.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* WEBMAIL RULES LIST */}
+        <div className="xl:col-span-2 space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+            <h3 className="text-lg font-extrabold text-slate-900 mb-4">Active Mail Mappings</h3>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[620px]">
+                <thead>
+                  <tr className="border-b border-slate-100 text-xs font-black uppercase text-slate-400">
+                    <th className="pb-3">Custom Mailbox</th>
+                    <th className="pb-3">Forward Target</th>
+                    <th className="pb-3">Status</th>
+                    <th className="pb-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {isLoading && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-400 italic">
+                        Syncing live database mappings...
+                      </td>
+                    </tr>
+                  )}
+                  {!isLoading && webmails.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-400 italic">
+                        No custom email mapping rules created yet.
+                      </td>
+                    </tr>
+                  )}
+                  {!isLoading && webmails.map((wm) => {
+                    const isEditing = editingId === wm._id;
+                    const isChangingPassword = changingPasswordId === wm._id;
+                    return (
+                      <tr key={wm._id} className="group hover:bg-slate-50/40">
+                        <td className="py-3.5 font-bold text-slate-800">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                            {wm.email}
+                          </div>
+                        </td>
+                        <td className="py-3.5">
+                          {isEditing ? (
+                            <div className="flex gap-1.5 items-center">
+                              <input 
+                                type="email" 
+                                value={editForwardTo} 
+                                onChange={(e) => setEditForwardTo(e.target.value)} 
+                                className="p-1 border rounded border-slate-300 text-xs bg-white w-48 outline-none focus:ring-1 focus:ring-indigo-500"
+                              />
+                              <button onClick={() => handleSaveForwarding(wm._id)} className="px-2 py-0.5 bg-indigo-600 text-white rounded text-[10px] font-black uppercase">Save</button>
+                              <button onClick={() => setEditingId('')} className="px-2 py-0.5 bg-slate-200 text-slate-700 rounded text-[10px] font-black uppercase">Cancel</button>
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 font-medium">{wm.forwardTo}</span>
+                          )}
+                        </td>
+                        <td className="py-3.5">
+                          <button 
+                            onClick={() => handleToggleActive(wm._id, wm.isActive)}
+                            className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                              wm.isActive 
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100' 
+                                : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200'
+                            }`}
+                          >
+                            {wm.isActive ? 'Active' : 'Inactive'}
+                          </button>
+                        </td>
+                        <td className="py-3.5 text-right">
+                          {isChangingPassword ? (
+                            <div className="inline-flex gap-1.5 items-center">
+                              <input 
+                                type="password" 
+                                placeholder="New password"
+                                value={newPassword} 
+                                onChange={(e) => setNewPassword(e.target.value)} 
+                                className="p-1 border rounded border-slate-300 text-xs bg-white w-32 outline-none focus:ring-1 focus:ring-indigo-500"
+                              />
+                              <button onClick={() => handleSavePassword(wm._id)} className="px-2 py-0.5 bg-indigo-600 text-white rounded text-[10px] font-black uppercase">Apply</button>
+                              <button onClick={() => setChangingPasswordId('')} className="px-2 py-0.5 bg-slate-200 text-slate-700 rounded text-[10px] font-black uppercase">Cancel</button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-2">
+                              {!isEditing && (
+                                <>
+                                  <button 
+                                    onClick={() => { setEditingId(wm._id); setEditForwardTo(wm.forwardTo); }}
+                                    className="p-1.5 rounded-lg border border-slate-100 hover:border-indigo-100 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition"
+                                    title="Edit Forwarding Address"
+                                  >
+                                    <ExternalLink size={14} />
+                                  </button>
+                                  <button 
+                                    onClick={() => setChangingPasswordId(wm._id)}
+                                    className="p-1.5 rounded-lg border border-slate-100 hover:border-indigo-100 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition"
+                                    title="Update Password"
+                                  >
+                                    <Key size={14} />
+                                  </button>
+                                </>
+                              )}
+                              <button 
+                                onClick={() => handleDelete(wm)}
+                                className="p-1.5 rounded-lg border border-slate-100 hover:border-rose-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition"
+                                title="Delete Rule"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* DETAILED GMAIL INTEGRATION GUIDE */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+        <h3 className="text-lg font-extrabold text-slate-900 mb-2 flex items-center gap-2">
+          <Shield className="text-indigo-600" size={22} /> Gmail "Send Mail As" Configuration Guide
+        </h3>
+        <p className="text-xs text-slate-500 mb-6">
+          Learn how to authenticate outgoing emails from your Gmail account using your VPS custom domain SMTP setup so recipients see your brand email.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Open Gmail Settings</p>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                  Log into your primary Gmail. Click the **Gear Icon** in the top right, select **"See all settings"**, and navigate to the **"Accounts and Import"** tab.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Add another email address</p>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                  Scroll down to the **"Send mail as:"** section and click **"Add another email address"**. A yellow popup window will appear. Enter your Name and the custom email address (e.g. `info@vrhere.in`). Leave *"Treat as an alias"* checked, then click **"Next Step"**.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">3</div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Configure SMTP Server Details</p>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                  Fill in the SMTP relay details listed in the panel on the right. Enter your full custom email address as the Username and the SMTP password you specified during creation. Click **"Add Account"**.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">4</div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Verify Account</p>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                  Gmail will send a verification code to your custom email. Since incoming mail is automatically forwarded, **check the inbox of your target Gmail address** for the code. Enter the code in the popup window and click **"Verify"**.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* QUICK COPY REFERENCE CARD */}
+          <div className="rounded-2xl bg-slate-900 text-slate-300 p-6 flex flex-col justify-between border border-slate-800 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5">
+              <Shield size={120} />
+            </div>
+
+            <h4 className="text-xs font-black uppercase tracking-widest text-cyan-300 mb-4">SMTP Relay Parameters</h4>
+
+            <div className="space-y-3 flex-1 text-xs">
+              <div className="flex justify-between items-center py-2 border-b border-slate-800">
+                <span className="font-semibold text-slate-400">SMTP Server</span>
+                <div className="flex items-center gap-2 font-mono text-[11px] text-white">
+                  <span>mail.yourdomain.com</span>
+                  <button 
+                    onClick={() => handleCopy('mail.yourdomain.com')} 
+                    className="p-1 text-slate-500 hover:text-white transition"
+                  >
+                    {copiedText === 'mail.yourdomain.com' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center py-2 border-b border-slate-800">
+                <span className="font-semibold text-slate-400">Port (TLS)</span>
+                <span className="font-mono text-[11px] text-white">587 (Recommended)</span>
+              </div>
+
+              <div className="flex justify-between items-center py-2 border-b border-slate-800">
+                <span className="font-semibold text-slate-400">Port (SSL)</span>
+                <span className="font-mono text-[11px] text-white">465</span>
+              </div>
+
+              <div className="flex justify-between items-center py-2 border-b border-slate-800">
+                <span className="font-semibold text-slate-400">Secured Connection</span>
+                <span className="font-mono text-[11px] text-white">STARTTLS (587) / SSL/TLS (465)</span>
+              </div>
+
+              <div className="flex justify-between items-center py-2">
+                <span className="font-semibold text-slate-400">Username</span>
+                <span className="font-mono text-[11px] text-emerald-400">Your full custom email address</span>
+              </div>
+            </div>
+
+            <div className="mt-5 p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-[10px] text-slate-400 leading-relaxed">
+              *Note: Replace `mail.yourdomain.com` with `mail.vrhere.in` or the specific custom domain you created the email for.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default WebmailModule;

@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import axios from 'axios';
+import { Users as UsersIcon, Mail } from 'lucide-react';
 import AddUserForm from './AddUserForm';
 import UsersFilters from './UsersFilters';
 import UsersTable from './UsersTable';
 import WorkloadPanel from './WorkloadPanel';
 import AssignmentPreview from './AssignmentPreview';
+import WebmailModule from './WebmailModule';
 
 const UsersModule = ({ token, users, orders, onRefresh }) => {
   const [createDraft, setCreateDraft] = useState({ name: '', email: '', phone: '', role: 'employee' });
@@ -15,6 +17,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
   const [attendanceSummary, setAttendanceSummary] = useState({ items: [] });
   const [roleFilter, setRoleFilter] = useState('all');
   const [searchText, setSearchText] = useState('');
+  const [subTab, setSubTab] = useState('app-users'); // 'app-users' or 'webmail'
 
   const config = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
@@ -95,45 +98,77 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
   }, []);
 
   return (
-    <div className="space-y-4">
-      <AddUserForm draft={createDraft} setDraft={setCreateDraft} onCreateUser={createUser} isCreating={isCreating} />
-      <UsersFilters
-        roleFilter={roleFilter}
-        setRoleFilter={setRoleFilter}
-        searchText={searchText}
-        setSearchText={setSearchText}
-        totalUsers={users.length}
-        filteredCount={filteredUsers.length}
-      />
-
-      <UsersTable
-        users={filteredUsers}
-        editingUserId={editingUserId}
-        editDraft={editDraft}
-        setEditDraft={setEditDraft}
-        onStartEdit={startEdit}
-        onSaveEdit={saveEdit}
-        onCancelEdit={() => setEditingUserId('')}
-        onToggleActive={toggleActive}
-        onSendPasswordLink={sendPasswordLink}
-        onDeleteUser={deleteUser}
-      />
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <WorkloadPanel attendanceSummary={attendanceSummary} />
-        <div className="space-y-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="font-semibold text-slate-800">Select Employee</p>
-            <select value={selectedEmployeeId} onChange={(event) => setSelectedEmployeeId(event.target.value)} className="mt-2 w-full p-2 border rounded-lg border-slate-300 bg-white text-sm">
-              <option value="">Select</option>
-              {employeeUsers.map((employee) => (
-                <option key={employee._id} value={employee._id}>{employee.name}</option>
-              ))}
-            </select>
-          </div>
-          <AssignmentPreview employeeId={selectedEmployeeId} orders={orders} />
-        </div>
+    <div className="space-y-6">
+      {/* Tabbed Navigation Bar */}
+      <div className="flex border-b border-slate-200 bg-white px-4 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+        <button
+          onClick={() => setSubTab('app-users')}
+          className={`flex items-center gap-2 px-5 py-3.5 text-sm font-bold border-b-2 transition-all duration-200 ${
+            subTab === 'app-users'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+          }`}
+        >
+          <UsersIcon size={16} />
+          App Users ({users.length})
+        </button>
+        <button
+          onClick={() => setSubTab('webmail')}
+          className={`flex items-center gap-2 px-5 py-3.5 text-sm font-bold border-b-2 transition-all duration-200 ${
+            subTab === 'webmail'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+          }`}
+        >
+          <Mail size={16} />
+          Webmail Accounts
+        </button>
       </div>
+
+      {subTab === 'app-users' ? (
+        <div className="space-y-4">
+          <AddUserForm draft={createDraft} setDraft={setCreateDraft} onCreateUser={createUser} isCreating={isCreating} />
+          <UsersFilters
+            roleFilter={roleFilter}
+            setRoleFilter={setRoleFilter}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            totalUsers={users.length}
+            filteredCount={filteredUsers.length}
+          />
+
+          <UsersTable
+            users={filteredUsers}
+            editingUserId={editingUserId}
+            editDraft={editDraft}
+            setEditDraft={setEditDraft}
+            onStartEdit={startEdit}
+            onSaveEdit={saveEdit}
+            onCancelEdit={() => setEditingUserId('')}
+            onToggleActive={toggleActive}
+            onSendPasswordLink={sendPasswordLink}
+            onDeleteUser={deleteUser}
+          />
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <WorkloadPanel attendanceSummary={attendanceSummary} />
+            <div className="space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="font-semibold text-slate-800">Select Employee</p>
+                <select value={selectedEmployeeId} onChange={(event) => setSelectedEmployeeId(event.target.value)} className="mt-2 w-full p-2 border rounded-lg border-slate-300 bg-white text-sm">
+                  <option value="">Select</option>
+                  {employeeUsers.map((employee) => (
+                    <option key={employee._id} value={employee._id}>{employee.name}</option>
+                  ))}
+                </select>
+              </div>
+              <AssignmentPreview employeeId={selectedEmployeeId} orders={orders} />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <WebmailModule token={token} />
+      )}
     </div>
   );
 };
