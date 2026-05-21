@@ -86,3 +86,39 @@ export const deleteWebmail = asyncHandler(async (req, res) => {
     await webmail.deleteOne();
     res.json({ message: 'Webmail account deleted successfully' });
 });
+
+// @desc    Get mail server diagnostics
+// @route   GET /api/webmail/diagnostics
+// @access  Private/Admin
+export const getDiagnostics = asyncHandler(async (req, res) => {
+    const { execSync } = await import('child_process');
+    const fs = await import('fs');
+    const results = {};
+
+    const runCommand = (cmd) => {
+        try {
+            return execSync(cmd, { encoding: 'utf8', timeout: 5000 });
+        } catch (err) {
+            return `Error executing "${cmd}": ${err.message}\n${err.stderr || ''}`;
+        }
+    };
+
+    results.mailq = runCommand('mailq');
+    
+    // Check which mail log file exists
+    let mailLog = '';
+    if (fs.existsSync('/var/log/mail.log')) {
+        mailLog = runCommand('tail -n 100 /var/log/mail.log');
+    } else if (fs.existsSync('/var/log/maillog')) {
+        mailLog = runCommand('tail -n 100 /var/log/maillog');
+    } else {
+        mailLog = 'Neither /var/log/mail.log nor /var/log/maillog was found.';
+    }
+    results.mailLog = mailLog;
+
+    results.postfixStatus = runCommand('systemctl status postfix');
+    results.dovecotStatus = runCommand('systemctl status dovecot');
+    
+    res.json(results);
+});
+

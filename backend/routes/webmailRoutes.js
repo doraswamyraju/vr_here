@@ -4,9 +4,13 @@ import {
     getWebmails,
     createWebmail,
     updateWebmail,
-    deleteWebmail
+    deleteWebmail,
+    getDiagnostics
 } from '../controllers/webmailController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
+
+router.route('/diagnostics')
+    .get(protect, admin, getDiagnostics);
 
 router.route('/')
     .get(protect, admin, getWebmails)
