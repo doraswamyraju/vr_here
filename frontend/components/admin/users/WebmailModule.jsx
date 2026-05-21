@@ -28,6 +28,7 @@ const WebmailModule = ({ token }) => {
   const [diagnostics, setDiagnostics] = useState(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Header authorization config
   const config = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
@@ -58,6 +59,19 @@ const WebmailModule = ({ token }) => {
       setShowDiagnostics(false);
     } finally {
       setIsDiagnosing(false);
+    }
+  };
+
+  const handleSyncServer = async () => {
+    setIsSyncing(true);
+    try {
+      const { data } = await axios.post('/api/webmail/sync', {}, config);
+      alert(data.message || 'Mailboxes synchronized successfully!');
+      fetchWebmails();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to synchronize mailboxes on the server.');
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -175,14 +189,22 @@ const WebmailModule = ({ token }) => {
               Create professional domain email accounts, forward received mail to external Gmail accounts, and authenticate outgoing SMTP relays securely from inside Gmail.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button 
               onClick={handleRunDiagnostics}
               disabled={isDiagnosing}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50 shadow-md"
             >
               <Shield size={14} className={isDiagnosing ? 'animate-pulse' : ''} />
               {isDiagnosing ? 'Running...' : 'Run Diagnostics'}
+            </button>
+            <button 
+              onClick={handleSyncServer}
+              disabled={isSyncing}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50 shadow-md"
+            >
+              <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+              {isSyncing ? 'Syncing Server...' : 'Sync VPS Config'}
             </button>
             <button 
               onClick={fetchWebmails}
@@ -190,7 +212,7 @@ const WebmailModule = ({ token }) => {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
             >
               <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-              Sync Accounts
+              Refresh List
             </button>
           </div>
         </div>
@@ -564,17 +586,31 @@ const WebmailModule = ({ token }) => {
                     {diagnostics.mailq || 'Mail queue is empty.'}
                   </pre>
                 </div>
+
+                <div>
+                  <h4 className="font-black text-cyan-300 uppercase tracking-wider mb-2">Postfix Configured Virtual Aliases (/etc/postfix/virtual)</h4>
+                  <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[150px] text-white whitespace-pre-wrap">
+                    {diagnostics.postfixVirtual || 'No aliases configured.'}
+                  </pre>
+                </div>
+
+                <div>
+                  <h4 className="font-black text-cyan-300 uppercase tracking-wider mb-2">Dovecot Configured Virtual Users (/etc/dovecot/users)</h4>
+                  <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[150px] text-white whitespace-pre-wrap">
+                    {diagnostics.dovecotUsers || 'No virtual users configured.'}
+                  </pre>
+                </div>
                 
                 <div>
                   <h4 className="font-black text-cyan-300 uppercase tracking-wider mb-2">Postfix Status</h4>
-                  <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[180px] text-white">
+                  <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[150px] text-white">
                     {diagnostics.postfixStatus}
                   </pre>
                 </div>
                 
                 <div>
                   <h4 className="font-black text-cyan-300 uppercase tracking-wider mb-2">Dovecot Status</h4>
-                  <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[180px] text-white">
+                  <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[150px] text-white">
                     {diagnostics.dovecotStatus}
                   </pre>
                 </div>
@@ -585,7 +621,7 @@ const WebmailModule = ({ token }) => {
                   <span>Mail Log (tail /var/log/mail.log)</span>
                   <span className="text-[10px] text-slate-500 font-normal normal-case">Shows recent mail transmission logs</span>
                 </h4>
-                <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-auto text-[11px] font-mono leading-relaxed h-[420px] text-white whitespace-pre-wrap">
+                <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-auto text-[11px] font-mono leading-relaxed h-[620px] text-white whitespace-pre-wrap">
                   {diagnostics.mailLog}
                 </pre>
               </div>

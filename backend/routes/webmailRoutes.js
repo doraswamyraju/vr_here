@@ -5,12 +5,16 @@ import {
     createWebmail,
     updateWebmail,
     deleteWebmail,
-    getDiagnostics
+    getDiagnostics,
+    triggerSync
 } from '../controllers/webmailController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 router.route('/diagnostics')
     .get(protect, admin, getDiagnostics);
+
+router.route('/sync')
+    .post(protect, admin, triggerSync);
 
 router.route('/')
     .get(protect, admin, getWebmails)
