@@ -503,12 +503,12 @@ const WebmailModule = ({ token }) => {
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
                 <span className="font-semibold text-slate-400">SMTP Server</span>
                 <div className="flex items-center gap-2 font-mono text-[11px] text-white">
-                  <span>mail.vrhere.in</span>
+                  <span>vrhere.in</span>
                   <button 
-                    onClick={() => handleCopy('mail.vrhere.in')} 
+                    onClick={() => handleCopy('vrhere.in')} 
                     className="p-1 text-slate-500 hover:text-white transition"
                   >
-                    {copiedText === 'mail.vrhere.in' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                    {copiedText === 'vrhere.in' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
                   </button>
                 </div>
               </div>
@@ -530,7 +530,7 @@ const WebmailModule = ({ token }) => {
             </div>
 
             <div className="mt-5 p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-[10px] text-slate-400 leading-relaxed">
-              *Pro Tip: For all your custom domains (e.g. any domain configured on this VPS), you can always use **`mail.vrhere.in`** as the working SMTP server with your custom mailbox username & password!
+              *Pro Tip: For all your custom domains (e.g. any domain configured on this VPS), you can always use **`vrhere.in`** as the working SMTP server with your custom mailbox username & password!
             </div>
           </div>
         </div>
