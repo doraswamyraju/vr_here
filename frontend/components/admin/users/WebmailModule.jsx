@@ -614,6 +614,13 @@ const WebmailModule = ({ token }) => {
                     {diagnostics.dovecotStatus}
                   </pre>
                 </div>
+
+                <div>
+                  <h4 className="font-black text-cyan-300 uppercase tracking-wider mb-2">Dovecot Config (doveconf -n)</h4>
+                  <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[250px] text-white whitespace-pre-wrap">
+                    {diagnostics.dovecotConf || 'No Dovecot config dump available.'}
+                  </pre>
+                </div>
               </div>
               
               <div className="space-y-2">

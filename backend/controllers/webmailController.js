@@ -166,6 +166,7 @@ export const getDiagnostics = asyncHandler(async (req, res) => {
 
     results.postfixStatus = runCommand('systemctl status postfix');
     results.dovecotStatus = runCommand('systemctl status dovecot');
+    results.dovecotConf = runCommand('doveconf -n');
 
     // Read configured postfix aliases (virtual)
     let postfixVirtual = '';
