@@ -76,14 +76,18 @@ const run = async () => {
         fs.writeFileSync(virtualPath, virtualLines.join('\n') + '\n', 'utf8');
 
         console.log(`Writing Dovecot user database to: ${dovecotUsersPath}`);
-        // Secure permission mode for Dovecot users db (read/write only by owner)
-        fs.writeFileSync(dovecotUsersPath, dovecotLines.join('\n') + '\n', { encoding: 'utf8', mode: 0o600 });
+        // Secure permission mode for Dovecot users db (read/write by owner, read by group)
+        fs.writeFileSync(dovecotUsersPath, dovecotLines.join('\n') + '\n', { encoding: 'utf8', mode: 0o640 });
 
         // 4. Reload mail services (only in production VPS environment with root permission)
         if (isProd) {
             console.log('Regenerating Postfix lookup tables...');
             const { execSync } = await import('child_process');
             try {
+                // Ensure correct group ownership for Dovecot
+                execSync(`chown root:dovecot ${dovecotUsersPath}`);
+                console.log('Dovecot users file ownership updated.');
+                
                 execSync(`postmap ${virtualPath}`);
                 console.log('postmap executed successfully.');
                 execSync('systemctl reload postfix');
