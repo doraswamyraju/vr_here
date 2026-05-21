@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Mail, Plus, Trash2, Key, RefreshCw, AlertCircle, Shield, Copy, Check, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Key, RefreshCw, AlertCircle, Shield, Copy, Check, ExternalLink } from 'lucide-react';
 
 const WebmailModule = ({ token }) => {
   const [webmails, setWebmails] = useState([]);
@@ -192,7 +192,7 @@ const WebmailModule = ({ token }) => {
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50 shadow-md"
         >
           <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
-          {isSyncing ? 'Sync VPS Config'}
+          {isSyncing ? 'Syncing...' : 'Sync VPS Config'}
         </button>
         <button 
           onClick={fetchWebmails}
