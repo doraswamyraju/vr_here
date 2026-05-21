@@ -167,6 +167,32 @@ export const getDiagnostics = asyncHandler(async (req, res) => {
     results.postfixStatus = runCommand('systemctl status postfix');
     results.dovecotStatus = runCommand('systemctl status dovecot');
     results.dovecotConf = runCommand('doveconf -n');
+    
+    // DKIM key check
+    let dkimKey = '';
+    try {
+        if (fs.existsSync('/etc/opendkim/keys/vrhere.in/mail.txt')) {
+            dkimKey = fs.readFileSync('/etc/opendkim/keys/vrhere.in/mail.txt', 'utf8');
+        } else if (fs.existsSync('/etc/opendkim/keys/mail.txt')) {
+            dkimKey = fs.readFileSync('/etc/opendkim/keys/mail.txt', 'utf8');
+        } else {
+            const findDkim = runCommand('find /etc/opendkim -name "*.txt" 2>/dev/null || find /etc/postfix -name "*.txt" 2>/dev/null');
+            if (findDkim && !findDkim.startsWith('Error')) {
+                const firstKeyPath = findDkim.split('\n')[0].trim();
+                if (firstKeyPath && fs.existsSync(firstKeyPath)) {
+                    dkimKey = fs.readFileSync(firstKeyPath, 'utf8');
+                }
+            }
+        }
+    } catch (e) {
+        dkimKey = `Error checking DKIM key: ${e.message}`;
+    }
+    results.dkimKey = dkimKey || 'DKIM key file not found on VPS (OpenDKIM may not be configured).';
+
+    // Query live DNS records from VPS to check verification
+    results.spfDns = runCommand('dig +short txt vrhere.in || host -t txt vrhere.in');
+    results.dmarcDns = runCommand('dig +short txt _dmarc.vrhere.in || host -t txt _dmarc.vrhere.in');
+    results.dkimDns = runCommand('dig +short txt mail._domainkey.vrhere.in || host -t txt mail._domainkey.vrhere.in');
 
     // Read configured postfix aliases (virtual)
     let postfixVirtual = '';

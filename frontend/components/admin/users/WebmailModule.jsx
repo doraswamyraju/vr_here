@@ -536,6 +536,123 @@ const WebmailModule = ({ token }) => {
         </div>
       </div>
 
+      {/* EMAIL DELIVERABILITY & DNS AUTHENTICATION GUIDE */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+        <h3 className="text-lg font-extrabold text-slate-900 mb-2 flex items-center gap-2">
+          <Shield className="text-indigo-600 animate-pulse" size={22} /> Email Authentication & Deliverability (SPF, DKIM, DMARC)
+        </h3>
+        <p className="text-xs text-slate-500 mb-6">
+          Configure these TXT DNS records for your domain (**vrhere.in**) at your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.) to sign all outbound emails, build domain reputation, and ensure 100% deliverability directly to primary inboxes.
+        </p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* SPF RECORD CARD */}
+          <div className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700">SPF Record</span>
+                <span className="text-[10px] text-slate-400 font-medium">Domain TXT</span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                Declares your VPS IP address as a valid sender. This prevents malicious servers from sending spoofed emails using your name.
+              </p>
+            </div>
+            
+            <div className="space-y-2.5 pt-3 border-t border-slate-100 font-mono text-[11px]">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Host / Name</span>
+                <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">@</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Type</span>
+                <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">TXT</span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <span className="text-slate-400 font-semibold flex-shrink-0">Value</span>
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200 truncate max-w-[150px]">v=spf1 ip4:147.93.107.21 ~all</span>
+                  <button 
+                    onClick={() => handleCopy('v=spf1 ip4:147.93.107.21 ~all')} 
+                    className="p-1 text-slate-400 hover:text-indigo-600 transition flex-shrink-0"
+                  >
+                    {copiedText === 'v=spf1 ip4:147.93.107.21 ~all' ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* DKIM RECORD CARD */}
+          <div className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-50 text-cyan-700">DKIM Record</span>
+                <span className="text-[10px] text-slate-400 font-medium">Domain TXT</span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                Signs all outgoing emails with a unique cryptographic signature. You can view and copy your public DKIM key directly inside the VPS diagnostics panel.
+              </p>
+            </div>
+            
+            <div className="space-y-2.5 pt-3 border-t border-slate-100 font-mono text-[11px]">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Host / Name</span>
+                <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">mail._domainkey</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Type</span>
+                <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">TXT</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Value</span>
+                <button 
+                  onClick={handleRunDiagnostics}
+                  className="text-[10px] text-indigo-600 hover:text-indigo-800 font-extrabold uppercase tracking-wide flex items-center gap-1 active:scale-95 transition"
+                >
+                  <Shield size={10} /> View in Diagnostics
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* DMARC POLICY CARD */}
+          <div className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700">DMARC Policy</span>
+                <span className="text-[10px] text-slate-400 font-medium">Domain TXT</span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                Establishes how external providers like Google and Yahoo handle messages claiming to be from your domain that fail authentication checks.
+              </p>
+            </div>
+            
+            <div className="space-y-2.5 pt-3 border-t border-slate-100 font-mono text-[11px]">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Host / Name</span>
+                <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">_dmarc</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Type</span>
+                <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">TXT</span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <span className="text-slate-400 font-semibold flex-shrink-0">Value</span>
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200 truncate max-w-[150px]">v=DMARC1; p=quarantine; pct=100; rua=mailto:admin@vrhere.in</span>
+                  <button 
+                    onClick={() => handleCopy('v=DMARC1; p=quarantine; pct=100; rua=mailto:admin@vrhere.in')} 
+                    className="p-1 text-slate-400 hover:text-indigo-600 transition flex-shrink-0"
+                  >
+                    {copiedText === 'v=DMARC1; p=quarantine; pct=100; rua=mailto:admin@vrhere.in' ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* DIAGNOSTICS MODAL/PANEL */}
       {showDiagnostics && (
         <div className="rounded-2xl border border-slate-200 bg-slate-900 text-white shadow-xl p-6 space-y-4 mt-6">
@@ -580,6 +697,31 @@ const WebmailModule = ({ token }) => {
                   <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[150px] text-white whitespace-pre-wrap">
                     {diagnostics.dovecotUsers || 'No virtual users configured.'}
                   </pre>
+                </div>
+
+                <div>
+                  <h4 className="font-black text-cyan-300 uppercase tracking-wider mb-2">OpenDKIM Public Key Configuration (Copy for TXT DNS Setup)</h4>
+                  <pre className="p-3 bg-black/60 border border-slate-800 rounded-xl overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[180px] text-emerald-400 whitespace-pre-wrap">
+                    {diagnostics.dkimKey || 'No opendkim key file located.'}
+                  </pre>
+                </div>
+
+                <div>
+                  <h4 className="font-black text-cyan-300 uppercase tracking-wider mb-2">Live DNS Record Lookup from VPS</h4>
+                  <div className="space-y-2 bg-black/60 border border-slate-800 rounded-xl p-3 text-[11px] font-mono leading-relaxed text-white">
+                    <div>
+                      <span className="text-slate-400 font-bold">SPF Record (TXT @):</span>
+                      <pre className="mt-1 p-1 bg-black/40 rounded max-h-[80px] overflow-auto text-yellow-300">{diagnostics.spfDns?.trim() || 'No record found.'}</pre>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold">DMARC Record (TXT _dmarc):</span>
+                      <pre className="mt-1 p-1 bg-black/40 rounded max-h-[80px] overflow-auto text-yellow-300">{diagnostics.dmarcDns?.trim() || 'No record found.'}</pre>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold">DKIM Record (TXT mail._domainkey):</span>
+                      <pre className="mt-1 p-1 bg-black/40 rounded max-h-[80px] overflow-auto text-yellow-300">{diagnostics.dkimDns?.trim() || 'No record found.'}</pre>
+                    </div>
+                  </div>
                 </div>
                 
                 <div>
