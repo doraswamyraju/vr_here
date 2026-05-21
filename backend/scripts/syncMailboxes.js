@@ -43,8 +43,8 @@ const run = async () => {
             // Postfix alias format: email forwardTo
             virtualLines.push(`${email} ${forwardTo}`);
 
-            // Dovecot passwd-file format: email:{BCRYPT}hash::::::
-            dovecotLines.push(`${email}:{BCRYPT}${wm.passwordHash}::::::`);
+            // Dovecot passwd-file format: email:{CRYPT}hash::::::
+            dovecotLines.push(`${email}:{CRYPT}${wm.passwordHash}::::::`);
         });
 
         const domainLines = Array.from(domains);
