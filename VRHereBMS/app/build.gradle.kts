@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.sbr.vrherebms"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.sbr.vrherebms"
