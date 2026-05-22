@@ -48,6 +48,14 @@ const sanitizeTickerMessages = (messages = []) =>
         ? messages.map((msg) => String(msg || '').trim()).filter(Boolean)
         : [];
 
+const sanitizeCapsulesPayload = (capsules = []) =>
+    Array.isArray(capsules)
+        ? capsules.map((capsule) => ({
+            text: String(capsule.text || '').trim(),
+            link: String(capsule.link || '').trim(),
+        })).filter((c) => c.text && c.link)
+        : [];
+
 const getOrCreateConfig = async () => {
     let config = await ServiceMenuConfig.findOne({ key: MENU_KEY });
     if (!config) {
@@ -62,10 +70,22 @@ const getOrCreateConfig = async () => {
         (config.services || []).some((service) => service.id === id)
     );
 
+    let needsSave = false;
+
     if (!hasColumnShape || !hasLatestCategorySet) {
         const defaultsDoc = new ServiceMenuConfig();
         config.services = defaultsDoc.services;
         config.tickerMessages = defaultsDoc.tickerMessages;
+        needsSave = true;
+    }
+
+    if (!config.capsules || config.capsules.length === 0) {
+        const defaultsDoc = new ServiceMenuConfig();
+        config.capsules = defaultsDoc.capsules;
+        needsSave = true;
+    }
+
+    if (needsSave) {
         await config.save();
     }
 
@@ -78,7 +98,7 @@ const getHeaderMenuConfig = asyncHandler(async (req, res) => {
 });
 
 const updateHeaderMenuConfig = asyncHandler(async (req, res) => {
-    const { services, tickerMessages } = req.body;
+    const { services, tickerMessages, capsules } = req.body;
 
     if (!Array.isArray(services) || services.length === 0) {
         res.status(400);
@@ -91,10 +111,24 @@ const updateHeaderMenuConfig = asyncHandler(async (req, res) => {
         throw new Error('At least one valid service is required');
     }
 
+    if (capsules !== undefined) {
+        if (!Array.isArray(capsules)) {
+            res.status(400);
+            throw new Error('Capsules payload must be an array');
+        }
+        if (capsules.length > 10) {
+            res.status(400);
+            throw new Error('Maximum of 10 capsules are allowed');
+        }
+    }
+
     const config = await getOrCreateConfig();
     config.services = cleanServices;
     if (tickerMessages !== undefined) {
         config.tickerMessages = sanitizeTickerMessages(tickerMessages);
+    }
+    if (capsules !== undefined) {
+        config.capsules = sanitizeCapsulesPayload(capsules);
     }
     const updated = await config.save();
 

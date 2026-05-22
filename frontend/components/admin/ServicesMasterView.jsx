@@ -30,6 +30,7 @@ const ServicesMasterView = ({ token }) => {
         'Startup consultation fee is adjustable against package purchase.',
         'Get faster support for registrations and certifications.',
     ]);
+    const [capsules, setCapsules] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState('');
@@ -51,6 +52,9 @@ const ServicesMasterView = ({ token }) => {
             }
             if (Array.isArray(data?.tickerMessages)) {
                 setTickerMessages(data.tickerMessages);
+            }
+            if (Array.isArray(data?.capsules)) {
+                setCapsules(data.capsules);
             }
         } catch (error) {
             console.error('Failed to load services header config', error);
@@ -88,14 +92,18 @@ const ServicesMasterView = ({ token }) => {
                         }))
                         .filter((offer) => offer.title && offer.imageUrl),
                 })).filter((service) => service.id && service.title),
+                capsules: capsules.map((cap) => ({
+                    text: (cap.text || '').trim(),
+                    link: (cap.link || '').trim(),
+                })).filter((cap) => cap.text && cap.link),
             };
 
             await axios.put('/api/services/header-config', payload, authConfig);
-            setMessage('Services menu updated successfully.');
+            setMessage('Services config updated successfully.');
             await fetchConfig();
         } catch (error) {
-            console.error('Failed to save services menu', error);
-            setMessage(error?.response?.data?.message || 'Failed to save services menu.');
+            console.error('Failed to save services config', error);
+            setMessage(error?.response?.data?.message || 'Failed to save services config.');
         } finally {
             setIsSaving(false);
         }
@@ -148,7 +156,7 @@ const ServicesMasterView = ({ token }) => {
             <div className="mb-6 flex items-center justify-between">
                 <div className="text-left">
                     <h2 className="text-2xl font-bold text-slate-800">Services Master</h2>
-                    <p className="text-slate-500">Manage header tabs, dropdown columns, and latest offers.</p>
+                    <p className="text-slate-500">Manage header tabs, dropdown columns, dynamic hero tags, and latest offers.</p>
                 </div>
                 <button
                     onClick={saveAll}
@@ -196,6 +204,81 @@ const ServicesMasterView = ({ token }) => {
                         </div>
                     ))}
                 </div>
+            </div>
+
+            <div className="mb-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="font-bold text-slate-800">Hero Section Interactive Capsules</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Manage up to 10 service tags that fall, drift, and can be thrown inside the Hero section background. Clicking a capsule opens that service page.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${capsules.length >= 10 ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-150'}`}>
+                            {capsules.length} / 10 Tags
+                        </span>
+                        <button
+                            onClick={() => setCapsules((prev) => [...prev, { text: '', link: '' }])}
+                            disabled={capsules.length >= 10}
+                            className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Plus className="w-3 h-3" /> Add Tag
+                        </button>
+                    </div>
+                </div>
+
+                {capsules.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic py-6 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50">No capsules defined. Add at least one to show on the hero section.</p>
+                ) : (
+                    <div className="grid md:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-1">
+                        {capsules.map((cap, idx) => (
+                            <div key={idx} className="flex gap-3 items-center p-3 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition relative group">
+                                <div className="flex-1 space-y-2">
+                                    <input
+                                        value={cap.text}
+                                        onChange={(e) =>
+                                            setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, text: e.target.value } : x)))
+                                        }
+                                        className="w-full border border-slate-350 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 bg-white"
+                                        placeholder="Capsule Label (e.g. GST Registration)"
+                                    />
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={cap.link}
+                                            onChange={(e) =>
+                                                setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, link: e.target.value } : x)))
+                                            }
+                                            className="flex-1 border border-slate-300 rounded-lg px-2 py-1 text-xs bg-white text-slate-600 outline-none"
+                                        >
+                                            <option value="">-- Service Page --</option>
+                                            <option value="/pvt-ltd-registration">Private Limited Registration</option>
+                                            <option value="/gst-registration">GST Registration</option>
+                                            <option value="/partnership-firm">Partnership Firm Registration</option>
+                                            <option value="/income-tax-return">Income Tax Return Filing</option>
+                                            <option value="/accounting-services">Accounting Services</option>
+                                            <option value="/compliance-scheme-2026">Companies Compliance Scheme 2026</option>
+                                            <option value="/all-services">All Services Page</option>
+                                            <option value="/contact">Contact Us / Inquiry</option>
+                                        </select>
+                                        <input
+                                            value={cap.link}
+                                            onChange={(e) =>
+                                                setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, link: e.target.value } : x)))
+                                            }
+                                            className="flex-1 border border-slate-300 rounded-lg px-3 py-1 text-[11px] bg-white"
+                                            placeholder="Or custom link"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setCapsules((prev) => prev.filter((_, i) => i !== idx))}
+                                    className="p-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="space-y-5">

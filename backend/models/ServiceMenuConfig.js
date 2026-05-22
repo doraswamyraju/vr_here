@@ -283,6 +283,22 @@ const serviceMenuConfigSchema = new mongoose.Schema(
                 },
             ],
         },
+        capsules: {
+            type: [
+                {
+                    text: { type: String, required: true, trim: true },
+                    link: { type: String, required: true, trim: true },
+                },
+            ],
+            default: [
+                { text: 'Private Limited Registration', link: '/pvt-ltd-registration' },
+                { text: 'GST Registration', link: '/gst-registration' },
+                { text: 'Partnership Firm Registration', link: '/partnership-firm' },
+                { text: 'Accounting Services', link: '/accounting-services' },
+                { text: 'Companies Compliance Scheme 2026', link: '/compliance-scheme-2026' },
+                { text: 'Income Tax Return Filing', link: '/income-tax-return' },
+            ],
+        },
     },
     { timestamps: true }
 );

@@ -11,6 +11,8 @@ import ConsultationPaymentModal from './components/ConsultationPaymentModal';
 import ProfessionalsModule from './components/OurTeamModule';
 import { launchRazorpayCheckout } from './utils/razorpayCheckout';
 import { showPaymentSuccessPopup } from './utils/paymentSuccessPopup';
+import axios from 'axios';
+import PhysicsCapsules from './components/PhysicsCapsules';
 
 // MENU_DATA removed (moved to SharedComponents)
 
@@ -156,6 +158,7 @@ const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]); // Search Suggestions
   const [activeAccordion, setActiveAccordion] = useState(null); // For FAQs
+  const [capsules, setCapsules] = useState([]);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -175,6 +178,20 @@ const HomePage = () => {
       if (searchSection) searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setTimeout(() => searchInput?.focus(), 450);
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchCapsules = async () => {
+      try {
+        const { data } = await axios.get('/api/services/header-config');
+        if (data && Array.isArray(data.capsules)) {
+          setCapsules(data.capsules);
+        }
+      } catch (error) {
+        console.error('Failed to load dynamic capsules', error);
+      }
+    };
+    fetchCapsules();
   }, []);
 
   // --- ACTIONS ---
@@ -251,6 +268,9 @@ const HomePage = () => {
 
       {/* HERO SECTION - RED/DARK THEME */}
       <section className="relative bg-[#0f172a] pb-32 pt-20 lg:pt-32 overflow-hidden -mt-[0px]">
+        {/* Physics Capsules Layer */}
+        <PhysicsCapsules capsules={capsules} />
+
         {/* Background Elements */}
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2 blob-anim opacity-50"></div>
