@@ -2,10 +2,12 @@ package com.sbr.vrherebms.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
@@ -14,13 +16,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sbr.vrherebms.viewmodel.AuthState
@@ -36,11 +38,11 @@ fun LoginScreen(
     val context = LocalContext.current
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Colors matching high-fidelity glassmorphism themes
-    val gradientColors = listOf(
-        Color(0xFF6366F1), // Indigo 500
-        Color(0xFF8B5CF6)  // Violet 500
-    )
+    // Colors matching React Web view exactly
+    val primaryRed = Color(0xFFC82323)
+    val textDark = Color(0xFF1E293B)
+    val textMuted = Color(0xFF64748B)
+    val inputBackground = Color(0xFFEEF2F6)
 
     LaunchedEffect(key1 = viewModel.authState) {
         if (viewModel.authState is AuthState.Success) {
@@ -62,147 +64,211 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8FAFC)), // Slate 50
-        contentAlignment = Alignment.Center
+            .background(Color.White)
+            .padding(horizontal = 24.dp)
     ) {
-        Card(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+            horizontalAlignment = Alignment.Start
         ) {
-            Column(
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // 1. "VR HERE" Branding Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(vertical = 12.dp)
+            ) {
+                Text(
+                    text = "VR",
+                    color = primaryRed,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "HERE",
+                    color = textDark,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black
+                )
+            }
+
+            Spacer(modifier = Modifier.height(44.dp))
+
+            // 2. "Sign In" Title & Subtitle
+            Text(
+                text = "Sign In",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Bold,
+                color = textDark
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Please enter your details to continue.",
+                fontSize = 15.sp,
+                color = textMuted
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // 3. Email Input
+            Text(
+                text = "Email Address",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = textDark,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            TextField(
+                value = viewModel.emailInput,
+                onValueChange = { viewModel.emailInput = it },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = null,
+                        tint = textMuted
+                    )
+                },
+                placeholder = { Text("Email Address", color = textMuted) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = inputBackground,
+                    unfocusedContainerColor = inputBackground,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    focusedTextColor = textDark,
+                    unfocusedTextColor = textDark
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 4. Password Input
+            Text(
+                text = "Password",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = textDark,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            TextField(
+                value = viewModel.passwordInput,
+                onValueChange = { viewModel.passwordInput = it },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = textMuted
+                    )
+                },
+                placeholder = { Text("Password", color = textMuted) },
+                trailingIcon = {
+                    val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(image, contentDescription = null, tint = textMuted)
+                    }
+                },
+                singleLine = true,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = inputBackground,
+                    unfocusedContainerColor = inputBackground,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    focusedTextColor = textDark,
+                    unfocusedTextColor = textDark
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 5. Forgot Password
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "Forgot Password?",
+                    color = primaryRed,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable {
+                        Toast.makeText(context, "Password reset link sent to your registered email.", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 6. Sign In Capsule Button
+            Button(
+                onClick = { viewModel.login() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .height(54.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryRed)
             ) {
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Premium VR Logo
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .background(
-                            brush = Brush.linearGradient(colors = gradientColors),
-                            shape = RoundedCornerShape(18.dp)
-                        ),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(
-                        text = "VR",
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Black
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "VR HERE Solutions",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF1E293B) // Slate 800
-                )
-
-                Text(
-                    text = "Sign in to manage your services",
-                    fontSize = 13.sp,
-                    color = Color(0xFF64748B), // Slate 500
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                // Email Input
-                OutlinedTextField(
-                    value = viewModel.emailInput,
-                    onValueChange = { viewModel.emailInput = it },
-                    label = { Text("Email Address") },
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF6366F1),
-                        focusedLabelColor = Color(0xFF6366F1)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Password Input
-                OutlinedTextField(
-                    value = viewModel.passwordInput,
-                    onValueChange = { viewModel.passwordInput = it },
-                    label = { Text("Password") },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                    trailingIcon = {
-                        val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(image, contentDescription = null)
-                        }
-                    },
-                    singleLine = true,
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF6366F1),
-                        focusedLabelColor = Color(0xFF6366F1)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Submit Button
-                Button(
-                    onClick = { viewModel.login() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    contentPadding = PaddingValues()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(brush = Brush.horizontalGradient(gradientColors)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (viewModel.authState is AuthState.Loading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                        } else {
-                            Text(
-                                text = "LOGIN",
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 14.sp,
-                                letterSpacing = 1.sp
-                            )
-                        }
+                    if (viewModel.authState is AuthState.Loading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text(
+                            text = "Sign In",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
-                TextButton(
-                    onClick = onNavigateToRegister,
-                    modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    Text(
-                        text = "Don't have an account? Sign Up",
-                        color = Color(0xFF6366F1),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp
-                    )
-                }
+            // 7. Footer: Sign Up
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Don't have an account? ",
+                    color = textMuted,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = "Sign Up",
+                    color = primaryRed,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.clickable { onNavigateToRegister() }
+                )
             }
         }
     }
