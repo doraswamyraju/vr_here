@@ -1,10 +1,95 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const CAPSULE_THEMES = [
+    { // Sunset Fire
+        gradient: 'from-rose-500/20 to-orange-500/20',
+        border: 'border-orange-500/35 hover:border-orange-450/70',
+        text: 'text-orange-200 hover:text-white',
+        glow: 'rgba(249, 115, 22, 0.22)',
+        glowHover: 'rgba(249, 115, 22, 0.55)',
+        dotColor: 'bg-orange-400',
+    },
+    { // Cyber Neon
+        gradient: 'from-blue-600/20 to-cyan-500/20',
+        border: 'border-cyan-500/35 hover:border-cyan-450/70',
+        text: 'text-cyan-200 hover:text-white',
+        glow: 'rgba(6, 182, 212, 0.22)',
+        glowHover: 'rgba(6, 182, 212, 0.55)',
+        dotColor: 'bg-cyan-400',
+    },
+    { // Cosmic Orchid
+        gradient: 'from-violet-600/20 to-fuchsia-500/20',
+        border: 'border-fuchsia-500/35 hover:border-fuchsia-450/70',
+        text: 'text-fuchsia-200 hover:text-white',
+        glow: 'rgba(217, 70, 239, 0.22)',
+        glowHover: 'rgba(217, 70, 239, 0.55)',
+        dotColor: 'bg-fuchsia-400',
+    },
+    { // Aurora Emerald
+        gradient: 'from-teal-600/20 to-emerald-500/20',
+        border: 'border-emerald-500/35 hover:border-emerald-450/70',
+        text: 'text-emerald-200 hover:text-white',
+        glow: 'rgba(16, 185, 129, 0.22)',
+        glowHover: 'rgba(16, 185, 129, 0.55)',
+        dotColor: 'bg-emerald-400',
+    },
+    { // Solar Gold
+        gradient: 'from-amber-600/20 to-yellow-500/20',
+        border: 'border-yellow-500/35 hover:border-yellow-450/70',
+        text: 'text-yellow-100 hover:text-white',
+        glow: 'rgba(234, 179, 8, 0.22)',
+        glowHover: 'rgba(234, 179, 8, 0.55)',
+        dotColor: 'bg-yellow-400',
+    },
+    { // Electric Indigo
+        gradient: 'from-indigo-600/20 to-blue-500/20',
+        border: 'border-blue-500/35 hover:border-blue-400/70',
+        text: 'text-indigo-200 hover:text-white',
+        glow: 'rgba(59, 130, 246, 0.22)',
+        glowHover: 'rgba(59, 130, 246, 0.55)',
+        dotColor: 'bg-indigo-400',
+    },
+    { // Rose Quartz
+        gradient: 'from-pink-600/20 to-rose-500/20',
+        border: 'border-rose-450/35 hover:border-rose-300/70',
+        text: 'text-pink-200 hover:text-white',
+        glow: 'rgba(244, 63, 94, 0.22)',
+        glowHover: 'rgba(244, 63, 94, 0.55)',
+        dotColor: 'bg-pink-400',
+    },
+    { // Neon Crimson
+        gradient: 'from-red-600/20 to-rose-600/20',
+        border: 'border-red-500/35 hover:border-red-400/70',
+        text: 'text-red-200 hover:text-white',
+        glow: 'rgba(239, 68, 68, 0.22)',
+        glowHover: 'rgba(239, 68, 68, 0.55)',
+        dotColor: 'bg-red-400',
+    },
+    { // Aqua Sea
+        gradient: 'from-cyan-600/20 to-teal-500/20',
+        border: 'border-teal-400/35 hover:border-teal-300/70',
+        text: 'text-cyan-100 hover:text-white',
+        glow: 'rgba(20, 184, 166, 0.22)',
+        glowHover: 'rgba(20, 184, 166, 0.55)',
+        dotColor: 'bg-teal-400',
+    },
+    { // Plum Dream
+        gradient: 'from-purple-600/20 to-rose-500/20',
+        border: 'border-purple-400/35 hover:border-purple-300/70',
+        text: 'text-purple-200 hover:text-white',
+        glow: 'rgba(168, 85, 247, 0.22)',
+        glowHover: 'rgba(168, 85, 247, 0.55)',
+        dotColor: 'bg-purple-400',
+    }
+];
+
 const PhysicsCapsules = ({ capsules = [] }) => {
     const containerRef = useRef(null);
     const navigate = useNavigate();
     const [instances, setInstances] = useState([]);
+    const [isMobile, setIsMobile] = useState(false);
+    const [hoveredId, setHoveredId] = useState(-1);
     const instancesRef = useRef([]);
     const dragRef = useRef({
         index: -1,
@@ -18,6 +103,17 @@ const PhysicsCapsules = ({ capsules = [] }) => {
         vx: 0,
         vy: 0,
     });
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    if (isMobile) return null;
 
     // Initialize physics bodies when capsules prop changes or mounts
     useEffect(() => {
@@ -304,33 +400,45 @@ const PhysicsCapsules = ({ capsules = [] }) => {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
-            {instances.map((body) => (
-                <div
-                    key={body.id}
-                    onMouseDown={(e) => handleMouseDown(e, body.id)}
-                    onTouchStart={(e) => handleTouchStart(e, body.id)}
-                    style={{
-                        position: 'absolute',
-                        width: `${body.width}px`,
-                        height: `${body.height}px`,
-                        left: 0,
-                        top: 0,
-                        transform: `translate3d(${body.x - body.width / 2}px, ${body.y - body.height / 2}px, 0)`,
-                        willChange: 'transform',
-                    }}
-                    className={`
-                        pointer-events-auto cursor-grab active:cursor-grabbing select-none
-                        flex items-center justify-center rounded-full px-4 py-2 text-xs font-bold text-white
-                        border border-white/20 bg-white/10 backdrop-blur-md
-                        shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]
-                        hover:border-red-500/50 hover:bg-white/15 transition-colors duration-300
-                    `}
-                >
-                    <span className="truncate max-w-[90%] text-center text-white font-black tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                        {body.text}
-                    </span>
-                </div>
-            ))}
+            {instances.map((body) => {
+                const theme = CAPSULE_THEMES[body.id % CAPSULE_THEMES.length];
+                const isHovered = hoveredId === body.id;
+                const isDragged = dragRef.current.index === body.id;
+                const shadowGlow = isHovered || isDragged ? theme.glowHover : theme.glow;
+                const scale = isHovered || isDragged ? 'scale(1.06)' : 'scale(1)';
+
+                return (
+                    <div
+                        key={body.id}
+                        onMouseDown={(e) => handleMouseDown(e, body.id)}
+                        onTouchStart={(e) => handleTouchStart(e, body.id)}
+                        onMouseEnter={() => setHoveredId(body.id)}
+                        onMouseLeave={() => setHoveredId(-1)}
+                        style={{
+                            position: 'absolute',
+                            width: `${body.width}px`,
+                            height: `${body.height}px`,
+                            left: 0,
+                            top: 0,
+                            transform: `translate3d(${body.x - body.width / 2}px, ${body.y - body.height / 2}px, 0) ${scale}`,
+                            willChange: 'transform',
+                            boxShadow: `0 8px 32px 0 rgba(0,0,0,0.35), 0 0 15px ${shadowGlow}`,
+                            transition: 'border-color 0.2s, background-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.05s ease-out',
+                        }}
+                        className={`
+                            pointer-events-auto cursor-grab active:cursor-grabbing select-none
+                            flex items-center justify-center rounded-full px-5 py-2.5 text-xs font-black
+                            border backdrop-blur-lg
+                            bg-gradient-to-r ${theme.gradient} ${theme.border} ${theme.text}
+                        `}
+                    >
+                        <span className={`w-2.5 h-2.5 rounded-full ${theme.dotColor} mr-2.5 shadow-[0_0_8px_currentColor] animate-pulse`} />
+                        <span className="truncate max-w-[85%] text-center font-extrabold tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+                            {body.text}
+                        </span>
+                    </div>
+                );
+            })}
         </div>
     );
 };
