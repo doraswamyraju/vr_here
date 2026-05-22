@@ -59,6 +59,14 @@ class SessionManager(context: Context) {
         return prefs.getBoolean(KEY_USER_ACTIVE, false)
     }
 
+    fun savePhone(phone: String) {
+        prefs.edit().putString("user_phone", phone).apply()
+    }
+
+    fun getPhone(): String {
+        return prefs.getString("user_phone", "") ?: ""
+    }
+
     fun clearSession() {
         prefs.edit().clear().apply()
     }

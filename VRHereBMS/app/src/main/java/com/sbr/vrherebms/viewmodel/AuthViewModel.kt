@@ -73,6 +73,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         role = authData.role,
                         isActive = authData.isActive
                     )
+                    sessionManager.savePhone(authData.phone ?: "")
                     authState = AuthState.Success(authData.role)
                     _eventFlow.emit(UiEvent.ShowToast("Welcome back, ${authData.name}!"))
                 } else {
@@ -136,6 +137,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         role = authData.role,
                         isActive = authData.isActive
                     )
+                    sessionManager.savePhone(authData.phone ?: "")
                     
                     if (authData.isActive) {
                         authState = AuthState.Success(authData.role)

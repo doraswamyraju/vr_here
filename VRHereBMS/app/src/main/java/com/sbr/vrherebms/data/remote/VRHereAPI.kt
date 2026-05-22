@@ -43,6 +43,13 @@ interface VRHereAPI {
     @GET("api/payments")
     suspend fun getPayments(): Response<List<PaymentResponse>>
 
+    @POST("api/payments/checkout-order")
+    suspend fun checkoutOrder(@Body payload: CheckoutPayload): Response<CheckoutOrderResponse>
+
+    @POST("api/payments/verify")
+    suspend fun verifyPayment(@Body payload: VerifyPayload): Response<VerifyResponse>
+
+
     // --- TICKETS ---
     @GET("api/tickets")
     suspend fun getTickets(): Response<List<TicketResponse>>
@@ -84,9 +91,8 @@ interface VRHereAPI {
     suspend fun updatePartnerProfile(@Body profile: PartnerProfileUpdateDto): Response<PartnerProfileResponse>
 
     companion object {
-        // base URL pointing to the standard local dev server from Android emulator
-        // In a real device or production, replace this with your domain name (e.g., https://vrhere.in/)
-        var BASE_URL = "http://10.0.2.2:5002/"
+        // base URL pointing directly to the live website database
+        var BASE_URL = "https://vrhere.in/"
 
         private var instance: VRHereAPI? = null
 

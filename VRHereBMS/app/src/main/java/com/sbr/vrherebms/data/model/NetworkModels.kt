@@ -252,3 +252,43 @@ data class PartnerOrderResponse(
     val createdAt: String = ""
 )
 
+// --- CHECKOUT & VERIFICATION ---
+
+data class CheckoutPayload(
+    val serviceName: String,
+    val packageName: String,
+    val amount: Double,
+    val customerName: String,
+    val email: String,
+    val phone: String,
+    val referralCode: String = ""
+)
+
+data class CheckoutOrderResponse(
+    val key: String,
+    val orderId: String,
+    val amount: Long,
+    val currency: String
+)
+
+data class VerifyPayload(
+    val serviceName: String,
+    val packageName: String,
+    val amount: Double,
+    val customerName: String,
+    val email: String,
+    val phone: String,
+    val referralCode: String = "",
+    val razorpay_order_id: String,
+    val razorpay_payment_id: String,
+    val razorpay_signature: String
+)
+
+data class VerifyResponse(
+    val success: Boolean,
+    val message: String?,
+    val resetLinkSent: Boolean? = false,
+    val auth: AuthResponse? = null
+)
+
+
