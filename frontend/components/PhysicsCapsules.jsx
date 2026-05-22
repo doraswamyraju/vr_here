@@ -113,10 +113,9 @@ const PhysicsCapsules = ({ capsules = [] }) => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    if (isMobile) return null;
-
     // Initialize physics bodies when capsules prop changes or mounts
     useEffect(() => {
+        if (isMobile) return;
         if (!capsules || capsules.length === 0) return;
 
         const container = containerRef.current;
@@ -154,10 +153,11 @@ const PhysicsCapsules = ({ capsules = [] }) => {
 
         instancesRef.current = newInstances;
         setInstances(newInstances);
-    }, [capsules]);
+    }, [capsules, isMobile]);
 
     // Core Animation and Physics Engine loop
     useEffect(() => {
+        if (isMobile) return;
         let animationId;
         const gravity = 0.25;
         const bounce = 0.55;         // Restitution coefficient for walls
@@ -295,7 +295,7 @@ const PhysicsCapsules = ({ capsules = [] }) => {
 
         animationId = requestAnimationFrame(updatePhysics);
         return () => cancelAnimationFrame(animationId);
-    }, []);
+    }, [isMobile]);
 
     // Mouse handlers
     const handleMouseDown = (e, index) => {
@@ -392,6 +392,8 @@ const PhysicsCapsules = ({ capsules = [] }) => {
     const handleTouchEnd = () => {
         handleMouseUpGlobal();
     };
+
+    if (isMobile) return null;
 
     return (
         <div
