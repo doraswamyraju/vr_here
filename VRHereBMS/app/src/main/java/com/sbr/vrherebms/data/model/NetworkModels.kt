@@ -214,3 +214,41 @@ data class AttendanceResponse(
 data class ClockInRequest(
     val notes: String = ""
 )
+
+// --- PARTNER DATA CLASSES ---
+
+data class BankDetails(
+    val accountName: String = "",
+    val accountNumber: String = "",
+    val ifscCode: String = "",
+    val bankName: String = ""
+)
+
+data class PartnerProfileResponse(
+    @SerializedName("_id") val id: String,
+    val name: String,
+    val email: String,
+    val role: String,
+    val phone: String?,
+    val panCard: String?,
+    val bankDetails: BankDetails?,
+    val commissionPercentage: Double?,
+    val isActive: Boolean
+)
+
+data class PartnerProfileUpdateDto(
+    val name: String,
+    val panCard: String,
+    val bankDetails: BankDetails
+)
+
+data class PartnerOrderResponse(
+    @SerializedName("_id") val id: String,
+    val clientName: String = "",
+    val serviceName: String = "",
+    val price: Double = 0.0,
+    val status: String = "",
+    val partnerCommissionAmount: Double = 0.0,
+    val createdAt: String = ""
+)
+

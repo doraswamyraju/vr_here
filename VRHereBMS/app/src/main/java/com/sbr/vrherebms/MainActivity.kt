@@ -15,6 +15,7 @@ import com.sbr.vrherebms.ui.theme.VRHereBMSTheme
 import com.sbr.vrherebms.viewmodel.AuthViewModel
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
 import com.sbr.vrherebms.viewmodel.EmployeeDashboardViewModel
+import com.sbr.vrherebms.viewmodel.PartnerDashboardViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,8 +109,9 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("partner_dashboard") {
+                        val partnerViewModel: PartnerDashboardViewModel = viewModel()
                         PartnerDashboardScreen(
-                            authViewModel = authViewModel,
+                            viewModel = partnerViewModel,
                             userName = authViewModel.getUserName(),
                             onLogout = {
                                 authViewModel.logout()

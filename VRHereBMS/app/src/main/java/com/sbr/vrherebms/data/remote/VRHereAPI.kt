@@ -73,6 +73,16 @@ interface VRHereAPI {
     @POST("api/attendance/clock-out")
     suspend fun clockOut(): Response<AttendanceResponse>
 
+    // --- PARTNER ---
+    @GET("api/partner/orders")
+    suspend fun getPartnerOrders(): Response<List<PartnerOrderResponse>>
+
+    @GET("api/partner/profile")
+    suspend fun getPartnerProfile(): Response<PartnerProfileResponse>
+
+    @PUT("api/partner/profile")
+    suspend fun updatePartnerProfile(@Body profile: PartnerProfileUpdateDto): Response<PartnerProfileResponse>
+
     companion object {
         // base URL pointing to the standard local dev server from Android emulator
         // In a real device or production, replace this with your domain name (e.g., https://vrhere.in/)
