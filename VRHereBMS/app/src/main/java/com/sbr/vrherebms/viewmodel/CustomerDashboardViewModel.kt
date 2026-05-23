@@ -53,8 +53,10 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
         object TicketCreated : UiEvent()
     }
 
-    fun refreshAllData() {
-        dashboardState = DashboardState.Loading
+    fun refreshAllData(silent: Boolean = false) {
+        if (!silent) {
+            dashboardState = DashboardState.Loading
+        }
         viewModelScope.launch {
             var hasErrors = false
             var lastErrorMessage = ""
@@ -137,8 +139,10 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
             }
 
             if (hasErrors) {
-                dashboardState = DashboardState.Error(lastErrorMessage)
-                _eventFlow.emit(UiEvent.ShowToast(lastErrorMessage))
+                if (!silent) {
+                    dashboardState = DashboardState.Error(lastErrorMessage)
+                    _eventFlow.emit(UiEvent.ShowToast(lastErrorMessage))
+                }
             } else {
                 dashboardState = DashboardState.Success
             }

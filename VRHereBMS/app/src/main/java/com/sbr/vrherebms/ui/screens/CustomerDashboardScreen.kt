@@ -59,7 +59,17 @@ fun CustomerDashboardScreen(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = true) {
-        viewModel.refreshAllData()
+        // Initial full-screen load
+        viewModel.refreshAllData(silent = false)
+
+        // Silent periodic background polling every 15 seconds
+        launch {
+            while (true) {
+                kotlinx.coroutines.delay(15000)
+                viewModel.refreshAllData(silent = true)
+            }
+        }
+
         viewModel.eventFlow.collect { event ->
             if (event is CustomerDashboardViewModel.UiEvent.ShowToast) {
                 Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
