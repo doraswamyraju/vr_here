@@ -67,10 +67,12 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
                 } else {
                     hasErrors = true
                     lastErrorMessage = "Orders: ${ordersCall.message()}"
+                    android.util.Log.e("CustomerDashboard", "Orders fetch failed: ${ordersCall.message()} code: ${ordersCall.code()}")
                 }
             } catch (e: Exception) {
                 hasErrors = true
                 lastErrorMessage = "Orders: ${e.localizedMessage}"
+                android.util.Log.e("CustomerDashboard", "Orders sync exception", e)
             }
 
             // 2. Fetch Payments
@@ -81,10 +83,12 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
                 } else {
                     hasErrors = true
                     lastErrorMessage = "Payments: ${paymentsCall.message()}"
+                    android.util.Log.e("CustomerDashboard", "Payments fetch failed: ${paymentsCall.message()}")
                 }
             } catch (e: Exception) {
                 hasErrors = true
                 lastErrorMessage = "Payments: ${e.localizedMessage}"
+                android.util.Log.e("CustomerDashboard", "Payments sync exception", e)
             }
 
             // 3. Fetch Tickets
@@ -95,10 +99,12 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
                 } else {
                     hasErrors = true
                     lastErrorMessage = "Tickets: ${ticketsCall.message()}"
+                    android.util.Log.e("CustomerDashboard", "Tickets fetch failed: ${ticketsCall.message()}")
                 }
             } catch (e: Exception) {
                 hasErrors = true
                 lastErrorMessage = "Tickets: ${e.localizedMessage}"
+                android.util.Log.e("CustomerDashboard", "Tickets sync exception", e)
             }
 
             // 4. Fetch Notifications (Non-blocking catch to prevent deployment delay crash)
@@ -123,6 +129,8 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
                         }
                     }
                     notifications = newNotifications
+                } else {
+                    android.util.Log.e("CustomerDashboard", "Notifications fetch failed: ${notificationsCall.message()}")
                 }
             } catch (e: Exception) {
                 android.util.Log.e("CustomerDashboard", "Failed to sync notifications", e)
@@ -130,6 +138,7 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
 
             if (hasErrors) {
                 dashboardState = DashboardState.Error(lastErrorMessage)
+                _eventFlow.emit(UiEvent.ShowToast(lastErrorMessage))
             } else {
                 dashboardState = DashboardState.Success
             }

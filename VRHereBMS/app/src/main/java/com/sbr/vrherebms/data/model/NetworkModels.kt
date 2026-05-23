@@ -45,6 +45,13 @@ data class UserProfile(
 
 // --- ORDER DATA CLASSES ---
 
+data class EmployeeResponse(
+    @SerializedName("_id") val id: String,
+    val name: String = "",
+    val email: String = "",
+    val role: String = ""
+)
+
 data class OrderResponse(
     @SerializedName("_id") val id: String,
     val clientName: String = "",
@@ -57,7 +64,7 @@ data class OrderResponse(
     val razorpayOrderId: String = "",
     val paymentStatus: String = "Paid",
     val status: String = "Pending Documents",
-    val assignedEmployee: String? = null,
+    val assignedEmployee: EmployeeResponse? = null,
     val clientDocuments: List<OrderDocument> = emptyList(),
     val adminDocuments: List<OrderDocument> = emptyList(),
     val finalCertificateUrl: String? = null,
