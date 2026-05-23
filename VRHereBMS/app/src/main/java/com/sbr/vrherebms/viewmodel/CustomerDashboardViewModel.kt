@@ -30,6 +30,13 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
     var payments by mutableStateOf<List<PaymentResponse>>(emptyList())
     var tickets by mutableStateOf<List<TicketResponse>>(emptyList())
     var notifications by mutableStateOf<List<NotificationResponse>>(emptyList())
+    
+    var activeBannerNotification by mutableStateOf<NotificationResponse?>(null)
+        private set
+
+    fun dismissBanner() {
+        activeBannerNotification = null
+    }
 
     // Raising support ticket inputs
     var ticketSubject by mutableStateOf("")
@@ -49,22 +56,82 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
     fun refreshAllData() {
         dashboardState = DashboardState.Loading
         viewModelScope.launch {
+            var hasErrors = false
+            var lastErrorMessage = ""
+
+            // 1. Fetch Orders
             try {
-                // Fetch in parallel
                 val ordersCall = api.getOrders()
-                val paymentsCall = api.getPayments()
-                val ticketsCall = api.getTickets()
-                val notificationsCall = api.getNotifications()
-
-                if (ordersCall.isSuccessful) orders = ordersCall.body() ?: emptyList()
-                if (paymentsCall.isSuccessful) payments = paymentsCall.body() ?: emptyList()
-                if (ticketsCall.isSuccessful) tickets = ticketsCall.body() ?: emptyList()
-                if (notificationsCall.isSuccessful) notifications = notificationsCall.body() ?: emptyList()
-
-                dashboardState = DashboardState.Success
+                if (ordersCall.isSuccessful) {
+                    orders = ordersCall.body() ?: emptyList()
+                } else {
+                    hasErrors = true
+                    lastErrorMessage = "Orders: ${ordersCall.message()}"
+                }
             } catch (e: Exception) {
-                dashboardState = DashboardState.Error(e.localizedMessage ?: "Failed to sync data")
-                _eventFlow.emit(UiEvent.ShowToast("Sync error: ${e.localizedMessage}"))
+                hasErrors = true
+                lastErrorMessage = "Orders: ${e.localizedMessage}"
+            }
+
+            // 2. Fetch Payments
+            try {
+                val paymentsCall = api.getPayments()
+                if (paymentsCall.isSuccessful) {
+                    payments = paymentsCall.body() ?: emptyList()
+                } else {
+                    hasErrors = true
+                    lastErrorMessage = "Payments: ${paymentsCall.message()}"
+                }
+            } catch (e: Exception) {
+                hasErrors = true
+                lastErrorMessage = "Payments: ${e.localizedMessage}"
+            }
+
+            // 3. Fetch Tickets
+            try {
+                val ticketsCall = api.getTickets()
+                if (ticketsCall.isSuccessful) {
+                    tickets = ticketsCall.body() ?: emptyList()
+                } else {
+                    hasErrors = true
+                    lastErrorMessage = "Tickets: ${ticketsCall.message()}"
+                }
+            } catch (e: Exception) {
+                hasErrors = true
+                lastErrorMessage = "Tickets: ${e.localizedMessage}"
+            }
+
+            // 4. Fetch Notifications (Non-blocking catch to prevent deployment delay crash)
+            try {
+                val notificationsCall = api.getNotifications()
+                if (notificationsCall.isSuccessful) {
+                    val newNotifications = notificationsCall.body() ?: emptyList()
+                    if (notifications.isNotEmpty() && newNotifications.isNotEmpty()) {
+                        val newUnreads = newNotifications.filter { item ->
+                            !item.isRead && !notifications.any { old -> old.id == item.id }
+                        }
+                        if (newUnreads.isNotEmpty()) {
+                            val latest = newUnreads.first()
+                            activeBannerNotification = latest
+                            com.sbr.vrherebms.utils.NotificationHelper.showNotification(
+                                getApplication(),
+                                latest.id.hashCode(),
+                                latest.title,
+                                latest.message,
+                                latest.type
+                            )
+                        }
+                    }
+                    notifications = newNotifications
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CustomerDashboard", "Failed to sync notifications", e)
+            }
+
+            if (hasErrors) {
+                dashboardState = DashboardState.Error(lastErrorMessage)
+            } else {
+                dashboardState = DashboardState.Success
             }
         }
     }

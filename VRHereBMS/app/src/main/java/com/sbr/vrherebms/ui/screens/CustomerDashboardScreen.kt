@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -660,6 +661,141 @@ fun CustomerDashboardScreen(
                             Toast.makeText(context, "Payment closed", Toast.LENGTH_SHORT).show()
                         }
                     )
+                }
+            }
+
+            // Lockscreen-style Heads-up In-app Notification Banner
+            AnimatedVisibility(
+                visible = viewModel.activeBannerNotification != null,
+                enter = slideInVertically(
+                    initialOffsetY = { -it },
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ) + fadeIn(),
+                exit = slideOutVertically(
+                    targetOffsetY = { -it },
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 48.dp, start = 16.dp, end = 16.dp)
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
+                viewModel.activeBannerNotification?.let { notif ->
+                    LaunchedEffect(notif.id) {
+                        kotlinx.coroutines.delay(5000)
+                        viewModel.dismissBanner()
+                    }
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(24.dp, RoundedCornerShape(20.dp))
+                            .clickable {
+                                viewModel.dismissBanner()
+                                activeTab = "Home"
+                            },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF0F172A).copy(alpha = 0.95f)
+                        ),
+                        border = BorderStroke(
+                            1.dp, 
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF6366F1).copy(alpha = 0.5f), Color(0xFF8B5CF6).copy(alpha = 0.3f))
+                            )
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .background(Color(0xFF6366F1), RoundedCornerShape(6.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("VR", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Black)
+                                    }
+                                    Text(
+                                        text = "VR HERE", 
+                                        color = Color(0xFF818CF8),
+                                        fontSize = 10.sp, 
+                                        fontWeight = FontWeight.Black, 
+                                        letterSpacing = 0.5.sp
+                                    )
+                                    Text(
+                                        text = "• Just now", 
+                                        color = Color(0xFF94A3B8), 
+                                        fontSize = 10.sp, 
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { viewModel.dismissBanner() },
+                                    modifier = Modifier.size(20.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = "Close",
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(Color(0xFF1E293B), RoundedCornerShape(10.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Notifications,
+                                        contentDescription = null,
+                                        tint = Color(0xFF6366F1),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = notif.title, 
+                                        color = Color.White, 
+                                        fontSize = 12.sp, 
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = notif.message, 
+                                        color = Color(0xFFCBD5E1), 
+                                        fontSize = 11.sp, 
+                                        lineHeight = 14.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

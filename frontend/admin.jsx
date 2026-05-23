@@ -42,6 +42,7 @@ import EmployeeAnalysisModule from './components/admin/users/EmployeeAnalysisMod
 import ComplianceModule from './components/admin/compliance/ComplianceModule';
 import { RevenueChart, ServiceDistributionChart, EmployeeWorkloadChart } from './components/admin/DashboardCharts';
 import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, ShieldCheck, CalendarCheck } from 'lucide-react';
+import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -73,6 +74,15 @@ function AdminApp() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [recurring, setRecurring] = useState([]);
   const [orderFilter, setOrderFilter] = useState('All');
+
+  const {
+    notifications,
+    activeBannerNotification,
+    setActiveBannerNotification,
+    unreadCount,
+    markRead,
+    markAllRead
+  } = useNotifications(userInfo?.token);
 
   useEffect(() => {
     console.log("VR HERE Admin Dashboard Loaded - v1.1.4 (Manual + Recurring)");
@@ -737,7 +747,20 @@ function AdminApp() {
     if (activeTab === 'Compliance') return <ComplianceModule token={userInfo?.token} />;
     if (activeTab === 'Performance') return <EmployeeAnalysisModule token={userInfo?.token} users={users} />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;
-    if (activeTab === 'Notifications') return <DummyView title="Notifications" />;
+    if (activeTab === 'Notifications') return (
+      <NotificationsFeed 
+        notifications={notifications}
+        onMarkRead={markRead}
+        onMarkAllRead={markAllRead}
+        onClickAction={(notif) => {
+          if (notif.type === 'Ticket') {
+            setActiveTab('Support');
+          } else {
+            setActiveTab('Orders');
+          }
+        }}
+      />
+    );
     if (activeTab === 'CRM') return <DummyView title="CRM Pipeline" />;
     if (activeTab === 'Knowledge') return <DummyView title="Knowledge Base" />;
     if (activeTab === 'Support') return <DummyView title="Support Inbox" />;
@@ -790,7 +813,11 @@ function AdminApp() {
                 title="Notifications"
               >
                 <Bell size={20} />
-                <div className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white group-hover:animate-ping"></div>
+                {unreadCount > 0 && (
+                  <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 rounded-full text-[9px] font-black text-white flex items-center justify-center border border-white">
+                    {unreadCount}
+                  </div>
+                )}
               </button>
               <button 
                 onClick={handleRefresh}
@@ -879,6 +906,12 @@ function AdminApp() {
         token={userInfo?.token} 
         onCreated={fetchData} 
         todoToEdit={todoToEdit}
+      />
+
+      <InAppBanner 
+        activeNotification={activeBannerNotification}
+        onDismiss={() => setActiveBannerNotification(null)}
+        onClickAction={() => setActiveTab('Notifications')}
       />
     </div>
   );

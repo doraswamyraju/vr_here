@@ -18,6 +18,7 @@ import AccountingServicesView from './components/customer/AccountingServicesView
 import ServiceDetailView from './components/customer/ServiceDetailView';
 import CustomerFinanceView from './components/customer/CustomerFinanceView';
 import { SERVICE_CATALOG } from './data/serviceCatalog';
+import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 
 export default function CustomerApp() {
    const [activeTab, setActiveTab] = useState('Home');
@@ -27,7 +28,14 @@ export default function CustomerApp() {
    const [userInfo, setUserInfo] = useState(null);
    const [orders, setOrders] = useState([]);
    const [payments, setPayments] = useState([]);
-   const [notifications, setNotifications] = useState([]);
+   const {
+      notifications,
+      activeBannerNotification,
+      setActiveBannerNotification,
+      unreadCount,
+      markRead,
+      markAllRead
+   } = useNotifications(userInfo?.token);
    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
    const [serviceSearchQuery, setServiceSearchQuery] = useState('');
@@ -49,14 +57,12 @@ export default function CustomerApp() {
       if (!userInfo) return;
       try {
          const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-         const [ordersRes, paymentsRes, notificationsRes] = await Promise.all([
+         const [ordersRes, paymentsRes] = await Promise.all([
             axios.get('/api/orders', config),
-            axios.get('/api/payments', config),
-            axios.get('/api/notifications', config)
+            axios.get('/api/payments', config)
          ]);
          setOrders(ordersRes.data);
          setPayments(paymentsRes.data);
-         setNotifications(notificationsRes.data);
       } catch (error) {
          console.error("Failed to fetch data:", error);
       }
@@ -309,6 +315,11 @@ export default function CustomerApp() {
                   </span>
                </button>
             </div>
+            <InAppBanner 
+               activeNotification={activeBannerNotification}
+               onDismiss={() => setActiveBannerNotification(null)}
+               onClickAction={() => setActiveTab('Home')}
+            />
          </main>
       </div>
    );

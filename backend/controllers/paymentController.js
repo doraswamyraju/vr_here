@@ -5,6 +5,9 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 import sendEmail from '../utils/sendEmail.js';
+import { triggerNotification, notifyAdmins } from '../services/notificationService.js';
+import { getOrderPlacedTemplate } from '../utils/emailTemplates.js';
+
 
 const getRazorpayClient = () => {
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -330,6 +333,37 @@ export const verifyPayment = async (req, res) => {
             packageName,
             amount: parsedAmount,
             shouldSendSetPasswordLink: isGuestCheckout
+        });
+
+        // Trigger customer in-app notification and styled email confirmation if customer account exists
+        if (customerUser?._id) {
+            const clientEmailHtml = getOrderPlacedTemplate({
+                clientName: resolvedCustomerName,
+                serviceName,
+                packageName,
+                price: parsedAmount,
+                paymentId: razorpay_payment_id
+            });
+
+            await triggerNotification({
+                userId: customerUser._id,
+                title: 'Order Registered Successfully',
+                message: `Your compliance order for ${serviceName} (${packageName}) is successfully registered. Transaction ID: ${razorpay_payment_id}.`,
+                type: 'Order',
+                emailOpts: {
+                    send: !isGuestCheckout, // For guest checkout, sendPostPaymentEmail already covers email notification
+                    subject: `Order Confirmed: ${serviceName} - VR HERE`,
+                    html: clientEmailHtml
+                }
+            });
+        }
+
+        // Notify admins of the new order placement
+        await notifyAdmins({
+            title: 'New Order Placed',
+            message: `Client ${resolvedCustomerName} has purchased ${serviceName} (${packageName}) for INR ${Number(parsedAmount).toLocaleString('en-IN')}. Payment ID: ${razorpay_payment_id}.`,
+            type: 'Order',
+            email: true
         });
 
         let postPaymentMessage = 'Payment successful. Your application has been started.';

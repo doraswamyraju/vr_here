@@ -1,5 +1,9 @@
 import asyncHandler from 'express-async-handler';
 import Ticket from '../models/Ticket.js';
+import { triggerNotification, notifyAdmins } from '../services/notificationService.js';
+import { getTicketMessageTemplate } from '../utils/emailTemplates.js';
+import User from '../models/User.js';
+
 
 // @desc    Create a new support ticket
 // @route   POST /api/tickets
@@ -15,6 +19,27 @@ const createTicket = asyncHandler(async (req, res) => {
     });
 
     const createdTicket = await ticket.save();
+
+    // Trigger Client in-app notification
+    await triggerNotification({
+        userId: req.user._id,
+        title: 'Support Ticket Registered',
+        message: `Your ticket "${subject}" has been successfully created. Our support team will review and reply shortly.`,
+        type: 'Ticket',
+        emailOpts: {
+            send: true,
+            subject: `Support Ticket Opened: ${subject}`
+        }
+    });
+
+    // Notify all admins of the new ticket
+    await notifyAdmins({
+        title: 'New Support Ticket Raised',
+        message: `Client ${req.user.name} has opened a support ticket: "${subject}" [Priority: ${priority || 'Low'}].`,
+        type: 'Ticket',
+        email: true
+    });
+
     res.status(201).json(createdTicket);
 });
 
@@ -70,6 +95,41 @@ const addTicketMessage = asyncHandler(async (req, res) => {
         }
 
         const updatedTicket = await ticket.save();
+
+        // Trigger Notifications
+        if (req.user.role === 'client') {
+            // Notify admins of the client's reply
+            await notifyAdmins({
+                title: 'New Message on Support Ticket',
+                message: `Client ${req.user.name} sent a message on ticket "${ticket.subject}": "${message}"`,
+                type: 'Ticket',
+                email: false
+            });
+        } else {
+            // Trigger Client in-app notification & rich HTML email
+            const clientUser = await User.findById(ticket.user);
+            if (clientUser) {
+                const clientEmailHtml = getTicketMessageTemplate({
+                    clientName: clientUser.name,
+                    subject: ticket.subject,
+                    message: message,
+                    senderName: req.user.name
+                });
+
+                await triggerNotification({
+                    userId: ticket.user,
+                    title: 'New Support Message Received',
+                    message: `Specialist ${req.user.name} replied to your ticket regarding "${ticket.subject}".`,
+                    type: 'Ticket',
+                    emailOpts: {
+                        send: true,
+                        subject: `Reply on Support Ticket: ${ticket.subject}`,
+                        html: clientEmailHtml
+                    }
+                });
+            }
+        }
+
         res.json(updatedTicket);
     } else {
         res.status(404);

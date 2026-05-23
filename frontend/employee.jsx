@@ -16,7 +16,8 @@ import CommercialsModule from './components/employee/CommercialsModule';
 import NotificationsModule from './components/employee/NotificationsModule';
 import SecurityModule from './components/employee/SecurityModule';
 import FinanceModule from './components/admin/finance/FinanceModule';
-import { dummyNotifications, dummyTickets } from './components/employee/mockData';
+import { dummyTickets } from './components/employee/mockData';
+import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
 
@@ -35,7 +36,16 @@ const EmployeeApp = () => {
   const [orders, setOrders] = useState([]);
   const [todos, setTodos] = useState([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [notifications, setNotifications] = useState([]);
+  
+  const {
+    notifications,
+    activeBannerNotification,
+    setActiveBannerNotification,
+    unreadCount,
+    markRead,
+    markAllRead
+  } = useNotifications(userInfo?.token);
+
   const [tickets, setTickets] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isClockedIn, setIsClockedIn] = useState(false);
@@ -113,13 +123,6 @@ const EmployeeApp = () => {
 
   const fetchExtras = useCallback(async () => {
     if (!authConfig) return;
-
-    try {
-      const { data } = await axios.get('/api/notifications', authConfig);
-      setNotifications(Array.isArray(data) ? data : dummyNotifications);
-    } catch (error) {
-      setNotifications(dummyNotifications);
-    }
 
     try {
       const { data } = await axios.get('/api/tickets', authConfig);
@@ -451,7 +454,20 @@ const EmployeeApp = () => {
       case 'finance':
         return <FinanceModule token={userInfo?.token} />;
       case 'notifications':
-        return <NotificationsModule notifications={notifications} />;
+        return (
+          <NotificationsFeed 
+            notifications={notifications}
+            onMarkRead={markRead}
+            onMarkAllRead={markAllRead}
+            onClickAction={(notif) => {
+              if (notif.type === 'Ticket') {
+                setActiveTab('support');
+              } else {
+                setActiveTab('queue');
+              }
+            }}
+          />
+        );
       case 'security':
         return <SecurityModule />;
       default:
@@ -485,6 +501,11 @@ const EmployeeApp = () => {
         />
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">{renderActiveModule()}</div>
       </main>
+      <InAppBanner 
+        activeNotification={activeBannerNotification}
+        onDismiss={() => setActiveBannerNotification(null)}
+        onClickAction={() => setActiveTab('notifications')}
+      />
     </div>
   );
 };

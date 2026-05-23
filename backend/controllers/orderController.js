@@ -2,6 +2,10 @@ import asyncHandler from 'express-async-handler';
 import Order from '../models/Order.js';
 import Todo from '../models/Todo.js';
 import { createSubscriptionInternal } from './recurringController.js';
+import { triggerNotification, notifyAdmins, notifyEmployee } from '../services/notificationService.js';
+import { getOrderStatusUpdateTemplate, getClientSubmissionTemplate, getAdditionalRequirementTemplate } from '../utils/emailTemplates.js';
+import User from '../models/User.js';
+
 
 const ORDER_POPULATE = [
     { path: 'user', select: 'name email phone' },
@@ -320,6 +324,39 @@ const createOrder = asyncHandler(async (req, res) => {
 
     const createdOrder = await order.save();
 
+    // Trigger customer in-app notification & email for admin-created manual orders
+    if (createdOrder.user) {
+        await triggerNotification({
+            userId: createdOrder.user,
+            title: 'New Compliance Order Registered',
+            message: `An order for ${serviceName} (${packageName}) has been registered on your behalf. Our team is commencing work.`,
+            type: 'Order',
+            emailOpts: {
+                send: true,
+                subject: `New Project Started: ${serviceName} - VR HERE`
+            }
+        });
+    }
+
+    // Trigger assigned employee notification if any
+    if (createdOrder.assignedEmployee) {
+        await notifyEmployee({
+            employeeId: createdOrder.assignedEmployee,
+            title: 'New Project Assigned',
+            message: `You have been assigned as the specialist for client ${createdOrder.clientName}'s project: ${serviceName} (${packageName}).`,
+            type: 'Order',
+            email: true
+        });
+    }
+
+    // Notify all admins of the manually placed order
+    await notifyAdmins({
+        title: 'New Order Placed (Manual)',
+        message: `Admin ${req.user.name} has manually registered an order for client ${createdOrder.clientName}: ${serviceName} (${packageName}) priced at INR ${Number(price).toLocaleString('en-IN')}.`,
+        type: 'Order',
+        email: true
+    });
+
     // If isRecurring is true, also create a Subscription record
     if (req.body.isRecurring) {
         try {
@@ -425,8 +462,40 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
         throw new Error('Not authorized to update this order');
     }
 
+    const oldStatus = order.status;
     order.status = status;
     const updatedOrder = await order.save();
+
+    // Trigger notification if the status has changed
+    if (oldStatus !== status && order.user) {
+        const clientEmailHtml = getOrderStatusUpdateTemplate({
+            clientName: order.clientName || 'Customer',
+            serviceName: order.serviceName,
+            packageName: order.packageName,
+            status: status
+        });
+
+        await triggerNotification({
+            userId: order.user,
+            title: `Project Status Updated: ${status}`,
+            message: `The status of your project "${order.serviceName}" has been updated to "${status}".`,
+            type: 'Order',
+            emailOpts: {
+                send: true,
+                subject: `Project Update: ${order.serviceName} is now ${status}`,
+                html: clientEmailHtml
+            }
+        });
+
+        // Notify admins about the progress
+        await notifyAdmins({
+            title: 'Order Status Updated',
+            message: `Project "${order.serviceName}" for client "${order.clientName}" was updated from "${oldStatus}" to "${status}" by ${req.user.name}.`,
+            type: 'Order',
+            email: false
+        });
+    }
+
     res.json(updatedOrder);
 });
 
@@ -478,11 +547,47 @@ const assignOrder = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
+    const oldEmployee = order.assignedEmployee?.toString();
+    const oldMaker = order.assignedMaker?.toString();
+    const oldChecker = order.assignedChecker?.toString();
+
     if (employeeId !== undefined) order.assignedEmployee = employeeId || null;
     if (makerId !== undefined) order.assignedMaker = makerId || null;
     if (checkerId !== undefined) order.assignedChecker = checkerId || null;
 
     const updatedOrder = await order.save();
+
+    // Trigger notifications if assignments changed
+    if (employeeId && oldEmployee !== employeeId) {
+        await notifyEmployee({
+            employeeId,
+            title: 'New Order Assigned',
+            message: `You have been assigned to client ${order.clientName}'s compliance project: ${order.serviceName} (${order.packageName}).`,
+            type: 'Order',
+            email: true
+        });
+    }
+
+    if (makerId && oldMaker !== makerId) {
+        await notifyEmployee({
+            employeeId: makerId,
+            title: 'New Order Assigned (Maker)',
+            message: `You have been assigned as the Maker for client ${order.clientName}'s project: ${order.serviceName} (${order.packageName}).`,
+            type: 'Order',
+            email: true
+        });
+    }
+
+    if (checkerId && oldChecker !== checkerId) {
+        await notifyEmployee({
+            employeeId: checkerId,
+            title: 'New Order Assigned (Checker)',
+            message: `You have been assigned as the Checker for client ${order.clientName}'s project: ${order.serviceName} (${order.packageName}).`,
+            type: 'Order',
+            email: true
+        });
+    }
+
     res.json(updatedOrder);
 });
 
@@ -563,6 +668,83 @@ const uploadDocument = asyncHandler(async (req, res) => {
     }
 
     const updatedOrder = await order.save();
+
+    // Trigger Notifications after successful upload and save
+    if (req.user.role === 'client') {
+        const docName = req.body.name || (req.file ? req.file.originalname : 'Document');
+        
+        // Notify assigned staff & admins
+        const message = `Client ${order.clientName} has uploaded document "${docName}" for project ${order.serviceName}.`;
+        
+        if (order.assignedEmployee) {
+            const employee = await User.findById(order.assignedEmployee);
+            if (employee) {
+                const staffEmailHtml = getClientSubmissionTemplate({
+                    staffName: employee.name,
+                    clientName: order.clientName,
+                    serviceName: order.serviceName
+                });
+                await triggerNotification({
+                    userId: order.assignedEmployee,
+                    title: 'Client Document Uploaded',
+                    message,
+                    type: 'Order',
+                    emailOpts: {
+                        send: true,
+                        subject: `Action Required: Client Uploaded Doc - ${order.serviceName}`,
+                        html: staffEmailHtml
+                    }
+                });
+            }
+        }
+        
+        await notifyAdmins({
+            title: 'Client Document Uploaded',
+            message,
+            type: 'Order',
+            email: false
+        });
+    } else {
+        // Uploaded by staff/admin
+        if (req.body.isFinalCertificate === 'true' || req.body.isFinalCertificate === true) {
+            // Notify client of completion
+            if (order.user) {
+                const clientEmailHtml = getOrderStatusUpdateTemplate({
+                    clientName: order.clientName || 'Customer',
+                    serviceName: order.serviceName,
+                    packageName: order.packageName,
+                    status: 'Completed'
+                });
+                await triggerNotification({
+                    userId: order.user,
+                    title: 'Compliance Project Completed! 🎉',
+                    message: `Congratulations! Your project for "${order.serviceName}" is now fully completed. You can download your final certificate inside your dashboard vault.`,
+                    type: 'Order',
+                    emailOpts: {
+                        send: true,
+                        subject: `Project Completed: ${order.serviceName} - VR HERE`,
+                        html: clientEmailHtml
+                    }
+                });
+            }
+        } else {
+            // Notify client of regular admin document
+            if (order.user) {
+                const docName = req.body.name || (req.file ? req.file.originalname : 'Document');
+                await triggerNotification({
+                    userId: order.user,
+                    title: 'New Document Uploaded by specialist',
+                    message: `A new document "${docName}" has been uploaded to your project: "${order.serviceName}".`,
+                    type: 'Order',
+                    emailOpts: {
+                        send: true,
+                        subject: `New Document Added: ${order.serviceName}`
+                    }
+                });
+            }
+        }
+    }
+
     res.json(updatedOrder);
 });
 
@@ -1028,6 +1210,9 @@ const updateRequirement = asyncHandler(async (req, res) => {
         throw new Error('Requirement not found');
     }
 
+    const oldStatus = requirement.status;
+    const oldClientCompleted = requirement.isClientCompleted;
+
     if (req.user.role === 'client') {
         if (value !== undefined || clientValue !== undefined) {
             const resolvedValue = clientValue !== undefined ? clientValue : value;
@@ -1059,6 +1244,57 @@ const updateRequirement = asyncHandler(async (req, res) => {
     }
 
     await order.save();
+
+    // Trigger Notifications after save
+    if (req.user.role === 'client') {
+        if ((requirement.isClientCompleted && !oldClientCompleted) || requirement.status === 'Received') {
+            const message = `Client ${order.clientName} has submitted details/documents for requirement "${requirement.title}" under project ${order.serviceName}.`;
+            if (order.assignedEmployee) {
+                const employee = await User.findById(order.assignedEmployee);
+                if (employee) {
+                    const staffEmailHtml = getClientSubmissionTemplate({
+                        staffName: employee.name,
+                        clientName: order.clientName,
+                        serviceName: order.serviceName
+                    });
+                    await triggerNotification({
+                        userId: order.assignedEmployee,
+                        title: 'Client Submission Logged',
+                        message,
+                        type: 'Order',
+                        emailOpts: {
+                            send: true,
+                            subject: `Action Required: Client Submitted details - ${order.serviceName}`,
+                            html: staffEmailHtml
+                        }
+                    });
+                }
+            }
+            await notifyAdmins({
+                title: 'Client Submission Logged',
+                message,
+                type: 'Order',
+                email: false
+            });
+        }
+    } else {
+        // Staff/Admin updated requirement status
+        if (status && oldStatus !== status) {
+            if (order.user) {
+                await triggerNotification({
+                    userId: order.user,
+                    title: `Requirement Verified: ${requirement.title}`,
+                    message: `Your submission for requirement "${requirement.title}" in project "${order.serviceName}" has been updated to status "${status}".`,
+                    type: 'Order',
+                    emailOpts: {
+                        send: true,
+                        subject: `Requirement Status Update: ${requirement.title} is ${status}`
+                    }
+                });
+            }
+        }
+    }
+
     res.json(order);
 });
 
@@ -1093,6 +1329,35 @@ const addRequirement = asyncHandler(async (req, res) => {
 
     order.customerRequirements.push(newReq);
     await order.save();
+
+    // Trigger Notification to client
+    if (order.user) {
+        try {
+            const clientUser = await User.findById(order.user);
+            const clientName = clientUser ? clientUser.name : (order.clientName || 'Valued Customer');
+            const emailHtml = getAdditionalRequirementTemplate({
+                clientName,
+                serviceName: order.serviceName,
+                requirementTitle: newReq.title,
+                requirementDescription: newReq.description,
+                type: newReq.type
+            });
+
+            await triggerNotification({
+                userId: order.user,
+                title: `New Information Requested: ${newReq.title}`,
+                message: `We require additional ${newReq.type === 'Document' ? 'document upload' : 'text details'} for "${newReq.title}" under your order for "${order.serviceName}".`,
+                type: 'Order',
+                emailOpts: {
+                    send: true,
+                    subject: `Action Required: Additional Information Requested for ${order.serviceName}`,
+                    html: emailHtml
+                }
+            });
+        } catch (notifErr) {
+            console.error('Error triggering notification for added requirement:', notifErr);
+        }
+    }
 
     res.status(201).json(order);
 });

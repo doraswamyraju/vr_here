@@ -193,38 +193,80 @@ fun CustomerHomeTab(
                                                                 viewModel.markNotificationAsRead(notification.id)
                                                             }
                                                         },
-                                                    shape = RoundedCornerShape(12.dp),
+                                                    shape = RoundedCornerShape(16.dp),
                                                     colors = CardDefaults.cardColors(
-                                                        containerColor = if (notification.isRead) Color(0xFFF8FAFC) else Color(0xFFEEF2F6)
+                                                        containerColor = if (notification.isRead) Color(0xFFF8FAFC) else Color(0xFFF1F5F9)
                                                     ),
-                                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                                                    border = BorderStroke(
+                                                        1.dp, 
+                                                        if (notification.isRead) Color(0xFFE2E8F0) else Color(0xFF6366F1).copy(alpha = 0.2f)
+                                                    )
                                                 ) {
-                                                    Row(
-                                                        modifier = Modifier.padding(12.dp),
-                                                        verticalAlignment = Alignment.CenterVertically
+                                                    Column(
+                                                        modifier = Modifier.padding(12.dp)
                                                     ) {
-                                                        if (!notification.isRead) {
+                                                        // Brand header inside card
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                            ) {
+                                                                Box(
+                                                                    modifier = Modifier
+                                                                        .size(16.dp)
+                                                                        .background(Color(0xFF6366F1), RoundedCornerShape(4.dp)),
+                                                                    contentAlignment = Alignment.Center
+                                                                ) {
+                                                                    Text("VR", color = Color.White, fontSize = 7.sp, fontWeight = FontWeight.Black)
+                                                                }
+                                                                Text(
+                                                                    text = "VR HERE", 
+                                                                    color = Color(0xFF475569), 
+                                                                    fontSize = 9.sp, 
+                                                                    fontWeight = FontWeight.Black, 
+                                                                    letterSpacing = 0.3.sp
+                                                                )
+                                                                if (!notification.isRead) {
+                                                                    Box(
+                                                                        modifier = Modifier
+                                                                            .size(5.dp)
+                                                                            .background(Color(0xFF6366F1), CircleShape)
+                                                                    )
+                                                                }
+                                                            }
+                                                            // Optional type badge or dot
                                                             Box(
                                                                 modifier = Modifier
-                                                                    .size(6.dp)
-                                                                    .background(Color(0xFF6366F1), CircleShape)
-                                                            )
-                                                            Spacer(modifier = Modifier.width(8.dp))
+                                                                    .background(Color(0xFFEEF2F6), RoundedCornerShape(4.dp))
+                                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                            ) {
+                                                                Text(
+                                                                    text = notification.type.uppercase(),
+                                                                    fontSize = 7.sp,
+                                                                    fontWeight = FontWeight.Black,
+                                                                    color = Color(0xFF6366F1)
+                                                                )
+                                                            }
                                                         }
-                                                        Column(modifier = Modifier.weight(1f)) {
-                                                            Text(
-                                                                text = notification.title,
-                                                                fontSize = 12.sp,
-                                                                fontWeight = FontWeight.Black,
-                                                                color = Color(0xFF1E293B)
-                                                            )
-                                                            Spacer(modifier = Modifier.height(2.dp))
-                                                            Text(
-                                                                text = notification.message,
-                                                                fontSize = 11.sp,
-                                                                color = Color(0xFF475569)
-                                                            )
-                                                        }
+                                                        Spacer(modifier = Modifier.height(8.dp))
+                                                        // Text block
+                                                        Text(
+                                                            text = notification.title,
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.Black,
+                                                            color = Color(0xFF1E293B)
+                                                        )
+                                                        Spacer(modifier = Modifier.height(2.dp))
+                                                        Text(
+                                                            text = notification.message,
+                                                            fontSize = 11.sp,
+                                                            color = Color(0xFF64748B),
+                                                            lineHeight = 14.sp
+                                                        )
                                                     }
                                                 }
                                             }
