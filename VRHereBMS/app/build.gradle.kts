@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Navigation
     implementation(libs.androidx.navigation.compose)

@@ -161,6 +161,16 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun logout() {
         sessionManager.clearSession()
+        
+        // Stop persistent notification polling service on logout
+        try {
+            val serviceIntent = android.content.Intent(getApplication(), com.sbr.vrherebms.services.NotificationPollingService::class.java)
+            getApplication<Application>().stopService(serviceIntent)
+            android.util.Log.d("AuthViewModel", "Successfully stopped notification polling service on logout")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         authState = AuthState.Idle
         emailInput = ""
         passwordInput = ""
