@@ -11,6 +11,7 @@ const OrderRequirementsTab = ({
   onDeleteRequirement
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('details');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [requirementFile, setRequirementFile] = useState(null);
   const [replaceExisting, setReplaceExisting] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
@@ -89,13 +90,35 @@ const OrderRequirementsTab = ({
                   ))}
                 </select>
                 {item.isAdditional && (
-                  <button 
-                    onClick={() => onDeleteRequirement(item._id)}
-                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                    title="Delete Requirement"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {confirmDeleteId === item._id ? (
+                      <div className="flex items-center gap-1 animate-fade-in">
+                        <button 
+                          onClick={() => {
+                            onDeleteRequirement(item._id);
+                            setConfirmDeleteId(null);
+                          }}
+                          className="px-2 py-1 text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white rounded hover:bg-rose-700 active:scale-95 transition-all"
+                        >
+                          Confirm
+                        </button>
+                        <button 
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-2 py-1 text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 rounded hover:bg-slate-200 active:scale-95 transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => setConfirmDeleteId(item._id)}
+                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Delete Requirement"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

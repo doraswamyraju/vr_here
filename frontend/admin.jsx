@@ -220,7 +220,6 @@ function AdminApp() {
   };
 
   const deleteRequirement = async (orderId, requirementId) => {
-    if (!window.confirm('Are you sure you want to delete this requirement?')) return;
     await axios.delete(`/api/orders/${orderId}/requirements/${requirementId}`, config);
     fetchData();
   };

@@ -28,7 +28,7 @@ const StatusBadge = ({ status }) => {
     return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${styles[status] || 'bg-slate-100'}`}>{status}</span>;
 };
 
-const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenProject }) => {
+const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenProject, onOpenNotifications }) => {
     const activeOrders = orders.filter(o => o.status !== 'Completed');
     const pendingActions = orders.filter(o => o.status === 'Pending Documents' || o.status === 'Waiting for Clarification');
     const unreadNotifications = notifications.filter(n => !n.isRead);
@@ -103,7 +103,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                         <Plus size={16} /> New Engagement
                     </button>
                     <div className="relative">
-                        <button className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-indigo-600 transition-colors">
+                        <button onClick={onOpenNotifications} className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-indigo-600 transition-colors active:scale-95">
                             <Bell size={20} />
                         </button>
                         {unreadNotifications.length > 0 && (

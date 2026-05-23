@@ -92,19 +92,20 @@ export default function CustomerApp() {
    const renderView = () => {
       switch (activeTab) {
          case 'Home': return (
-            <DashboardView
-               setActiveTab={(tab, query) => {
-                  if (query) setServiceSearchQuery(query);
-                  setActiveTab(tab);
-               }}
-               orders={orders}
-               notifications={notifications}
-               userInfo={userInfo}
-               onOpenProject={(orderId) => {
-                  setSelectedOrderId(orderId);
-                  setActiveTab('Orders');
-               }}
-            />
+             <DashboardView
+                setActiveTab={(tab, query) => {
+                   if (query) setServiceSearchQuery(query);
+                   setActiveTab(tab);
+                }}
+                orders={orders}
+                notifications={notifications}
+                userInfo={userInfo}
+                onOpenProject={(orderId) => {
+                   setSelectedOrderId(orderId);
+                   setActiveTab('Orders');
+                }}
+                onOpenNotifications={() => setIsNotificationOpen(true)}
+             />
          );
          case 'Services': {
             const q = serviceSearchQuery;
@@ -320,6 +321,50 @@ export default function CustomerApp() {
                onDismiss={() => setActiveBannerNotification(null)}
                onClickAction={() => setActiveTab('Home')}
             />
+
+            {/* --- NOTIFICATIONS MODAL OVERLAY --- */}
+            {isNotificationOpen && (
+               <div className="fixed inset-0 z-50 flex items-start justify-center md:justify-end md:pr-10 pt-24 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsNotificationOpen(false)}>
+                  <div 
+                     className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-slate-100/80 overflow-hidden animate-in slide-in-from-top-5 md:slide-in-from-right-5 duration-500 flex flex-col max-h-[75vh] m-4"
+                     onClick={e => e.stopPropagation()}
+                  >
+                     <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div className="flex items-center gap-2">
+                           <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                              <Bell size={18} />
+                           </div>
+                           <span className="font-black text-slate-800 text-xs tracking-wider uppercase">Notifications</span>
+                           {unreadCount > 0 && (
+                              <span className="px-2 py-0.5 bg-rose-500 text-[9px] text-white font-black rounded-full uppercase tracking-wider">
+                                 {unreadCount} New
+                              </span>
+                           )}
+                        </div>
+                        <button onClick={() => setIsNotificationOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition active:scale-95">
+                           <X size={18} />
+                        </button>
+                     </div>
+
+                     <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30">
+                        <NotificationsFeed 
+                           notifications={notifications}
+                           onMarkRead={markRead}
+                           onMarkAllRead={markAllRead}
+                           onClickAction={(notif) => {
+                              setIsNotificationOpen(false);
+                              if (notif.type === 'Ticket') {
+                                 setActiveTab('New');
+                              } else {
+                                 setSelectedOrderId(notif.referenceId || '');
+                                 setActiveTab('Orders');
+                              }
+                           }}
+                        />
+                     </div>
+                  </div>
+               </div>
+            )}
          </main>
       </div>
    );
