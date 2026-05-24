@@ -70,6 +70,9 @@ interface VRHereAPI {
     @PUT("api/notifications/{id}/read")
     suspend fun markNotificationAsRead(@Path("id") id: String): Response<NotificationResponse>
 
+    @PUT("api/auth/fcm-token")
+    suspend fun updateFcmToken(@Body body: Map<String, String>): Response<Map<String, Any>>
+
     // --- ATTENDANCE ---
     @GET("api/attendance")
     suspend fun getAttendance(): Response<List<AttendanceResponse>>

@@ -13,7 +13,8 @@ import {
     updateUserByAdmin,
     toggleUserActiveByAdmin,
     sendPasswordLinkByAdmin,
-    deleteUserByAdmin
+    deleteUserByAdmin,
+    updateFcmToken
 } from '../controllers/authController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -23,6 +24,7 @@ router.post('/login', authUser);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resetToken', resetPassword);
 router.route('/profile').get(protect, getUserProfile);
+router.route('/fcm-token').put(protect, updateFcmToken);
 router.route('/employees').get(protect, admin, getEmployees);
 router.route('/users').get(protect, admin, getUsers).post(protect, admin, createUserByAdmin);
 router.route('/users/:id').put(protect, admin, updateUserByAdmin).delete(protect, admin, deleteUserByAdmin);

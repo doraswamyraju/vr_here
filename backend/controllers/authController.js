@@ -264,6 +264,23 @@ const getUserProfile = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Update FCM Token for user
+// @route   PUT /api/auth/fcm-token
+// @access  Private
+const updateFcmToken = asyncHandler(async (req, res) => {
+    const { fcmToken } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        user.fcmToken = fcmToken || null;
+        await user.save();
+        res.json({ success: true, message: 'FCM token updated successfully' });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+});
+
 // @desc    Get all employees
 // @route   GET /api/auth/employees
 // @access  Private/Admin
@@ -451,5 +468,6 @@ export {
     updateUserByAdmin,
     toggleUserActiveByAdmin,
     sendPasswordLinkByAdmin,
-    deleteUserByAdmin
+    deleteUserByAdmin,
+    updateFcmToken
 };

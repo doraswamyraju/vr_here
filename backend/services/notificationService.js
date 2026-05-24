@@ -1,6 +1,7 @@
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
+import { sendPushNotification } from './firebaseService.js';
 
 /**
  * Creates an in-app notification and optionally sends an email to the user.
@@ -38,10 +39,26 @@ export const triggerNotification = async ({
 
         console.log(`In-app notification created for User [${userId}]: ${title}`);
 
-        // 2. Dispatch email if requested
-        if (emailOpts && emailOpts.send) {
-            const user = await User.findById(userId);
-            if (user && user.email) {
+        // Fetch user once for push and email notifications
+        const user = await User.findById(userId);
+
+        if (user) {
+            // A. Dispatch Firebase Push Notification
+            if (user.fcmToken) {
+                sendPushNotification(user.fcmToken, {
+                    title,
+                    body: message,
+                    data: {
+                        notificationId: notification._id.toString(),
+                        type
+                    }
+                }).catch(err => {
+                    console.error(`Push notification failure to user [${userId}]:`, err.message);
+                });
+            }
+
+            // B. Dispatch email if requested
+            if (emailOpts && emailOpts.send && user.email) {
                 const subject = emailOpts.subject || title;
                 const htmlMessage = emailOpts.html || `
                     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1.5px solid #e2e8f0; border-radius: 12px;">

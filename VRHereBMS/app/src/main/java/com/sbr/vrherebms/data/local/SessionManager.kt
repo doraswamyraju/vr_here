@@ -67,6 +67,14 @@ class SessionManager(context: Context) {
         return prefs.getString("user_phone", "") ?: ""
     }
 
+    fun saveFcmToken(token: String) {
+        prefs.edit().putString("fcm_token", token).apply()
+    }
+
+    fun getFcmToken(): String? {
+        return prefs.getString("fcm_token", null)
+    }
+
     fun clearSession() {
         prefs.edit().clear().apply()
     }

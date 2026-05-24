@@ -36,39 +36,22 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Start Foreground Notification Sync Service if user is logged in on startup
-        if (com.sbr.vrherebms.data.local.SessionManager(applicationContext).isLoggedIn()) {
-            try {
-                val serviceIntent = android.content.Intent(this, com.sbr.vrherebms.services.NotificationPollingService::class.java)
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    startForegroundService(serviceIntent)
-                } else {
-                    startService(serviceIntent)
-                }
-                android.util.Log.d("MainActivity", "Successfully started persistent notification sync service on launch")
-            } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed to start notification sync service on launch", e)
-            }
-        }
+        // Initialize Notification Channel (safely registers channel for system alerts)
+        com.sbr.vrherebms.utils.NotificationHelper.createNotificationChannel(applicationContext)
 
-        // Schedule periodic background notification sync worker as an additional robust fallback
+        // Retrieve and sync FCM token on launch
         try {
-            val syncRequest = androidx.work.PeriodicWorkRequestBuilder<com.sbr.vrherebms.utils.NotificationSyncWorker>(
-                15, java.util.concurrent.TimeUnit.MINUTES
-            ).setConstraints(
-                androidx.work.Constraints.Builder()
-                    .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
-                    .build()
-            ).build()
-
-            androidx.work.WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-                "NotificationSyncWork",
-                androidx.work.ExistingPeriodicWorkPolicy.KEEP,
-                syncRequest
-            )
-            android.util.Log.d("MainActivity", "Successfully enqueued unique periodic notification sync worker")
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful && task.result != null) {
+                    val token = task.result
+                    android.util.Log.d("MainActivity", "FCM token fetched successfully on launch: $token")
+                    com.sbr.vrherebms.utils.FcmTokenHelper.uploadFcmToken(applicationContext, token)
+                } else {
+                    android.util.Log.e("MainActivity", "FCM token fetch failed on launch", task.exception)
+                }
+            }
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Failed to initialize background worker", e)
+            android.util.Log.e("MainActivity", "Failed to initialize Firebase Messaging on launch", e)
         }
 
         enableEdgeToEdge()
@@ -99,17 +82,8 @@ class MainActivity : ComponentActivity() {
                             viewModel = authViewModel,
                             onNavigateToRegister = { navController.navigate("register") },
                             onLoginSuccess = { role ->
-                                try {
-                                    val serviceIntent = android.content.Intent(this@MainActivity, com.sbr.vrherebms.services.NotificationPollingService::class.java)
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                        startForegroundService(serviceIntent)
-                                    } else {
-                                        startService(serviceIntent)
-                                    }
-                                    android.util.Log.d("MainActivity", "Started notification sync service on login")
-                                } catch (e: Exception) {
-                                    android.util.Log.e("MainActivity", "Failed to start notification sync service on login", e)
-                                }
+                                // Sync FCM token on login success
+                                com.sbr.vrherebms.utils.FcmTokenHelper.uploadFcmToken(applicationContext)
                                 val destination = when (role) {
                                     "admin" -> "admin_dashboard"
                                     "employee" -> "employee_dashboard"
@@ -128,17 +102,8 @@ class MainActivity : ComponentActivity() {
                             viewModel = authViewModel,
                             onNavigateToLogin = { navController.navigate("login") },
                             onRegistrationSuccess = {
-                                try {
-                                    val serviceIntent = android.content.Intent(this@MainActivity, com.sbr.vrherebms.services.NotificationPollingService::class.java)
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                        startForegroundService(serviceIntent)
-                                    } else {
-                                        startService(serviceIntent)
-                                    }
-                                    android.util.Log.d("MainActivity", "Started notification sync service on registration")
-                                } catch (e: Exception) {
-                                    android.util.Log.e("MainActivity", "Failed to start notification sync service on registration", e)
-                                }
+                                // Sync FCM token on registration success
+                                com.sbr.vrherebms.utils.FcmTokenHelper.uploadFcmToken(applicationContext)
                                 val role = authViewModel.getUserRole()
                                 val destination = when (role) {
                                     "admin" -> "admin_dashboard"

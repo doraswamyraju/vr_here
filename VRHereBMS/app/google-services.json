@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "674627570227",
+    "project_id": "vrherebms-82e2c",
+    "storage_bucket": "vrherebms-82e2c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:674627570227:android:060897648dc5ab64a8f146",
+        "android_client_info": {
+          "package_name": "com.sbr.vrherebms"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2hQjZbMOWHY15BRTsuawVnkKd2Pm4V5I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
