@@ -11,6 +11,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.Modifier
 import com.sbr.vrherebms.ui.screens.*
+import com.sbr.vrherebms.ui.screens.admin.AdminDashboardScreen
+import com.sbr.vrherebms.ui.screens.employee.EmployeeDashboardScreen
+import com.sbr.vrherebms.ui.screens.partner.PartnerDashboardScreen
 import com.sbr.vrherebms.ui.theme.VRHereBMSTheme
 import com.sbr.vrherebms.viewmodel.AuthViewModel
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel

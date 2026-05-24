@@ -19,9 +19,11 @@ object NotificationHelper {
     // Set up and register notification channel (required for Android 8.0+)
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_HIGH // Changed to HIGH for Heads-Up alerts
             val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
                 description = CHANNEL_DESC
+                enableLights(true)
+                enableVibration(true)
             }
             // Register the channel with the system
             val notificationManager: NotificationManager =
@@ -54,7 +56,6 @@ object NotificationHelper {
         )
 
         // Select resource small icon (we can fall back to standard Android app icon or mipmap)
-        // Usually, android.R.drawable.ic_dialog_info is safe to use in any Android SDK
         val iconRes = android.R.drawable.ic_dialog_info
 
         // Build notification
@@ -62,7 +63,13 @@ object NotificationHelper {
             .setSmallIcon(iconRes)
             .setContentTitle(title)
             .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            // 1. Expandable style so long requirement descriptions can be read fully in lockscreen/command drawer
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            // 2. Tint app icon, label, and action buttons with the signature VR Here brand purple
+            .setColor(androidx.core.content.ContextCompat.getColor(context, R.color.purple_500))
+            // 3. Set high priority for instant slide-down Heads-Up alert banners
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // Make visible on lockscreen

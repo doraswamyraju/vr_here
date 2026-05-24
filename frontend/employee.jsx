@@ -7,7 +7,7 @@ import EmployeeTopbar from './components/employee/EmployeeTopbar';
 import DashboardOverviewModule from './components/employee/DashboardOverviewModule';
 import WorkQueueModule from './components/employee/WorkQueueModule';
 import OrderProcessingModule from './components/employee/OrderProcessingModule';
-import TaskManagementModule from './components/employee/TaskManagementModule';
+import { TaskManagementModule } from './modules/orders/v1.1';
 import TimeTrackingModule from './components/employee/TimeTrackingModule';
 import DocumentsModule from './components/employee/DocumentsModule';
 import RequirementsModule from './components/employee/RequirementsModule';
@@ -18,6 +18,7 @@ import SecurityModule from './components/employee/SecurityModule';
 import FinanceModule from './components/admin/finance/FinanceModule';
 import { dummyTickets } from './components/employee/mockData';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
+import HRMSModule from './modules/hrms/v1.1/index.jsx';
 
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
 
@@ -470,6 +471,8 @@ const EmployeeApp = () => {
         );
       case 'security':
         return <SecurityModule />;
+      case 'hrms':
+        return <HRMSModule role={userInfo?.role} />;
       default:
         return <DashboardOverviewModule userInfo={userInfo} orders={orders} onOpenOrder={openOrderInProcessing} />;
     }

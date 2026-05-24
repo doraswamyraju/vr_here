@@ -298,4 +298,77 @@ data class VerifyResponse(
     val auth: AuthResponse? = null
 )
 
+// --- HRMS DATA CLASSES ---
+
+data class LeaveRequest(
+    val startDate: String,
+    val endDate: String,
+    val type: String,
+    val reason: String
+)
+
+data class LeaveResponse(
+    @SerializedName("_id") val id: String,
+    val employee: EmployeeResponse?,
+    val startDate: String,
+    val endDate: String,
+    val type: String,
+    val reason: String,
+    val status: String = "Pending", // 'Pending', 'Approved', 'Rejected'
+    val approvedBy: String? = null,
+    val adminNotes: String? = null,
+    val createdAt: String = ""
+)
+
+data class ApproveLeaveRequest(
+    val status: String, // 'Approved' or 'Rejected'
+    val adminNotes: String = ""
+)
+
+data class HolidayRequest(
+    val title: String,
+    val date: String,
+    val description: String = ""
+)
+
+data class HolidayResponse(
+    @SerializedName("_id") val id: String,
+    val title: String,
+    val date: String,
+    val description: String = ""
+)
+
+data class NoticeRequest(
+    val title: String,
+    val message: String,
+    val priority: String = "Medium" // 'Low', 'Medium', 'High'
+)
+
+data class NoticeResponse(
+    @SerializedName("_id") val id: String,
+    val title: String,
+    val message: String,
+    val priority: String = "Medium",
+    val issuedBy: EmployeeResponse?,
+    val createdAt: String = ""
+)
+
+data class LiveStatusEmployee(
+    @SerializedName("_id") val id: String,
+    val name: String,
+    val email: String,
+    val phone: String? = null,
+    val clockInAt: String? = null,
+    val source: String? = null,
+    val leaveType: String? = null,
+    val reason: String? = null
+)
+
+data class LiveStatusResponse(
+    val date: String,
+    val clockedIn: List<LiveStatusEmployee> = emptyList(),
+    val onLeave: List<LiveStatusEmployee> = emptyList(),
+    val offline: List<LiveStatusEmployee> = emptyList()
+)
+
 

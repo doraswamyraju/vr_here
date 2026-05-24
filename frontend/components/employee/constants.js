@@ -10,7 +10,8 @@ import {
   IndianRupee,
   Bell,
   ShieldCheck,
-  DollarSign
+  DollarSign,
+  Users
 } from 'lucide-react';
 
 export const ORDER_STATUSES = [
@@ -32,6 +33,7 @@ export const EMPLOYEE_TABS = [
   { id: 'support', label: 'Support', icon: MessageSquare },
   { id: 'commercials', label: 'Commercials', icon: IndianRupee },
   { id: 'finance', label: 'Finance', icon: DollarSign },
+  { id: 'hrms', label: 'HRMS Portal', icon: Users },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: ShieldCheck }
 ];

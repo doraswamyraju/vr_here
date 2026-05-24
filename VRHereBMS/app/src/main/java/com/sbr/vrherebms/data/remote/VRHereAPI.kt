@@ -83,6 +83,43 @@ interface VRHereAPI {
     @POST("api/attendance/clock-out")
     suspend fun clockOut(): Response<AttendanceResponse>
 
+    // --- HRMS Endpoints ---
+    @POST("api/hrms/leaves")
+    suspend fun applyLeave(@Body request: LeaveRequest): Response<Map<String, Any>>
+
+    @GET("api/hrms/leaves/my")
+    suspend fun getMyLeaves(): Response<List<LeaveResponse>>
+
+    @GET("api/hrms/leaves/admin")
+    suspend fun getAdminLeaves(): Response<List<LeaveResponse>>
+
+    @PUT("api/hrms/leaves/{id}/approve")
+    suspend fun approveLeave(
+        @Path("id") id: String,
+        @Body request: ApproveLeaveRequest
+    ): Response<Map<String, Any>>
+
+    @GET("api/hrms/holidays")
+    suspend fun getHolidays(): Response<List<HolidayResponse>>
+
+    @POST("api/hrms/holidays")
+    suspend fun createHoliday(@Body request: HolidayRequest): Response<Map<String, Any>>
+
+    @DELETE("api/hrms/holidays/{id}")
+    suspend fun deleteHoliday(@Path("id") id: String): Response<Map<String, Any>>
+
+    @GET("api/hrms/notices")
+    suspend fun getNotices(): Response<List<NoticeResponse>>
+
+    @POST("api/hrms/notices")
+    suspend fun createNotice(@Body request: NoticeRequest): Response<Map<String, Any>>
+
+    @DELETE("api/hrms/notices/{id}")
+    suspend fun deleteNotice(@Path("id") id: String): Response<Map<String, Any>>
+
+    @GET("api/hrms/admin/live-status")
+    suspend fun getLiveStatus(): Response<LiveStatusResponse>
+
     // --- PARTNER ---
     @GET("api/partner/orders")
     suspend fun getPartnerOrders(): Response<List<PartnerOrderResponse>>

@@ -25,11 +25,11 @@ import {
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ServicesMasterView from './components/admin/ServicesMasterView';
-import OrdersModule from './components/admin/orders/OrdersModule';
+import { AdminOrdersView } from './modules/orders/v1.1';
 import UsersModule from './components/admin/users/UsersModule';
-import { ORDER_STATUSES } from './components/admin/orders/constants';
-import { nextStatus } from './components/admin/orders/helpers';
-import { parseRequirementWorkbook, parseTaskWorkbook } from './components/admin/orders/excelParsers';
+import { ORDER_STATUSES } from './modules/orders/v1.1/constants/constants';
+import { nextStatus } from './modules/orders/v1.1/utils/helpers';
+import { parseRequirementWorkbook, parseTaskWorkbook } from './modules/orders/v1.1/utils/excelParsers';
 import QuickActionFAB from './components/admin/QuickActionFAB';
 import NewOrderModal from './components/admin/modals/NewOrderModal';
 import NewTodoModal from './components/admin/modals/NewTodoModal';
@@ -43,6 +43,7 @@ import ComplianceModule from './components/admin/compliance/ComplianceModule';
 import { RevenueChart, ServiceDistributionChart, EmployeeWorkloadChart } from './components/admin/DashboardCharts';
 import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, ShieldCheck, CalendarCheck } from 'lucide-react';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
+import HRMSModule from './modules/hrms/v1.1/index.jsx';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -676,6 +677,7 @@ function AdminApp() {
     { key: 'Finance', label: 'Finance', icon: DollarSign },
     { key: 'Compliance', label: 'Compliance', icon: CalendarCheck },
     { key: 'Performance', label: 'Performance', icon: BarChart3 },
+    { key: 'HRMS', label: 'HRMS Portal', icon: Users },
     { key: 'Reports', label: 'Reports', icon: Activity },
     { key: 'Notifications', label: 'Notifications', icon: Bell },
     { key: 'CRM', label: 'CRM Pipeline', icon: Briefcase },
@@ -691,7 +693,7 @@ function AdminApp() {
     if (activeTab === 'Dashboard') return <DashboardView />;
     if (activeTab === 'Orders') {
       return (
-        <OrdersModule
+        <AdminOrdersView
           orders={orders}
           employees={employees}
           selectedOrderId={selectedOrderId}
@@ -745,6 +747,7 @@ function AdminApp() {
     if (activeTab === 'Finance') return <FinanceModule token={userInfo?.token} />;
     if (activeTab === 'Compliance') return <ComplianceModule token={userInfo?.token} />;
     if (activeTab === 'Performance') return <EmployeeAnalysisModule token={userInfo?.token} users={users} />;
+    if (activeTab === 'HRMS') return <HRMSModule role={userInfo?.role} />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;
     if (activeTab === 'Notifications') return (
       <NotificationsFeed 
