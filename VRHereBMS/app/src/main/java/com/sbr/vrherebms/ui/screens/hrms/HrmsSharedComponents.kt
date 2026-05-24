@@ -194,7 +194,7 @@ fun LeaveHistoryCard(leave: LeaveResponse) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.between,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("${leave.type} Leave", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))

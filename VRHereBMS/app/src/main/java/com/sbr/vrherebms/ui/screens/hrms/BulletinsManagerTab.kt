@@ -40,7 +40,6 @@ fun BulletinsManagerTab(viewModel: HrmsViewModel) {
             TabRow(
                 selectedTabIndex = subTab,
                 containerColor = Color(0xFFF1F5F9),
-                shape = RoundedCornerShape(10.dp),
                 divider = {}
             ) {
                 Tab(
