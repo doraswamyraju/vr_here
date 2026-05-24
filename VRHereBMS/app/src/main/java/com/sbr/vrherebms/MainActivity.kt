@@ -19,6 +19,7 @@ import com.sbr.vrherebms.viewmodel.AuthViewModel
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
 import com.sbr.vrherebms.viewmodel.EmployeeDashboardViewModel
 import com.sbr.vrherebms.viewmodel.PartnerDashboardViewModel
+import com.sbr.vrherebms.viewmodel.AdminDashboardViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -164,8 +165,10 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("admin_dashboard") {
+                        val adminViewModel: AdminDashboardViewModel = viewModel()
                         AdminDashboardScreen(
                             authViewModel = authViewModel,
+                            adminViewModel = adminViewModel,
                             userName = authViewModel.getUserName(),
                             onLogout = {
                                 authViewModel.logout()

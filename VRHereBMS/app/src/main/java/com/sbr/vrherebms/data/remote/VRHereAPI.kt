@@ -130,6 +130,19 @@ interface VRHereAPI {
     @PUT("api/partner/profile")
     suspend fun updatePartnerProfile(@Body profile: PartnerProfileUpdateDto): Response<PartnerProfileResponse>
 
+    // --- ADMIN COMMANDS ---
+    @POST("api/orders")
+    suspend fun createOrder(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<OrderResponse>
+
+    @GET("api/todos")
+    suspend fun getTodos(): Response<List<TodoResponse>>
+
+    @POST("api/todos")
+    suspend fun createTodo(@Body request: CreateTodoRequest): Response<TodoResponse>
+
+    @GET("api/auth/employees")
+    suspend fun getEmployees(): Response<List<EmployeeResponse>>
+
     companion object {
         // base URL pointing directly to the live website database
         var BASE_URL = "https://vrhere.in/"

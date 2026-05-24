@@ -371,4 +371,29 @@ data class LiveStatusResponse(
     val offline: List<LiveStatusEmployee> = emptyList()
 )
 
+// --- TODO DATA CLASSES ---
+
+data class TodoResponse(
+    @SerializedName("_id") val id: String,
+    val title: String,
+    val description: String?,
+    val status: String = "Pending", // 'Pending', 'Completed'
+    val priority: String = "Medium", // 'Low', 'Medium', 'High'
+    val assignedTo: EmployeeResponse? = null,
+    val orderId: OrderResponse? = null,
+    val dueDate: String? = null,
+    val createdBy: UserProfile? = null,
+    val createdAt: String = ""
+)
+
+data class CreateTodoRequest(
+    val title: String,
+    val description: String?,
+    val priority: String = "Medium", // 'Low', 'Medium', 'High'
+    val assignedTo: String? = null,
+    val orderId: String? = null,
+    val dueDate: String? = null
+)
+
+
 
