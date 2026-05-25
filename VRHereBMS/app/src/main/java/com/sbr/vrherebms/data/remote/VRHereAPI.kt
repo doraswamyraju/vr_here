@@ -143,6 +143,55 @@ interface VRHereAPI {
     @GET("api/auth/employees")
     suspend fun getEmployees(): Response<List<EmployeeResponse>>
 
+    // --- EMPLOYEE TRANSACTION Endpoints ---
+    @PUT("api/todos/{id}")
+    suspend fun updateTodoStatus(
+        @Path("id") id: String,
+        @Body body: Map<String, String>
+    ): Response<TodoResponse>
+
+    @PUT("api/orders/{orderId}/tasks/{taskId}")
+    suspend fun updateTaskStatus(
+        @Path("orderId") orderId: String,
+        @Path("taskId") taskId: String,
+        @Body body: Map<String, String>
+    ): Response<OrderResponse>
+
+    @PUT("api/orders/{orderId}/tasks/{taskId}/subtasks/{subtaskId}")
+    suspend fun updateSubtask(
+        @Path("orderId") orderId: String,
+        @Path("taskId") taskId: String,
+        @Path("subtaskId") subtaskId: String,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<OrderResponse>
+
+    @POST("api/orders/{orderId}/tasks/{taskId}/time-log")
+    suspend fun logTaskTime(
+        @Path("orderId") orderId: String,
+        @Path("taskId") taskId: String,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<OrderResponse>
+
+    @PUT("api/orders/{orderId}/requirements/{requirementId}/status")
+    suspend fun updateRequirementStatus(
+        @Path("orderId") orderId: String,
+        @Path("requirementId") requirementId: String,
+        @Body body: Map<String, String>
+    ): Response<OrderResponse>
+
+    @POST("api/orders/{orderId}/requirements")
+    suspend fun raiseRequirement(
+        @Path("orderId") orderId: String,
+        @Body body: Map<String, String>
+    ): Response<OrderResponse>
+
+    @Multipart
+    @POST("api/orders/{id}/documents")
+    suspend fun uploadFinalCertificate(
+        @Path("id") id: String,
+        @Part document: okhttp3.MultipartBody.Part
+    ): Response<OrderResponse>
+
     companion object {
         // base URL pointing directly to the live website database
         var BASE_URL = "https://vrhere.in/"
