@@ -32,10 +32,19 @@ app.use(
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://checkout.razorpay.com"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://checkout.razorpay.com", "https://livechat.vrhere.in", "https://cdn.socket.io"],
                 styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
                 imgSrc: ["'self'", "data:", "https://*"],
-                connectSrc: ["'self'", "https://api.razorpay.com", "https://lumberjack.razorpay.com", "http://localhost:5000", "http://localhost:5002", "http://147.93.107.21:5002"],
+                connectSrc: [
+                    "'self'", 
+                    "https://api.razorpay.com", 
+                    "https://lumberjack.razorpay.com", 
+                    "http://localhost:5000", 
+                    "http://localhost:5002", 
+                    "http://147.93.107.21:5002", 
+                    "https://livechat.vrhere.in", 
+                    "wss://livechat.vrhere.in"
+                ],
                 frameSrc: ["'self'", "https://api.razorpay.com"],
                 upgradeInsecureRequests: null, // Disable HTTPS upgrade for successful HTTP load
             },
