@@ -570,12 +570,12 @@ const WebmailModule = ({ token }) => {
               <div className="flex justify-between items-center gap-4">
                 <span className="text-slate-400 font-semibold flex-shrink-0">Value</span>
                 <div className="flex items-center gap-1.5 overflow-hidden">
-                  <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200 truncate max-w-[150px]">v=spf1 ip4:147.93.107.21 ~all</span>
+                  <span className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-slate-200 truncate max-w-[150px]">v=spf1 ip4:147.95.107.21 ~all</span>
                   <button 
-                    onClick={() => handleCopy('v=spf1 ip4:147.93.107.21 ~all')} 
+                    onClick={() => handleCopy('v=spf1 ip4:147.95.107.21 ~all')} 
                     className="p-1 text-slate-400 hover:text-indigo-600 transition flex-shrink-0"
                   >
-                    {copiedText === 'v=spf1 ip4:147.93.107.21 ~all' ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                    {copiedText === 'v=spf1 ip4:147.95.107.21 ~all' ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                   </button>
                 </div>
               </div>

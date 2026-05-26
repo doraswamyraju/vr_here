@@ -41,7 +41,7 @@ app.use(
                     "https://lumberjack.razorpay.com", 
                     "http://localhost:5000", 
                     "http://localhost:5002", 
-                    "http://147.93.107.21:5002", 
+                    "http://147.95.107.21:5002", 
                     "https://livechat.vrhere.in", 
                     "wss://livechat.vrhere.in"
                 ],
