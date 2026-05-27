@@ -51,6 +51,8 @@ const OrderInvoicesTab = ({ selectedOrder, invoiceForm, setInvoiceForm, onAddInv
 );
 
 const OrdersModule = ({
+  token,
+  setActiveTab,
   orders,
   employees,
   selectedOrderId,
@@ -154,7 +156,20 @@ const OrdersModule = ({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black text-slate-900">{selectedOrder.serviceName}</h2>
-                <p className="text-sm text-slate-500 mt-1">{getOrderClientLabel(selectedOrder)} | {rupees(selectedOrder.price)}</p>
+                <p className="text-sm text-slate-500 mt-1">
+                  <span 
+                    onClick={() => {
+                      if (setActiveTab) {
+                        setActiveTab('Customers');
+                      }
+                    }}
+                    className="cursor-pointer text-indigo-700 hover:text-indigo-900 font-bold hover:underline"
+                    title="View Customer Profile"
+                  >
+                    {getOrderClientLabel(selectedOrder)}
+                  </span>
+                  {' '}| {rupees(selectedOrder.price)}
+                </p>
                 <div className="mt-1 flex flex-wrap gap-3 text-xs">
                   {(selectedOrder.phone || selectedOrder?.user?.phone) ? (
                     <a href={`tel:${selectedOrder.phone || selectedOrder?.user?.phone}`} className="text-indigo-700 font-semibold hover:underline">
@@ -244,7 +259,7 @@ const OrdersModule = ({
               ))}
             </div>
             <div className="p-5 space-y-4">
-              {orderDetailTab === 'Overview' && <OrderOverviewTab selectedOrder={selectedOrder} />}
+              {orderDetailTab === 'Overview' && <OrderOverviewTab selectedOrder={selectedOrder} token={token} />}
               {orderDetailTab === 'Tasks' && (
                 <OrderTasksTab
                   selectedOrder={selectedOrder}

@@ -44,6 +44,7 @@ import { RevenueChart, ServiceDistributionChart, EmployeeWorkloadChart } from '.
 import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, ShieldCheck, CalendarCheck } from 'lucide-react';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 import HRMSModule from './modules/hrms/v1.1/index.jsx';
+import CustomersModule from './components/admin/crm/CustomersModule';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -680,7 +681,7 @@ function AdminApp() {
     { key: 'HRMS', label: 'HRMS Portal', icon: Users },
     { key: 'Reports', label: 'Reports', icon: Activity },
     { key: 'Notifications', label: 'Notifications', icon: Bell },
-    { key: 'CRM', label: 'CRM Pipeline', icon: Briefcase },
+    { key: 'Customers', label: 'Customers', icon: UsersIcon },
     { key: 'Knowledge', label: 'Knowledge Base', icon: BookOpen },
     { key: 'Support', label: 'Support Inbox', icon: MessageSquare },
     { key: 'Services', label: 'Services Master', icon: FileText },
@@ -694,6 +695,8 @@ function AdminApp() {
     if (activeTab === 'Orders') {
       return (
         <AdminOrdersView
+          token={userInfo?.token}
+          setActiveTab={setActiveTab}
           orders={orders}
           employees={employees}
           selectedOrderId={selectedOrderId}
@@ -763,7 +766,17 @@ function AdminApp() {
         }}
       />
     );
-    if (activeTab === 'CRM') return <DummyView title="CRM Pipeline" />;
+    if (activeTab === 'Customers') return (
+      <CustomersModule 
+        users={users} 
+        orders={orders} 
+        onViewOrder={(orderId) => {
+          setSelectedOrderId(orderId);
+          setActiveTab('Orders');
+          setOrderDetailTab('Overview');
+        }}
+      />
+    );
     if (activeTab === 'Knowledge') return <DummyView title="Knowledge Base" />;
     if (activeTab === 'Support') return <DummyView title="Support Inbox" />;
     if (activeTab === 'Services') return <ServicesMasterView token={userInfo?.token} />;

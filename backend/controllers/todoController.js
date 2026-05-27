@@ -66,6 +66,10 @@ const getTodos = asyncHandler(async (req, res) => {
         query = {};
     }
 
+    if (req.query.orderId) {
+        query.orderId = req.query.orderId;
+    }
+
     const todos = await Todo.find(query)
         .populate('assignedTo', 'name email role')
         .populate('orderId', 'serviceName clientName')

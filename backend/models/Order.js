@@ -56,6 +56,10 @@ const orderSchema = mongoose.Schema({
         enum: ['Pending', 'Paid', 'Failed', 'Refunded'],
         default: 'Paid'
     },
+    consultationAdjusted: {
+        type: Boolean,
+        default: false
+    },
     status: {
         type: String,
         enum: ['Pending Documents', 'Documents Verified', 'Processing at Portal', 'Waiting for Clarification', 'Completed'],

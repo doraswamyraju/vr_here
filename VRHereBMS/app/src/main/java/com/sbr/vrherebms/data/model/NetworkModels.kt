@@ -72,6 +72,10 @@ data class OrderResponse(
     val invoices: List<OrderInvoice> = emptyList(),
     val customerRequirements: List<CustomerRequirement> = emptyList(),
     val checklists: List<ChecklistItem> = emptyList(),
+    val consultationAdjusted: Boolean = false,
+    val linkedTodos: List<TodoResponse> = emptyList(),
+    val activityHistory: List<OrderHistoryResponse> = emptyList(),
+    val attendance: List<OrderAttendanceResponse> = emptyList(),
     val createdAt: String = "",
     val updatedAt: String = ""
 )
@@ -393,6 +397,24 @@ data class CreateTodoRequest(
     val assignedTo: String? = null,
     val orderId: String? = null,
     val dueDate: String? = null
+)
+
+data class OrderHistoryResponse(
+    @SerializedName("_id") val id: String,
+    val order: String,
+    val user: UserProfile?,
+    val action: String,
+    val description: String,
+    val createdAt: String
+)
+
+data class OrderAttendanceResponse(
+    @SerializedName("_id") val id: String?,
+    val name: String,
+    val email: String,
+    val role: String,
+    val isClockedIn: Boolean = false,
+    val clockInAt: String? = null
 )
 
 

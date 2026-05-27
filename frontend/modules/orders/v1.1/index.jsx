@@ -5,6 +5,7 @@ import OrderFlowSnapshot from './components/OrderFlowSnapshot';
 import OrderOverviewTab from './components/OrderOverviewTab';
 import OrderTasksTab from './components/OrderTasksTab';
 import OrderRequirementsTab from './components/OrderRequirementsTab';
+import CustomerProfileTab from './components/CustomerProfileTab';
 
 export {
   OrdersModule as AdminOrdersView,
@@ -13,5 +14,6 @@ export {
   OrderFlowSnapshot,
   OrderOverviewTab,
   OrderTasksTab,
-  OrderRequirementsTab
+  OrderRequirementsTab,
+  CustomerProfileTab
 };

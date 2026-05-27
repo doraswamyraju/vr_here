@@ -7,6 +7,7 @@ import generateToken from '../utils/generateToken.js';
 import sendEmail from '../utils/sendEmail.js';
 import { triggerNotification, notifyAdmins } from '../services/notificationService.js';
 import { getOrderPlacedTemplate } from '../utils/emailTemplates.js';
+import { logOrderActivity } from '../utils/activityLogger.js';
 
 
 const getRazorpayClient = () => {
@@ -442,5 +443,104 @@ export const createPayment = async (req, res) => {
         res.status(201).json(payment);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Handle Razorpay Webhook Event (e.g. payment_link.paid, payment.captured)
+// @route   POST /api/payments/razorpay/webhook
+// @access  Public
+export const handleRazorpayWebhook = async (req, res) => {
+    try {
+        const signature = req.headers['x-razorpay-signature'];
+        const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+        // Verify webhook signature if secret exists
+        if (webhookSecret && signature) {
+            const shasum = crypto.createHmac('sha256', webhookSecret);
+            shasum.update(JSON.stringify(req.body));
+            const digest = shasum.digest('hex');
+            if (digest !== signature) {
+                return res.status(400).json({ message: 'Invalid signature verification' });
+            }
+        }
+
+        const { event, payload } = req.body;
+
+        if (event === 'payment_link.paid' || event === 'payment.captured') {
+            let paymentLinkEntity = null;
+            let paymentEntity = null;
+
+            if (event === 'payment_link.paid') {
+                paymentLinkEntity = payload.payment_link.entity;
+                paymentEntity = payload.payment.entity;
+            } else {
+                paymentEntity = payload.payment.entity;
+            }
+
+            const notes = paymentLinkEntity?.notes || paymentEntity?.notes || {};
+            const orderId = notes.orderId;
+            const invoiceNumber = notes.invoiceNumber;
+
+            if (orderId && invoiceNumber) {
+                const order = await Order.findById(orderId);
+                if (order) {
+                    const invoice = order.invoices.find(inv => inv.invoiceNumber === invoiceNumber);
+                    if (invoice) {
+                        const oldStatus = invoice.status;
+                        invoice.status = 'Paid';
+                        order.paymentStatus = 'Paid';
+                        await order.save();
+
+                        // Add Payment record in Payment collection so the transactions tab lists it
+                        const paidAmount = (paymentLinkEntity?.amount || paymentEntity?.amount || 0) / 100;
+                        const paymentId = paymentEntity?.id || `PAY_${Date.now()}`;
+                        const rzpOrderId = paymentEntity?.order_id || '';
+
+                        // Check if payment already recorded
+                        const existingPayment = await Payment.findOne({ paymentId });
+                        if (!existingPayment) {
+                            await Payment.create({
+                                user: order.user || null,
+                                order: order._id,
+                                amount: paidAmount,
+                                currency: 'INR',
+                                paymentId,
+                                razorpayOrderId: rzpOrderId,
+                                signature: signature || 'WEBHOOK_VERIFIED',
+                                status: 'Completed',
+                                method: 'Razorpay',
+                                customerName: order.clientName,
+                                email: order.email,
+                                phone: order.phone,
+                                serviceName: order.serviceName,
+                                packageName: order.packageName
+                            });
+                        }
+
+                        // Log activity in history
+                        await logOrderActivity(
+                            order._id,
+                            order.user || order._id, // Actor fallback to orderId for guest
+                            'PAYMENT_RECEIVE',
+                            `Payment of INR ${paidAmount.toLocaleString('en-IN')} received via Razorpay for Invoice ${invoiceNumber}`,
+                            { invoiceNumber, paymentId, amount: paidAmount }
+                        );
+
+                        // Notify admins
+                        await notifyAdmins({
+                            title: 'Invoice Paid Successfully',
+                            message: `Client ${order.clientName} paid Invoice ${invoiceNumber} for service "${order.serviceName}" through payment link. Amount: INR ${paidAmount.toLocaleString('en-IN')}`,
+                            type: 'Order',
+                            email: true
+                        });
+                    }
+                }
+            }
+        }
+
+        res.status(200).json({ status: 'ok' });
+    } catch (error) {
+        console.error('Webhook processing failure:', error);
+        res.status(500).json({ message: 'Webhook processing error', error: error.message });
     }
 };

@@ -2,6 +2,8 @@ import express from 'express';
 import {
     createOrder,
     getOrders,
+    getOrderHistory,
+    getOrderAttendance,
     getOrderById,
     updateOrderStatus,
     updateOrder,
@@ -16,6 +18,7 @@ import {
     toggleChecklistItem,
     addInvoice,
     updateInvoiceStatus,
+    createAdjustedInvoice,
     importTasks,
     assignTask,
     updateSubtask,
@@ -33,6 +36,12 @@ const router = express.Router();
 router.route('/')
     .post(protect, createOrder)
     .get(protect, getOrders);
+
+router.route('/:id/history')
+    .get(protect, getOrderHistory);
+
+router.route('/:id/attendance')
+    .get(protect, getOrderAttendance);
 
 router.route('/:id')
     .get(protect, getOrderById)
@@ -80,6 +89,9 @@ router.route('/:id/checklists/:itemId/toggle')
 
 router.route('/:id/invoices')
     .post(protect, admin, addInvoice);
+
+router.route('/:id/invoices/adjusted')
+    .post(protect, admin, createAdjustedInvoice);
 
 router.route('/:id/invoices/:invoiceId/status')
     .put(protect, admin, updateInvoiceStatus);

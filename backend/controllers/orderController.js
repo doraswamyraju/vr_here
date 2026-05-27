@@ -1,10 +1,14 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/Order.js';
+import OrderHistory from '../models/OrderHistory.js';
 import Todo from '../models/Todo.js';
 import { createSubscriptionInternal } from './recurringController.js';
 import { triggerNotification, notifyAdmins, notifyEmployee } from '../services/notificationService.js';
 import { getOrderStatusUpdateTemplate, getClientSubmissionTemplate, getAdditionalRequirementTemplate } from '../utils/emailTemplates.js';
 import User from '../models/User.js';
+import { logOrderActivity } from '../utils/activityLogger.js';
+import Razorpay from 'razorpay';
+import sendEmail from '../utils/sendEmail.js';
 
 
 const ORDER_POPULATE = [
@@ -466,6 +470,16 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     order.status = status;
     const updatedOrder = await order.save();
 
+    if (oldStatus !== status) {
+        await logOrderActivity(
+            order._id,
+            req.user._id,
+            'STATUS_CHANGE',
+            `Updated order status from "${oldStatus}" to "${status}"`,
+            { oldStatus, newStatus: status }
+        );
+    }
+
     // Trigger notification if the status has changed
     if (oldStatus !== status && order.user) {
         const clientEmailHtml = getOrderStatusUpdateTemplate({
@@ -668,6 +682,15 @@ const uploadDocument = asyncHandler(async (req, res) => {
     }
 
     const updatedOrder = await order.save();
+
+    const uploadedDocName = req.body.name || (req.file ? req.file.originalname : 'Document');
+    await logOrderActivity(
+        order._id,
+        req.user._id,
+        'DOCUMENT_UPLOAD',
+        `Uploaded document "${uploadedDocName}"`,
+        { documentName: uploadedDocName, url: documentUrl, isFinal: req.body.isFinalCertificate === 'true' }
+    );
 
     // Trigger Notifications after successful upload and save
     if (req.user.role === 'client') {
@@ -1099,6 +1122,13 @@ const addInvoice = asyncHandler(async (req, res) => {
             sentAt: status === 'Sent' ? new Date() : null
         });
         await order.save();
+        await logOrderActivity(
+            order._id,
+            req.user._id,
+            'INVOICE_CREATE',
+            `Invoice ${invoiceNumber} created with status "${status}"`,
+            { invoiceNumber, amount, status }
+        );
         res.status(201).json(order);
     } else {
         res.status(404);
@@ -1116,11 +1146,19 @@ const updateInvoiceStatus = asyncHandler(async (req, res) => {
     if (order) {
         const invoice = order.invoices.id(req.params.invoiceId);
         if (invoice) {
+            const oldStatus = invoice.status;
             invoice.status = status;
             if (status === 'Sent' && !invoice.sentAt) {
                 invoice.sentAt = new Date();
             }
             await order.save();
+            await logOrderActivity(
+                order._id,
+                req.user._id,
+                'INVOICE_STATUS_UPDATE',
+                `Invoice ${invoice.invoiceNumber} status updated from "${oldStatus}" to "${status}"`,
+                { invoiceNumber: invoice.invoiceNumber, oldStatus, newStatus: status }
+            );
             res.json(order);
         } else {
             res.status(404);
@@ -1244,6 +1282,14 @@ const updateRequirement = asyncHandler(async (req, res) => {
     }
 
     await order.save();
+
+    await logOrderActivity(
+        order._id,
+        req.user._id,
+        'REQUIREMENT_UPDATE',
+        `Requirement "${requirement.title}" updated (Status: "${requirement.status}")`,
+        { requirementId: requirement._id, title: requirement.title, status: requirement.status }
+    );
 
     // Trigger Notifications after save
     if (req.user.role === 'client') {
@@ -1384,9 +1430,217 @@ const deleteRequirement = asyncHandler(async (req, res) => {
     res.json(order);
 });
 
+// @desc    Get history logs for an order
+// @route   GET /api/orders/:id/history
+// @access  Private
+const getOrderHistory = asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to view history for this order');
+    }
+    const history = await OrderHistory.find({ order: req.params.id })
+        .populate('user', 'name email role')
+        .sort({ createdAt: -1 });
+    res.json(history);
+});
+
+// @desc    Create Adjusted Invoice with optional 499 INR discount and generate Razorpay Link
+// @route   POST /api/orders/:id/invoices/adjusted
+// @access  Private/Admin
+const createAdjustedInvoice = asyncHandler(async (req, res) => {
+    const { packageName, amount, adjustConsultation = false, dueDate = null, notes = '', invoiceNumber } = req.body;
+    
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const baseAmount = Number(amount);
+    if (!Number.isFinite(baseAmount) || baseAmount <= 0) {
+        res.status(400);
+        throw new Error('Amount must be a positive number');
+    }
+
+    // Determine final amount and update adjustment flags safely
+    let finalAmount = baseAmount;
+    if (adjustConsultation) {
+        if (order.consultationAdjusted) {
+            res.status(400);
+            throw new Error('Consultation adjustment has already been applied to this order');
+        }
+        finalAmount = Math.max(0, baseAmount - 499);
+        order.consultationAdjusted = true;
+    }
+
+    const finalInvoiceNumber = invoiceNumber || `INV_${Date.now()}`;
+
+    // Initialize Razorpay
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) {
+        res.status(500);
+        throw new Error('Razorpay configuration is missing on the server');
+    }
+
+    const razorpay = new Razorpay({
+        key_id: keyId,
+        key_secret: keySecret
+    });
+
+    let paymentLinkUrl = '';
+    try {
+        const linkPayload = {
+            amount: Math.round(finalAmount * 100),
+            currency: 'INR',
+            accept_partial: false,
+            description: `Payment for Service: ${order.serviceName} (${packageName || order.packageName})`,
+            customer: {
+                name: order.clientName || 'Customer',
+                email: order.email || 'customer@vrhere.in',
+                contact: order.phone || '9999999999'
+            },
+            notify: {
+                sms: false,
+                email: false
+            },
+            notes: {
+                orderId: order._id.toString(),
+                invoiceNumber: finalInvoiceNumber,
+                adjustConsultation: String(adjustConsultation)
+            }
+        };
+        const paymentLink = await razorpay.paymentLink.create(linkPayload);
+        paymentLinkUrl = paymentLink.short_url;
+    } catch (razorpayError) {
+        console.error('Error creating Razorpay Payment Link:', razorpayError);
+        res.status(500);
+        throw new Error(`Razorpay Link Generation Failed: ${razorpayError.message}`);
+    }
+
+    const newInvoice = {
+        invoiceNumber: finalInvoiceNumber,
+        amount: finalAmount,
+        status: 'Sent',
+        url: paymentLinkUrl,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        notes: notes || (adjustConsultation ? 'Adjusted consultation payment of 499 INR applied.' : ''),
+        sentAt: new Date(),
+        createdAt: new Date()
+    };
+
+    order.invoices.push(newInvoice);
+    const savedOrder = await order.save();
+
+    // Log this creation activity in audit history
+    await logOrderActivity(
+        order._id,
+        req.user._id,
+        'INVOICE_CREATE',
+        `Adjusted Invoice ${finalInvoiceNumber} created for INR ${finalAmount} (Consultation Adjusted: ${adjustConsultation})`,
+        { invoiceNumber: finalInvoiceNumber, amount: finalAmount, adjustConsultation }
+    );
+
+    // NodeMailer Styled Email Dispatch
+    if (order.email) {
+        const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #4f46e5; text-align: center;">VR HERE Invoice Generated</h2>
+                <p>Hello ${order.clientName || 'Customer'},</p>
+                <p>An invoice has been generated for your service: <strong>${order.serviceName}</strong>.</p>
+                <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Invoice Number:</strong> ${finalInvoiceNumber}</p>
+                    <p style="margin: 5px 0;"><strong>Package:</strong> ${packageName || order.packageName}</p>
+                    <p style="margin: 5px 0;"><strong>Amount Due:</strong> INR ${Number(finalAmount).toLocaleString('en-IN')}</p>
+                    ${adjustConsultation ? '<p style="margin: 5px 0; color: #16a34a;"><strong>Discount Applied:</strong> INR 499 (Consultation adjusted)</p>' : ''}
+                    ${dueDate ? `<p style="margin: 5px 0;"><strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}</p>` : ''}
+                </div>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${paymentLinkUrl}" style="background-color: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Pay Invoice Now</a>
+                </div>
+                <p style="font-size: 12px; color: #64748b;">If the button above does not work, copy and paste this link into your browser:<br/><a href="${paymentLinkUrl}">${paymentLinkUrl}</a></p>
+                <p>Thank you for choosing VR HERE Business Solutions.</p>
+            </div>
+        `;
+        try {
+            await sendEmail({
+                email: order.email,
+                subject: `Invoice ${finalInvoiceNumber} from VR HERE`,
+                message: emailHtml
+            });
+        } catch (emailErr) {
+            console.error('Nodemailer failed to send invoice link:', emailErr.message);
+        }
+    }
+
+    res.status(201).json(savedOrder);
+});
+
+// @desc    Get real-time attendance status of all staff assigned to the order
+// @route   GET /api/orders/:id/attendance
+// @access  Private
+const getOrderAttendance = asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to view attendance for this order');
+    }
+
+    // Collect all assigned employee IDs
+    const employeeIds = new Set();
+    if (order.assignedEmployee) employeeIds.add(order.assignedEmployee.toString());
+    if (order.assignedMaker) employeeIds.add(order.assignedMaker.toString());
+    if (order.assignedChecker) employeeIds.add(order.assignedChecker.toString());
+
+    (order.tasks || []).forEach(task => {
+        if (task.assignedTo) employeeIds.add(task.assignedTo.toString());
+        if (task.assignedMaker) employeeIds.add(task.assignedMaker.toString());
+        if (task.assignedChecker) employeeIds.add(task.assignedChecker.toString());
+
+        (task.subtasks || []).forEach(sub => {
+            if (sub.assignedToMaker) employeeIds.add(sub.assignedToMaker.toString());
+            if (sub.assignedToChecker) employeeIds.add(sub.assignedToChecker.toString());
+        });
+    });
+
+    const Attendance = (await import('../models/Attendance.js')).default;
+    const staffList = await User.find({ _id: { $in: Array.from(employeeIds) } }).select('name email role');
+
+    const result = await Promise.all(staffList.map(async (staff) => {
+        const activeSession = await Attendance.findOne({
+            employee: staff._id,
+            clockOutAt: null
+        });
+
+        return {
+            _id: staff._id,
+            name: staff.name,
+            email: staff.email,
+            role: staff.role,
+            isClockedIn: !!activeSession,
+            clockInAt: activeSession ? activeSession.clockInAt : null
+        };
+    }));
+
+    res.json(result);
+});
+
 export {
     createOrder,
     getOrders,
+    getOrderHistory,
+    createAdjustedInvoice,
+    getOrderAttendance,
     getOrderById,
     updateOrderStatus,
     updateOrder,
