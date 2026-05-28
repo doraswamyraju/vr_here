@@ -281,10 +281,10 @@ const PrivateLimitedPage = () => {
             <div className="lg:w-1/2">
               <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-sm font-bold text-slate-600 mb-6">
                 <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                India's #1 Registration Platform
+                India's #1 Secure Registration Platform
               </div>
               <h1 className="text-4xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6">
-                Register Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">Private Limited</span> Company Online.
+                Register Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">Private Limited</span> Company Online
               </h1>
               <p className="text-xl text-slate-600 leading-relaxed mb-8">
                 Launch your startup with the most credible legal structure. Get Certificate of Incorporation, PAN, TAN & MOA/AOA in just 7 days.
