@@ -837,116 +837,106 @@ fun CustomerServiceDetailScreen(
                     )
                 )
             ) {
+                var isDropdownExpanded by remember { mutableStateOf(false) }
+
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left Column: Dynamic pricing and active plan name
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.Center
+                    // Left Side: Box showing package name with a Dropdown option
+                    Box(
+                        modifier = Modifier
+                            .weight(1.3f)
+                            .height(48.dp)
+                            .background(Color(0xFF1E293B), RoundedCornerShape(14.dp))
+                            .border(1.dp, Color(0xFF334155), RoundedCornerShape(14.dp))
+                            .clickable { isDropdownExpanded = true }
+                            .padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.CenterStart
                     ) {
-                        Text(
-                            text = selectedPackage.name.uppercase(),
-                            color = Color(0xFF818CF8),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 0.8.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                text = formatCurrency(selectedPackage.price),
-                                color = Color.White,
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = (-0.5).sp
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = if (selectedPackage.isAdjustable) "Adj." else "+Tax",
-                                color = Color(0xFF94A3B8),
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 3.dp)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(2.dp))
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null,
-                                tint = Color(0xFF10B981),
-                                modifier = Modifier.size(10.dp)
-                            )
-                            Spacer(modifier = Modifier.width(3.dp))
-                            Text(
-                                text = "SECURE RAZORPAY BRIDGE",
-                                color = Color(0xFF94A3B8),
-                                fontSize = 7.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.3.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // Middle: Segmented Selector Pills (If multi-pack exists, toggle directly at bottom)
-                    if (service.packages.size > 1) {
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "SELECTED PLAN",
+                                    color = Color(0xFF94A3B8),
+                                    fontSize = 7.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Text(
+                                    text = selectedPackage.name.uppercase(),
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Select Package",
+                                tint = Color(0xFF6366F1),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = isDropdownExpanded,
+                            onDismissRequest = { isDropdownExpanded = false },
                             modifier = Modifier
-                                .background(Color(0xFF1E293B), RoundedCornerShape(12.dp))
-                                .padding(2.dp)
+                                .background(Color(0xFF0F172A))
+                                .border(1.dp, Color(0xFF334155), RoundedCornerShape(12.dp))
                         ) {
                             service.packages.forEach { pkg ->
-                                val active = selectedPackage.id == pkg.id
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (active) Color(0xFF334155) else Color.Transparent)
-                                        .clickable {
-                                            selectedPackage = pkg
-                                            // Scroll to package card
-                                            val idx = service.packages.indexOf(pkg)
-                                            scope.launch {
-                                                // index offset 2: account for header column and divider
-                                                listState.animateScrollToItem((idx + 2).coerceIn(0, service.packages.size + 1))
-                                            }
+                                val isActive = selectedPackage.id == pkg.id
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = pkg.name.uppercase(),
+                                                color = if (isActive) Color(0xFF818CF8) else Color.White,
+                                                fontWeight = FontWeight.Black,
+                                                fontSize = 11.sp,
+                                                letterSpacing = 0.5.sp
+                                            )
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            Text(
+                                                text = formatCurrency(pkg.price),
+                                                color = if (isActive) Color(0xFF818CF8) else Color(0xFF94A3B8),
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 11.sp
+                                            )
                                         }
-                                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = pkg.name.substringBefore(" ").uppercase(),
-                                        color = if (active) Color.White else Color(0xFF94A3B8),
-                                        fontSize = 8.sp,
-                                        fontWeight = FontWeight.Black,
-                                        letterSpacing = 0.5.sp
-                                    )
-                                }
+                                    },
+                                    onClick = {
+                                        selectedPackage = pkg
+                                        isDropdownExpanded = false
+                                        val idx = service.packages.indexOf(pkg)
+                                        scope.launch {
+                                            listState.animateScrollToItem(idx + 2)
+                                        }
+                                    }
+                                )
                             }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    // Right: Creative Dynamic CTA Button based on selected Package
-                    val checkoutBtnLabel = when {
-                        selectedPackage.id == "consultation" -> "CONSULT"
-                        selectedPackage.isPopular -> "GO PRO"
-                        else -> "LAUNCH"
-                    }
-
+                    // Right Side: Action CTA Button showing price
                     Button(
                         onClick = { isConfirmSheetOpen = true },
                         modifier = Modifier
+                            .weight(1.7f)
                             .height(48.dp)
                             .scaleOnPress()
                             .shadow(
@@ -966,11 +956,17 @@ fun CustomerServiceDetailScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
+                            val btnLabel = when {
+                                selectedPackage.id == "consultation" -> "CONSULT"
+                                else -> "BOOK"
+                            }
                             Text(
-                                text = checkoutBtnLabel,
-                                fontSize = 11.sp,
+                                text = "$btnLabel @ ${formatCurrency(selectedPackage.price)}",
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp
+                                letterSpacing = 0.5.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
