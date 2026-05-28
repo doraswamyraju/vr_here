@@ -252,6 +252,18 @@ const EmployeeApp = () => {
     }
   };
 
+  const handleUpdateOrderName = async (orderId, name) => {
+    if (!authConfig) return;
+    try {
+      await axios.put(`/api/orders/${orderId}/commercials`, {
+        serviceName: name
+      }, authConfig);
+      await fetchOrders();
+    } catch (error) {
+      alert('Unable to update order name.');
+    }
+  };
+
   const handleTaskStatusChange = async (orderId, taskId, status) => {
     if (!authConfig) return;
     try {
@@ -397,6 +409,7 @@ const EmployeeApp = () => {
             selectedOrder={selectedOrder}
             setSelectedOrder={(order) => setSelectedOrderId(order?._id || null)}
             onStatusChange={handleStatusChange}
+            onUpdateOrderName={handleUpdateOrderName}
             onUploadCertificate={handleUploadCertificate}
             isUploading={isUploading}
             userInfo={userInfo}

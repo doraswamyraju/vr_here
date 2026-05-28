@@ -383,6 +383,10 @@ const OrdersModule = ({
                 <label className="text-xs text-slate-500">Price</label>
                 <input value={commercialDraft.price} onChange={(event) => setCommercialDraft((prev) => ({ ...prev, price: event.target.value }))} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300" />
               </div>
+              <div className="xl:col-span-2">
+                <label className="text-xs text-slate-500">Order Name (Service)</label>
+                <input value={commercialDraft.serviceName || ''} onChange={(event) => setCommercialDraft((prev) => ({ ...prev, serviceName: event.target.value }))} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300" />
+              </div>
             </div>
 
             <div className="mt-3">
@@ -552,17 +556,26 @@ const OrdersModule = ({
                         </a>
                       </div>
                     ))}
-                    {(selectedOrder.clientDocuments || []).map((doc) => (
-                      <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
-                        <div>
-                          <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
-                          <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Client Uploaded Doc</p>
-                        </div>
-                        <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
-                          <Eye size={16} />
-                        </a>
-                      </div>
-                    ))}
+                    {(() => {
+                      const requirementUrls = new Set(
+                        (selectedOrder.customerRequirements || [])
+                          .map(r => r.uploadedDocumentUrl)
+                          .filter(Boolean)
+                      );
+                      return (selectedOrder.clientDocuments || [])
+                        .filter(doc => !requirementUrls.has(doc.url))
+                        .map((doc) => (
+                          <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
+                            <div>
+                              <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
+                              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Client Uploaded Doc</p>
+                            </div>
+                            <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                              <Eye size={16} />
+                            </a>
+                          </div>
+                        ));
+                    })()}
                     {(selectedOrder.adminDocuments || []).map((doc) => (
                       <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
                         <div>

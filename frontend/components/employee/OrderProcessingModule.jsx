@@ -11,6 +11,7 @@ const OrderProcessingModule = ({
   selectedOrder,
   setSelectedOrder,
   onStatusChange,
+  onUpdateOrderName,
   onUploadCertificate,
   isUploading,
   userInfo,
@@ -18,7 +19,9 @@ const OrderProcessingModule = ({
   onRaiseRequirement,
   linkedTodos = [],
   onTodoStatusChange,
-  isClockedIn
+  isClockedIn,
+  onTaskStatusChange,
+  onUpdateSubtask
 }) => {
   const handleTodoUpdate = (id, status) => {
     if (!isClockedIn) {
@@ -29,6 +32,14 @@ const OrderProcessingModule = ({
   };
   const [file, setFile] = useState(null);
   const [detailTab, setDetailTab] = useState('Tasks');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+
+  useEffect(() => {
+    if (selectedOrder) {
+      setEditedName(selectedOrder.serviceName || '');
+    }
+  }, [selectedOrder]);
 
   const [payments, setPayments] = useState([]);
   const [history, setHistory] = useState([]);
@@ -152,8 +163,46 @@ const OrderProcessingModule = ({
     <div className="space-y-4">
       <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
         <div className="flex justify-between items-start gap-4 flex-wrap">
-          <div>
-            <h3 className="text-xl font-bold text-slate-800">{selectedOrder.serviceName}</h3>
+          <div className="flex-1 min-w-[280px]">
+            {isEditingName ? (
+              <div className="flex items-center gap-2 mt-1 mb-2">
+                <input 
+                  type="text" 
+                  value={editedName} 
+                  onChange={(e) => setEditedName(e.target.value)}
+                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none min-w-[240px]"
+                />
+                <button 
+                  onClick={async () => {
+                    if (!editedName.trim()) return;
+                    await onUpdateOrderName(selectedOrder._id, editedName.trim());
+                    setIsEditingName(false);
+                  }}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
+                >
+                  Save
+                </button>
+                <button 
+                  onClick={() => {
+                    setEditedName(selectedOrder.serviceName || '');
+                    setIsEditingName(false);
+                  }}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2.5 mb-1">
+                <h3 className="text-xl font-bold text-slate-800">{selectedOrder.serviceName}</h3>
+                <button 
+                  onClick={() => setIsEditingName(true)}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-bold underline"
+                >
+                  Edit Name
+                </button>
+              </div>
+            )}
             <p className="text-sm text-slate-500">
               Client: <span className="font-semibold">{getOrderClientLabel(selectedOrder)}</span>
             </p>
@@ -505,17 +554,26 @@ const OrderProcessingModule = ({
                     </a>
                   </div>
                 ))}
-                {(selectedOrder.clientDocuments || []).map((doc) => (
-                  <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
-                    <div>
-                      <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Client Uploaded Doc</p>
-                    </div>
-                    <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
-                      <Eye size={16} />
-                    </a>
-                  </div>
-                ))}
+                {(() => {
+                  const requirementUrls = new Set(
+                    (selectedOrder.customerRequirements || [])
+                      .map(r => r.uploadedDocumentUrl)
+                      .filter(Boolean)
+                  );
+                  return (selectedOrder.clientDocuments || [])
+                    .filter(doc => !requirementUrls.has(doc.url))
+                    .map((doc) => (
+                      <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Client Uploaded Doc</p>
+                        </div>
+                        <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                          <Eye size={16} />
+                        </a>
+                      </div>
+                    ));
+                })()}
                 {(selectedOrder.adminDocuments || []).map((doc) => (
                   <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
                     <div>

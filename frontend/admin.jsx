@@ -66,7 +66,7 @@ function AdminApp() {
   const [employees, setEmployees] = useState([]);
   const [users, setUsers] = useState([]);
   const [invoiceForm, setInvoiceForm] = useState({ invoiceNumber: '', amount: '', status: 'Draft', dueDate: '', notes: '' });
-  const [commercialDraft, setCommercialDraft] = useState({ packageName: '', price: '' });
+  const [commercialDraft, setCommercialDraft] = useState({ packageName: '', price: '', serviceName: '' });
   const [todos, setTodos] = useState([]);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isNewTodoModalOpen, setIsNewTodoModalOpen] = useState(false);
@@ -125,7 +125,11 @@ function AdminApp() {
 
   useEffect(() => {
     if (selectedOrder) {
-      setCommercialDraft({ packageName: selectedOrder.packageName || '', price: String(selectedOrder.price || '') });
+      setCommercialDraft({ 
+        packageName: selectedOrder.packageName || '', 
+        price: String(selectedOrder.price || ''),
+        serviceName: selectedOrder.serviceName || ''
+      });
     }
   }, [selectedOrder]);
 
@@ -171,7 +175,8 @@ function AdminApp() {
     if (!selectedOrder) return;
     await axios.put(`/api/orders/${selectedOrder._id}/commercials`, {
       packageName: commercialDraft.packageName,
-      price: Number(commercialDraft.price || 0)
+      price: Number(commercialDraft.price || 0),
+      serviceName: commercialDraft.serviceName
     }, config);
     fetchData();
   };
