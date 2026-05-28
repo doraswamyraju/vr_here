@@ -1,8 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home3/rajugda1/public_html
-    - /bin/mkdir -p $DEPLOYPATH/assets
-    - /bin/rm -rf $DEPLOYPATH/assets/*
-    - /bin/cp -f dist/index.html $DEPLOYPATH/index.html
-    - /bin/cp -Rf dist/assets/* $DEPLOYPATH/assets/
