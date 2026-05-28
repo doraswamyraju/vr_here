@@ -552,22 +552,62 @@ const PrivateLimitedPage = () => {
             {isSeoExpanded && (
               <div className="mt-12 text-left bg-slate-50 p-8 md:p-12 rounded-3xl border border-slate-200 animate-in fade-in slide-in-from-top-4 duration-300 grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Column A: Detailed SEO Text */}
-                <div className="lg:col-span-1 space-y-6">
-                  <h3 className="text-xl font-black text-slate-900 border-b-2 border-red-500 pb-2">Complete Guide to Company Registration</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                    Incorporating a **Private Limited Company** is the most widely recognized corporate legal structure in India. Regulated by the Ministry of Corporate Affairs (MCA) under the Companies Act, 2013, it offers startups a credible platform to raise external funding from venture capitalists, angel investors, and banks.
-                  </p>
-                  <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                    One of the primary benefits is **limited liability protection**, which guarantees that the personal assets of the shareholders are secure in case the business faces financial distress.
-                  </p>
-                  <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                    <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-2">Checklist of Documents Needed</h4>
-                    <ul className="text-xs text-slate-600 space-y-1.5 font-bold">
-                      <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> PAN & Aadhaar of all Directors</li>
-                      <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Electricity/Water Bill (Registered Address)</li>
-                      <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> NOC from property owner</li>
-                      <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Bank Statement/Utility Bill of Directors</li>
-                    </ul>
+                <div className="lg:col-span-1 space-y-6 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-300">
+                  <h3 className="text-xl font-black text-slate-900 border-b-2 border-red-500 pb-2">Guide to Company Registration</h3>
+                  
+                  <div className="space-y-4">
+                    <p className="text-xs text-slate-600 leading-relaxed font-semibold">
+                      Incorporating a <strong>Private Limited Company</strong> in India is the most widely recognized and preferred corporate structure for startups, offering credibility, structured governance, and investor-friendly access.
+                    </p>
+
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">What is Private Limited Company Registration?</h4>
+                      <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                        It is the legal process of incorporating a business entity under the <strong>Companies Act, 2013</strong>, governed by the Ministry of Corporate Affairs (MCA). A private limited company restricts share transfers and limits members to 200. It becomes a separate legal entity distinct from directors and shareholders, allowing the company to own assets, enter contracts, and sue or be sued in its own name.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">Forms of Private Limited Company</h4>
+                      <ul className="text-[11px] text-slate-500 space-y-2 font-medium">
+                        <li><strong>1. Company Limited by Shares:</strong> The most common form where shareholder liability is strictly limited to the face value of unpaid shares. Personal assets are 100% protected.</li>
+                        <li><strong>2. Company Limited by Guarantee:</strong> Liability of members is limited to the amount they agree to contribute in case of winding up (common for NGOs / Section 8).</li>
+                        <li><strong>3. Unlimited Private Company:</strong> Rare form where members have unlimited personal liability, offering capital distribution flexibility.</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">Private Limited Minimum Requirements</h4>
+                      <ul className="text-[11px] text-slate-500 space-y-1 font-medium list-disc pl-4">
+                        <li>Minimum 2 Directors & maximum 15 directors.</li>
+                        <li>Minimum 2 Shareholders & maximum 200 shareholders.</li>
+                        <li>At least 1 Indian Resident Director.</li>
+                        <li>Proposed directors must obtain DIN & DSC.</li>
+                        <li>No minimum paid-up capital requirement.</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">Incorporation Step-by-Step Process</h4>
+                      <ol className="text-[11px] text-slate-500 space-y-2 font-medium">
+                        <li><strong>Step 1: Obtain DSC:</strong> Proposed directors apply for Digital Signature Certificate from a government certified agency.</li>
+                        <li><strong>Step 2: Reserve Unique Name (RUN):</strong> Reserving the company name through the MCA RUN portal.</li>
+                        <li><strong>Step 3: SPICe+ Form:</strong> Filing the integrated electronic form covering PAN, TAN, GSTIN, EPFO, ESIC, and Profession Tax.</li>
+                        <li><strong>Step 4: MoA & AoA:</strong> Drafting Memorandum of Association and Articles of Association to establish rules and objectives.</li>
+                        <li><strong>Step 5: COI Issuance:</strong> ROC issues the official Certificate of Incorporation.</li>
+                      </ol>
+                    </div>
+
+                    <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-inner">
+                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-2">Checklist of Documents Needed</h4>
+                      <ul className="text-[10px] text-slate-600 space-y-1.5 font-bold">
+                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> PAN & Aadhaar of all Directors</li>
+                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Passport Size Photograph of Directors</li>
+                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Electricity/Water Bill (Registered Address)</li>
+                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> NOC from property owner</li>
+                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Bank Statement / Utility Bill of Proposed Directors</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
@@ -621,7 +661,7 @@ const PrivateLimitedPage = () => {
         <section className="py-20 bg-slate-50 border-t border-slate-200/50">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-16">
-              <span className="text-xs uppercase font-black tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full font-bold">Explore Catalog</span>
+              <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3 py-1.5 rounded-full font-bold">Explore Catalog</span>
               <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mt-4 tracking-tight">Related Compliance Services</h2>
               <p className="text-lg text-slate-600 mt-2 font-medium">Grow your business legally with our allied setup packages.</p>
             </div>
@@ -630,10 +670,10 @@ const PrivateLimitedPage = () => {
                 <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
                   <div>
                     <h3 className="font-black text-base text-slate-900 mb-2">{service.title}</h3>
-                    <div className="text-indigo-600 font-black text-lg mb-4">{service.price} <span className="text-[10px] text-slate-400 font-bold uppercase">+ Govt Fees</span></div>
+                    <div className="text-red-600 font-black text-lg mb-4">{service.price} <span className="text-[10px] text-slate-400 font-bold uppercase">+ Govt Fees</span></div>
                     <p className="text-slate-500 text-xs leading-relaxed font-medium mb-6">{service.desc}</p>
                   </div>
-                  <button onClick={() => navigate(service.link)} className="w-full py-2 bg-slate-100 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold text-slate-800 transition flex items-center justify-center gap-1.5">
+                  <button onClick={() => navigate(service.link)} className="w-full py-2 bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold text-slate-800 transition flex items-center justify-center gap-1.5">
                     <span>Explore Plan</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
