@@ -77,22 +77,32 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             // 1. "VR HERE" Branding Header
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
                 modifier = Modifier.padding(vertical = 12.dp)
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "VR",
+                        color = primaryRed,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "HERE",
+                        color = textDark,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
                 Text(
-                    text = "VR",
-                    color = primaryRed,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Black
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "HERE",
-                    color = textDark,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Black
+                    text = "Business Management Solutions",
+                    color = textMuted,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
             }
 

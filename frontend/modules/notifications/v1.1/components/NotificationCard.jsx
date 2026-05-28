@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Order, X, ArrowUpRight, MessageSquare, CreditCard, AlertCircle } from 'lucide-react';
+import { Bell, X, ArrowUpRight, MessageSquare, CreditCard, AlertCircle } from 'lucide-react';
 
 // Utility function to get relative time
 const getRelativeTime = (dateString) => {
@@ -58,10 +58,10 @@ const NotificationCard = ({ notification, onMarkRead, onClickAction, isBanner = 
     <div 
       className={`
         w-full max-w-sm rounded-[1.25rem] transition-all duration-300 relative overflow-hidden
-        ${isBanner 
+        \${isBanner 
           ? 'bg-slate-900/90 text-white backdrop-blur-lg border border-slate-800/80 shadow-2xl shadow-slate-950/20' 
           : 'bg-white/80 text-slate-800 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl hover:translate-y-[-2px]'}
-        ${!isRead && !isBanner ? 'ring-2 ring-indigo-500/20' : ''}
+        \${!isRead && !isBanner ? 'ring-2 ring-indigo-500/20' : ''}
         p-4.5 p-4
       `}
     >
@@ -72,8 +72,8 @@ const NotificationCard = ({ notification, onMarkRead, onClickAction, isBanner = 
           <div className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-[9px] font-black text-white shadow-sm shadow-indigo-200">
             VR
           </div>
-          <span className={`text-[10px] font-black uppercase tracking-wider ${isBanner ? 'text-indigo-300' : 'text-slate-400'}`}>
-            VR HERE
+          <span className={`text-[10px] font-black uppercase tracking-wider \${isBanner ? 'text-indigo-300' : 'text-slate-400'}`}>
+            VR Here Business Management Solutions
           </span>
           <span className={`text-[10px] ${isBanner ? 'text-slate-400' : 'text-slate-400'} font-bold`}>
             • {relativeTime}

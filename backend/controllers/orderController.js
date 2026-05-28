@@ -1453,7 +1453,7 @@ const getOrderHistory = asyncHandler(async (req, res) => {
 // @route   POST /api/orders/:id/invoices/adjusted
 // @access  Private/Admin
 const createAdjustedInvoice = asyncHandler(async (req, res) => {
-    const { packageName, amount, adjustConsultation = false, dueDate = null, notes = '', invoiceNumber } = req.body;
+    const { packageName, amount, adjustConsultation = false, dueDate = null, notes = '', invoiceNumber, splitPercentage = null } = req.body;
     
     const order = await Order.findById(req.params.id);
     if (!order) {
@@ -1478,6 +1478,12 @@ const createAdjustedInvoice = asyncHandler(async (req, res) => {
         order.consultationAdjusted = true;
     }
 
+    // Handle split payment calculation
+    const isSplit = splitPercentage && Number(splitPercentage) > 0 && Number(splitPercentage) < 100;
+    const splitPercentVal = isSplit ? Number(splitPercentage) : 100;
+    const firstInvoiceAmount = isSplit ? Math.round(finalAmount * (splitPercentVal / 100)) : finalAmount;
+    const secondInvoiceAmount = finalAmount - firstInvoiceAmount;
+
     const finalInvoiceNumber = invoiceNumber || `INV_${Date.now()}`;
 
     // Initialize Razorpay
@@ -1496,10 +1502,10 @@ const createAdjustedInvoice = asyncHandler(async (req, res) => {
     let paymentLinkUrl = '';
     try {
         const linkPayload = {
-            amount: Math.round(finalAmount * 100),
+            amount: Math.round(firstInvoiceAmount * 100),
             currency: 'INR',
             accept_partial: false,
-            description: `Payment for Service: ${order.serviceName} (${packageName || order.packageName})`,
+            description: `Payment for Service: ${order.serviceName} (${packageName || order.packageName})${isSplit ? ` - Milestone 1 (${splitPercentVal}%)` : ''}`,
             customer: {
                 name: order.clientName || 'Customer',
                 email: order.email || 'customer@vrhere.in',
@@ -1525,16 +1531,32 @@ const createAdjustedInvoice = asyncHandler(async (req, res) => {
 
     const newInvoice = {
         invoiceNumber: finalInvoiceNumber,
-        amount: finalAmount,
+        amount: firstInvoiceAmount,
         status: 'Sent',
         url: paymentLinkUrl,
         dueDate: dueDate ? new Date(dueDate) : null,
-        notes: notes || (adjustConsultation ? 'Adjusted consultation payment of 499 INR applied.' : ''),
+        notes: notes || (isSplit 
+            ? `Milestone 1 (${splitPercentVal}%): Adjusted consultation payment of 499 INR applied.` 
+            : (adjustConsultation ? 'Adjusted consultation payment of 499 INR applied.' : '')),
         sentAt: new Date(),
         createdAt: new Date()
     };
 
     order.invoices.push(newInvoice);
+
+    if (isSplit) {
+        const remainingInvoice = {
+            invoiceNumber: `${finalInvoiceNumber}_BAL`,
+            amount: secondInvoiceAmount,
+            status: 'Draft',
+            url: '',
+            dueDate: null,
+            notes: `Milestone 2 (Remaining ${100 - splitPercentVal}%): Raised on additional requirements upload.`,
+            createdAt: new Date()
+        };
+        order.invoices.push(remainingInvoice);
+    }
+
     const savedOrder = await order.save();
 
     // Log this creation activity in audit history
@@ -1542,15 +1564,15 @@ const createAdjustedInvoice = asyncHandler(async (req, res) => {
         order._id,
         req.user._id,
         'INVOICE_CREATE',
-        `Adjusted Invoice ${finalInvoiceNumber} created for INR ${finalAmount} (Consultation Adjusted: ${adjustConsultation})`,
-        { invoiceNumber: finalInvoiceNumber, amount: finalAmount, adjustConsultation }
+        `Adjusted Invoice ${finalInvoiceNumber} created for INR ${firstInvoiceAmount} (Consultation Adjusted: ${adjustConsultation}${isSplit ? `, Split: ${splitPercentVal}%` : ''})`,
+        { invoiceNumber: finalInvoiceNumber, amount: firstInvoiceAmount, adjustConsultation }
     );
 
     // NodeMailer Styled Email Dispatch
     if (order.email) {
         const emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #4f46e5; text-align: center;">VR HERE Invoice Generated</h2>
+                <h2 style="color: #4f46e5; text-align: center;">VR Here Invoice Generated</h2>
                 <p>Hello ${order.clientName || 'Customer'},</p>
                 <p>An invoice has been generated for your service: <strong>${order.serviceName}</strong>.</p>
                 <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -1564,17 +1586,24 @@ const createAdjustedInvoice = asyncHandler(async (req, res) => {
                     <a href="${paymentLinkUrl}" style="background-color: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Pay Invoice Now</a>
                 </div>
                 <p style="font-size: 12px; color: #64748b;">If the button above does not work, copy and paste this link into your browser:<br/><a href="${paymentLinkUrl}">${paymentLinkUrl}</a></p>
-                <p>Thank you for choosing VR HERE Business Solutions.</p>
+                <p>Thank you for choosing VR Here Business Management Solutions.</p>
             </div>
         `;
         try {
             await sendEmail({
                 email: order.email,
-                subject: `Invoice ${finalInvoiceNumber} from VR HERE`,
+                subject: `Invoice ${finalInvoiceNumber} from VR Here Business Management Solutions`,
                 message: emailHtml
             });
         } catch (emailErr) {
             console.error('Nodemailer failed to send invoice link:', emailErr.message);
+            await logOrderActivity(
+                order._id,
+                req.user._id,
+                'EMAIL_DISPATCH_FAILURE',
+                `Invoice email dispatch failed for ${finalInvoiceNumber}: ${emailErr.message}`,
+                { invoiceNumber: finalInvoiceNumber, error: emailErr.message }
+            );
         }
     }
 

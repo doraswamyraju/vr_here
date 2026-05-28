@@ -101,11 +101,11 @@ fun PartnerDashboardScreen(
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "VR HERE",
+                                    text = "VR Here Business Management Solutions",
                                     color = Color(0xFF0F172A),
-                                    fontSize = 14.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,
-                                    letterSpacing = 0.5.sp
+                                    letterSpacing = 0.2.sp
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Box(

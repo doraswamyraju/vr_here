@@ -142,13 +142,13 @@ const sendPostPaymentEmail = async ({
              <p>This link will expire in 24 hours.</p>`
             : '<p>You can continue using your existing login credentials to access your dashboard.</p>'
         }
-      <p>Thanks,<br/>VR HERE Business Solutions</p>
+      <p>Thanks,<br/>VR Here Business Management Solutions</p>
     `;
 
     try {
         await sendEmail({
             email: targetEmail,
-            subject: 'VR HERE Payment Confirmation & Login Details',
+            subject: 'VR Here Business Management Solutions Payment Confirmation & Login Details',
             message
         });
         return {
@@ -396,7 +396,14 @@ export const verifyPayment = async (req, res) => {
 // @access  Private
 export const getPayments = async (req, res) => {
     try {
-        const payments = await Payment.find({ user: req.user._id }).populate('order', 'serviceName packageName status');
+        let query = {};
+        if (req.user.role === 'client') {
+            query.user = req.user._id;
+        }
+        if (req.query.orderId) {
+            query.order = req.query.orderId;
+        }
+        const payments = await Payment.find(query).populate('order', 'serviceName packageName status');
         res.json(payments);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });

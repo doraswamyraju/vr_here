@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VR Here BMS"
+rootProject.name = "VR Here Business Management Solutions"
 include(":app")
  

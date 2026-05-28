@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Upload, Plus, Trash2, FileText, Fingerprint, Send, CheckCircle2 } from 'lucide-react';
+import axios from 'axios';
+import { Upload, Plus, Trash2, FileText, Fingerprint, Send, CheckCircle2, CreditCard, RefreshCw } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { REQUIREMENT_STATUSES } from './constants';
 
@@ -22,6 +23,37 @@ const OrderRequirementsTab = ({
   const [manualLoading, setManualLoading] = useState(false);
   const [quickRequirementText, setQuickRequirementText] = useState('');
   const [quickRequirementType, setQuickRequirementType] = useState('Detail');
+
+  const [showBillingForm, setShowBillingForm] = useState(false);
+  const [billingMode, setBillingMode] = useState('single'); // 'single' or 'split'
+  const [totalPackageAmount, setTotalPackageAmount] = useState(selectedOrder?.price || '');
+  const [splitPercent, setSplitPercent] = useState('70');
+  const [billingLoading, setBillingLoading] = useState(false);
+
+  const handleInitiateBilling = async () => {
+    if (!totalPackageAmount) return alert('Please enter final package price.');
+    setBillingLoading(true);
+    try {
+      const payload = {
+        packageName: selectedOrder?.packageName || 'Basic Package',
+        amount: Number(totalPackageAmount),
+        adjustConsultation: true,
+        splitPercentage: billingMode === 'split' ? Number(splitPercent) : null
+      };
+      
+      const activeToken = JSON.parse(localStorage.getItem('userInfo') || '{}')?.token;
+      await axios.post(`/api/orders/${selectedOrder._id}/invoices/adjusted`, payload, {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      });
+      alert('Billing initiated successfully! Invoice has been generated and dispatched to the customer.');
+      setShowBillingForm(false);
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to initiate billing.');
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   const requirements = selectedOrder?.customerRequirements || [];
 
@@ -148,6 +180,19 @@ const OrderRequirementsTab = ({
             {isImporting ? 'Importing...' : 'Import Workbook'}
           </button>
 
+          {!selectedOrder?.consultationAdjusted && (
+            <>
+              <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+              <button
+                onClick={() => setShowBillingForm(!showBillingForm)}
+                className="px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-bold hover:bg-slate-900 hover:text-white transition-all inline-flex items-center gap-1.5 shadow-sm shadow-indigo-100"
+              >
+                <CreditCard size={14} />
+                {showBillingForm ? 'Discard Billing' : 'Setup Payments (Single/Split)'}
+              </button>
+            </>
+          )}
+
           <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
           <button
@@ -158,6 +203,57 @@ const OrderRequirementsTab = ({
             {showManualForm ? 'Discard Manual' : 'Add Manual Item'}
           </button>
         </div>
+
+        {showBillingForm && (
+          <div className="mt-4 p-5 bg-white rounded-2xl border border-indigo-100 space-y-4 animate-fade-in shadow-sm shadow-indigo-100">
+            <p className="font-bold text-slate-800 text-sm flex items-center gap-1.5"><CreditCard size={16} className="text-indigo-600" /> Initiate Billing & Adjust Consultation (Rs. 499)</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Total Package Price (INR)</label>
+                <input 
+                  type="number"
+                  value={totalPackageAmount}
+                  onChange={(e) => setTotalPackageAmount(e.target.value)}
+                  placeholder="e.g. 11399"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Payment Mode</label>
+                <select 
+                  value={billingMode}
+                  onChange={(e) => setBillingMode(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  <option value="single">Single Payment (Adjust Rs.499)</option>
+                  <option value="split">Split Payment (Adjust Rs.499 & Split %)</option>
+                </select>
+              </div>
+              {billingMode === 'split' && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Split % for Milestone 1</label>
+                  <input 
+                    type="number"
+                    value={splitPercent}
+                    onChange={(e) => setSplitPercent(e.target.value)}
+                    placeholder="70"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+              )}
+            </div>
+            
+            <div className="pt-2">
+              <button 
+                disabled={billingLoading}
+                onClick={handleInitiateBilling}
+                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm shadow-xl shadow-indigo-100 hover:bg-slate-900 transition-all flex items-center justify-center gap-2"
+              >
+                {billingLoading ? 'Processing...' : <><RefreshCw size={18} /> Generate Invoices & Send Links</>}
+              </button>
+            </div>
+          </div>
+        )}
 
         {showManualForm && (
            <div className="mt-4 p-5 bg-white rounded-2xl border border-indigo-100 space-y-4 animate-fade-in shadow-sm shadow-indigo-100">

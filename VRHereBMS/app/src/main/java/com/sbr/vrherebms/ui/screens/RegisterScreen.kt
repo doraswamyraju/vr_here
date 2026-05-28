@@ -79,7 +79,7 @@ fun RegisterScreen(
                 )
 
                 Text(
-                    text = "Join VR HERE Business Solutions",
+                    text = "Join VR Here Business Management Solutions",
                     fontSize = 13.sp,
                     color = Color(0xFF64748B),
                     modifier = Modifier.padding(top = 4.dp)

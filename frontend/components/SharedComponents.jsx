@@ -416,10 +416,10 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                     <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 relative">
                         {/* LOGO: Points to / (Home) */}
                         <a href="/" className="flex items-center flex-shrink-0 group cursor-pointer">
-                            <img src="/logo.png" alt="VR HERE" className="h-12 w-auto object-contain mr-2 group-hover:scale-105 transition-transform duration-300" />
+                            <img src="/logo.png" alt="VR Here" className="h-12 w-auto object-contain mr-2 group-hover:scale-105 transition-transform duration-300" />
                             <div className="flex flex-col">
-                                <span className="text-2xl font-extrabold text-black leading-none tracking-tight group-hover:text-red-600 transition-colors">VR HERE</span>
-                                <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-0.5">Business Solutions</span>
+                                <span className="text-2xl font-extrabold text-black leading-none tracking-tight group-hover:text-red-600 transition-colors">VR Here</span>
+                                <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-0.5">Business Management Solutions</span>
                             </div>
                         </a>
 
@@ -670,8 +670,8 @@ export const SharedFooter = () => (
                             <span className="text-black font-black text-xl">VR</span>
                         </div>
                         <div>
-                            <h2 className="text-2xl font-extrabold text-white leading-none group-hover:text-red-500 transition-colors">VR HERE</h2>
-                            <p className="text-[10px] text-red-500 font-bold tracking-widest uppercase mt-1">Business Solutions</p>
+                            <h2 className="text-2xl font-extrabold text-white leading-none group-hover:text-red-500 transition-colors">VR Here</h2>
+                            <p className="text-[10px] text-red-500 font-bold tracking-widest uppercase mt-1">Business Management Solutions</p>
                         </div>
                     </div>
                     {/* ADDRESS REMOVED */}
@@ -727,7 +727,7 @@ export const SharedFooter = () => (
                 </div>
             </div>
             <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-                <p>&copy; {new Date().getFullYear()} VR HERE Business Management Solutions. All rights reserved.</p>
+                <p>&copy; {new Date().getFullYear()} VR Here Business Management Solutions. All rights reserved.</p>
                 <div className="flex space-x-6">
                     <a href="/partner/signup" className="hover:text-red-500 transition font-medium">Become a Partner</a>
                     <a href="#" className="hover:text-white transition">Privacy Policy</a>

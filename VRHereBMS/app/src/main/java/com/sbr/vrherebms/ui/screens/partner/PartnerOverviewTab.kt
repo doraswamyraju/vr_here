@@ -72,7 +72,7 @@ fun PartnerOverviewTab(
                                 fontSize = 16.sp
                             )
                             Text(
-                                "Welcome to VR HERE Partner Program! Your account is currently under KYC review. You will start earning commissions once your account is validated by our admin team.",
+                                "Welcome to VR Here Business Management Solutions Partner Program! Your account is currently under KYC review. You will start earning commissions once your account is validated by our admin team.",
                                 color = Color(0xFFFEE2E2),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,

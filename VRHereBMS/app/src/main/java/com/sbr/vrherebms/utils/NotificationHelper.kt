@@ -13,8 +13,8 @@ import com.sbr.vrherebms.R
 
 object NotificationHelper {
     private const val CHANNEL_ID = "vr_here_notifications"
-    private const val CHANNEL_NAME = "VR HERE Notifications"
-    private const val CHANNEL_DESC = "Notifications for VR HERE order updates and support tickets"
+    private const val CHANNEL_NAME = "VR Here Business Management Solutions Notifications"
+    private const val CHANNEL_DESC = "Notifications for VR Here Business Management Solutions order updates and support tickets"
 
     // Set up and register notification channel (required for Android 8.0+)
     fun createNotificationChannel(context: Context) {

@@ -743,11 +743,11 @@ fun CustomerDashboardScreen(
                                         Text("VR", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Black)
                                     }
                                     Text(
-                                        text = "VR HERE", 
+                                        text = "VR Here Business Management Solutions", 
                                         color = Color(0xFF818CF8),
-                                        fontSize = 10.sp, 
+                                        fontSize = 9.sp, 
                                         fontWeight = FontWeight.Black, 
-                                        letterSpacing = 0.5.sp
+                                        letterSpacing = 0.2.sp
                                     )
                                     Text(
                                         text = "• Just now", 

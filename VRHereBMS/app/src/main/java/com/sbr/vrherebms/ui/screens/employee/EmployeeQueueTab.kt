@@ -56,7 +56,7 @@ fun EmployeeQueueTab(
 
     if (selectedOrder != null) {
         // --- ORDER DETAILED PROCESSING VIEW ---
-        var detailTab by remember { mutableStateOf("Tasks") }
+        var detailTab by remember { mutableStateOf("Overview") }
         var subTab by remember { mutableStateOf("Details") }
         
         LazyColumn(
@@ -253,21 +253,22 @@ fun EmployeeQueueTab(
 
             // Horizontal Tab Controls
             item {
+                val tabList = listOf("Overview", "Tasks", "Requirements", "Invoices", "ToDo", "Transactions", "Activities", "Docs")
                 ScrollableTabRow(
-                    selectedTabIndex = listOf("Tasks", "Requirements", "Documents", "Commercials", "Invoices").indexOf(detailTab),
+                    selectedTabIndex = tabList.indexOf(detailTab),
                     edgePadding = 0.dp,
                     containerColor = Color.Transparent,
                     divider = {},
                     indicator = { tabPositions ->
                         Box(
                             Modifier
-                                .tabIndicatorOffset(tabPositions[listOf("Tasks", "Requirements", "Documents", "Commercials", "Invoices").indexOf(detailTab)])
+                                .tabIndicatorOffset(tabPositions[tabList.indexOf(detailTab)])
                                 .height(3.dp)
                                 .background(Color(0xFF6366F1), RoundedCornerShape(1.5.dp))
                         )
                     }
                 ) {
-                    listOf("Tasks", "Requirements", "Documents", "Commercials", "Invoices").forEach { tab ->
+                    tabList.forEach { tab ->
                         Tab(
                             selected = detailTab == tab,
                             onClick = { detailTab = tab },
@@ -758,62 +759,8 @@ fun EmployeeQueueTab(
                     }
                 }
                 
-                "Documents" -> {
-                    val clientDocs = selectedOrder.clientDocuments
-                    
-                    if (clientDocs.isEmpty()) {
-                        item {
-                            Text("No documents uploaded by client yet.", fontSize = 12.sp, color = Color(0xFF64748B))
-                        }
-                    } else {
-                        items(clientDocs) { doc ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF64748B))
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = doc.name,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp,
-                                            color = Color(0xFF1E293B)
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .background(Color(0xFFECFDF5), RoundedCornerShape(8.dp))
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    ) {
-                                        Text(
-                                            text = "Uploaded",
-                                            color = Color(0xFF065F46),
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                "Commercials" -> {
+                "Overview" -> {
                     val formattedPrice = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(selectedOrder.price)
-                    
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -821,44 +768,31 @@ fun EmployeeQueueTab(
                             colors = CardDefaults.cardColors(containerColor = Color.White),
                             border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                         ) {
-                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Text(
-                                    text = "Commercial Snapshot",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 15.sp,
-                                    color = Color(0xFF1E293B)
-                                )
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("Operational Overview", fontWeight = FontWeight.Black, fontSize = 14.sp, color = Color(0xFF1E293B))
+                                Divider(color = Color(0xFFEEF2F6))
+                                CommercialItemRow("Service Name", selectedOrder.serviceName)
+                                CommercialItemRow("Target Package", selectedOrder.packageName.ifEmpty { "Basic Plan" })
+                                CommercialItemRow("Quoted Value", formattedPrice)
+                                CommercialItemRow("Workflow Milestone", selectedOrder.status)
+                                CommercialItemRow("Deliverable Certificate", if (selectedOrder.finalCertificateUrl != null) "Ready & Uploaded" else "In Progress")
                                 
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    CommercialItemRow("Service", selectedOrder.serviceName)
-                                    CommercialItemRow("Package", selectedOrder.packageName.ifEmpty { "-" })
-                                    CommercialItemRow("Total Price", formattedPrice)
-                                    CommercialItemRow("Payment Reference", selectedOrder.paymentId.ifEmpty { "N/A" })
-                                    CommercialItemRow("Razorpay Order ID", selectedOrder.razorpayOrderId.ifEmpty { "N/A" })
-                                    CommercialItemRow("Payment Status", selectedOrder.paymentStatus)
-                                }
-                                
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(Color(0xFFEEF2F6), RoundedCornerShape(10.dp))
-                                        .padding(10.dp)
-                                ) {
+                                if (selectedOrder.finalCertificateUrl != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "Employee View only. Commercial overrides are restricted to global System Administrators.",
-                                        fontSize = 10.sp,
+                                        text = "Delivered Certificate is available inside the Docs vault.",
+                                        fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF6366F1)
+                                        color = Color(0xFF10B981)
                                     )
                                 }
                             }
                         }
                     }
                 }
-                
+
                 "Invoices" -> {
                     val invoices = selectedOrder.invoices
-                    
                     if (invoices.isEmpty()) {
                         item {
                             Text("No invoices mapped to this order.", fontSize = 12.sp, color = Color(0xFF64748B))
@@ -917,6 +851,289 @@ fun EmployeeQueueTab(
                                                 "Overdue" -> Color(0xFF991B1B)
                                                 else -> Color(0xFF475569)
                                             }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                "ToDo" -> {
+                    val linkedTodos = todos.filter { it.orderId?.id == selectedOrder.id }
+                    if (linkedTodos.isEmpty()) {
+                        item {
+                            Text("No operational standalone TODO tasks.", fontSize = 12.sp, color = Color(0xFF64748B))
+                        }
+                    } else {
+                        items(linkedTodos) { todo ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = BorderStroke(1.dp, Color(0xFFEEF2F6))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .background(
+                                                        color = when (todo.priority) {
+                                                            "Urgent" -> Color(0xFFFEE2E2)
+                                                            "High" -> Color(0xFFFEF3C7)
+                                                            else -> Color(0xFFE0E7FF)
+                                                        },
+                                                        shape = RoundedCornerShape(4.dp)
+                                                    )
+                                                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = todo.priority,
+                                                    fontSize = 7.sp,
+                                                    fontWeight = FontWeight.Black,
+                                                    color = when (todo.priority) {
+                                                        "Urgent" -> Color(0xFF991B1B)
+                                                        "High" -> Color(0xFF92400E)
+                                                        else -> Color(0xFF3730A3)
+                                                    }
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = todo.title,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 12.sp,
+                                                color = Color(0xFF1E293B)
+                                            )
+                                        }
+                                        if (todo.description?.isNotEmpty() == true) {
+                                            Text(
+                                                text = todo.description,
+                                                fontSize = 10.sp,
+                                                color = Color(0xFF64748B),
+                                                modifier = Modifier.padding(top = 2.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    color = when (todo.status) {
+                                                        "Completed" -> Color(0xFFD1FAE5)
+                                                        "In Progress" -> Color(0xFFFEF3C7)
+                                                        else -> Color(0xFFEEF2F6)
+                                                    },
+                                                    shape = RoundedCornerShape(6.dp)
+                                                )
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = todo.status,
+                                                fontSize = 8.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = when (todo.status) {
+                                                    "Completed" -> Color(0xFF065F46)
+                                                    "In Progress" -> Color(0xFF92400E)
+                                                    else -> Color(0xFF64748B)
+                                                }
+                                            )
+                                        }
+                                        
+                                        if (todo.status == "Pending") {
+                                            IconButton(
+                                                onClick = {
+                                                    if (!isClockedIn) Toast.makeText(context, "Please clock in first.", Toast.LENGTH_SHORT).show()
+                                                    else viewModel.updateTodoStatus(todo.id, "In Progress")
+                                                },
+                                                modifier = Modifier.size(24.dp)
+                                            ) {
+                                                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color(0xFF6366F1))
+                                            }
+                                        }
+                                        
+                                        if (todo.status != "Completed") {
+                                            IconButton(
+                                                onClick = {
+                                                    if (!isClockedIn) Toast.makeText(context, "Please clock in first.", Toast.LENGTH_SHORT).show()
+                                                    else viewModel.updateTodoStatus(todo.id, "Completed")
+                                                },
+                                                modifier = Modifier.size(24.dp)
+                                            ) {
+                                                Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF10B981))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                "Transactions" -> {
+                    val formattedPrice = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(selectedOrder.price)
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text(
+                                    text = "Payments Snapshot",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 15.sp,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    CommercialItemRow("Base Budget", formattedPrice)
+                                    CommercialItemRow("Payment Status", selectedOrder.paymentStatus)
+                                    CommercialItemRow("Razorpay Order ID", selectedOrder.razorpayOrderId.ifEmpty { "N/A" })
+                                    CommercialItemRow("System Gateway Reference", selectedOrder.paymentId.ifEmpty { "N/A" })
+                                }
+                            }
+                        }
+                    }
+                }
+
+                "Activities" -> {
+                    val logs = selectedOrder.activityHistory
+                    if (logs.isEmpty()) {
+                        item {
+                            Text("No activities recorded yet.", fontSize = 12.sp, color = Color(0xFF64748B))
+                        }
+                    } else {
+                        items(logs) { log ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = BorderStroke(1.dp, Color(0xFFEEF2F6))
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(
+                                        text = log.action.uppercase(),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFF6366F1)
+                                    )
+                                    Text(
+                                        text = log.description,
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF1E293B),
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                    Text(
+                                        text = log.createdAt,
+                                        fontSize = 9.sp,
+                                        color = Color(0xFF94A3B8),
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                "Docs" -> {
+                    val clientDocs = selectedOrder.clientDocuments
+                    item {
+                        Text("Operational Deliverables", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF64748B))
+                    }
+                    if (selectedOrder.finalCertificateUrl != null) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFECFDF5)),
+                                border = BorderStroke(1.dp, Color(0xFFA7F3D0))
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = Color(0xFF10B981))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text("Final Deliverable Certificate", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF065F46))
+                                            Text("Delivered to Client", fontSize = 10.sp, color = Color(0xFF047857))
+                                        }
+                                    }
+                                    IconButton(onClick = {
+                                        Toast.makeText(context, "Opening delivered document...", Toast.LENGTH_SHORT).show()
+                                    }) {
+                                        Icon(Icons.Default.OpenInNew, contentDescription = null, tint = Color(0xFF047857))
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        item {
+                            Text("No operational certificates delivered yet.", fontSize = 11.sp, color = Color(0xFF64748B))
+                        }
+                    }
+
+                    item {
+                        Text("Client Uploaded Documents", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF64748B), modifier = Modifier.padding(top = 10.dp))
+                    }
+
+                    if (clientDocs.isEmpty()) {
+                        item {
+                            Text("No documents uploaded by client yet.", fontSize = 11.sp, color = Color(0xFF64748B))
+                        }
+                    } else {
+                        items(clientDocs) { doc ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF64748B))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = doc.name,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF1E293B)
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .background(Color(0xFFECFDF5), RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "Uploaded",
+                                            color = Color(0xFF065F46),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black
                                         )
                                     }
                                 }
