@@ -552,7 +552,32 @@ const OrdersModule = ({
                         </a>
                       </div>
                     ))}
-                    {!selectedOrder.finalCertificateUrl && (selectedOrder.customerRequirements || []).filter(r => r.uploadedDocumentUrl).length === 0 && (
+                    {(selectedOrder.clientDocuments || []).map((doc) => (
+                      <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Client Uploaded Doc</p>
+                        </div>
+                        <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                          <Eye size={16} />
+                        </a>
+                      </div>
+                    ))}
+                    {(selectedOrder.adminDocuments || []).map((doc) => (
+                      <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Staff Uploaded Doc</p>
+                        </div>
+                        <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                          <Eye size={16} />
+                        </a>
+                      </div>
+                    ))}
+                    {!selectedOrder.finalCertificateUrl && 
+                     (selectedOrder.customerRequirements || []).filter(r => r.uploadedDocumentUrl).length === 0 && 
+                     (selectedOrder.clientDocuments || []).length === 0 && 
+                     (selectedOrder.adminDocuments || []).length === 0 && (
                       <p className="col-span-full text-center text-xs text-slate-400 italic py-4">No documents available inside the vault.</p>
                     )}
                   </div>
