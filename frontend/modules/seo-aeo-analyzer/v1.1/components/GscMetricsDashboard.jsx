@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Globe, TrendingUp, BarChart2, CheckCircle2, RotateCw, ExternalLink, AlertTriangle, Link } from 'lucide-react';
+import { Globe, TrendingUp, BarChart2, CheckCircle2, RotateCw, AlertTriangle, Link } from 'lucide-react';
 import axios from 'axios';
 
 const GscMetricsDashboard = ({ pageId, config, onAuthRequest }) => {
