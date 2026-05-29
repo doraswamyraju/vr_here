@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Plus, Trash2, Save, Upload, Loader2 } from 'lucide-react';
 import { MENU_DATA } from '../SharedComponents';
+import ServicePagesBuilder from './ServicePagesBuilder';
 
 const toEditableSeed = () =>
     MENU_DATA.map((service) => ({
@@ -24,6 +25,7 @@ const normalizeServices = (services = []) =>
     }));
 
 const ServicesMasterView = ({ token }) => {
+    const [activeSubTab, setActiveSubTab] = useState('header'); // 'header' or 'pages'
     const [services, setServices] = useState(toEditableSeed());
     const [tickerMessages, setTickerMessages] = useState([
         'New: Income Tax return filing support now available.',
@@ -152,234 +154,216 @@ const ServicesMasterView = ({ token }) => {
     }
 
     return (
-        <div className="animate-in fade-in zoom-in duration-300">
-            <div className="mb-6 flex items-center justify-between">
-                <div className="text-left">
-                    <h2 className="text-2xl font-bold text-slate-800">Services Master</h2>
-                    <p className="text-slate-500">Manage header tabs, dropdown columns, dynamic hero tags, and latest offers.</p>
-                </div>
+        <div className="animate-in fade-in duration-300">
+            {/* Unified Sub-tab Segmented Controller */}
+            <div className="flex border border-slate-200 rounded-2xl mb-6 bg-slate-50/50 p-1 max-w-md shadow-sm">
                 <button
-                    onClick={saveAll}
-                    disabled={isSaving}
-                    className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-60"
+                    onClick={() => setActiveSubTab('header')}
+                    className={`flex-1 text-center py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition ${activeSubTab === 'header' ? 'bg-white text-slate-900 shadow border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'}`}
                 >
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Save Changes
+                    Global Header Settings
+                </button>
+                <button
+                    onClick={() => setActiveSubTab('pages')}
+                    className={`flex-1 text-center py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition ${activeSubTab === 'pages' ? 'bg-white text-slate-900 shadow border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                    Landing Pages & SEO/AEO
                 </button>
             </div>
 
-            {message && (
-                <div className="mb-4 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-700">
-                    {message}
-                </div>
-            )}
-
-            <div className="mb-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-slate-800">Top Bar Ticker (Latest Updates)</h3>
-                    <button
-                        onClick={() => setTickerMessages((prev) => [...prev, ''])}
-                        className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
-                    >
-                        <Plus className="w-3 h-3" /> Add Message
-                    </button>
-                </div>
-                <div className="space-y-2">
-                    {tickerMessages.map((msg, idx) => (
-                        <div key={`ticker-${idx}`} className="flex gap-2">
-                            <input
-                                value={msg}
-                                onChange={(e) =>
-                                    setTickerMessages((prev) => prev.map((x, i) => (i === idx ? e.target.value : x)))
-                                }
-                                className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                placeholder="Ticker message"
-                            />
-                            <button
-                                onClick={() => setTickerMessages((prev) => prev.filter((_, i) => i !== idx))}
-                                className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+            {activeSubTab === 'pages' ? (
+                <ServicePagesBuilder token={token} />
+            ) : (
+                <>
+                    <div className="mb-6 flex items-center justify-between">
+                        <div className="text-left">
+                            <h2 className="text-2xl font-bold text-slate-800">Services Master</h2>
+                            <p className="text-slate-500">Manage header tabs, dropdown columns, dynamic hero tags, and latest offers.</p>
                         </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="mb-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 className="font-bold text-slate-800">Hero Section Interactive Capsules</h3>
-                        <p className="text-xs text-slate-500 mt-0.5">Manage up to 10 service tags that fall, drift, and can be thrown inside the Hero section background. Clicking a capsule opens that service page.</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${capsules.length >= 10 ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-150'}`}>
-                            {capsules.length} / 10 Tags
-                        </span>
                         <button
-                            onClick={() => setCapsules((prev) => [...prev, { text: '', link: '' }])}
-                            disabled={capsules.length >= 10}
-                            className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={saveAll}
+                            disabled={isSaving}
+                            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-60"
                         >
-                            <Plus className="w-3 h-3" /> Add Tag
+                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Save Changes
                         </button>
                     </div>
-                </div>
 
-                {capsules.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic py-6 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50">No capsules defined. Add at least one to show on the hero section.</p>
-                ) : (
-                    <div className="grid md:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-1">
-                        {capsules.map((cap, idx) => (
-                            <div key={idx} className="flex gap-3 items-center p-3 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition relative group">
-                                <div className="flex-1 space-y-2">
-                                    <input
-                                        value={cap.text}
-                                        onChange={(e) =>
-                                            setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, text: e.target.value } : x)))
-                                        }
-                                        className="w-full border border-slate-350 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 bg-white"
-                                        placeholder="Capsule Label (e.g. GST Registration)"
-                                    />
-                                    <div className="flex gap-2">
-                                        <select
-                                            value={cap.link}
-                                            onChange={(e) =>
-                                                setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, link: e.target.value } : x)))
-                                            }
-                                            className="flex-1 border border-slate-300 rounded-lg px-2 py-1 text-xs bg-white text-slate-600 outline-none"
-                                        >
-                                            <option value="">-- Service Page --</option>
-                                            <option value="/pvt-ltd-registration">Private Limited Registration</option>
-                                            <option value="/gst-registration">GST Registration</option>
-                                            <option value="/partnership-firm">Partnership Firm Registration</option>
-                                            <option value="/income-tax-return">Income Tax Return Filing</option>
-                                            <option value="/accounting-services">Accounting Services</option>
-                                            <option value="/compliance-scheme-2026">Companies Compliance Scheme 2026</option>
-                                            <option value="/all-services">All Services Page</option>
-                                            <option value="/contact">Contact Us / Inquiry</option>
-                                        </select>
-                                        <input
-                                            value={cap.link}
-                                            onChange={(e) =>
-                                                setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, link: e.target.value } : x)))
-                                            }
-                                            className="flex-1 border border-slate-300 rounded-lg px-3 py-1 text-[11px] bg-white"
-                                            placeholder="Or custom link"
-                                        />
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setCapsules((prev) => prev.filter((_, i) => i !== idx))}
-                                    className="p-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="space-y-5">
-                {services.map((service, serviceIndex) => (
-                    <div key={service.id || serviceIndex} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                        <div className="grid md:grid-cols-3 gap-4 mb-4">
-                            <input
-                                value={service.title}
-                                onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, title: e.target.value }))}
-                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold"
-                                placeholder="Main tab title"
-                            />
-                            <input
-                                value={service.id}
-                                onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, id: e.target.value }))}
-                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                placeholder="tab id"
-                            />
-                            <input
-                                value={service.iconKey || ''}
-                                onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, iconKey: e.target.value }))}
-                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                placeholder="Icon key"
-                            />
+                    {message && (
+                        <div className="mb-4 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-700">
+                            {message}
                         </div>
+                    )}
 
-                        <div className="grid lg:grid-cols-2 gap-6">
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <h3 className="font-bold text-slate-800">Dropdown Columns</h3>
-                                    <button
-                                        onClick={() =>
-                                            updateService(serviceIndex, (s) => ({
-                                                ...s,
-                                                columns: [...(s.columns || []), { title: '', items: [''] }],
-                                            }))
+                    <div className="mb-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-bold text-slate-800">Top Bar Ticker (Latest Updates)</h3>
+                            <button
+                                onClick={() => setTickerMessages((prev) => [...prev, ''])}
+                                className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
+                            >
+                                <Plus className="w-3 h-3" /> Add Message
+                            </button>
+                        </div>
+                        <div className="space-y-2">
+                            {tickerMessages.map((msg, idx) => (
+                                <div key={`ticker-${idx}`} className="flex gap-2">
+                                    <input
+                                        value={msg}
+                                        onChange={(e) =>
+                                            setTickerMessages((prev) => prev.map((x, i) => (i === idx ? e.target.value : x)))
                                         }
-                                        className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
+                                        className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                        placeholder="Ticker message"
+                                    />
+                                    <button
+                                        onClick={() => setTickerMessages((prev) => prev.filter((_, i) => i !== idx))}
+                                        className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
                                     >
-                                        <Plus className="w-3 h-3" /> Add Column
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
+                            ))}
+                        </div>
+                    </div>
 
-                                <div className="space-y-3">
-                                    {(service.columns || []).map((column, colIndex) => (
-                                        <div key={`${service.id}-col-${colIndex}`} className="border border-slate-200 rounded-xl p-3 bg-slate-50">
-                                            <div className="flex gap-2 mb-2">
-                                                <input
-                                                    value={column.title || ''}
+                    <div className="mb-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="font-bold text-slate-800">Hero Section Interactive Capsules</h3>
+                                <p className="text-xs text-slate-500 mt-0.5">Manage up to 10 service tags that fall, drift, and can be thrown inside the Hero section background. Clicking a capsule opens that service page.</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${capsules.length >= 10 ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-150'}`}>
+                                    {capsules.length} / 10 Tags
+                                </span>
+                                <button
+                                    onClick={() => setCapsules((prev) => [...prev, { text: '', link: '' }])}
+                                    disabled={capsules.length >= 10}
+                                    className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Plus className="w-3 h-3" /> Add Tag
+                                </button>
+                            </div>
+                        </div>
+
+                        {capsules.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic py-6 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50">No capsules defined. Add at least one to show on the hero section.</p>
+                        ) : (
+                            <div className="grid md:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-1">
+                                {capsules.map((cap, idx) => (
+                                    <div key={idx} className="flex gap-3 items-center p-3 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition relative group">
+                                        <div className="flex-1 space-y-2">
+                                            <input
+                                                value={cap.text}
+                                                onChange={(e) =>
+                                                    setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, text: e.target.value } : x)))
+                                                }
+                                                className="w-full border border-slate-350 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 bg-white"
+                                                placeholder="Capsule Label (e.g. GST Registration)"
+                                            />
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={cap.link}
                                                     onChange={(e) =>
-                                                        updateService(serviceIndex, (s) => ({
-                                                            ...s,
-                                                            columns: (s.columns || []).map((c, idx) => (idx === colIndex ? { ...c, title: e.target.value } : c)),
-                                                        }))
+                                                        setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, link: e.target.value } : x)))
                                                     }
-                                                    className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold"
-                                                    placeholder="Column title"
-                                                />
-                                                <button
-                                                    onClick={() =>
-                                                        updateService(serviceIndex, (s) => ({
-                                                            ...s,
-                                                            columns: (s.columns || []).filter((_, idx) => idx !== colIndex),
-                                                        }))
-                                                    }
-                                                    className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                                                    className="flex-1 border border-slate-300 rounded-lg px-2 py-1 text-xs bg-white text-slate-600 outline-none"
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                    <option value="">-- Service Page --</option>
+                                                    <option value="/pvt-ltd-registration">Private Limited Registration</option>
+                                                    <option value="/gst-registration">GST Registration</option>
+                                                    <option value="/partnership-firm">Partnership Firm Registration</option>
+                                                    <option value="/income-tax-return">Income Tax Return Filing</option>
+                                                    <option value="/accounting-services">Accounting Services</option>
+                                                    <option value="/compliance-scheme-2026">Companies Compliance Scheme 2026</option>
+                                                    <option value="/all-services">All Services Page</option>
+                                                    <option value="/contact">Contact Us / Inquiry</option>
+                                                </select>
+                                                <input
+                                                    value={cap.link}
+                                                    onChange={(e) =>
+                                                        setCapsules((prev) => prev.map((x, i) => (i === idx ? { ...x, link: e.target.value } : x)))
+                                                    }
+                                                    className="flex-1 border border-slate-300 rounded-lg px-3 py-1 text-[11px] bg-white"
+                                                    placeholder="Or custom link"
+                                                />
                                             </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setCapsules((prev) => prev.filter((_, i) => i !== idx))}
+                                            className="p-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
-                                            <div className="space-y-2">
-                                                {(column.items || []).map((item, itemIndex) => (
-                                                    <div key={`${service.id}-col-${colIndex}-item-${itemIndex}`} className="flex gap-2">
+                    <div className="space-y-5">
+                        {services.map((service, serviceIndex) => (
+                            <div key={service.id || serviceIndex} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                                <div className="grid md:grid-cols-3 gap-4 mb-4">
+                                    <input
+                                        value={service.title}
+                                        onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, title: e.target.value }))}
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold"
+                                        placeholder="Main tab title"
+                                    />
+                                    <input
+                                        value={service.id}
+                                        onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, id: e.target.value }))}
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                        placeholder="tab id"
+                                    />
+                                    <input
+                                        value={service.iconKey || ''}
+                                        onChange={(e) => updateService(serviceIndex, (s) => ({ ...s, iconKey: e.target.value }))}
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                        placeholder="Icon key"
+                                    />
+                                </div>
+
+                                <div className="grid lg:grid-cols-2 gap-6">
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h3 className="font-bold text-slate-800">Dropdown Columns</h3>
+                                            <button
+                                                onClick={() =>
+                                                    updateService(serviceIndex, (s) => ({
+                                                        ...s,
+                                                        columns: [...(s.columns || []), { title: '', items: [''] }],
+                                                    }))
+                                                }
+                                                className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
+                                            >
+                                                <Plus className="w-3 h-3" /> Add Column
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {(service.columns || []).map((column, colIndex) => (
+                                                <div key={`${service.id}-col-${colIndex}`} className="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                                                    <div className="flex gap-2 mb-2">
                                                         <input
-                                                            value={item}
+                                                            value={column.title || ''}
                                                             onChange={(e) =>
                                                                 updateService(serviceIndex, (s) => ({
                                                                     ...s,
-                                                                    columns: (s.columns || []).map((c, idx) =>
-                                                                        idx !== colIndex
-                                                                            ? c
-                                                                            : {
-                                                                                ...c,
-                                                                                items: (c.items || []).map((x, innerIdx) => (innerIdx === itemIndex ? e.target.value : x)),
-                                                                            }
-                                                                    ),
+                                                                    columns: (s.columns || []).map((c, idx) => (idx === colIndex ? { ...c, title: e.target.value } : c)),
                                                                 }))
                                                             }
-                                                            className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                                            placeholder="Service name"
+                                                            className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold"
+                                                            placeholder="Column title"
                                                         />
                                                         <button
                                                             onClick={() =>
                                                                 updateService(serviceIndex, (s) => ({
                                                                     ...s,
-                                                                    columns: (s.columns || []).map((c, idx) =>
-                                                                        idx !== colIndex
-                                                                            ? c
-                                                                            : { ...c, items: (c.items || []).filter((_, innerIdx) => innerIdx !== itemIndex) }
-                                                                    ),
+                                                                    columns: (s.columns || []).filter((_, idx) => idx !== colIndex),
                                                                 }))
                                                             }
                                                             className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
@@ -387,114 +371,154 @@ const ServicesMasterView = ({ token }) => {
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </div>
-                                                ))}
-                                                <button
-                                                    onClick={() =>
-                                                        updateService(serviceIndex, (s) => ({
-                                                            ...s,
-                                                            columns: (s.columns || []).map((c, idx) =>
-                                                                idx !== colIndex ? c : { ...c, items: [...(c.items || []), ''] }
-                                                            ),
-                                                        }))
-                                                    }
-                                                    className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
-                                                >
-                                                    <Plus className="w-3 h-3" /> Add Service
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
 
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <h3 className="font-bold text-slate-800">Latest Offers</h3>
-                                    <button
-                                        onClick={() =>
-                                            updateService(serviceIndex, (s) => ({
-                                                ...s,
-                                                offers: [...(s.offers || []), { title: '', imageUrl: '', ctaLink: '/contact' }],
-                                            }))
-                                        }
-                                        className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
-                                    >
-                                        <Plus className="w-3 h-3" /> Add Offer
-                                    </button>
-                                </div>
-                                <div className="space-y-3">
-                                    {(service.offers || []).map((offer, offerIndex) => (
-                                        <div key={offer._id || `${service.id}-offer-${offerIndex}`} className="border border-slate-200 rounded-xl p-3 bg-slate-50">
-                                            <div className="space-y-2">
-                                                <input
-                                                    value={offer.title || ''}
-                                                    onChange={(e) =>
-                                                        updateService(serviceIndex, (s) => ({
-                                                            ...s,
-                                                            offers: (s.offers || []).map((x, idx) => (idx === offerIndex ? { ...x, title: e.target.value } : x)),
-                                                        }))
-                                                    }
-                                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                                    placeholder="Offer title"
-                                                />
-                                                <input
-                                                    value={offer.imageUrl || ''}
-                                                    onChange={(e) =>
-                                                        updateService(serviceIndex, (s) => ({
-                                                            ...s,
-                                                            offers: (s.offers || []).map((x, idx) => (idx === offerIndex ? { ...x, imageUrl: e.target.value } : x)),
-                                                        }))
-                                                    }
-                                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                                    placeholder="Offer image URL"
-                                                />
-                                                <input
-                                                    value={offer.ctaLink || ''}
-                                                    onChange={(e) =>
-                                                        updateService(serviceIndex, (s) => ({
-                                                            ...s,
-                                                            offers: (s.offers || []).map((x, idx) => (idx === offerIndex ? { ...x, ctaLink: e.target.value } : x)),
-                                                        }))
-                                                    }
-                                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                                                    placeholder="Offer link"
-                                                />
-                                            </div>
-                                            <div className="mt-2 flex items-center justify-between">
-                                                <label className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 cursor-pointer">
-                                                    <Upload className="w-3 h-3" />
-                                                    Upload image
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                        onChange={(e) => uploadOfferImage(service.id, offer._id, e.target.files?.[0])}
-                                                        disabled={!offer._id}
-                                                    />
-                                                </label>
-                                                <button
-                                                    onClick={() =>
-                                                        updateService(serviceIndex, (s) => ({
-                                                            ...s,
-                                                            offers: (s.offers || []).filter((_, idx) => idx !== offerIndex),
-                                                        }))
-                                                    }
-                                                    className="text-rose-600 text-xs font-bold"
-                                                >
-                                                    Remove
-                                                </button>
-                                            </div>
-                                            {!offer._id && (
-                                                <p className="text-[11px] text-slate-500 mt-1">Save once to enable direct image uploads for this offer.</p>
-                                            )}
+                                                    <div className="space-y-2">
+                                                        {(column.items || []).map((item, itemIndex) => (
+                                                            <div key={`${service.id}-col-${colIndex}-item-${itemIndex}`} className="flex gap-2">
+                                                                <input
+                                                                    value={item}
+                                                                    onChange={(e) =>
+                                                                        updateService(serviceIndex, (s) => ({
+                                                                            ...s,
+                                                                            columns: (s.columns || []).map((c, idx) =>
+                                                                                idx !== colIndex
+                                                                                    ? c
+                                                                                    : {
+                                                                                        ...c,
+                                                                                        items: (c.items || []).map((x, innerIdx) => (innerIdx === itemIndex ? e.target.value : x)),
+                                                                                    }
+                                                                            ),
+                                                                        }))
+                                                                    }
+                                                                    className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                                                    placeholder="Service name"
+                                                                />
+                                                                <button
+                                                                    onClick={() =>
+                                                                        updateService(serviceIndex, (s) => ({
+                                                                            ...s,
+                                                                            columns: (s.columns || []).map((c, idx) =>
+                                                                                idx !== colIndex
+                                                                                    ? c
+                                                                                    : { ...c, items: (c.items || []).filter((_, innerIdx) => innerIdx !== itemIndex) }
+                                                                            ),
+                                                                        }))
+                                                                    }
+                                                                    className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        <button
+                                                            onClick={() =>
+                                                                updateService(serviceIndex, (s) => ({
+                                                                    ...s,
+                                                                    columns: (s.columns || []).map((c, idx) =>
+                                                                        idx !== colIndex ? c : { ...c, items: [...(c.items || []), ''] }
+                                                                    ),
+                                                                }))
+                                                            }
+                                                            className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
+                                                        >
+                                                            <Plus className="w-3 h-3" /> Add Service
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    </div>
+
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h3 className="font-bold text-slate-800">Latest Offers</h3>
+                                            <button
+                                                onClick={() =>
+                                                    updateService(serviceIndex, (s) => ({
+                                                        ...s,
+                                                        offers: [...(s.offers || []), { title: '', imageUrl: '', ctaLink: '/contact' }],
+                                                    }))
+                                                }
+                                                className="text-xs font-bold text-indigo-600 inline-flex items-center gap-1"
+                                            >
+                                                <Plus className="w-3 h-3" /> Add Offer
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {(service.offers || []).map((offer, offerIndex) => (
+                                                <div key={offer._id || `${service.id}-offer-${offerIndex}`} className="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                                                    <div className="space-y-2">
+                                                        <input
+                                                            value={offer.title || ''}
+                                                            onChange={(e) =>
+                                                                updateService(serviceIndex, (s) => ({
+                                                                    ...s,
+                                                                    offers: (s.offers || []).map((x, idx) => (idx === offerIndex ? { ...x, title: e.target.value } : x)),
+                                                                }))
+                                                            }
+                                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                                            placeholder="Offer title"
+                                                        />
+                                                        <input
+                                                            value={offer.imageUrl || ''}
+                                                            onChange={(e) =>
+                                                                updateService(serviceIndex, (s) => ({
+                                                                    ...s,
+                                                                    offers: (s.offers || []).map((x, idx) => (idx === offerIndex ? { ...x, imageUrl: e.target.value } : x)),
+                                                                }))
+                                                            }
+                                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                                            placeholder="Offer image URL"
+                                                        />
+                                                        <input
+                                                            value={offer.ctaLink || ''}
+                                                            onChange={(e) =>
+                                                                updateService(serviceIndex, (s) => ({
+                                                                    ...s,
+                                                                    offers: (s.offers || []).map((x, idx) => (idx === offerIndex ? { ...x, ctaLink: e.target.value } : x)),
+                                                                }))
+                                                            }
+                                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                                            placeholder="Offer link"
+                                                        />
+                                                    </div>
+                                                    <div className="mt-2 flex items-center justify-between">
+                                                        <label className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 cursor-pointer">
+                                                            <Upload className="w-3 h-3" />
+                                                            Upload image
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                onChange={(e) => uploadOfferImage(service.id, offer._id, e.target.files?.[0])}
+                                                                disabled={!offer._id}
+                                                            />
+                                                        </label>
+                                                        <button
+                                                            onClick={() =>
+                                                                updateService(serviceIndex, (s) => ({
+                                                                    ...s,
+                                                                    offers: (s.offers || []).filter((_, idx) => idx !== offerIndex),
+                                                                }))
+                                                            }
+                                                            className="text-rose-600 text-xs font-bold"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                    {!offer._id && (
+                                                        <p className="text-[11px] text-slate-500 mt-1">Save once to enable direct image uploads for this offer.</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ))}
                     </div>
-                ))}
-            </div>
+                </>
+            )}
         </div>
     );
 };
