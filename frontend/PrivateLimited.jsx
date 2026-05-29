@@ -17,6 +17,8 @@ import InlineEditOverlay from './modules/service-editor/v1.1/components/InlineEd
 import SeoAeoDashboard from './modules/seo-aeo-analyzer/v1.1/components/SeoAeoDashboard';
 import { injectTrackingScripts } from './modules/seo-aeo-analyzer/v1.1/components/TrackingSettings';
 
+// Cache-busting trigger: May 29 2026 15:05
+
 /* --- UPDATED PACKAGES --- */
 const PACKAGES = [
   {
