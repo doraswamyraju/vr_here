@@ -59,128 +59,174 @@ data class ServiceDetail(
     val packages: List<ServicePackage>
 )
 
+fun resolveComposeIcon(iconKey: String): ImageVector {
+    return when (iconKey.lowercase()) {
+        "apartment", "building" -> Icons.Default.Apartment
+        "description", "file" -> Icons.Default.Description
+        "people", "group" -> Icons.Default.People
+        "calculate", "calculator" -> Icons.Default.Calculate
+        "star" -> Icons.Default.Star
+        "globe" -> Icons.Default.Globe
+        "zap" -> Icons.Default.Zap
+        "phone" -> Icons.Default.Phone
+        else -> Icons.Default.Work
+    }
+}
+
 object ServiceCatalog {
-    val items = mapOf(
-        "pvt-ltd-registration" to ServiceDetail(
-            id = "pvt-ltd-registration",
-            title = "Private Limited Registration",
-            description = "Launch your startup with the most credible legal structure. Get Certificate of Incorporation, MOA, AOA, PAN & TAN in 7 days.",
-            icon = Icons.Default.Apartment,
-            packages = listOf(
-                ServicePackage(
-                    id = "consultation",
-                    name = "Expert Consultation",
-                    price = 499.0,
-                    isAdjustable = true,
-                    description = "Start here if you are unsure. Fee fully adjusted against registration.",
-                    features = listOf("30 Mins CA/CS Call", "Business Structure Advice", "Name Availability Check", "Compliance Roadmap"),
-                    creativeButtonText = "Consult CA/CS Now"
-                ),
-                ServicePackage(
-                    id = "basic",
-                    name = "Basic Plan",
-                    price = 5499.0,
-                    description = "Essential registration for verified startups.",
-                    features = listOf("Name Approval (RUN)", "COI, PAN & TAN", "MOA & AOA", "2 DIN & 2 DSC", "PF/ESI/MSME registration"),
-                    creativeButtonText = "Launch Basic Setup"
-                ),
-                ServicePackage(
-                    id = "advance",
-                    name = "Advance Plan",
-                    price = 11399.0,
-                    isPopular = true,
-                    description = "Complete compliance & web presence.",
-                    features = listOf("Everything in Basic", "GST Registration", "Import Export Code (IEC)", "ISO Certification", "Professional Website"),
-                    creativeButtonText = "Unlock Premium Growth"
+    var items by mutableStateOf<Map<String, ServiceDetail>>(
+        mapOf(
+            "pvt-ltd-registration" to ServiceDetail(
+                id = "pvt-ltd-registration",
+                title = "Private Limited Registration",
+                description = "Launch your startup with the most credible legal structure. Get Certificate of Incorporation, MOA, AOA, PAN & TAN in 7 days.",
+                icon = Icons.Default.Apartment,
+                packages = listOf(
+                    ServicePackage(
+                        id = "consultation",
+                        name = "Expert Consultation",
+                        price = 499.0,
+                        isAdjustable = true,
+                        description = "Start here if you are unsure. Fee fully adjusted against registration.",
+                        features = listOf("30 Mins CA/CS Call", "Business Structure Advice", "Name Availability Check", "Compliance Roadmap"),
+                        creativeButtonText = "Consult CA/CS Now"
+                    ),
+                    ServicePackage(
+                        id = "basic",
+                        name = "Basic Plan",
+                        price = 5499.0,
+                        description = "Essential registration for verified startups.",
+                        features = listOf("Name Approval (RUN)", "COI, PAN & TAN", "MOA & AOA", "2 DIN & 2 DSC", "PF/ESI/MSME registration"),
+                        creativeButtonText = "Launch Basic Setup"
+                    ),
+                    ServicePackage(
+                        id = "advance",
+                        name = "Advance Plan",
+                        price = 11399.0,
+                        isPopular = true,
+                        description = "Complete compliance & web presence.",
+                        features = listOf("Everything in Basic", "GST Registration", "Import Export Code (IEC)", "ISO Certification", "Professional Website"),
+                        creativeButtonText = "Unlock Premium Growth"
+                    )
                 )
-            )
-        ),
-        "gst-registration" to ServiceDetail(
-            id = "gst-registration",
-            title = "GST Registration",
-            description = "Get your GST number quickly and start filing returns. Essential for businesses with turnover above thresholds.",
-            icon = Icons.Default.Description,
-            packages = listOf(
-                ServicePackage(
-                    id = "consultation",
-                    name = "Expert Consultation",
-                    price = 499.0,
-                    isAdjustable = true,
-                    description = "Speak with our tax expert about your GST eligibility and documents.",
-                    features = listOf("30 Mins Call", "Eligibility Check", "Documents List Review", "State-Specific Rules"),
-                    creativeButtonText = "Speak with Tax Expert"
-                ),
-                ServicePackage(
-                    id = "basic",
-                    name = "Basic Plan",
-                    price = 2569.0,
-                    description = "Essential GST registration package.",
-                    features = listOf("New GST Registration", "Updating Bank Account", "1st Month GST Return"),
-                    creativeButtonText = "Get Registered Now"
-                ),
-                ServicePackage(
-                    id = "expert",
-                    name = "Expert Plan",
-                    price = 9059.0,
-                    isPopular = true,
-                    description = "Complete tax compliance suite.",
-                    features = listOf("Everything in Basic", "LUT Filing", "IEC Code Application", "2 Months GST Returns", "Priority Support"),
-                    creativeButtonText = "Go Pro Compliance"
+            ),
+            "gst-registration" to ServiceDetail(
+                id = "gst-registration",
+                title = "GST Registration",
+                description = "Get your GST number quickly and start filing returns. Essential for businesses with turnover above thresholds.",
+                icon = Icons.Default.Description,
+                packages = listOf(
+                    ServicePackage(
+                        id = "consultation",
+                        name = "Expert Consultation",
+                        price = 499.0,
+                        isAdjustable = true,
+                        description = "Speak with our tax expert about your GST eligibility and documents.",
+                        features = listOf("30 Mins Call", "Eligibility Check", "Documents List Review", "State-Specific Rules"),
+                        creativeButtonText = "Speak with Tax Expert"
+                    ),
+                    ServicePackage(
+                        id = "basic",
+                        name = "Basic Plan",
+                        price = 2569.0,
+                        description = "Essential GST registration package.",
+                        features = listOf("New GST Registration", "Updating Bank Account", "1st Month GST Return"),
+                        creativeButtonText = "Get Registered Now"
+                    ),
+                    ServicePackage(
+                        id = "expert",
+                        name = "Expert Plan",
+                        price = 9059.0,
+                        isPopular = true,
+                        description = "Complete tax compliance suite.",
+                        features = listOf("Everything in Basic", "LUT Filing", "IEC Code Application", "2 Months GST Returns", "Priority Support"),
+                        creativeButtonText = "Go Pro Compliance"
+                    )
                 )
-            )
-        ),
-        "partnership-firm" to ServiceDetail(
-            id = "partnership-firm",
-            title = "Partnership Firm Registration",
-            description = "Ideal for small businesses with multiple owners. Shared responsibilities and faster decision making.",
-            icon = Icons.Default.People,
-            packages = listOf(
-                ServicePackage(
-                    id = "consultation",
-                    name = "Expert Consultation",
-                    price = 499.0,
-                    isAdjustable = true,
-                    description = "Discuss partnership clauses and legal requirements with our experts.",
-                    features = listOf("Partnership Deed Advice", "Clause Review", "Tax Implication Call"),
-                    creativeButtonText = "Draft Partners Deed"
-                ),
-                ServicePackage(
-                    id = "basic",
-                    name = "Basic Plan",
-                    price = 4899.0,
-                    description = "Essential registration for partnership firms.",
-                    features = listOf("Deed Drafting", "PAN & TAN Applications", "Firm Registration", "Notary Assistance"),
-                    creativeButtonText = "Establish Partnership"
+            ),
+            "partnership-firm" to ServiceDetail(
+                id = "partnership-firm",
+                title = "Partnership Firm Registration",
+                description = "Ideal for small businesses with multiple owners. Shared responsibilities and faster decision making.",
+                icon = Icons.Default.People,
+                packages = listOf(
+                    ServicePackage(
+                        id = "consultation",
+                        name = "Expert Consultation",
+                        price = 499.0,
+                        isAdjustable = true,
+                        description = "Discuss partnership clauses and legal requirements with our experts.",
+                        features = listOf("Partnership Deed Advice", "Clause Review", "Tax Implication Call"),
+                        creativeButtonText = "Draft Partners Deed"
+                    ),
+                    ServicePackage(
+                        id = "basic",
+                        name = "Basic Plan",
+                        price = 4899.0,
+                        description = "Essential registration for partnership firms.",
+                        features = listOf("Deed Drafting", "PAN & TAN Applications", "Firm Registration", "Notary Assistance"),
+                        creativeButtonText = "Establish Partnership"
+                    )
                 )
-            )
-        ),
-        "income-tax-return" to ServiceDetail(
-            id = "income-tax-return",
-            title = "Income Tax Return (ITR)",
-            description = "End-to-end ITR filing support for salaried, professionals, and businesses with compliance-first review.",
-            icon = Icons.Default.Calculate,
-            packages = listOf(
-                ServicePackage(
-                    id = "consultation",
-                    name = "Expert Consultation",
-                    price = 499.0,
-                    isAdjustable = true,
-                    description = "Review your tax computation and self-assessment with a CA.",
-                    features = listOf("Tax Planning Call", "Computation Review", "Deduction Guidance"),
-                    creativeButtonText = "Solve Tax Doubts"
-                ),
-                ServicePackage(
-                    id = "itr-filing",
-                    name = "ITR Filing",
-                    price = 1499.0,
-                    isPopular = true,
-                    description = "Standard filing service for individuals/professionals.",
-                    features = listOf("ITR 1 to 4 Support", "Computation Review", "Notice Response Guidance"),
-                    creativeButtonText = "Secure My Tax Filing"
+            ),
+            "income-tax-return" to ServiceDetail(
+                id = "income-tax-return",
+                title = "Income Tax Return (ITR)",
+                description = "End-to-end ITR filing support for salaried, professionals, and businesses with compliance-first review.",
+                icon = Icons.Default.Calculate,
+                packages = listOf(
+                    ServicePackage(
+                        id = "consultation",
+                        name = "Expert Consultation",
+                        price = 499.0,
+                        isAdjustable = true,
+                        description = "Review your tax computation and self-assessment with a CA.",
+                        features = listOf("Tax Planning Call", "Computation Review", "Deduction Guidance"),
+                        creativeButtonText = "Solve Tax Doubts"
+                    ),
+                    ServicePackage(
+                        id = "itr-filing",
+                        name = "ITR Filing",
+                        price = 1499.0,
+                        isPopular = true,
+                        description = "Standard filing service for individuals/professionals.",
+                        features = listOf("ITR 1 to 4 Support", "Computation Review", "Notice Response Guidance"),
+                        creativeButtonText = "Secure My Tax Filing"
+                    )
                 )
             )
         )
     )
+
+    private val initialStaticCatalogMap = items
+
+    fun updateFromApi(apiData: List<com.sbr.vrherebms.data.model.MobileServiceDetail>) {
+        val updatedMap = initialStaticCatalogMap.toMutableMap()
+        apiData.forEach { apiDetail ->
+            val pkgs = apiDetail.packages.map { apiPkg ->
+                ServicePackage(
+                    id = apiPkg.id,
+                    name = apiPkg.name,
+                    price = apiPkg.price,
+                    isAdjustable = apiPkg.isAdjustable,
+                    isPopular = apiPkg.isPopular,
+                    description = apiPkg.description,
+                    features = apiPkg.features,
+                    creativeButtonText = apiPkg.buttonText
+                )
+            }
+            updatedMap[apiDetail.pageId] = ServiceDetail(
+                id = apiDetail.pageId,
+                title = apiDetail.title,
+                description = apiDetail.description,
+                icon = resolveComposeIcon(apiDetail.iconKey),
+                packages = pkgs
+            )
+        }
+        items = updatedMap
+    }
+
+    }
 }
 
 @Composable

@@ -418,4 +418,71 @@ data class OrderAttendanceResponse(
 )
 
 
+// --- DYNAMIC DTO FOR SERVER-DRIVEN SERVICES SYNC ---
+data class MobileServiceHero(
+    val title: String = "",
+    val subtitle: String = "",
+    val badgeText: String = "",
+    val consultationPrice: Double = 499.0
+)
+
+data class MobileServiceStat(
+    val value: String = "",
+    val label: String = ""
+)
+
+data class MobileServiceLogo(
+    val name: String = "",
+    val iconKey: String = "",
+    val colorClass: String = ""
+)
+
+data class MobileServicePackage(
+    val id: String = "",
+    val name: String = "",
+    val price: Double = 0.0,
+    val description: String = "",
+    val features: List<String> = emptyList(),
+    val buttonText: String = "Select Plan",
+    val isPopular: Boolean = false,
+    val isAdjustable: Boolean = false
+)
+
+data class MobileServiceReview(
+    val name: String = "",
+    val company: String = "",
+    val rating: Int = 5,
+    val date: String = "",
+    val text: String = "",
+    val avatar: String = "",
+    val verified: Boolean = true
+)
+
+data class MobileServiceStep(
+    val number: String = "",
+    val title: String = "",
+    val desc: String = "",
+    val badge: String = ""
+)
+
+data class MobileServiceFaq(
+    val q: String = "",
+    val a: String = ""
+)
+
+data class MobileServiceDetail(
+    val pageId: String = "",
+    val title: String = "",
+    val description: String = "",
+    val iconKey: String = "Apartment",
+    val hero: MobileServiceHero? = null,
+    val stats: List<MobileServiceStat> = emptyList(),
+    val logos: List<MobileServiceLogo> = emptyList(),
+    val packages: List<MobileServicePackage> = emptyList(),
+    val reviews: List<MobileServiceReview> = emptyList(),
+    val steps: List<MobileServiceStep> = emptyList(),
+    val faqs: List<MobileServiceFaq> = emptyList()
+)
+
+
 

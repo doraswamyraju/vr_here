@@ -6,11 +6,16 @@ import {
   MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
   ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw
 } from 'lucide-react';
+import * as Lucide from 'lucide-react';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from './utils/razorpayCheckout';
 import { useNavigate } from 'react-router-dom';
 import { showPaymentSuccessPopup } from './utils/paymentSuccessPopup';
+import { fetchServicePageConfig, updateServicePageConfig } from './modules/service-editor/v1.1/services/serviceConfigApi';
+import InlineEditOverlay from './modules/service-editor/v1.1/components/InlineEditOverlay';
+import SeoAeoDashboard from './modules/seo-aeo-analyzer/v1.1/components/SeoAeoDashboard';
+import { injectTrackingScripts } from './modules/seo-aeo-analyzer/v1.1/components/TrackingSettings';
 
 /* --- UPDATED PACKAGES --- */
 const PACKAGES = [
@@ -165,6 +170,8 @@ const RELATED_SERVICES = [
 const PrivateLimitedPage = () => {
   const navigate = useNavigate();
   // --- STATE ---
+  const [pageConfig, setPageConfig] = useState(null);
+  const [pageHtmlContent, setPageHtmlContent] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeMobileCategory, setActiveMobileCategory] = useState(null);
   const [isServicesHovered, setIsServicesHovered] = useState(false);
@@ -175,6 +182,62 @@ const PrivateLimitedPage = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isSeoExpanded, setIsSeoExpanded] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
+  const [savingOverlay, setSavingOverlay] = useState(false);
+
+  const handleUpdateSeoSettings = async (seo) => {
+    setSavingOverlay(true);
+    try {
+      const updated = { ...pageConfig, seoSettings: seo };
+      const data = await updateServicePageConfig('private-limited', updated);
+      setPageConfig(data.page);
+    } catch (err) {
+      console.error('Failed to update SEO settings:', err);
+    } finally {
+      setSavingOverlay(false);
+    }
+  };
+
+  const handleUpdateTrackingSettings = async (tracking) => {
+    setSavingOverlay(true);
+    try {
+      const updated = { ...pageConfig, trackingSettings: tracking };
+      const data = await updateServicePageConfig('private-limited', updated);
+      setPageConfig(data.page);
+    } catch (err) {
+      console.error('Failed to update tracking settings:', err);
+    } finally {
+      setSavingOverlay(false);
+    }
+  };
+
+  // --- CONFIG EFFECTS ---
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const configData = await fetchServicePageConfig('private-limited');
+        setPageConfig(configData);
+        if (configData.trackingSettings) {
+          injectTrackingScripts(
+            configData.trackingSettings.googleAnalyticsId,
+            configData.trackingSettings.metaPixelId
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load page config, utilizing hardcoded backups:', err);
+      }
+    };
+    loadConfig();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const mainEl = document.getElementById('private-limited-container');
+      if (mainEl) {
+        setPageHtmlContent(mainEl.innerHTML);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [pageConfig, loading]);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -191,6 +254,26 @@ const PrivateLimitedPage = () => {
   }, [isServicesHovered]);
 
   // --- ACTIONS ---
+  const activeHero = pageConfig?.hero || {
+    title: "Register Your Private Limited Company Online",
+    subtitle: "Launch your startup with the most credible legal structure. Get Certificate of Incorporation, PAN, TAN & MOA/AOA in just 7 days.",
+    badgeText: "India's #1 Secure Registration Platform",
+    consultationPrice: 499
+  };
+
+  const activeStats = pageConfig?.stats || [
+    { value: '7 Days', label: 'Avg. Turnaround' },
+    { value: '5000+', label: 'Happy Founders' },
+    { value: '4.9/5', label: 'Google Rating' },
+    { value: '100%', label: 'Online Process' }
+  ];
+
+  const activeLogos = pageConfig?.logos || LOGOS;
+  const activePackages = pageConfig?.packages || PACKAGES;
+  const activeReviews = pageConfig?.reviews || REVIEWS;
+  const activeSteps = pageConfig?.steps || STEPS;
+  const activeFaqs = pageConfig?.faqs || FAQS;
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -198,7 +281,7 @@ const PrivateLimitedPage = () => {
   });
 
   const handleConsultationBook = () => {
-    setSelectedPlan(PACKAGES[0]); // Set consultation as selected
+    setSelectedPlan(activePackages[0]); // Set consultation as selected
     setIsModalOpen(true);
   };
 
@@ -272,7 +355,7 @@ const PrivateLimitedPage = () => {
       />
 
       {/* LANDING CONTENT: PRIVATE LIMITED REGISTRATION */}
-      <div className="animate-fade-in">
+      <div id="private-limited-container" className="animate-fade-in">
 
         {/* 1. Hero Section */}
         <div className="relative pt-16 pb-20 lg:pt-24 lg:pb-32 bg-slate-50 overflow-hidden">
@@ -281,18 +364,18 @@ const PrivateLimitedPage = () => {
             <div className="lg:w-1/2">
               <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-sm font-bold text-slate-600 mb-6">
                 <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                India's #1 Secure Registration Platform
+                {activeHero.badgeText}
               </div>
               <h1 className="text-4xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6">
-                Register Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">Private Limited</span> Company Online
+                {activeHero.title}
               </h1>
               <p className="text-xl text-slate-600 leading-relaxed mb-8">
-                Launch your startup with the most credible legal structure. Get Certificate of Incorporation, PAN, TAN & MOA/AOA in just 7 days.
+                {activeHero.subtitle}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <button onClick={handleConsultationBook} className="bg-red-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition shadow-xl shadow-red-600/20 transform hover:-translate-y-1 active:scale-95 flex items-center justify-center">
-                  Book Consultation @ ₹499 <ArrowRight className="ml-2 w-5 h-5" />
+                  Book Consultation @ ₹{activeHero.consultationPrice} <ArrowRight className="ml-2 w-5 h-5" />
                 </button>
                 <p className="text-xs text-slate-500 sm:hidden text-center mt-2">Adjusted against final package</p>
               </div>
@@ -348,21 +431,21 @@ const PrivateLimitedPage = () => {
           <div className="w-full overflow-hidden relative flex py-4 mb-8 bg-slate-900/50 border-y border-slate-800">
             <div className="animate-marquee space-x-12">
               {/* Set 1 */}
-              {LOGOS.map((logo, idx) => {
-                const Icon = logo.icon;
+              {activeLogos.map((logo, idx) => {
+                const Icon = Lucide[logo.iconKey] || Lucide.Globe;
                 return (
                   <div key={`logo-1-${idx}`} className="inline-flex items-center gap-2.5 px-6 py-2.5 bg-slate-800/40 rounded-xl border border-slate-700/30 flex-shrink-0">
-                    <Icon className={`w-4.5 h-4.5 ${logo.color}`} />
+                    <Icon className={`w-4.5 h-4.5 ${logo.colorClass || logo.color || 'text-slate-500'}`} />
                     <span className="text-xs font-black tracking-tight text-slate-300">{logo.name}</span>
                   </div>
                 );
               })}
               {/* Set 2 */}
-              {LOGOS.map((logo, idx) => {
-                const Icon = logo.icon;
+              {activeLogos.map((logo, idx) => {
+                const Icon = Lucide[logo.iconKey] || Lucide.Globe;
                 return (
                   <div key={`logo-2-${idx}`} className="inline-flex items-center gap-2.5 px-6 py-2.5 bg-slate-800/40 rounded-xl border border-slate-700/30 flex-shrink-0">
-                    <Icon className={`w-4.5 h-4.5 ${logo.color}`} />
+                    <Icon className={`w-4.5 h-4.5 ${logo.colorClass || logo.color || 'text-slate-500'}`} />
                     <span className="text-xs font-black tracking-tight text-slate-300">{logo.name}</span>
                   </div>
                 );
@@ -372,22 +455,12 @@ const PrivateLimitedPage = () => {
 
           {/* Stats Grid */}
           <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-slate-800 border-t border-slate-800/50 pt-8">
-            <div className="group p-2 rounded transition">
-              <div className="text-3xl md:text-4xl font-black text-white mb-1 group-hover:text-red-500 transition-colors">7 Days</div>
-              <div className="text-red-500 text-[10px] uppercase tracking-wider font-black group-hover:text-white transition-colors">Avg. Turnaround</div>
-            </div>
-            <div className="group p-2 rounded transition">
-              <div className="text-3xl md:text-4xl font-black text-white mb-1 group-hover:text-red-500 transition-colors">5000+</div>
-              <div className="text-red-500 text-[10px] uppercase tracking-wider font-black group-hover:text-white transition-colors">Happy Founders</div>
-            </div>
-            <div className="group p-2 rounded transition">
-              <div className="text-3xl md:text-4xl font-black text-white mb-1 group-hover:text-red-500 transition-colors">4.9/5</div>
-              <div className="text-red-500 text-[10px] uppercase tracking-wider font-black group-hover:text-white transition-colors">Google Rating</div>
-            </div>
-            <div className="group p-2 rounded transition">
-              <div className="text-3xl md:text-4xl font-black text-white mb-1 group-hover:text-red-500 transition-colors">100%</div>
-              <div className="text-red-500 text-[10px] uppercase tracking-wider font-black group-hover:text-white transition-colors">Online Process</div>
-            </div>
+            {activeStats.map((stat, idx) => (
+              <div key={idx} className="group p-2 rounded transition">
+                <div className="text-3xl md:text-4xl font-black text-white mb-1 group-hover:text-red-500 transition-colors">{stat.value}</div>
+                <div className="text-red-500 text-[10px] uppercase tracking-wider font-black group-hover:text-white transition-colors">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -399,7 +472,7 @@ const PrivateLimitedPage = () => {
               <p className="text-slate-600 font-medium">Transparent pricing. No hidden fees.</p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
-              {PACKAGES.map((pkg) => (
+              {activePackages.map((pkg) => (
                 <div key={pkg.id} className={`bg-white rounded-2xl p-8 border transition-all duration-300 flex flex-col relative transform hover:-translate-y-4 hover:shadow-2xl ${pkg.isPopular ? 'border-red-600 shadow-xl scale-105 z-10' : 'border-slate-200 hover:border-red-300 shadow-sm'}`}>
                   {pkg.isPopular && <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-md">RECOMMENDED</div>}
 
@@ -420,7 +493,7 @@ const PrivateLimitedPage = () => {
                   <p className="text-sm text-slate-600 mb-6">{pkg.description}</p>
 
                   <div className="space-y-4 mb-8 flex-1">
-                    {pkg.features.map((feat, i) => (
+                    {pkg.features && pkg.features.map((feat, i) => (
                       <div key={i} className="flex items-start text-sm text-slate-700 font-medium group"><CheckCircle2 className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0 group-hover:scale-125 transition-transform" />{feat}</div>
                     ))}
                   </div>
@@ -442,7 +515,7 @@ const PrivateLimitedPage = () => {
               <p className="text-lg text-slate-600 mt-2 font-medium">Hear directly from companies registered and powered by VR Here.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
-              {REVIEWS.map((review, idx) => (
+              {activeReviews.map((review, idx) => (
                 <div key={idx} className="bg-slate-50/50 p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-1 text-amber-400 mb-4">
@@ -481,7 +554,7 @@ const PrivateLimitedPage = () => {
             </div>
             <div className="grid md:grid-cols-3 gap-8 relative z-10">
               <div className="hidden md:block absolute top-[68px] left-0 w-full h-1 bg-gradient-to-r from-red-100 via-orange-200 to-red-100 -z-10"></div>
-              {STEPS.map((step, i) => (
+              {activeSteps.map((step, i) => (
                 <div key={i} className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center hover:-translate-y-2 transition-all duration-300 relative group">
                   <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-xl shadow-red-600/20 transform group-hover:rotate-6 transition-all border-4 border-white">{step.number}</div>
                   <div className="inline-block px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500 mb-4">{step.badge}</div>
@@ -615,7 +688,7 @@ const PrivateLimitedPage = () => {
                 <div className="lg:col-span-1 space-y-4">
                   <h3 className="text-xl font-black text-slate-900 border-b-2 border-orange-500 pb-2 mb-6">Frequently Asked Questions</h3>
                   <div className="space-y-3">
-                    {FAQS.map((faq, idx) => (
+                    {activeFaqs.map((faq, idx) => (
                       <div key={idx} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                         <button 
                           onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
@@ -703,6 +776,28 @@ const PrivateLimitedPage = () => {
         </section>
 
       </div>
+
+      {/* Dynamic inline customize overlays & Real-time scoring checking widgets */}
+      {pageConfig && (
+        <>
+          <InlineEditOverlay
+            pageId="private-limited"
+            config={pageConfig}
+            onConfigUpdate={setPageConfig}
+          />
+          <SeoAeoDashboard
+            pageId="private-limited"
+            config={pageConfig}
+            currentHtml={pageHtmlContent}
+            faqList={activeFaqs}
+            seoSettings={pageConfig.seoSettings || {}}
+            onUpdateSeoSettings={handleUpdateSeoSettings}
+            trackingSettings={pageConfig.trackingSettings || {}}
+            onUpdateTrackingSettings={handleUpdateTrackingSettings}
+            isSaving={savingOverlay}
+          />
+        </>
+      )}
 
       <SharedFooter />
     </div>

@@ -70,6 +70,19 @@ fun CustomerDashboardScreen(
             }
         }
 
+        // Fetch Dynamic Service Page configs on boot from the server database
+        launch {
+            try {
+                val apiService = VRHereAPI.getInstance(context)
+                val response = apiService.getDynamicServices()
+                if (response.isSuccessful && response.body() != null) {
+                    ServiceCatalog.updateFromApi(response.body()!!)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ServiceCatalog", "Failed loading dynamic catalog sync", e)
+            }
+        }
+
         viewModel.eventFlow.collect { event ->
             if (event is CustomerDashboardViewModel.UiEvent.ShowToast) {
                 Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
@@ -411,7 +424,7 @@ fun CustomerDashboardScreen(
                                 },
                                 onOpenLiveService = { name, url ->
                                     val key = url.substringAfterLast("/")
-                                    if (key in listOf("pvt-ltd-registration", "gst-registration", "partnership-firm", "income-tax-return")) {
+                                    if (key in ServiceCatalog.items.keys) {
                                         activeServiceKey = key
                                     } else {
                                         webviewUrl = url
@@ -424,7 +437,7 @@ fun CustomerDashboardScreen(
                                 onSelectTab = { activeTab = it },
                                 onOpenLiveService = { name, url ->
                                     val key = url.substringAfterLast("/")
-                                    if (key in listOf("pvt-ltd-registration", "gst-registration", "partnership-firm", "income-tax-return")) {
+                                    if (key in ServiceCatalog.items.keys) {
                                         activeServiceKey = key
                                     } else {
                                         webviewUrl = url

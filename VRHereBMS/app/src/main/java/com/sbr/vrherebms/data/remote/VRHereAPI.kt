@@ -192,6 +192,10 @@ interface VRHereAPI {
         @Part document: okhttp3.MultipartBody.Part
     ): Response<OrderResponse>
 
+    // --- DYNAMIC SERVER-DRIVEN SERVICES ---
+    @GET("api/service-pages")
+    suspend fun getDynamicServices(): Response<List<com.sbr.vrherebms.data.model.MobileServiceDetail>>
+
     companion object {
         // base URL pointing directly to the live website database
         var BASE_URL = "https://vrhere.in/"

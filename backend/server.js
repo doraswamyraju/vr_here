@@ -70,6 +70,7 @@ import financeRoutes from './routes/financeRoutes.js';
 import complianceRoutes from './routes/complianceRoutes.js';
 import webmailRoutes from './routes/webmailRoutes.js';
 import hrmsRoutes from './routes/hrmsRoutes.js';
+import servicePageRoutes from './routes/servicePageRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 
 // Routes
@@ -88,6 +89,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/webmail', webmailRoutes);
 app.use('/api/hrms', hrmsRoutes);
+app.use('/api/service-pages', servicePageRoutes);
 
 // Serve Frontend in Production
 
