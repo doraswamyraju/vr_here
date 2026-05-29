@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     AlertCircle, Sparkles, CheckCircle2, ChevronRight, ChevronDown, 
-    Play, Eye, ShieldAlert, BarChart2, Award, Zap, Globe, Search, Link, ExternalLink 
+    Play, Eye, ShieldAlert, BarChart2, Award, Zap, Globe, Search, Link 
 } from 'lucide-react';
 import { analyzeSeo } from '../core/seoEngine';
 import { analyzeAeo } from '../core/aeoEngine';
@@ -203,7 +203,9 @@ const SeoAeoDashboard = ({ pageId, currentHtml = '', faqList = [], seoSettings =
                                             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Sources Cited:</span>
                                             <a href="#link" className="inline-flex items-center gap-1 bg-indigo-500/10 text-indigo-400 text-[9px] font-bold px-2 py-0.5 rounded border border-indigo-500/20">
                                                 <span>1. vrhere.in</span>
-                                                <ExternalLink className="w-2.5 h-2.5" />
+                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
                                             </a>
                                         </div>
                                     )}
