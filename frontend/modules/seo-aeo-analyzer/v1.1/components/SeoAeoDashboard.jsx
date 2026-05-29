@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     AlertCircle, Sparkles, CheckCircle2, ChevronRight, ChevronDown, 
-    Play, Eye, ShieldAlert, BarChart2, Award, Zap, Globe, Search, Link 
+    Play, Eye, ShieldAlert, BarChart2, Award, Zap, Globe, Search, Link, ExternalLink 
 } from 'lucide-react';
 import { analyzeSeo } from '../core/seoEngine';
 import { analyzeAeo } from '../core/aeoEngine';
