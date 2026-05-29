@@ -5,9 +5,11 @@ import {
 } from 'lucide-react';
 import { fetchServicePageConfig, updateServicePageConfig } from '../services/serviceConfigApi';
 
-const InlineEditOverlay = ({ pageId, onConfigUpdate, config }) => {
+const InlineEditOverlay = ({ pageId, onConfigUpdate, config, isOpen: externalIsOpen, setIsOpen: externalSetIsOpen }) => {
     const [isAdminOrStaff, setIsAdminOrStaff] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
+    const [localIsOpen, setLocalIsOpen] = useState(false);
+    const isOpen = externalIsOpen !== undefined ? externalIsOpen : localIsOpen;
+    const setIsOpen = externalSetIsOpen !== undefined ? externalSetIsOpen : setLocalIsOpen;
     const [activeSection, setActiveSection] = useState('hero');
     const [localConfig, setLocalConfig] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -75,13 +77,15 @@ const InlineEditOverlay = ({ pageId, onConfigUpdate, config }) => {
     return (
         <>
             {/* FLOATING ADMIN INLINE ACTION CONTROL BUTTON */}
-            <button
-                onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-[80] bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-500 py-3.5 px-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-2 transform hover:-translate-y-1 active:scale-95 transition duration-300"
-            >
-                <Edit className="w-4 h-4 animate-pulse" />
-                <span>Customize Page Layout</span>
-            </button>
+            {externalIsOpen === undefined && (
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="fixed bottom-6 right-6 z-[80] bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-500 py-3.5 px-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-2 transform hover:-translate-y-1 active:scale-95 transition duration-300"
+                >
+                    <Edit className="w-4 h-4 animate-pulse" />
+                    <span>Customize Page Layout</span>
+                </button>
+            )}
 
             {/* DRAWER SECTION PANEL */}
             <div className={`fixed top-0 left-0 h-screen w-full md:w-[500px] bg-slate-950/95 backdrop-blur-xl border-r border-slate-900 z-[95] shadow-2xl transform transition-transform duration-500 ease-out flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>

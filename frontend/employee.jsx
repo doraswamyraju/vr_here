@@ -19,6 +19,7 @@ import FinanceModule from './components/admin/finance/FinanceModule';
 import { dummyTickets } from './components/employee/mockData';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 import HRMSModule from './modules/hrms/v1.1/index.jsx';
+import ServicesMasterView from './components/admin/ServicesMasterView';
 
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
 
@@ -486,6 +487,8 @@ const EmployeeApp = () => {
         return <SecurityModule />;
       case 'hrms':
         return <HRMSModule role={userInfo?.role} />;
+      case 'services':
+        return <ServicesMasterView token={userInfo?.token} />;
       default:
         return <DashboardOverviewModule userInfo={userInfo} orders={orders} onOpenOrder={openOrderInProcessing} />;
     }

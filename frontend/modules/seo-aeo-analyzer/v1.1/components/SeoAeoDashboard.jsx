@@ -9,9 +9,11 @@ import GscMetricsDashboard from './GscMetricsDashboard';
 import TrackingSettings from './TrackingSettings';
 import axios from 'axios';
 
-const SeoAeoDashboard = ({ pageId, currentHtml = '', faqList = [], seoSettings = {}, onUpdateSeoSettings, trackingSettings = {}, onUpdateTrackingSettings, config, isSaving }) => {
+const SeoAeoDashboard = ({ pageId, currentHtml = '', faqList = [], seoSettings = {}, onUpdateSeoSettings, trackingSettings = {}, onUpdateTrackingSettings, config, isSaving, isOpen: externalIsOpen, setIsOpen: externalSetIsOpen }) => {
     const [activeTab, setActiveTab] = useState('analysis');
-    const [isOpen, setIsOpen] = useState(false);
+    const [localIsOpen, setLocalIsOpen] = useState(false);
+    const isOpen = externalIsOpen !== undefined ? externalIsOpen : localIsOpen;
+    const setIsOpen = externalSetIsOpen !== undefined ? externalSetIsOpen : setLocalIsOpen;
     const [seoResult, setSeoResult] = useState({ score: 0, diagnostics: [] });
     const [aeoResult, setAeoResult] = useState({ score: 0, diagnostics: [] });
     const [expandedGroup, setExpandedGroup] = useState('errors');
@@ -55,17 +57,19 @@ const SeoAeoDashboard = ({ pageId, currentHtml = '', faqList = [], seoSettings =
     return (
         <>
             {/* FLOATING ACTION TRIGGER */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-24 right-6 z-[80] bg-slate-950 text-white border border-slate-800 hover:border-indigo-500 py-3.5 px-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-2.5 transition transform hover:-translate-y-1 active:scale-95 group"
-            >
-                <div className="relative">
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-500 rounded-full animate-ping"></span>
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-500 rounded-full"></span>
-                    <Sparkles className="w-4 h-4 text-indigo-400 group-hover:rotate-12 transition-transform" />
-                </div>
-                <span>Live SEO/AEO Optimizer</span>
-            </button>
+            {externalIsOpen === undefined && (
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="fixed bottom-24 right-6 z-[80] bg-slate-950 text-white border border-slate-800 hover:border-indigo-500 py-3.5 px-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-2.5 transition transform hover:-translate-y-1 active:scale-95 group"
+                >
+                    <div className="relative">
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-500 rounded-full animate-ping"></span>
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-500 rounded-full"></span>
+                        <Sparkles className="w-4 h-4 text-indigo-400 group-hover:rotate-12 transition-transform" />
+                    </div>
+                    <span>Live SEO/AEO Optimizer</span>
+                </button>
+            )}
 
             {/* EXPANDABLE OPTIMIZER DRAWER */}
             <div className={`fixed top-0 right-0 h-screen w-full md:w-[480px] bg-slate-950/95 backdrop-blur-xl border-l border-slate-900 z-[90] shadow-2xl transform transition-transform duration-500 ease-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
