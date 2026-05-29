@@ -172,6 +172,9 @@ const RELATED_SERVICES = [
 const PrivateLimitedPage = () => {
   const navigate = useNavigate();
   // --- STATE ---
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+  const isAuthorized = userInfo && (userInfo.role === 'admin' || userInfo.role === 'employee');
+
   const [pageConfig, setPageConfig] = useState(null);
   const [pageHtmlContent, setPageHtmlContent] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -780,7 +783,7 @@ const PrivateLimitedPage = () => {
       </div>
 
       {/* Dynamic inline customize overlays & Real-time scoring checking widgets */}
-      {pageConfig && (
+      {pageConfig && isAuthorized && (
         <>
           <InlineEditOverlay
             pageId="private-limited"
