@@ -27,6 +27,7 @@ const PACKAGES = [
     id: 'itr1',
     name: 'ITR-1 (Sahaj)',
     price: 999,
+    customPriceLabel: 'Starts from ₹999',
     description: 'For Salaried Individuals, Single House Property & Interest Income (< ₹50 Lakhs total).',
     features: ['Salary Income & Form 16', 'Single House Property', 'Savings & FD Interest', 'Chapter VI-A Deductions', 'AIS / TIS Matching Check', 'E-Filing Acknowledgement'],
     buttonText: 'File ITR-1'
@@ -35,6 +36,7 @@ const PACKAGES = [
     id: 'itr4',
     name: 'ITR-4 (Sugam)',
     price: 1899,
+    customPriceLabel: 'Starts from ₹1,899',
     description: 'For Resident Individuals/HUFs/Firms with Presumptive Business Income (Sec 44AD/44ADA).',
     features: ['Presumptive Taxation scheme', 'Total Income up to ₹50L', 'Small Business / Professionals', 'Deduction & Relief Review', 'Tax Liability Optimization', 'Secure Return Submission'],
     buttonText: 'File ITR-4'
@@ -43,7 +45,7 @@ const PACKAGES = [
     id: 'itr2',
     name: 'ITR-2 (Premium)',
     price: 1699,
-    customPriceLabel: '₹1,699 - ₹2,999',
+    customPriceLabel: 'Starts from ₹1,699',
     description: 'For individuals with Capital Gains, Multiple Houses, Foreign Income, or holding Directorship.',
     features: ['Equity & Mutual Fund Profits', 'Crypto & VDAs Treatment', 'Multiple House Properties', 'Unlisted Share / Directorship', 'Foreign Asset Declarations', 'Relief under Section 90/91'],
     buttonText: 'File ITR-2'
@@ -52,7 +54,7 @@ const PACKAGES = [
     id: 'itr3',
     name: 'ITR-3 (Business)',
     price: 3499,
-    customPriceLabel: '₹3,499 - ₹5,999',
+    customPriceLabel: 'Starts from ₹3,499',
     description: 'For Individuals & HUFs having business profits/profession income (without audited financials).',
     features: ['F&O and Intraday Trading', 'Sole Proprietorship Income', 'Depreciation & Expenses Claim', 'Set-off & Carry Forward Losses', 'Balance Sheet Drafting Assistance', 'Expert Audit-Ready Files'],
     buttonText: 'File ITR-3'
@@ -61,6 +63,7 @@ const PACKAGES = [
     id: 'itr5',
     name: 'ITR-5 (LLP & Firm)',
     price: 6999,
+    customPriceLabel: 'Starts from ₹6,999',
     description: 'For Partnership Firms, LLPs, AOPs, BOIs, and Co-operative societies.',
     features: ['Partnership Deed Compliance', 'Partner Salary & Interest Calc', 'Business Income Audits support', 'Asset Depreciation schedules', 'Tax Computation Sheets', 'Corporate Compliance check'],
     buttonText: 'File ITR-5'
@@ -69,6 +72,7 @@ const PACKAGES = [
     id: 'itr6',
     name: 'ITR-6 (Corporate)',
     price: 7999,
+    customPriceLabel: 'Starts from ₹7,999',
     description: 'For registered companies other than charitable/religious institutions (Non-Section 8).',
     features: ['MCA Financial Matching', 'Minimum Alternate Tax (MAT)', 'Deferred Tax Treatment', 'Director Compliances mapping', 'Audit Report Attachment', 'Complete Balance Sheet Filing'],
     buttonText: 'File ITR-6'
@@ -77,6 +81,7 @@ const PACKAGES = [
     id: 'itr7',
     name: 'ITR-7 (NGOs & Trusts)',
     price: 6999,
+    customPriceLabel: 'Starts from ₹6,999',
     description: 'For Trusts, NGOs, Political Parties, and Charitable Institutions claiming tax exemption.',
     features: ['Section 11, 12A, 10(23C) claims', 'Foreign Contribution mapping', 'Income/Application of Funds', 'Audit Form 10B/10BB matching', 'Exemption verification', 'NGO Darpan compliance check'],
     buttonText: 'File ITR-7'

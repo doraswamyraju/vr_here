@@ -159,8 +159,20 @@ const HomePage = () => {
   const [suggestions, setSuggestions] = useState([]); // Search Suggestions
   const [activeAccordion, setActiveAccordion] = useState(null); // For FAQs
   const [capsules, setCapsules] = useState([]);
+  const [isItrPopupOpen, setIsItrPopupOpen] = useState(false);
 
   // --- EFFECTS ---
+  useEffect(() => {
+    const shown = sessionStorage.getItem('itrPromoShown');
+    if (!shown) {
+      const timer = setTimeout(() => {
+        setIsItrPopupOpen(true);
+        sessionStorage.setItem('itrPromoShown', 'true');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -409,6 +421,109 @@ const HomePage = () => {
           <span className="font-bold text-xl text-slate-400">Digital India</span>
         </div>
       </section>
+
+      {/* 🚀 INCOME TAX FILING HOME STRIP BANNER */}
+      <section className="py-12 bg-white relative overflow-hidden border-b border-slate-100 animate-fade-in">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="relative bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 text-white rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8 group">
+            {/* Ambient gradients */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[100px] pointer-events-none translate-x-1/4 -translate-y-1/4"></div>
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[80px] pointer-events-none -translate-x-1/4 translate-y-1/4"></div>
+
+            {/* Left Content */}
+            <div className="relative z-10 max-w-2xl text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3.5 py-1 text-[10px] font-black uppercase tracking-wider text-red-400 mb-5 animate-pulse">
+                <span>●</span> AY 2026-27 (FY 2025-26) Filing is Live
+              </div>
+              <h3 className="text-2xl md:text-4xl font-black tracking-tight leading-tight mb-4">
+                Hassle-Free Income Tax filing <br className="hidden md:inline"/> by Chartered Accountants.
+              </h3>
+              <p className="text-sm md:text-base text-slate-400 leading-relaxed mb-6 font-medium max-w-xl mx-auto lg:mx-0">
+                Ensure zero discrepancies and maximum refunds. Direct matching of Form 16, AIS, and TIS to secure zero-rejection peace of mind.
+              </p>
+              
+              {/* Feature Tags */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                <span className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold"><CheckCircle className="w-4 h-4 text-emerald-500" /> Max Deductions Claimed</span>
+                <span className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold"><CheckCircle className="w-4 h-4 text-emerald-500" /> Expert CA Verification</span>
+                <span className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold"><CheckCircle className="w-4 h-4 text-emerald-500" /> Starts from just ₹999</span>
+              </div>
+            </div>
+
+            {/* Right Action */}
+            <div className="relative z-10 shrink-0 text-center lg:text-right flex flex-col items-center lg:items-end gap-3 w-full lg:w-auto">
+              <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl px-5 py-3 text-center w-full max-w-xs lg:w-auto">
+                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Early Bird Special</div>
+                <div className="text-3xl font-black text-orange-400 mt-1">Starts from ₹999!</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">Adjustable booking fee applies</div>
+              </div>
+              <a 
+                href="/income-tax-return" 
+                className="w-full max-w-xs lg:w-auto text-center bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-4 rounded-xl transition transform active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-red-600/30 whitespace-nowrap"
+              >
+                <span>File Your ITR Now</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 🎁 ITR EARLY BIRD PROMO POPUP MODAL */}
+      {isItrPopupOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-700/60 rounded-3xl p-8 max-w-lg w-full relative shadow-2xl text-white overflow-hidden transform transition-all duration-300">
+            {/* Visual background accents */}
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-red-600/30 rounded-full blur-2xl"></div>
+            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-orange-500/20 rounded-full blur-2xl"></div>
+
+            {/* Close button */}
+            <button 
+              onClick={() => setIsItrPopupOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Content */}
+            <div className="text-center relative z-10">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600/20 text-red-400 border border-red-500/30 rounded-full text-[10px] font-black uppercase tracking-wider mb-4">
+                <Clock className="w-3.5 h-3.5" /> Early Bird filing LIVE
+              </div>
+
+              <h3 className="text-2xl sm:text-3xl font-black mb-3">
+                Early Bird Offer: Flat 10% Off on ITR Filings!
+              </h3>
+              
+              <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                Avoid last-minute rush and notice discrepancies. File your Income Tax Return accurately with certified CAs for maximum savings.
+              </p>
+
+              <div className="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4 mb-6">
+                <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Apply Code at Checkout</div>
+                <div className="text-2xl font-black text-orange-400 tracking-wider mt-1 select-all">ITR10</div>
+                <div className="text-xs text-slate-400 mt-1 font-semibold">Valid for first 250 users • AY 2026-27 (FY 2025-26)</div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button 
+                  onClick={() => setIsItrPopupOpen(false)}
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 font-bold py-3.5 rounded-xl transition text-sm"
+                >
+                  Maybe Later
+                </button>
+                <a 
+                  href="/income-tax-return"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-red-600/30"
+                >
+                  <span>Start Filing Now</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SERVICE CATEGORIES GRID */}
       <section id="services" className="py-24 bg-gradient-to-b from-white to-slate-50">
