@@ -128,6 +128,7 @@ const TESTIMONIALS = [
 
 /* --- SEARCH DATA --- */
 const ALL_SERVICES = [
+  { name: 'Income Tax Return (ITR) Filing', link: '/income-tax-return', type: 'page' },
   { name: 'Companies Compliance Scheme 2026 (CCFS)', link: '/compliance-scheme-2026', type: 'page' },
   { name: 'Private Limited Registration', link: '/pvt-ltd-registration', type: 'page' },
   { name: 'Partnership Firm Registration', link: '/partnership-firm', type: 'page' },
