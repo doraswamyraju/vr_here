@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Calculator, CheckCircle2, ArrowRight, ShieldCheck, Mail, Phone, RefreshCw, Layers
+    Calculator, CheckCircle2, ArrowRight, ShieldCheck, Mail, Phone, RefreshCw, Layers, LayoutDashboard
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
@@ -19,6 +19,11 @@ const ACCOUNTING_SERVICES = [
 
 const AccountingServices = () => {
     const navigate = useNavigate();
+
+    // Staff Authorization Banner Setup
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+    const isAuthorized = userInfo && (userInfo.role === 'admin' || userInfo.role === 'employee');
+
     const [isScrolled, setIsScrolled] = useState(false);
     const [loading, setLoading] = useState(true);
     
@@ -120,7 +125,36 @@ const AccountingServices = () => {
     }
 
     return (
-        <div className="font-sans text-slate-800 bg-slate-50 min-h-screen">
+        <div className={`font-sans text-slate-800 bg-slate-50 min-h-screen ${isAuthorized ? 'pt-14' : ''}`}>
+            
+            {/* Staff Panel Navigation Header */}
+            {isAuthorized && (
+                <div className="fixed top-0 left-0 right-0 z-[100] h-14 bg-slate-900 border-b border-indigo-500/20 text-white px-6 flex items-center justify-between shadow-lg font-sans animate-fade-in">
+                    <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow">
+                            VR
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs font-black uppercase tracking-wider text-slate-100">VR Here Staff Panel</span>
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+                                <span>Active Session ({userInfo?.role})</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => navigate(userInfo?.role === 'admin' ? '/admin' : '/employee')}
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5"
+                        >
+                            <LayoutDashboard className="w-3.5 h-3.5" />
+                            <span>Back to Dashboard</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <SharedHeader isScrolled={isScrolled} />
             
             {/* Payment Modal */}

@@ -4,7 +4,7 @@ import {
     Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
     Building2, Mail, MapPin, CheckCircle, FileText, Star, User as UsersIcon, Check, HelpCircle,
     MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
-    ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw, BadgePercent
+    ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw, BadgePercent, LayoutDashboard
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -55,6 +55,11 @@ const PACKAGES = [
 
 const GSTRegistrationPage = () => {
     const navigate = useNavigate();
+
+    // Staff Authorization Banner Setup
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+    const isAuthorized = userInfo && (userInfo.role === 'admin' || userInfo.role === 'employee');
+
     // --- STATE ---
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeMobileCategory, setActiveMobileCategory] = useState(null);
@@ -147,7 +152,36 @@ const GSTRegistrationPage = () => {
     }
 
     return (
-        <div className="font-sans text-slate-800 bg-white min-h-screen selection:bg-red-100 selection:text-red-900 overflow-x-hidden">
+        <div className={`font-sans text-slate-800 bg-white min-h-screen selection:bg-red-100 selection:text-red-900 overflow-x-hidden ${isAuthorized ? 'pt-14' : ''}`}>
+            
+            {/* Staff Panel Navigation Header */}
+            {isAuthorized && (
+                <div className="fixed top-0 left-0 right-0 z-[100] h-14 bg-slate-900 border-b border-indigo-500/20 text-white px-6 flex items-center justify-between shadow-lg font-sans animate-fade-in">
+                    <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow">
+                            VR
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs font-black uppercase tracking-wider text-slate-100">VR Here Staff Panel</span>
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+                                <span>Active Session ({userInfo?.role})</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => navigate(userInfo?.role === 'admin' ? '/admin' : '/employee')}
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5"
+                        >
+                            <LayoutDashboard className="w-3.5 h-3.5" />
+                            <span>Back to Dashboard</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <SharedHeader isScrolled={isScrolled} />
             <ConsultationPaymentModal
                 isOpen={isModalOpen}
@@ -340,9 +374,9 @@ const GSTRegistrationPage = () => {
                 <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
                     <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
                     <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-                        <h2 className="text-3xl lg:text-5xl font-black mb-6">Confused about GST?</h2>
-                        <p className="text-xl text-slate-400 mb-10">
-                            Not sure if you need GST or which state to register in? Talk to our experts.
+                        <h2 className="text-3xl lg:text-5xl font-black mb-6">Confused about the process?</h2>
+                        <p className="text-xl text-slate-400 mb-10 leading-relaxed font-medium">
+                            Talk to our experts before you commit. Pay a small booking fee now, and we will deduct it from your final bill.
                         </p>
                         <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/10 inline-block w-full max-w-md">
                             <div className="text-sm font-bold text-red-400 uppercase tracking-widest mb-2">Consultation Offer</div>

@@ -3,7 +3,8 @@ import {
   Calculator, CheckCircle2, ArrowRight, FileCheck, ShieldCheck, 
   HelpCircle, ChevronDown, Check, Star, User as UsersIcon, 
   RefreshCw, TrendingUp, Info, AlertCircle, FileText, CheckCircle,
-  Briefcase, Landmark, ShieldAlert, Award, FileSpreadsheet, Building2
+  Briefcase, Landmark, ShieldAlert, Award, FileSpreadsheet, Building2,
+  Paintbrush, Sparkles, LayoutDashboard, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
@@ -85,7 +86,7 @@ const PACKAGES = [
 const TRUST_LOGOS = [
   { name: 'Income Tax Certified CAs', icon: ShieldCheck, color: 'text-indigo-600' },
   { name: '100% Secure Uploads', icon: FileCheck, color: 'text-emerald-500' },
-  { name: 'AI-Enabled Computation', icon: Calculator, color: 'text-orange-500' },
+  { name: 'Expert CA Computation', icon: Calculator, color: 'text-orange-500' },
   { name: 'Govt Portal Integration', icon: Landmark, color: 'text-blue-500' },
   { name: 'Maximum Refund Guarantee', icon: TrendingUp, color: 'text-red-500' }
 ];
@@ -164,8 +165,40 @@ const FAQS = [
   }
 ];
 
+const RELATED_SERVICES = [
+  {
+    title: "Private Limited Registration",
+    price: "₹6,499",
+    desc: "Launch your startup with the most credible legal structure. Get Certificate of Incorporation, PAN, TAN & MOA/AOA.",
+    link: "/pvt-ltd-registration"
+  },
+  {
+    title: "Partnership Firm",
+    price: "₹4,899",
+    desc: "Form your partnership firm quickly with notary deed drafting, PAN & TAN, and firm registration.",
+    link: "/partnership-firm"
+  },
+  {
+    title: "GST Registration & Filing",
+    price: "₹2,569",
+    desc: "Get your GSTIN quickly and ensure smooth tax compliance. Highly recommended for e-commerce and vendors.",
+    link: "/gst-registration"
+  },
+  {
+    title: "Accounting & Bookkeeping",
+    price: "₹3,999",
+    desc: "Let professional CAs handle your day-to-day accounts, ledger entries, bank reconciliation and compliance.",
+    link: "/accounting-services"
+  }
+];
+
 const IncomeTaxPage = () => {
   const navigate = useNavigate();
+  
+  // Staff Authorization Banner Setup
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+  const isAuthorized = userInfo && (userInfo.role === 'admin' || userInfo.role === 'employee');
+
   const [isScrolled, setIsScrolled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -283,7 +316,36 @@ const IncomeTaxPage = () => {
   }
 
   return (
-    <div className="font-sans text-slate-800 bg-white min-h-screen selection:bg-red-100 selection:text-red-900 overflow-x-hidden">
+    <div className={`font-sans text-slate-800 bg-white min-h-screen selection:bg-red-100 selection:text-red-900 overflow-x-hidden ${isAuthorized ? 'pt-14' : ''}`}>
+      
+      {/* Staff Panel Navigation Header */}
+      {isAuthorized && (
+        <div className="fixed top-0 left-0 right-0 z-[100] h-14 bg-slate-900 border-b border-indigo-500/20 text-white px-6 flex items-center justify-between shadow-lg font-sans animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow">
+              VR
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-100">VR Here Staff Panel</span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+                <span>Active Session ({userInfo?.role})</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(userInfo?.role === 'admin' ? '/admin' : '/employee')}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Back to Dashboard</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       <SharedHeader isScrolled={isScrolled} />
       
       <ConsultationPaymentModal
@@ -629,7 +691,7 @@ const IncomeTaxPage = () => {
           </div>
         </section>
 
-        {/* 7. EXPANDING SEO SECTION (DETAILED TAX GUIDE & FAQS FOR SEARCH & AI ENGINE DISCOVERY) */}
+        {/* 7. EXPANDING SEO SECTION (DETAILED TAX GUIDE & FAQS FOR SEARCH DISCOVERY) */}
         <section className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <button 
@@ -711,7 +773,7 @@ const IncomeTaxPage = () => {
                 {/* Column C: Popular Searches */}
                 <div className="lg:col-span-1 space-y-6">
                   <h3 className="text-xl font-black text-slate-900 border-b-2 border-indigo-500 pb-2">Popular Searches</h3>
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">SEO Keywords & AI Tags</p>
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">SEO Keywords & Search Phrases</p>
                   <div className="flex flex-wrap gap-2">
                     {[
                       'ITR Filing Online India', 'Income Tax Return CA Service', 'ITR 1 Sahaj Filing Fee', 
@@ -729,6 +791,51 @@ const IncomeTaxPage = () => {
 
               </div>
             )}
+          </div>
+        </section>
+
+        {/* 8. New Related Services */}
+        <section className="py-20 bg-slate-50 border-t border-slate-200/50">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-16">
+              <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3 py-1.5 rounded-full font-bold">Explore Catalog</span>
+              <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mt-4 tracking-tight">Related Compliance Services</h2>
+              <p className="text-lg text-slate-600 mt-2 font-medium">Grow your business legally with our allied setup packages.</p>
+            </div>
+            <div className="grid md:grid-cols-4 gap-6">
+              {RELATED_SERVICES.map((service, idx) => (
+                <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-black text-base text-slate-900 mb-2">{service.title}</h3>
+                    <div className="text-red-600 font-black text-lg mb-4">{service.price} <span className="text-[10px] text-slate-400 font-bold uppercase">+ Govt Fees</span></div>
+                    <p className="text-slate-500 text-xs leading-relaxed font-medium mb-6">{service.desc}</p>
+                  </div>
+                  <button onClick={() => navigate(service.link)} className="w-full py-2 bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold text-slate-800 transition flex items-center justify-center gap-1.5">
+                    <span>Explore Plan</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 9. Consultation CTA Area (Confused about the process?) */}
+        <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+          <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+            <h2 className="text-3xl lg:text-5xl font-black mb-6">Confused about the process?</h2>
+            <p className="text-xl text-slate-400 mb-10 leading-relaxed font-medium">
+              Talk to our experts before you commit. Pay a small booking fee now, and we will deduct it from your final bill.
+            </p>
+            <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/10 inline-block w-full max-w-md">
+              <div className="text-sm font-bold text-red-400 uppercase tracking-widest mb-2 font-black">Consultation Offer</div>
+              <div className="text-5xl font-black mb-2">₹499</div>
+              <p className="text-slate-300 text-sm mb-6 font-medium">Fully adjustable against filing fees</p>
+              <button onClick={handleConsultationBook} className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-600/30 flex items-center justify-center">
+                Book Now <ArrowRight className="ml-2 w-5 h-5" />
+              </button>
+            </div>
           </div>
         </section>
 
