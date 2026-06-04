@@ -8,6 +8,7 @@ import sendEmail from '../utils/sendEmail.js';
 import { triggerNotification, notifyAdmins } from '../services/notificationService.js';
 import { getOrderPlacedTemplate } from '../utils/emailTemplates.js';
 import { logOrderActivity } from '../utils/activityLogger.js';
+import { generateAndEmailInvoice } from '../utils/invoiceHelper.js';
 
 
 const getRazorpayClient = () => {
@@ -307,6 +308,17 @@ export const verifyPayment = async (req, res) => {
             referralPartner: referralPartnerId,
             partnerCommissionAmount
         });
+
+        // Generate paid invoice automatically
+        try {
+            await generateAndEmailInvoice(createdOrder, parsedAmount, {
+                status: 'Paid',
+                notes: 'Primary Invoice generated automatically on successful website checkout.',
+                invoiceNumber: `INV_${razorpay_payment_id || Date.now()}`
+            });
+        } catch (invErr) {
+            console.error('Failed to generate initial paid invoice on payment verification:', invErr.message);
+        }
 
         const payment = await Payment.create({
             user: customerUser?._id || req.user?._id || null,

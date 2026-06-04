@@ -9,6 +9,8 @@ import User from '../models/User.js';
 import { logOrderActivity } from '../utils/activityLogger.js';
 import Razorpay from 'razorpay';
 import sendEmail from '../utils/sendEmail.js';
+import { generateAndEmailInvoice } from '../utils/invoiceHelper.js';
+
 
 
 const ORDER_POPULATE = [
@@ -327,6 +329,17 @@ const createOrder = asyncHandler(async (req, res) => {
     });
 
     const createdOrder = await order.save();
+
+    // Auto-generate primary invoice for manual orders
+    try {
+        await generateAndEmailInvoice(createdOrder, price, {
+            status: createdOrder.paymentStatus === 'Paid' ? 'Paid' : 'Sent',
+            actorId: req.user._id,
+            notes: 'Primary Invoice generated on order registration.'
+        });
+    } catch (invErr) {
+        console.error('Failed to generate initial invoice on order creation:', invErr.message);
+    }
 
     // Trigger customer in-app notification & email for admin-created manual orders
     if (createdOrder.user) {
@@ -1449,11 +1462,8 @@ const getOrderHistory = asyncHandler(async (req, res) => {
     res.json(history);
 });
 
-// @desc    Create Adjusted Invoice with optional 499 INR discount and generate Razorpay Link
-// @route   POST /api/orders/:id/invoices/adjusted
-// @access  Private/Admin
 const createAdjustedInvoice = asyncHandler(async (req, res) => {
-    const { packageName, amount, adjustConsultation = false, dueDate = null, notes = '', invoiceNumber, splitPercentage = null } = req.body;
+    const { packageName, amount, adjustConsultation = false, adjustPreviousAmount = false, dueDate = null, notes = '', invoiceNumber, splitPercentage = null } = req.body;
     
     const order = await Order.findById(req.params.id);
     if (!order) {
@@ -1461,151 +1471,19 @@ const createAdjustedInvoice = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
-    const baseAmount = Number(amount);
-    if (!Number.isFinite(baseAmount) || baseAmount <= 0) {
-        res.status(400);
-        throw new Error('Amount must be a positive number');
+    if (packageName && packageName !== order.packageName) {
+        order.packageName = packageName;
     }
 
-    // Determine final amount and update adjustment flags safely
-    let finalAmount = baseAmount;
-    if (adjustConsultation) {
-        if (order.consultationAdjusted) {
-            res.status(400);
-            throw new Error('Consultation adjustment has already been applied to this order');
-        }
-        finalAmount = Math.max(0, baseAmount - 499);
-        order.consultationAdjusted = true;
-    }
-
-    // Handle split payment calculation
-    const isSplit = splitPercentage && Number(splitPercentage) > 0 && Number(splitPercentage) < 100;
-    const splitPercentVal = isSplit ? Number(splitPercentage) : 100;
-    const firstInvoiceAmount = isSplit ? Math.round(finalAmount * (splitPercentVal / 100)) : finalAmount;
-    const secondInvoiceAmount = finalAmount - firstInvoiceAmount;
-
-    const finalInvoiceNumber = invoiceNumber || `INV_${Date.now()}`;
-
-    // Initialize Razorpay
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keyId || !keySecret) {
-        res.status(500);
-        throw new Error('Razorpay configuration is missing on the server');
-    }
-
-    const razorpay = new Razorpay({
-        key_id: keyId,
-        key_secret: keySecret
+    const savedOrder = await generateAndEmailInvoice(order, amount, {
+        invoiceNumber,
+        adjustConsultation,
+        adjustPreviousAmount,
+        splitPercentage,
+        dueDate,
+        notes,
+        actorId: req.user._id
     });
-
-    let paymentLinkUrl = '';
-    try {
-        const linkPayload = {
-            amount: Math.round(firstInvoiceAmount * 100),
-            currency: 'INR',
-            accept_partial: false,
-            description: `Payment for Service: ${order.serviceName} (${packageName || order.packageName})${isSplit ? ` - Milestone 1 (${splitPercentVal}%)` : ''}`,
-            customer: {
-                name: order.clientName || 'Customer',
-                email: order.email || 'customer@vrhere.in',
-                contact: order.phone || '9999999999'
-            },
-            notify: {
-                sms: false,
-                email: false
-            },
-            notes: {
-                orderId: order._id.toString(),
-                invoiceNumber: finalInvoiceNumber,
-                adjustConsultation: String(adjustConsultation)
-            }
-        };
-        const paymentLink = await razorpay.paymentLink.create(linkPayload);
-        paymentLinkUrl = paymentLink.short_url;
-    } catch (razorpayError) {
-        console.error('Error creating Razorpay Payment Link:', razorpayError);
-        res.status(500);
-        throw new Error(`Razorpay Link Generation Failed: ${razorpayError.message}`);
-    }
-
-    const newInvoice = {
-        invoiceNumber: finalInvoiceNumber,
-        amount: firstInvoiceAmount,
-        status: 'Sent',
-        url: paymentLinkUrl,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        notes: notes || (isSplit 
-            ? `Milestone 1 (${splitPercentVal}%): Adjusted consultation payment of 499 INR applied.` 
-            : (adjustConsultation ? 'Adjusted consultation payment of 499 INR applied.' : '')),
-        sentAt: new Date(),
-        createdAt: new Date()
-    };
-
-    order.invoices.push(newInvoice);
-
-    if (isSplit) {
-        const remainingInvoice = {
-            invoiceNumber: `${finalInvoiceNumber}_BAL`,
-            amount: secondInvoiceAmount,
-            status: 'Draft',
-            url: '',
-            dueDate: null,
-            notes: `Milestone 2 (Remaining ${100 - splitPercentVal}%): Raised on additional requirements upload.`,
-            createdAt: new Date()
-        };
-        order.invoices.push(remainingInvoice);
-    }
-
-    const savedOrder = await order.save();
-
-    // Log this creation activity in audit history
-    await logOrderActivity(
-        order._id,
-        req.user._id,
-        'INVOICE_CREATE',
-        `Adjusted Invoice ${finalInvoiceNumber} created for INR ${firstInvoiceAmount} (Consultation Adjusted: ${adjustConsultation}${isSplit ? `, Split: ${splitPercentVal}%` : ''})`,
-        { invoiceNumber: finalInvoiceNumber, amount: firstInvoiceAmount, adjustConsultation }
-    );
-
-    // NodeMailer Styled Email Dispatch
-    if (order.email) {
-        const emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #4f46e5; text-align: center;">VR Here Invoice Generated</h2>
-                <p>Hello ${order.clientName || 'Customer'},</p>
-                <p>An invoice has been generated for your service: <strong>${order.serviceName}</strong>.</p>
-                <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 5px 0;"><strong>Invoice Number:</strong> ${finalInvoiceNumber}</p>
-                    <p style="margin: 5px 0;"><strong>Package:</strong> ${packageName || order.packageName}</p>
-                    <p style="margin: 5px 0;"><strong>Amount Due:</strong> INR ${Number(finalAmount).toLocaleString('en-IN')}</p>
-                    ${adjustConsultation ? '<p style="margin: 5px 0; color: #16a34a;"><strong>Discount Applied:</strong> INR 499 (Consultation adjusted)</p>' : ''}
-                    ${dueDate ? `<p style="margin: 5px 0;"><strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}</p>` : ''}
-                </div>
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${paymentLinkUrl}" style="background-color: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Pay Invoice Now</a>
-                </div>
-                <p style="font-size: 12px; color: #64748b;">If the button above does not work, copy and paste this link into your browser:<br/><a href="${paymentLinkUrl}">${paymentLinkUrl}</a></p>
-                <p>Thank you for choosing VR Here Business Management Solutions.</p>
-            </div>
-        `;
-        try {
-            await sendEmail({
-                email: order.email,
-                subject: `Invoice ${finalInvoiceNumber} from VR Here Business Management Solutions`,
-                message: emailHtml
-            });
-        } catch (emailErr) {
-            console.error('Nodemailer failed to send invoice link:', emailErr.message);
-            await logOrderActivity(
-                order._id,
-                req.user._id,
-                'EMAIL_DISPATCH_FAILURE',
-                `Invoice email dispatch failed for ${finalInvoiceNumber}: ${emailErr.message}`,
-                { invoiceNumber: finalInvoiceNumber, error: emailErr.message }
-            );
-        }
-    }
 
     res.status(201).json(savedOrder);
 });
