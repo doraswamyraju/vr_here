@@ -32,3 +32,12 @@ pm2 save
 2. Open DevTools -> Network -> enable `Disable cache`.
 3. Hard reload once (`Ctrl + Shift + R`).
 
+## Razorpay Webhook Configuration
+To enable automatic payment status updates:
+1. In the Razorpay Dashboard, configure a webhook pointing to:
+   `https://vrhere.in/api/payments/razorpay/webhook`
+2. Subscribe to the following active events:
+   - `payment_link.paid`
+   - `payment.captured`
+3. Optional: Set `RAZORPAY_WEBHOOK_SECRET` in the backend `.env` file to match the secret generated in the dashboard. If signature validation is bypassed/unset, signature checks are automatically skipped.
+
