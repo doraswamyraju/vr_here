@@ -470,6 +470,7 @@ export const createPayment = async (req, res) => {
 // @access  Public
 export const handleRazorpayWebhook = async (req, res) => {
     try {
+        console.log('Razorpay Webhook Triggered:', req.body.event, JSON.stringify(req.body.payload));
         const signature = req.headers['x-razorpay-signature'];
         const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
@@ -508,6 +509,7 @@ export const handleRazorpayWebhook = async (req, res) => {
                         const oldStatus = invoice.status;
                         invoice.status = 'Paid';
                         order.paymentStatus = 'Paid';
+                        order.markModified('invoices');
                         await order.save();
 
                         // Add Payment record in Payment collection so the transactions tab lists it
