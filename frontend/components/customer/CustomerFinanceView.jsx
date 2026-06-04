@@ -117,7 +117,17 @@ const CustomerFinanceView = ({ token }) => {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-6 text-right">
+                                            <td className="px-8 py-6 text-right flex items-center justify-end gap-2">
+                                                {record.url && record.status !== 'Paid' && record.status !== 'Cancelled' && (
+                                                    <a 
+                                                        href={record.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="px-3.5 py-1.5 bg-indigo-600 text-white font-black text-[10px] rounded-xl uppercase tracking-wider hover:bg-indigo-700 transition shadow-md shadow-indigo-100 flex items-center gap-1.5"
+                                                    >
+                                                        Pay Now
+                                                    </a>
+                                                )}
                                                 <button 
                                                     onClick={() => setSelectedRecord(record)}
                                                     className="p-2.5 bg-slate-50 text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 rounded-xl transition-all"

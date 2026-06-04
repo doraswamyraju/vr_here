@@ -17,7 +17,10 @@ const getStatusProgress = (status) => {
 
 const ProjectDetailsView = ({ order, payments = [], onBack, onOpenVault }) => {
     // Filter payments for this order
-    const orderPayments = payments.filter((p) => p.orderId === order._id);
+    const orderPayments = payments.filter((p) => {
+        const pOrderId = p.order?._id || p.order;
+        return pOrderId === order._id;
+    });
     const totalPaid = orderPayments.reduce((acc, curr) => acc + (curr.status === 'Completed' ? curr.amount : 0), 0);
     const balance = Math.max(0, order.price - totalPaid);
 

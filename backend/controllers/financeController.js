@@ -14,6 +14,8 @@ const createFinanceRecord = asyncHandler(async (req, res) => {
     res.status(201).json(createdRecord);
 });
 
+import Order from '../models/Order.js';
+
 // @desc    Get all finance records with filtering
 // @route   GET /api/finance
 // @access  Private
@@ -39,8 +41,60 @@ const getFinanceRecords = asyncHandler(async (req, res) => {
     const records = await Finance.find(query)
         .populate('linkedOrder', 'serviceName packageName')
         .sort({ createdAt: -1 });
+
+    let allRecords = records.map(r => r.toObject ? r.toObject() : r);
+
+    // If client, fetch their order.invoices as well and merge
+    if (req.user.role === 'client') {
+        const clientOrders = await Order.find({ user: req.user._id });
+        for (const order of clientOrders) {
+            if (order.invoices && order.invoices.length > 0) {
+                for (const inv of order.invoices) {
+                    if (!allRecords.some(r => r.number === inv.invoiceNumber)) {
+                        allRecords.push({
+                            _id: inv._id || inv.invoiceNumber,
+                            type: 'Invoice',
+                            number: inv.invoiceNumber,
+                            date: inv.createdAt || inv.sentAt || order.createdAt,
+                            dueDate: inv.dueDate,
+                            client: {
+                                name: order.clientName,
+                                phone: order.phone,
+                                email: order.email
+                            },
+                            items: [
+                                {
+                                    description: `Payment for Service: ${order.serviceName} (${order.packageName})`,
+                                    qty: 1,
+                                    rate: inv.amount,
+                                    amount: inv.amount
+                                }
+                            ],
+                            totals: {
+                                subtotal: inv.amount,
+                                cgst: 0,
+                                sgst: 0,
+                                igst: 0,
+                                total: inv.amount
+                            },
+                            status: inv.status,
+                            notes: inv.notes,
+                            url: inv.url, // Razorpay link URL
+                            linkedOrder: {
+                                _id: order._id,
+                                serviceName: order.serviceName,
+                                packageName: order.packageName
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        // Sort combined list by date descending
+        allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
         
-    res.json(records);
+    res.json(allRecords);
 });
 
 // @desc    Get single finance record

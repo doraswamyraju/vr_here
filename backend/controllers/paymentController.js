@@ -547,6 +547,37 @@ export const handleRazorpayWebhook = async (req, res) => {
                             { invoiceNumber, paymentId, amount: paidAmount }
                         );
 
+                        // Send confirmation email to Client
+                        if (order.email) {
+                            const clientSubject = `Payment Confirmation - Invoice ${invoiceNumber} Paid`;
+                            const clientMessage = `
+                                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                    <h2 style="color: #16a34a; text-align: center;">Payment Received Successfully</h2>
+                                    <p>Hello ${order.clientName || 'Customer'},</p>
+                                    <p>We have successfully received your payment of <strong>INR ${paidAmount.toLocaleString('en-IN')}</strong> for Invoice <strong>${invoiceNumber}</strong>.</p>
+                                    <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                        <p style="margin: 5px 0;"><strong>Invoice Number:</strong> ${invoiceNumber}</p>
+                                        <p style="margin: 5px 0;"><strong>Service:</strong> ${order.serviceName}</p>
+                                        <p style="margin: 5px 0;"><strong>Package:</strong> ${order.packageName}</p>
+                                        <p style="margin: 5px 0;"><strong>Amount Paid:</strong> INR ${paidAmount.toLocaleString('en-IN')}</p>
+                                        <p style="margin: 5px 0;"><strong>Status:</strong> Paid</p>
+                                        <p style="margin: 5px 0;"><strong>Payment ID:</strong> ${paymentId}</p>
+                                    </div>
+                                    <p>You can view, print, or download your formal GST Invoice PDF directly from your <a href="https://vrhere.in/" style="color: #4f46e5; text-decoration: underline; font-weight: bold;">Client Dashboard</a> under the <strong>Invoices</strong> section.</p>
+                                    <p style="margin-top: 20px; font-size: 14px; color: #475569;">Thank you for choosing VR Here Business Management Solutions.</p>
+                                </div>
+                            `;
+                            try {
+                                await sendEmail({
+                                    email: order.email,
+                                    subject: clientSubject,
+                                    message: clientMessage
+                                });
+                            } catch (clientEmailErr) {
+                                console.error(`Failed to send webhook payment confirmation email to client: ${clientEmailErr.message}`);
+                            }
+                        }
+
                         // Notify admins
                         await notifyAdmins({
                             title: 'Invoice Paid Successfully',
