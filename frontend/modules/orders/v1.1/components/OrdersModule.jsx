@@ -18,7 +18,7 @@ import OrderOverviewTab from './OrderOverviewTab';
 import OrderTasksTab from './OrderTasksTab';
 import OrderRequirementsTab from './OrderRequirementsTab';
 import GSTInvoiceTemplate from '../../../../components/admin/finance/GSTInvoiceTemplate';
-import { InvoiceAdjustments } from '../../invoices/v1.1';
+import { InvoiceAdjustments } from '../../../invoices/v1.1';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
