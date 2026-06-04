@@ -324,7 +324,7 @@ const createOrder = asyncHandler(async (req, res) => {
         paymentId: paymentId || `MANUAL_BY_ADMIN_${Date.now()}`,
         razorpayOrderId,
         paymentSignature,
-        paymentStatus: paymentId ? paymentStatus : 'Paid', // Default to Paid if manual
+        paymentStatus: paymentId ? paymentStatus : 'Pending', // Default to Pending if manual (to allow Razorpay link generation)
         assignedEmployee: req.body.assignedEmployee || null
     });
 

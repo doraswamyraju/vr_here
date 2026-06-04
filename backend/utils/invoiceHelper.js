@@ -147,9 +147,14 @@ export const generateAndEmailInvoice = async (order, baseAmount, options = {}) =
             <div style="text-align: center; margin: 30px 0;">
                 <a href="${paymentLinkUrl}" style="background-color: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Pay Invoice Now</a>
             </div>
-            <p style="font-size: 12px; color: #64748b;">If the button above does not work, copy and paste this link into your browser:<br/><a href="${paymentLinkUrl}">${paymentLinkUrl}</a></p>
+            <p style="font-size: 12px; color: #64748b; text-align: center;">If the button above does not work, copy and paste this link into your browser:<br/><a href="${paymentLinkUrl}">${paymentLinkUrl}</a></p>
             ` : ''}
-            <p>Thank you for choosing VR Here Business Management Solutions.</p>
+            <div style="margin-top: 25px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                <p style="font-size: 13px; color: #475569; line-height: 1.5; margin: 0;">
+                    <strong>GST Invoice PDF:</strong> You can view, print, or download your formal GST Invoice PDF directly from your <a href="https://vrhere.in/" style="color: #4f46e5; text-decoration: underline; font-weight: bold;">Client Dashboard</a> under the <strong>Invoices</strong> section.
+                </p>
+            </div>
+            <p style="margin-top: 20px; font-size: 14px; color: #475569;">Thank you for choosing VR Here Business Management Solutions.</p>
         </div>
     `;
 
