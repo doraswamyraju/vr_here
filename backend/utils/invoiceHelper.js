@@ -45,7 +45,7 @@ export const generateAndEmailInvoice = async (order, baseAmount, options = {}) =
     const secondInvoiceAmount = finalAmount - firstInvoiceAmount;
 
     const finalInvoiceNumber = invoiceNumber || `INV_${Date.now()}`;
-    const invoiceStatus = status || (order.paymentStatus === 'Paid' ? 'Paid' : 'Sent');
+    const invoiceStatus = status || 'Sent';
 
     let paymentLinkUrl = '';
 
