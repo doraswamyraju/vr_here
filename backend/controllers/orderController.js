@@ -1474,6 +1474,7 @@ const createAdjustedInvoice = asyncHandler(async (req, res) => {
     if (packageName && packageName !== order.packageName) {
         order.packageName = packageName;
     }
+    order.price = Number(amount);
 
     const savedOrder = await generateAndEmailInvoice(order, amount, {
         invoiceNumber,

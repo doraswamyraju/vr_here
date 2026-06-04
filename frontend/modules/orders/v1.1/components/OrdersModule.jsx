@@ -18,6 +18,7 @@ import OrderOverviewTab from './OrderOverviewTab';
 import OrderTasksTab from './OrderTasksTab';
 import OrderRequirementsTab from './OrderRequirementsTab';
 import GSTInvoiceTemplate from '../../../../components/admin/finance/GSTInvoiceTemplate';
+import { InvoiceAdjustments } from '../../invoices/v1.1';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -25,20 +26,13 @@ const Card = ({ children, className = '' }) => (
   </div>
 );
 
-const OrderInvoicesTab = ({ selectedOrder, invoiceForm, setInvoiceForm, onAddInvoice, onUpdateInvoiceStatus, onSelectInvoiceForPdf }) => (
+const OrderInvoicesTab = ({ selectedOrder, onInitiateBilling, billingLoading, onUpdateInvoiceStatus, onSelectInvoiceForPdf }) => (
   <div className="space-y-4">
-    <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-      <p className="font-semibold text-slate-700 mb-3">Raise Additional Invoice</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input value={invoiceForm.invoiceNumber} onChange={(event) => setInvoiceForm((prev) => ({ ...prev, invoiceNumber: event.target.value }))} placeholder="Invoice Number" className="p-2.5 border border-slate-300 rounded-lg text-sm" />
-        <input type="number" value={invoiceForm.amount} onChange={(event) => setInvoiceForm((prev) => ({ ...prev, amount: event.target.value }))} placeholder="Amount" className="p-2.5 border border-slate-300 rounded-lg text-sm" />
-        <select value={invoiceForm.status} onChange={(event) => setInvoiceForm((prev) => ({ ...prev, status: event.target.value }))} className="p-2.5 border border-slate-300 rounded-lg text-sm">
-          {INVOICE_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
-        </select>
-        <input type="date" value={invoiceForm.dueDate} onChange={(event) => setInvoiceForm((prev) => ({ ...prev, dueDate: event.target.value }))} className="p-2.5 border border-slate-300 rounded-lg text-sm" />
-      </div>
-      <button onClick={onAddInvoice} className="mt-3 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold">Add Invoice</button>
-    </div>
+    <InvoiceAdjustments
+      selectedOrder={selectedOrder}
+      onInitiateBilling={onInitiateBilling}
+      loading={billingLoading}
+    />
     <div className="space-y-2">
       {(selectedOrder.invoices || []).map((invoice) => (
         <div key={invoice._id} className="rounded-lg border border-slate-200 p-3 flex flex-wrap items-center justify-between gap-3 bg-white">
@@ -123,6 +117,20 @@ const OrdersModule = ({
     const activeToken = token || userInfo?.token;
     return activeToken ? { headers: { Authorization: `Bearer ${activeToken}` } } : null;
   }, [token]);
+
+  const [billingLoading, setBillingLoading] = useState(false);
+  const handleInitiateBilling = async (payload) => {
+    setBillingLoading(true);
+    try {
+      await axios.post(`/api/orders/${selectedOrder._id}/invoices/adjusted`, payload, config);
+      alert('Billing initiated successfully! Invoice has been generated and dispatched to both the customer and admin.');
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to initiate billing.');
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   const [payments, setPayments] = useState([]);
   const [isLoadingPayments, setIsLoadingPayments] = useState(false);
@@ -431,9 +439,8 @@ const OrdersModule = ({
               {orderDetailTab === 'Invoices' && (
                 <OrderInvoicesTab
                   selectedOrder={selectedOrder}
-                  invoiceForm={invoiceForm}
-                  setInvoiceForm={setInvoiceForm}
-                  onAddInvoice={() => onAddInvoice(selectedOrder._id)}
+                  onInitiateBilling={handleInitiateBilling}
+                  billingLoading={billingLoading}
                   onUpdateInvoiceStatus={(invoiceId, status) => onUpdateInvoiceStatus(selectedOrder._id, invoiceId, status)}
                   onSelectInvoiceForPdf={setSelectedInvoiceForPdf}
                 />
