@@ -18,6 +18,7 @@ const ORDER_POPULATE = [
     { path: 'assignedEmployee', select: 'name email role' },
     { path: 'assignedMaker', select: 'name email role' },
     { path: 'assignedChecker', select: 'name email role' },
+    { path: 'assignedFreelancer', select: 'name email phone isClockedIn lastClockInTime' },
     { path: 'tasks.assignedTo', select: 'name email role' },
     { path: 'tasks.assignedMaker', select: 'name email role' },
     { path: 'tasks.assignedChecker', select: 'name email role' },

@@ -87,6 +87,7 @@ const LoginPage = () => {
             if (user.role === 'admin') navigate('/admin');
             else if (user.role === 'employee') navigate('/employee');
             else if (user.role === 'partner') navigate('/partner-dashboard');
+            else if (user.role === 'freelancer') navigate('/freelancer-dashboard');
             else navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');

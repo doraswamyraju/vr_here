@@ -21,8 +21,33 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'employee', 'client', 'partner'],
+        enum: ['admin', 'employee', 'client', 'partner', 'freelancer'],
         default: 'client'
+    },
+    skills: {
+        type: [String],
+        default: []
+    },
+    yearsOfExperience: {
+        type: Number,
+        default: 0
+    },
+    resumeUrl: {
+        type: String,
+        default: null
+    },
+    isClockedIn: {
+        type: Boolean,
+        default: false
+    },
+    lastClockInTime: {
+        type: Date,
+        default: null
+    },
+    activeOrderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order',
+        default: null
     },
     panCard: {
         type: String,

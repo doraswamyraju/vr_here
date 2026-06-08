@@ -45,6 +45,7 @@ import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, 
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 import HRMSModule from './modules/hrms/v1.1/index.jsx';
 import CustomersModule from './components/admin/crm/CustomersModule';
+import FreelancersModule from './components/admin/FreelancersModule';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -679,6 +680,7 @@ function AdminApp() {
     { key: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { key: 'Orders', label: 'Orders', icon: Layers },
     { key: 'Users', label: 'Users', icon: UsersIcon },
+    { key: 'Freelancers', label: 'Freelancer Hub', icon: UsersIcon },
     { key: 'ToDo', label: 'To Do', icon: CheckSquare },
     { key: 'Finance', label: 'Finance', icon: DollarSign },
     { key: 'Compliance', label: 'Compliance', icon: CalendarCheck },
@@ -740,6 +742,7 @@ function AdminApp() {
       );
     }
     if (activeTab === 'Users') return <UsersModule token={userInfo?.token} users={users} orders={orders} onRefresh={fetchData} />;
+    if (activeTab === 'Freelancers') return <FreelancersModule token={userInfo?.token} />;
     if (activeTab === 'ToDo') return (
       <TodoModule 
         todos={todos} 

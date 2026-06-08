@@ -24,6 +24,8 @@ import CompaniesComplianceScheme from './CompaniesComplianceScheme';
 import AccountingServices from './AccountingServices';
 import PartnerSignupPage from './PartnerSignup';
 import PartnerDashboardPage from './partner';
+import FreelancerSignupPage from './FreelancerSignup';
+import FreelancerDashboardPage from './modules/freelancer/v1.1';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -40,6 +42,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 const App = () => {
+  const { logout } = useContext(AuthContext);
+
   return (
     <Routes>
       {/* Public Routes */}
@@ -47,7 +51,7 @@ const App = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:resetToken" element={<ResetPassword />} /> {/* Added ResetPassword route */}
+      <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
       <Route path="/pvt-ltd-registration" element={<PrivateLimitedPage />} />
       <Route path="/partnership-firm" element={<PartnershipFirmPage />} />
       <Route path="/gst-registration" element={<GSTRegistrationPage />} />
@@ -57,6 +61,7 @@ const App = () => {
       <Route path="/compliance-scheme-2026" element={<CompaniesComplianceScheme />} />
       <Route path="/accounting-services" element={<AccountingServices />} />
       <Route path="/partner/signup" element={<PartnerSignupPage />} />
+      <Route path="/freelancer/signup" element={<FreelancerSignupPage />} />
 
       <Route path="/contact" element={<ContactUsPage />} />
 
@@ -94,12 +99,24 @@ const App = () => {
         }
       />
 
-      
       <Route
         path="/partner-dashboard"
         element={
           <ProtectedRoute allowedRoles={['partner', 'admin']}>
             <PartnerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/freelancer-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['freelancer', 'admin']}>
+            <AuthContext.Consumer>
+              {({ user }) => (
+                <FreelancerDashboardPage userInfo={user} onLogout={logout} />
+              )}
+            </AuthContext.Consumer>
           </ProtectedRoute>
         }
       />

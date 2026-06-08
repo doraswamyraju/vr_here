@@ -80,6 +80,34 @@ const orderSchema = mongoose.Schema({
         ref: 'User',
         default: null
     },
+    assignedFreelancer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    freelancerPayout: {
+        type: Number,
+        default: 0
+    },
+    broadcastStatus: {
+        type: String,
+        enum: ['Draft', 'Broadcasted', 'Claimed'],
+        default: 'Draft'
+    },
+    freelancerTimeLogs: [{
+        freelancer: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        minutes: {
+            type: Number,
+            default: 0
+        },
+        loggedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     clientDocuments: [{
         name: String,
         url: String, // Path to file

@@ -130,6 +130,93 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
         {/* Left Column: Live ToDo & Attendance */}
         <div className="lg:col-span-2 space-y-6">
           
+          {/* Freelancer Assignment / Broadcast Panel */}
+          <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm space-y-4">
+            <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm flex items-center gap-2 border-b border-slate-50 pb-2">
+              <IndianRupee size={16} className="text-indigo-600" /> Freelancer Assignment & Payout
+            </h4>
+
+            {!selectedOrder.assignedFreelancer ? (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500 font-medium">Broadcast this order to the freelancer pool. The first freelancer to accept will claim the project.</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-grow">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Payout (₹)</span>
+                    <input 
+                      type="number" 
+                      placeholder="Define payout amount"
+                      id="freelancerPayoutInput"
+                      className="w-full pl-20 pr-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-505 outline-none"
+                    />
+                  </div>
+                  <button 
+                    onClick={async () => {
+                      const amount = Number(document.getElementById('freelancerPayoutInput')?.value || 0);
+                      if (!amount || amount <= 0) return alert('Please input a valid payout amount');
+                      try {
+                        await axios.put(`/api/freelancer/admin/broadcast/${selectedOrder._id}`, { payoutAmount: amount }, config);
+                        alert('Order broadcasted successfully!');
+                        window.location.reload();
+                      } catch (err) {
+                        alert(err.response?.data?.message || 'Failed to broadcast order');
+                      }
+                    }}
+                    className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition active:scale-[0.98]"
+                  >
+                    Broadcast Order
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3 text-xs font-semibold text-slate-600">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Assigned Freelancer</p>
+                    <p className="text-slate-900 font-black mt-1 text-sm">{selectedOrder.assignedFreelancer.name || 'Assigned'}</p>
+                    <p className="text-slate-500 text-[10px] mt-0.5">{selectedOrder.assignedFreelancer.phone}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Defined Payout</p>
+                    <p className="text-slate-900 font-black mt-1 text-sm">₹{selectedOrder.freelancerPayout}</p>
+                    <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider mt-1 inline-block">Claimed</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Accumulated Work Effort</p>
+                    <p className="text-slate-900 font-black mt-1 text-sm">
+                      {selectedOrder.freelancerTimeLogs?.reduce((sum, log) => sum + log.minutes, 0) || 0} Minutes
+                    </p>
+                  </div>
+                  {selectedOrder.assignedFreelancer.isClockedIn ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse">
+                      <span className="w-1.5 h-1.5 bg-red-600 rounded-full"></span> Live Working
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 text-[10px]">Inactive</span>
+                  )}
+                </div>
+
+                <button 
+                  onClick={async () => {
+                    if (!window.confirm('Are you sure you want to approve this work and authorize payout?')) return;
+                    try {
+                      await axios.post(`/api/freelancer/admin/approve-payout/${selectedOrder._id}`, {}, config);
+                      alert('Work effort verified and payout approved successfully!');
+                      window.location.reload();
+                    } catch (err) {
+                      alert(err.response?.data?.message || 'Failed to approve payout');
+                    }
+                  }}
+                  className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-2"
+                >
+                  <Check size={14} /> Approve Work & Settle Payout
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* ToDo List Card */}
           <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm">
             <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm mb-4 flex items-center gap-2">
