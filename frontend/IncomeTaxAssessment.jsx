@@ -233,17 +233,17 @@ export default function IncomeTaxAssessment() {
   const stepQuestions = QUESTIONS.filter(q => q.id >= activeSection.start && q.id <= activeSection.end);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24 selection:bg-indigo-500/10">
       
       {/* Header */}
-      <header className="h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-md px-6 md:px-12 flex items-center justify-between">
-        <Link to="/dashboard" className="flex items-center gap-2 text-slate-400 hover:text-white transition">
+      <header className="h-20 bg-white border-b border-slate-100 sticky top-0 z-40 backdrop-blur-md px-6 md:px-12 flex items-center justify-between shadow-sm">
+        <Link to="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition">
           <ArrowLeft size={18} />
           <span className="text-xs font-black uppercase tracking-wider">Back to Dashboard</span>
         </Link>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-sm">VR</div>
-          <span className="font-black text-white text-sm tracking-tight uppercase">VR HERE</span>
+          <span className="font-black text-slate-800 text-sm tracking-tight uppercase">VR HERE</span>
         </div>
       </header>
 
@@ -251,25 +251,25 @@ export default function IncomeTaxAssessment() {
         
         {/* Page Title */}
         <div className="text-center mb-10">
-          <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 mb-4">
+          <span className="bg-indigo-50/60 text-indigo-600 border border-indigo-100 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 mb-4">
             <CheckSquare size={12} /> Interactive CA Checklist
           </span>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-            ITR Filing Checklist <span className="text-indigo-500">FY {financialYear}</span>
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+            ITR Filing Checklist <span className="text-indigo-600">FY {financialYear}</span>
           </h1>
-          <p className="text-slate-400 text-xs md:text-sm font-medium mt-2 max-w-lg mx-auto">
+          <p className="text-slate-500 text-xs md:text-sm font-medium mt-2 max-w-lg mx-auto">
             Assessment Year {assessmentYear}. Provide response for each item and attach supporting files.
           </p>
         </div>
 
         {/* Step Indicators */}
-        <div className="bg-slate-900/60 backdrop-blur border border-slate-850 p-6 rounded-3xl mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-white border border-slate-100 p-6 rounded-3xl mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
           <div className="flex-1 w-full">
             <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
               <span>Step {currentStep} of 5</span>
-              <span className="text-indigo-400">{activeSection.name}</span>
+              <span className="text-indigo-600">{activeSection.name}</span>
             </div>
-            <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 rounded-full"
                 style={{ width: `${(currentStep / 5) * 100}%` }}
@@ -279,12 +279,12 @@ export default function IncomeTaxAssessment() {
         </div>
 
         {/* Step Content */}
-        <div className="bg-slate-900 border border-slate-850/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
           
           {/* Step 1 Profile Information */}
           {currentStep === 1 && (
-            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider border-b border-slate-850 pb-2">
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 space-y-4">
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2">
                 Personal Identification
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -297,7 +297,7 @@ export default function IncomeTaxAssessment() {
                     placeholder="Enter your name" 
                     value={clientName}
                     onChange={e => setClientName(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-white transition"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-slate-800 transition"
                   />
                 </div>
                 <div>
@@ -310,7 +310,7 @@ export default function IncomeTaxAssessment() {
                     placeholder="ABCDE1234F" 
                     value={pan}
                     onChange={e => setPan(e.target.value.toUpperCase())}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-white transition uppercase"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-slate-800 transition uppercase"
                   />
                 </div>
               </div>
@@ -319,11 +319,11 @@ export default function IncomeTaxAssessment() {
 
           {/* Checklist questions */}
           <div className="space-y-6">
-            <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-800 pb-3">
+            <h4 className="text-xs font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
               <FileText size={16} /> Section Checklist Items
             </h4>
 
-            <div className="space-y-6 divide-y divide-slate-800">
+            <div className="space-y-6 divide-y divide-slate-100">
               {stepQuestions.map((q) => {
                 const itemRes = responses[q.id] || {};
                 return (
@@ -332,20 +332,20 @@ export default function IncomeTaxAssessment() {
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
                       <div className="max-w-xl">
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 bg-slate-800 text-[10px] text-slate-400 font-black rounded flex items-center justify-center">
+                          <span className="w-5 h-5 bg-slate-100 text-[10px] text-slate-500 font-black rounded flex items-center justify-center">
                             {q.id}
                           </span>
-                          <span className="text-[9px] font-black uppercase tracking-wider bg-slate-800/40 text-slate-400 px-2 py-0.5 rounded border border-slate-800">
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-slate-50 text-slate-400 px-2 py-0.5 rounded border border-slate-100">
                             {q.section}
                           </span>
                         </div>
-                        <p className="text-xs font-bold text-slate-200 mt-2 leading-relaxed">
+                        <p className="text-xs font-bold text-slate-700 mt-2 leading-relaxed">
                           {q.text}
                         </p>
                       </div>
 
                       {/* Yes / No / NA Controls */}
-                      <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-850 self-start">
+                      <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200 self-start">
                         {['Yes', 'No', 'N/A'].map(opt => (
                           <button
                             key={opt}
@@ -358,7 +358,7 @@ export default function IncomeTaxAssessment() {
                                   : opt === 'No'
                                     ? 'bg-rose-600 text-white shadow-md'
                                     : 'bg-indigo-600 text-white shadow-md'
-                                : 'text-slate-400 hover:text-white'
+                                : 'text-slate-450 hover:text-slate-700'
                             }`}
                           >
                             {opt}
@@ -369,7 +369,7 @@ export default function IncomeTaxAssessment() {
 
                     {/* Conditional Remarks & File Upload when "Yes" is checked */}
                     {itemRes.value === 'Yes' && (
-                      <div className="bg-slate-950/50 rounded-2xl p-4 border border-slate-850/50 space-y-3 animate-in fade-in duration-300">
+                      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3 animate-in fade-in duration-300">
                         <div className="flex flex-col md:flex-row items-center gap-3">
                           <div className="flex-1 w-full">
                             <input 
@@ -377,14 +377,14 @@ export default function IncomeTaxAssessment() {
                               placeholder="Add optional CA remarks / notes..."
                               value={itemRes.remarks || ''}
                               onChange={e => handleResponseChange(q.id, 'remarks', e.target.value)}
-                              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-medium focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-white"
+                              className="w-full bg-white border border-slate-250 rounded-xl px-3 py-2 text-xs font-medium focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-800"
                             />
                           </div>
 
                           {/* File Uploader */}
                           <div className="flex items-center gap-2 self-stretch md:self-auto">
                             {!itemRes.documentUrl ? (
-                              <label className={`h-9 px-4 bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer ${uploadingItem === q.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                              <label className={`h-9 px-4 bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 active:scale-95 transition-all text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer ${uploadingItem === q.id ? 'opacity-50 pointer-events-none' : ''}`}>
                                 <Upload size={14} />
                                 {uploadingItem === q.id ? 'Uploading...' : 'Attach Proof'}
                                 <input 
@@ -395,8 +395,8 @@ export default function IncomeTaxAssessment() {
                                 />
                               </label>
                             ) : (
-                              <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 pl-3 pr-2 py-1 rounded-xl">
-                                <span className="text-[10px] font-bold text-indigo-400 max-w-[120px] truncate">
+                              <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 pl-3 pr-2 py-1 rounded-xl">
+                                <span className="text-[10px] font-bold text-indigo-600 max-w-[120px] truncate">
                                   {itemRes.originalFileName}
                                 </span>
                                 <button
@@ -420,12 +420,12 @@ export default function IncomeTaxAssessment() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between border-t border-slate-800 pt-6 mt-8">
+          <div className="flex items-center justify-between border-t border-slate-100 pt-6 mt-8">
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={handleBack}
-                className="px-5 py-3 border border-slate-800 hover:border-slate-700 text-slate-300 rounded-xl text-xs font-black uppercase tracking-wider transition active:scale-[0.98] flex items-center gap-2"
+                className="px-5 py-3 border border-slate-200 hover:border-slate-300 text-slate-600 rounded-xl text-xs font-black uppercase tracking-wider transition active:scale-[0.98] flex items-center gap-2"
               >
                 <ArrowLeft size={14} /> Back
               </button>
@@ -456,11 +456,11 @@ export default function IncomeTaxAssessment() {
         </div>
 
         {/* Info Box */}
-        <div className="bg-slate-900/40 border border-slate-850/80 p-5 rounded-3xl mt-6 flex gap-3">
+        <div className="bg-white border border-slate-100 p-5 rounded-3xl mt-6 flex gap-3 shadow-sm">
           <ShieldAlert className="text-amber-500 flex-shrink-0 mt-0.5" size={18} />
           <div>
             <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">Confidentiality Note</p>
-            <p className="text-[11px] text-slate-400 font-medium leading-normal">
+            <p className="text-[11px] text-slate-500 font-medium leading-normal">
               All documents and identifiers collected (PAN, Aadhaar) are stored on secure isolated storage and are strictly used for your Income Tax Return filing under Section 139A guidelines.
             </p>
           </div>
