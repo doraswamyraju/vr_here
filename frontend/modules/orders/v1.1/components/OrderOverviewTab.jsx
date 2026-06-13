@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   CheckCircle, Clock, FileText, User, 
-  Plus, CheckSquare, RefreshCcw, IndianRupee, AlertCircle, Check 
+  Plus, CheckSquare, RefreshCcw, IndianRupee, AlertCircle, Check, Trash2 
 } from 'lucide-react';
 import { rupees } from '../utils/helpers';
 
@@ -35,6 +35,10 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
   const [isLoadingTodos, setIsLoadingTodos] = useState(false);
   const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [freelancers, setFreelancers] = useState([]);
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [selectedFreelancerId, setSelectedFreelancerId] = useState('');
+
 
   const config = React.useMemo(() => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -108,10 +112,21 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
     }
   };
 
+  const fetchFreelancers = async () => {
+    if (!config) return;
+    try {
+      const { data } = await axios.get('/api/freelancer/admin/users', config);
+      setFreelancers(data.filter(f => f.isActive) || []);
+    } catch (err) {
+      console.error('Error fetching freelancers:', err.message);
+    }
+  };
+
   useEffect(() => {
     fetchTodos();
     fetchAttendance();
     fetchHistory();
+    fetchFreelancers();
   }, [selectedOrder?._id, config]);
 
   return (
@@ -137,34 +152,83 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
             </h4>
 
             {!selectedOrder.assignedFreelancer ? (
-              <div className="space-y-3">
-                <p className="text-xs text-slate-500 font-medium">Broadcast this order to the freelancer pool. The first freelancer to accept will claim the project.</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-grow">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Payout (₹)</span>
-                    <input 
-                      type="number" 
-                      placeholder="Define payout amount"
-                      id="freelancerPayoutInput"
-                      className="w-full pl-20 pr-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-505 outline-none"
-                    />
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest border-b border-slate-50 pb-1">Option A: Broadcast to pool</p>
+                  <p className="text-xs text-slate-500 font-medium">Broadcast this order to the freelancer pool. The first freelancer to accept will claim the project.</p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-grow">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Payout (₹)</span>
+                      <input 
+                        type="number" 
+                        placeholder="Define payout amount"
+                        id="freelancerPayoutInput"
+                        className="w-full pl-20 pr-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                    <button 
+                      onClick={async () => {
+                        const amount = Number(document.getElementById('freelancerPayoutInput')?.value || 0);
+                        if (!amount || amount <= 0) return alert('Please input a valid payout amount');
+                        try {
+                          await axios.put(`/api/freelancer/admin/broadcast/${selectedOrder._id}`, { payoutAmount: amount }, config);
+                          alert('Order broadcasted successfully!');
+                          window.location.reload();
+                        } catch (err) {
+                          alert(err.response?.data?.message || 'Failed to broadcast order');
+                        }
+                      }}
+                      className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition active:scale-[0.98]"
+                    >
+                      Broadcast Order
+                    </button>
                   </div>
-                  <button 
-                    onClick={async () => {
-                      const amount = Number(document.getElementById('freelancerPayoutInput')?.value || 0);
-                      if (!amount || amount <= 0) return alert('Please input a valid payout amount');
-                      try {
-                        await axios.put(`/api/freelancer/admin/broadcast/${selectedOrder._id}`, { payoutAmount: amount }, config);
-                        alert('Order broadcasted successfully!');
-                        window.location.reload();
-                      } catch (err) {
-                        alert(err.response?.data?.message || 'Failed to broadcast order');
-                      }
-                    }}
-                    className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition active:scale-[0.98]"
-                  >
-                    Broadcast Order
-                  </button>
+                </div>
+
+                <div className="border-t border-slate-100 pt-3 space-y-3">
+                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest border-b border-slate-50 pb-1">Option B: Direct Assignment</p>
+                  <p className="text-xs text-slate-500 font-medium">Select an approved freelancer to assign directly to this order.</p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <select
+                      value={selectedFreelancerId}
+                      onChange={(e) => setSelectedFreelancerId(e.target.value)}
+                      className="flex-grow px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none bg-white"
+                    >
+                      <option value="">Select Freelancer...</option>
+                      {freelancers.map(f => (
+                        <option key={f._id} value={f._id}>{f.name} ({f.phone || f.email})</option>
+                      ))}
+                    </select>
+                    
+                    <div className="relative w-40">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Payout</span>
+                      <input 
+                        type="number" 
+                        placeholder="Payout"
+                        id="directPayoutInput"
+                        className="w-full pl-14 pr-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+
+                    <button 
+                      onClick={async () => {
+                        if (!selectedFreelancerId) return alert('Please select a freelancer');
+                        const amount = Number(document.getElementById('directPayoutInput')?.value || 0);
+                        if (!amount || amount <= 0) return alert('Please input a valid payout amount');
+                        try {
+                          await axios.put(`/api/freelancer/admin/broadcast/${selectedOrder._id}`, { payoutAmount: amount }, config);
+                          await axios.post(`/api/freelancer/admin/reassign/${selectedOrder._id}`, { freelancerId: selectedFreelancerId }, config);
+                          alert('Freelancer assigned successfully!');
+                          window.location.reload();
+                        } catch (err) {
+                          alert(err.response?.data?.message || 'Failed to assign freelancer');
+                        }
+                      }}
+                      className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition active:scale-[0.98]"
+                    >
+                      Assign Freelancer
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -198,21 +262,90 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
                   )}
                 </div>
 
-                <button 
-                  onClick={async () => {
-                    if (!window.confirm('Are you sure you want to approve this work and authorize payout?')) return;
-                    try {
-                      await axios.post(`/api/freelancer/admin/approve-payout/${selectedOrder._id}`, {}, config);
-                      alert('Work effort verified and payout approved successfully!');
-                      window.location.reload();
-                    } catch (err) {
-                      alert(err.response?.data?.message || 'Failed to approve payout');
-                    }
-                  }}
-                  className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-2"
-                >
-                  <Check size={14} /> Approve Work & Settle Payout
-                </button>
+                {isReassigning && (
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-3">
+                    <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Reassign Freelancer</p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <select
+                        value={selectedFreelancerId}
+                        onChange={(e) => setSelectedFreelancerId(e.target.value)}
+                        className="flex-grow px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none bg-white"
+                      >
+                        <option value="">Select Freelancer...</option>
+                        {freelancers.map(f => (
+                          <option key={f._id} value={f._id}>{f.name} ({f.phone || f.email})</option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (!selectedFreelancerId) return alert('Please select a freelancer');
+                            if (!window.confirm('Are you sure you want to reassign this order to the selected freelancer?')) return;
+                            try {
+                              await axios.post(`/api/freelancer/admin/reassign/${selectedOrder._id}`, { freelancerId: selectedFreelancerId }, config);
+                              alert('Freelancer reassigned successfully!');
+                              window.location.reload();
+                            } catch (err) {
+                              alert(err.response?.data?.message || 'Failed to reassign freelancer');
+                            }
+                          }}
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition active:scale-[0.98]"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => { setIsReassigning(false); setSelectedFreelancerId(''); }}
+                          className="px-3 py-2 border border-slate-200 hover:bg-slate-150 text-slate-600 rounded-xl text-xs font-black transition"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button 
+                    onClick={async () => {
+                      if (!window.confirm('Are you sure you want to approve this work and authorize payout?')) return;
+                      try {
+                        await axios.post(`/api/freelancer/admin/approve-payout/${selectedOrder._id}`, {}, config);
+                        alert('Work effort verified and payout approved successfully!');
+                        window.location.reload();
+                      } catch (err) {
+                        alert(err.response?.data?.message || 'Failed to approve payout');
+                      }
+                    }}
+                    className="flex-grow h-11 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-2"
+                  >
+                    <Check size={14} /> Approve Work & Settle Payout
+                  </button>
+
+                  {!isReassigning && (
+                    <button 
+                      onClick={() => setIsReassigning(true)}
+                      className="px-4 h-11 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5"
+                    >
+                      Reassign
+                    </button>
+                  )}
+
+                  <button 
+                    onClick={async () => {
+                      if (!window.confirm('Are you sure you want to remove the assigned freelancer? This will return the order to the broadcast pool.')) return;
+                      try {
+                        await axios.post(`/api/freelancer/admin/reassign/${selectedOrder._id}`, { freelancerId: null }, config);
+                        alert('Freelancer assignment removed successfully!');
+                        window.location.reload();
+                      } catch (err) {
+                        alert(err.response?.data?.message || 'Failed to remove freelancer');
+                      }
+                    }}
+                    className="px-4 h-11 border border-rose-250 hover:bg-rose-50 text-rose-600 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5"
+                  >
+                    <Trash2 size={14} /> Remove Assignment
+                  </button>
+                </div>
               </div>
             )}
           </div>

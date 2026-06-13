@@ -350,6 +350,81 @@ const adminGetLiveAttendance = asyncHandler(async (req, res) => {
     res.json(liveUsers);
 });
 
+// @desc    Admin reassign or remove freelancer from order
+// @route   POST /api/freelancer/admin/reassign/:orderId
+// @access  Private (Admin)
+const adminReassignOrder = asyncHandler(async (req, res) => {
+    const { freelancerId } = req.body;
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    if (freelancerId) {
+        const freelancer = await User.findById(freelancerId);
+        if (!freelancer || freelancer.role !== 'freelancer') {
+            res.status(404);
+            throw new Error('Freelancer not found');
+        }
+        order.assignedFreelancer = freelancer._id;
+        order.broadcastStatus = 'Claimed';
+        order.assignedEmployee = freelancer._id;
+    } else {
+        // Unassign
+        order.assignedFreelancer = null;
+        order.broadcastStatus = 'Pending';
+        order.assignedEmployee = null;
+    }
+
+    await order.save();
+    res.json({ message: 'Freelancer assignment updated successfully', order });
+});
+
+// @desc    Admin update freelancer details
+// @route   PUT /api/freelancer/admin/users/:userId
+// @access  Private (Admin)
+const adminUpdateFreelancer = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.userId);
+
+    if (!user || user.role !== 'freelancer') {
+        res.status(404);
+        throw new Error('Freelancer not found');
+    }
+
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.phone = req.body.phone || user.phone;
+    user.skills = req.body.skills || user.skills;
+    user.yearsOfExperience = req.body.yearsOfExperience !== undefined ? req.body.yearsOfExperience : user.yearsOfExperience;
+    user.panCard = req.body.panCard !== undefined ? req.body.panCard : user.panCard;
+    user.bankDetails = req.body.bankDetails || user.bankDetails;
+    user.isActive = req.body.isActive !== undefined ? req.body.isActive : user.isActive;
+
+    if (req.body.password) {
+        user.password = req.body.password;
+    }
+
+    const updatedUser = await user.save();
+    res.json(updatedUser);
+});
+
+// @desc    Admin delete freelancer
+// @route   DELETE /api/freelancer/admin/users/:userId
+// @access  Private (Admin)
+const adminDeleteFreelancer = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.userId);
+
+    if (!user || user.role !== 'freelancer') {
+        res.status(404);
+        throw new Error('Freelancer not found');
+    }
+
+    await user.deleteOne();
+    res.json({ message: 'Freelancer deleted successfully' });
+});
+
 export {
     registerFreelancer,
     getBroadcastedOrders,
@@ -364,5 +439,8 @@ export {
     adminGetFreelancers,
     adminGetPayouts,
     adminPayFreelancer,
-    adminGetLiveAttendance
+    adminGetLiveAttendance,
+    adminReassignOrder,
+    adminUpdateFreelancer,
+    adminDeleteFreelancer
 };

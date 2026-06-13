@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
     Users, Search, RefreshCcw, CheckCircle2, 
-    AlertCircle, Loader2, ArrowUpRight, Briefcase, 
+    AlertCircle, ArrowUpRight, Briefcase, 
     ShieldCheck, Phone, Mail, X, FileText, 
-    Clock, DollarSign, Landmark, Check
+    Clock, DollarSign, Landmark, Check, Trash2, Edit, Eye
 } from 'lucide-react';
 
 const FreelancersModule = ({ token }) => {
@@ -21,6 +21,26 @@ const FreelancersModule = ({ token }) => {
         method: 'NEFT',
         transactionRef: '',
         notes: ''
+    });
+
+    // Detail/Edit Modal States
+    const [selectedFreelancer, setSelectedFreelancer] = useState(null);
+    const [editMode, setEditMode] = useState(false);
+    const [editForm, setEditForm] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        skills: '',
+        yearsOfExperience: 0,
+        panCard: '',
+        resumeUrl: '',
+        bankDetails: {
+            bankName: '',
+            accountNumber: '',
+            ifscCode: '',
+            accountName: ''
+        },
+        isActive: false
     });
 
     const config = {
@@ -66,6 +86,39 @@ const FreelancersModule = ({ token }) => {
         }
     };
 
+    const handleDeleteFreelancer = async (userId) => {
+        if (!window.confirm('Are you sure you want to permanently delete this freelancer? This action cannot be undone.')) return;
+        try {
+            setError('');
+            await axios.delete(`/api/freelancer/admin/users/${userId}`, config);
+            setSuccessMsg('Freelancer deleted successfully!');
+            fetchData();
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to delete freelancer');
+        }
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            setError('');
+            const payload = {
+                ...editForm,
+                skills: typeof editForm.skills === 'string' 
+                    ? editForm.skills.split(',').map(s => s.trim()).filter(Boolean) 
+                    : editForm.skills
+            };
+            await axios.put(`/api/freelancer/admin/users/${selectedFreelancer._id}`, payload, config);
+            setSuccessMsg('Freelancer profile updated successfully!');
+            setSelectedFreelancer(null);
+            fetchData();
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to update freelancer');
+        }
+    };
+
     const handleProcessPaymentSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -79,6 +132,27 @@ const FreelancersModule = ({ token }) => {
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to process payout');
         }
+    };
+
+    const openEditModal = (freelancer) => {
+        setSelectedFreelancer(freelancer);
+        setEditMode(true);
+        setEditForm({
+            name: freelancer.name || '',
+            email: freelancer.email || '',
+            phone: freelancer.phone || '',
+            skills: Array.isArray(freelancer.skills) ? freelancer.skills.join(', ') : '',
+            yearsOfExperience: freelancer.yearsOfExperience || 0,
+            panCard: freelancer.panCard || '',
+            resumeUrl: freelancer.resumeUrl || '',
+            bankDetails: {
+                bankName: freelancer.bankDetails?.bankName || '',
+                accountNumber: freelancer.bankDetails?.accountNumber || '',
+                ifscCode: freelancer.bankDetails?.ifscCode || '',
+                accountName: freelancer.bankDetails?.accountName || ''
+            },
+            isActive: freelancer.isActive || false
+        });
     };
 
     const formatCurrency = (amount) => {
@@ -168,7 +242,7 @@ const FreelancersModule = ({ token }) => {
                                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Experience & Skills</th>
                                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Bank Details</th>
                                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Verification Status</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Action</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 text-xs font-semibold">
@@ -205,14 +279,37 @@ const FreelancersModule = ({ token }) => {
                                                     </span>
                                                 </td>
                                                 <td className="px-8 py-5">
-                                                    {!freelancer.isActive && (
+                                                    <div className="flex items-center justify-end gap-2.5">
+                                                        {!freelancer.isActive && (
+                                                            <button 
+                                                                onClick={() => handleApproveFreelancer(freelancer._id)}
+                                                                className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition"
+                                                            >
+                                                                Approve
+                                                            </button>
+                                                        )}
                                                         <button 
-                                                            onClick={() => handleApproveFreelancer(freelancer._id)}
-                                                            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black shadow-lg transition"
+                                                            onClick={() => { setSelectedFreelancer(freelancer); setEditMode(false); }}
+                                                            className="p-2 bg-slate-50 border border-slate-100 hover:border-slate-200 text-slate-500 rounded-xl transition"
+                                                            title="View Details"
                                                         >
-                                                            Approve Account
+                                                            <Eye className="w-4 h-4" />
                                                         </button>
-                                                    )}
+                                                        <button 
+                                                            onClick={() => openEditModal(freelancer)}
+                                                            className="p-2 bg-slate-50 border border-slate-100 hover:border-slate-200 text-slate-500 rounded-xl transition"
+                                                            title="Edit Details"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDeleteFreelancer(freelancer._id)}
+                                                            className="p-2 bg-rose-50 border border-rose-100 hover:border-rose-200 text-rose-600 rounded-xl transition"
+                                                            title="Delete Freelancer"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )) : (
@@ -338,11 +435,263 @@ const FreelancersModule = ({ token }) => {
                 </>
             )}
 
+            {/* View Details / Edit Modal */}
+            {selectedFreelancer && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-[40px] shadow-2xl max-w-2xl w-full overflow-hidden border border-white/50 max-h-[85vh] flex flex-col">
+                        <div className="bg-slate-950 p-6 flex items-center justify-between border-b-4 border-red-600">
+                            <div>
+                                <h3 className="text-white text-lg font-black tracking-tight">
+                                    {editMode ? 'Edit Freelancer Profile' : 'Freelancer Details'}
+                                </h3>
+                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">
+                                    {selectedFreelancer.name}
+                                </p>
+                            </div>
+                            <button onClick={() => setSelectedFreelancer(null)} className="p-2 text-slate-400 hover:text-white transition">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        
+                        <div className="p-6 md:p-8 overflow-y-auto flex-1 space-y-6">
+                            {editMode ? (
+                                <form onSubmit={handleEditSubmit} className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Full Name</label>
+                                            <input 
+                                                type="text" 
+                                                required
+                                                value={editForm.name}
+                                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-xs focus:border-red-500 focus:bg-white"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Email Address</label>
+                                            <input 
+                                                type="email" 
+                                                required
+                                                value={editForm.email}
+                                                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-xs focus:border-red-500 focus:bg-white"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Phone Number</label>
+                                            <input 
+                                                type="text" 
+                                                required
+                                                value={editForm.phone}
+                                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-xs focus:border-red-500 focus:bg-white"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Experience (Years)</label>
+                                            <input 
+                                                type="number" 
+                                                value={editForm.yearsOfExperience}
+                                                onChange={(e) => setEditForm({ ...editForm, yearsOfExperience: Number(e.target.value) })}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-xs focus:border-red-500 focus:bg-white"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Skills (comma separated)</label>
+                                        <input 
+                                            type="text" 
+                                            value={editForm.skills}
+                                            onChange={(e) => setEditForm({ ...editForm, skills: e.target.value })}
+                                            placeholder="e.g. INCOME TAX, GST, COMPANY INCORPORATION"
+                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-xs focus:border-red-500 focus:bg-white"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">PAN Card Number</label>
+                                            <input 
+                                                type="text" 
+                                                value={editForm.panCard || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, panCard: e.target.value.toUpperCase() })}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-xs focus:border-red-500 focus:bg-white uppercase"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Resume/Portfolio Link</label>
+                                            <input 
+                                                type="text" 
+                                                value={editForm.resumeUrl}
+                                                onChange={(e) => setEditForm({ ...editForm, resumeUrl: e.target.value })}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-xs focus:border-red-500 focus:bg-white"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b pb-1.5">Bank Payout Info</h4>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase block">Bank Name</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={editForm.bankDetails.bankName}
+                                                    onChange={(e) => setEditForm({ 
+                                                        ...editForm, 
+                                                        bankDetails: { ...editForm.bankDetails, bankName: e.target.value } 
+                                                    })}
+                                                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none font-bold text-xs focus:border-red-500"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase block">Account Number</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={editForm.bankDetails.accountNumber}
+                                                    onChange={(e) => setEditForm({ 
+                                                        ...editForm, 
+                                                        bankDetails: { ...editForm.bankDetails, accountNumber: e.target.value } 
+                                                    })}
+                                                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none font-bold text-xs focus:border-red-500"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase block">IFSC Code</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={editForm.bankDetails.ifscCode}
+                                                    onChange={(e) => setEditForm({ 
+                                                        ...editForm, 
+                                                        bankDetails: { ...editForm.bankDetails, ifscCode: e.target.value.toUpperCase() } 
+                                                    })}
+                                                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none font-bold text-xs focus:border-red-500 uppercase"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase block">Account Beneficiary Name</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={editForm.bankDetails.accountName}
+                                                    onChange={(e) => setEditForm({ 
+                                                        ...editForm, 
+                                                        bankDetails: { ...editForm.bankDetails, accountName: e.target.value } 
+                                                    })}
+                                                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none font-bold text-xs focus:border-red-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 px-1">
+                                        <input 
+                                            type="checkbox" 
+                                            id="isActiveCheckbox"
+                                            checked={editForm.isActive}
+                                            onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
+                                            className="w-4 h-4 rounded text-red-600 border-slate-300 focus:ring-red-500"
+                                        />
+                                        <label htmlFor="isActiveCheckbox" className="text-xs font-bold text-slate-700 select-none">
+                                            Freelancer Account is Active / Approved
+                                        </label>
+                                    </div>
+
+                                    <div className="flex gap-4 pt-4 border-t border-slate-100">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setEditMode(false)}
+                                            className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 rounded-xl transition"
+                                        >
+                                            View Details
+                                        </button>
+                                        <button 
+                                            type="submit"
+                                            className="flex-1 py-3 bg-slate-900 text-white font-bold hover:bg-slate-800 rounded-xl shadow-lg transition"
+                                        >
+                                            Save Profile
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                                            <p className="text-[9px] font-black text-slate-450 uppercase tracking-widest">Email Address</p>
+                                            <p className="text-slate-800 font-bold mt-0.5 text-xs">{selectedFreelancer.email}</p>
+                                        </div>
+                                        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                                            <p className="text-[9px] font-black text-slate-455 uppercase tracking-widest">Phone Number</p>
+                                            <p className="text-slate-800 font-bold mt-0.5 text-xs">{selectedFreelancer.phone}</p>
+                                        </div>
+                                        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                                            <p className="text-[9px] font-black text-slate-450 uppercase tracking-widest">Years of Experience</p>
+                                            <p className="text-slate-800 font-black mt-0.5 text-xs">{selectedFreelancer.yearsOfExperience} Years</p>
+                                        </div>
+                                        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                                            <p className="text-[9px] font-black text-slate-450 uppercase tracking-widest">PAN Card</p>
+                                            <p className="text-slate-800 font-black mt-0.5 text-xs">{selectedFreelancer.panCard || 'N/A'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                                        <p className="text-[9px] font-black text-slate-450 uppercase tracking-widest">Skills & Expertise</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {selectedFreelancer.skills.map((s, idx) => (
+                                                <span key={idx} className="bg-red-50 text-red-600 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">{s}</span>
+                                            ))}
+                                            {selectedFreelancer.skills.length === 0 && <span className="text-slate-400 italic">No skills declared</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b pb-1">Bank Payment Parameters</h4>
+                                        <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
+                                            <div>
+                                                <p className="text-[9px] text-slate-400 uppercase">Beneficiary Name</p>
+                                                <p className="text-slate-700 mt-0.5">{selectedFreelancer.bankDetails?.accountName || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] text-slate-400 uppercase">Bank Name</p>
+                                                <p className="text-slate-700 mt-0.5">{selectedFreelancer.bankDetails?.bankName || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] text-slate-400 uppercase">Account Number</p>
+                                                <p className="text-slate-700 font-mono mt-0.5">{selectedFreelancer.bankDetails?.accountNumber || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] text-slate-400 uppercase">IFSC Code</p>
+                                                <p className="text-slate-700 font-mono mt-0.5">{selectedFreelancer.bankDetails?.ifscCode || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 pt-4 border-t border-slate-100">
+                                        <button 
+                                            onClick={() => openEditModal(selectedFreelancer)}
+                                            className="flex-1 py-3 bg-slate-900 text-white font-bold hover:bg-slate-800 rounded-xl shadow-lg transition"
+                                        >
+                                            Edit Details
+                                        </button>
+                                        <button 
+                                            onClick={() => setSelectedFreelancer(null)}
+                                            className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 rounded-xl transition"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Payout Processing Modal */}
             {processingPayout && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md animate-fade-in">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-[40px] shadow-2xl max-w-lg w-full overflow-hidden border border-white/50">
-                        <div className="bg-slate-950 p-8 flex items-center justify-between border-b-4 border-red-600">
+                        <div className="bg-slate-955 p-8 flex items-center justify-between border-b-4 border-red-600">
                             <div>
                                 <h3 className="text-white text-xl font-black tracking-tight">Record Freelancer Payment</h3>
                                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Log bank transfer settlements</p>
