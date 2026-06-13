@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Upload, Briefcase, CreditCard, ChevronRight, AlertTriangle, Bell, Plus,
     Search, Gift, Newspaper, Building2, FileCheck, Shield,
@@ -29,6 +30,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenProject, onOpenNotifications }) => {
+    const navigate = useNavigate();
     const activeOrders = orders.filter(o => o.status !== 'Completed');
     const pendingActions = orders.filter(o => o.status === 'Pending Documents' || o.status === 'Waiting for Clarification');
     const unreadNotifications = notifications.filter(n => !n.isRead);
@@ -210,7 +212,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                     key={service.id}
                                     onClick={() => {
                                         if (service.key.startsWith('/')) {
-                                            window.location.href = service.key;
+                                            navigate(service.key);
                                         } else {
                                             setActiveTab(service.key);
                                         }
