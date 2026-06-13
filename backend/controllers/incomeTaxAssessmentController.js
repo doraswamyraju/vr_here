@@ -21,7 +21,7 @@ const uploadAssessmentDocument = asyncHandler(async (req, res) => {
 // @route   POST /api/income-tax-assessment
 // @access  Private
 const submitAssessment = asyncHandler(async (req, res) => {
-    const { clientName, pan, financialYear, assessmentYear, responses } = req.body;
+    const { clientName, pan, financialYear, assessmentYear, responses, orderId } = req.body;
 
     if (!clientName || !pan || !responses || !Array.isArray(responses)) {
         res.status(400);
@@ -30,6 +30,7 @@ const submitAssessment = asyncHandler(async (req, res) => {
 
     const assessment = await IncomeTaxAssessment.create({
         user: req.user ? req.user._id : null,
+        orderId: orderId || null,
         clientName,
         pan,
         financialYear,
@@ -46,13 +47,21 @@ const submitAssessment = asyncHandler(async (req, res) => {
 // @access  Private
 const getAssessments = asyncHandler(async (req, res) => {
     let assessments;
+    const query = {};
 
-    if (req.user.role === 'admin') {
-        assessments = await IncomeTaxAssessment.find({})
+    if (req.query.orderId) {
+        query.orderId = req.query.orderId;
+    } else {
+        query.orderId = null;
+    }
+
+    if (req.user.role === 'admin' || req.user.role === 'employee') {
+        assessments = await IncomeTaxAssessment.find(query)
             .populate('user', 'name email')
             .sort({ createdAt: -1 });
     } else {
-        assessments = await IncomeTaxAssessment.find({ user: req.user._id })
+        query.user = req.user._id;
+        assessments = await IncomeTaxAssessment.find(query)
             .sort({ createdAt: -1 });
     }
 

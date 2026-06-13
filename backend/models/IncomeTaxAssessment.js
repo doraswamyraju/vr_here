@@ -29,6 +29,13 @@ const responseSchema = mongoose.Schema({
     originalFileName: {
         type: String,
         default: null
+    },
+    documents: {
+        type: [{
+            documentUrl: String,
+            originalFileName: String
+        }],
+        default: []
     }
 });
 
@@ -36,6 +43,12 @@ const incomeTaxAssessmentSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+        required: false,
+        default: null
+    },
+    orderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order',
         required: false,
         default: null
     },

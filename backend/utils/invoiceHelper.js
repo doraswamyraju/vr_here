@@ -143,6 +143,12 @@ export const generateAndEmailInvoice = async (order, baseAmount, options = {}) =
                 ${adjustConsultation ? '<p style="margin: 5px 0; color: #16a34a;"><strong>Discount Applied:</strong> INR 499 (Consultation adjusted)</p>' : ''}
                 ${dueDate ? `<p style="margin: 5px 0;"><strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}</p>` : ''}
             </div>
+            ${order.serviceName?.toLowerCase().includes('income tax') || order.packageName?.toLowerCase().includes('itr') ? `
+            <div style="background-color: #fffbeb; border: 1px solid #fef3c7; padding: 15px; border-radius: 12px; margin: 20px 0; color: #b45309;">
+                <p style="margin: 0; font-weight: bold; font-size: 14px;">Action Required: ITR Assessment Checklist</p>
+                <p style="margin: 5px 0 0 0; font-size: 12px; line-height: 1.5; color: #d97706;">Please complete your interactive income tax checklist. This helps our expert CAs review your deductions, assets, and tax profiles correctly: <a href="https://vrhere.in/income-tax-assessment?orderId=${order._id}" style="color: #4f46e5; text-decoration: underline; font-weight: bold;">Fill ITR Checklist Now</a>.</p>
+            </div>
+            ` : ''}
             ${paymentLinkUrl ? `
             <div style="text-align: center; margin: 30px 0;">
                 <a href="${paymentLinkUrl}" style="background-color: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Pay Invoice Now</a>

@@ -344,10 +344,15 @@ const createOrder = asyncHandler(async (req, res) => {
 
     // Trigger customer in-app notification & email for admin-created manual orders
     if (createdOrder.user) {
+        const isITR = serviceName?.toLowerCase().includes('income tax') || packageName?.toLowerCase().includes('itr');
+        const customMessage = isITR
+            ? `An order for ${serviceName} (${packageName}) has been registered on your behalf. Please complete your ITR Checklist questionnaire at https://vrhere.in/income-tax-assessment?orderId=${createdOrder._id} and review your raised invoice to proceed.`
+            : `An order for ${serviceName} (${packageName}) has been registered on your behalf. Our team is commencing work.`;
+
         await triggerNotification({
             userId: createdOrder.user,
             title: 'New Compliance Order Registered',
-            message: `An order for ${serviceName} (${packageName}) has been registered on your behalf. Our team is commencing work.`,
+            message: customMessage,
             type: 'Order',
             emailOpts: {
                 send: true,

@@ -294,7 +294,13 @@ const IncomeTaxPage = () => {
           requiresEmailLogin
         });
         setIsModalOpen(false);
-        navigate(requiresEmailLogin ? '/login' : '/customer-dashboard');
+        if (requiresEmailLogin) {
+          navigate('/login');
+        } else if (selectedPlan?.id !== 'consultation') {
+          navigate(`/income-tax-assessment?orderId=${data?.order?._id}`);
+        } else {
+          navigate('/customer-dashboard');
+        }
       },
       onFailure: (error) => {
         console.error('Payment Flow Error:', error);

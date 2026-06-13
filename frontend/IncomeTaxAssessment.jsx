@@ -97,6 +97,7 @@ const QUESTIONS = [
 
 export default function IncomeTaxAssessment() {
   const navigate = useNavigate();
+  const orderId = new URLSearchParams(window.location.search).get('orderId') || null;
   const [currentStep, setCurrentStep] = useState(1);
   const [clientName, setClientName] = useState('');
   const [pan, setPan] = useState('');
@@ -125,7 +126,8 @@ export default function IncomeTaxAssessment() {
         value: 'N/A',
         remarks: '',
         documentUrl: null,
-        originalFileName: null
+        originalFileName: null,
+        documents: []
       };
     });
     setResponses(initialResponses);
@@ -157,8 +159,18 @@ export default function IncomeTaxAssessment() {
         }
       };
       const { data } = await axios.post('/api/income-tax-assessment/upload', formData, config);
-      handleResponseChange(id, 'documentUrl', data.documentUrl);
-      handleResponseChange(id, 'originalFileName', data.originalFileName);
+      
+      setResponses(prev => {
+        const item = prev[id] || {};
+        const docs = item.documents || [];
+        return {
+          ...prev,
+          [id]: {
+            ...item,
+            documents: [...docs, { documentUrl: data.documentUrl, originalFileName: data.originalFileName }]
+          }
+        };
+      });
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to upload document');
     } finally {
@@ -166,9 +178,19 @@ export default function IncomeTaxAssessment() {
     }
   };
 
-  const handleRemoveFile = (id) => {
-    handleResponseChange(id, 'documentUrl', null);
-    handleResponseChange(id, 'originalFileName', null);
+  const handleRemoveFile = (id, idx) => {
+    setResponses(prev => {
+      const item = prev[id] || {};
+      const docs = [...(item.documents || [])];
+      docs.splice(idx, 1);
+      return {
+        ...prev,
+        [id]: {
+          ...item,
+          documents: docs
+        }
+      };
+    });
   };
 
   const validateStep = () => {
@@ -214,7 +236,8 @@ export default function IncomeTaxAssessment() {
         pan,
         financialYear,
         assessmentYear,
-        responses: Object.values(responses)
+        responses: Object.values(responses),
+        orderId
       };
 
       await axios.post('/api/income-tax-assessment', payload, config);
@@ -370,26 +393,48 @@ export default function IncomeTaxAssessment() {
                           </div>
 
                           {/* File Uploader */}
-                          <div className="flex items-center gap-2 self-stretch md:self-auto">
-                            {!itemRes.documentUrl ? (
-                              <label className={`h-9 px-4 bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 active:scale-95 transition-all text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer ${uploadingItem === q.id ? 'opacity-50 pointer-events-none' : ''}`}>
-                                <Upload size={14} />
-                                {uploadingItem === q.id ? 'Uploading...' : 'Attach Proof'}
-                                <input 
-                                  type="file" 
-                                  className="hidden" 
-                                  onChange={e => handleFileUpload(q.id, e)}
-                                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-                                />
-                              </label>
-                            ) : (
+                          <div className="flex flex-col gap-2 self-stretch md:self-auto w-full md:w-auto">
+                            <label className={`h-9 px-4 bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 active:scale-95 transition-all text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer ${uploadingItem === q.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                              <Upload size={14} />
+                              {uploadingItem === q.id ? 'Uploading...' : 'Attach Proof'}
+                              <input 
+                                type="file" 
+                                className="hidden" 
+                                onChange={e => handleFileUpload(q.id, e)}
+                                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                              />
+                            </label>
+                            
+                            {(itemRes.documents || []).length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {itemRes.documents.map((doc, idx) => (
+                                  <div key={idx} className="flex items-center gap-2 bg-slate-105 border border-slate-200 pl-3 pr-2 py-1 rounded-xl">
+                                    <span className="text-[10px] font-bold text-indigo-650 max-w-[120px] truncate">
+                                      {doc.originalFileName}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveFile(q.id, idx)}
+                                      className="p-1 text-rose-500 hover:bg-rose-500/10 rounded-md transition"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {itemRes.documentUrl && (
                               <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 pl-3 pr-2 py-1 rounded-xl">
                                 <span className="text-[10px] font-bold text-indigo-600 max-w-[120px] truncate">
-                                  {itemRes.originalFileName}
+                                  {itemRes.originalFileName} (Legacy)
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => handleRemoveFile(q.id)}
+                                  onClick={() => {
+                                    handleResponseChange(q.id, 'documentUrl', null);
+                                    handleResponseChange(q.id, 'originalFileName', null);
+                                  }}
                                   className="p-1 text-rose-500 hover:bg-rose-500/10 rounded-md transition"
                                 >
                                   <Trash2 size={13} />

@@ -39,12 +39,78 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
   const [isReassigning, setIsReassigning] = useState(false);
   const [selectedFreelancerId, setSelectedFreelancerId] = useState('');
 
+  const [itrAssessment, setItrAssessment] = useState(null);
+  const [isLoadingAssessment, setIsLoadingAssessment] = useState(false);
+  const [isRaisingInvoice, setIsRaisingInvoice] = useState(false);
+  const [balanceInvoiceForm, setBalanceInvoiceForm] = useState({
+    amount: '',
+    packageName: selectedOrder?.packageName || '',
+    notes: 'Balance fees invoice raised by CA review.',
+    dueDate: ''
+  });
+  const [invoiceError, setInvoiceError] = useState('');
+  const [invoiceSuccess, setInvoiceSuccess] = useState('');
+
 
   const config = React.useMemo(() => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
     const activeToken = token || userInfo?.token;
     return activeToken ? { headers: { Authorization: `Bearer ${activeToken}` } } : null;
   }, [token]);
+
+  const fetchItrAssessment = async () => {
+    if (!config || !selectedOrder?._id) return;
+    const isITR = selectedOrder.serviceName?.toLowerCase().includes('income tax') || selectedOrder.packageName?.toLowerCase().includes('itr');
+    if (!isITR) {
+      setItrAssessment(null);
+      return;
+    }
+    setIsLoadingAssessment(true);
+    try {
+      const { data } = await axios.get(`/api/income-tax-assessment?orderId=${selectedOrder._id}`, config);
+      if (data && data.length > 0) {
+        setItrAssessment(data[0]);
+      } else {
+        setItrAssessment(null);
+      }
+    } catch (err) {
+      console.error('Error fetching ITR assessment:', err.message);
+    } finally {
+      setIsLoadingAssessment(false);
+    }
+  };
+
+  const handleRaiseBalanceInvoice = async (e) => {
+    e.preventDefault();
+    if (!balanceInvoiceForm.amount || !config) return;
+    setIsRaisingInvoice(true);
+    setInvoiceError('');
+    setInvoiceSuccess('');
+    try {
+      await axios.post(`/api/orders/${selectedOrder._id}/invoices/adjusted`, {
+        packageName: balanceInvoiceForm.packageName || selectedOrder.packageName,
+        amount: Number(balanceInvoiceForm.amount),
+        adjustConsultation: false,
+        adjustPreviousAmount: false,
+        dueDate: balanceInvoiceForm.dueDate || null,
+        notes: balanceInvoiceForm.notes
+      }, config);
+      setInvoiceSuccess('Balance invoice raised and sent to client successfully!');
+      setBalanceInvoiceForm({
+        amount: '',
+        packageName: selectedOrder?.packageName || '',
+        notes: 'Balance fees invoice raised by CA review.',
+        dueDate: ''
+      });
+      if (typeof window.location.reload === 'function') {
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (err) {
+      setInvoiceError(err.response?.data?.message || 'Failed to raise balance invoice');
+    } finally {
+      setIsRaisingInvoice(false);
+    }
+  };
 
   const fetchTodos = async () => {
     if (!config || !selectedOrder?._id) return;
@@ -127,6 +193,7 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
     fetchAttendance();
     fetchHistory();
     fetchFreelancers();
+    fetchItrAssessment();
   }, [selectedOrder?._id, config]);
 
   return (
@@ -422,6 +489,130 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
               )}
             </div>
           </div>
+
+          {/* ITR Assessment Checklist Details & Raise Balance Invoice */}
+          {itrAssessment && (
+            <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm space-y-6">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm flex items-center gap-2">
+                  <FileText size={16} className="text-indigo-600" /> Client ITR Checklist Response
+                </h4>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                  itrAssessment.status === 'Approved' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                }`}>
+                  {itrAssessment.status}
+                </span>
+              </div>
+
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 text-xs">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Client PAN</p>
+                  <p className="font-black text-slate-800 text-sm mt-0.5 uppercase">{itrAssessment.pan}</p>
+                </div>
+
+                <div className="space-y-3.5 border-t pt-3.5">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Checked Items & Attachments</p>
+                  {itrAssessment.responses?.filter(r => r.value === 'Yes').map((r, idx) => (
+                    <div key={idx} className="p-3 bg-slate-50 border rounded-xl space-y-2">
+                      <div className="flex justify-between items-start">
+                        <span className="font-bold text-slate-800 leading-snug">{r.description}</span>
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Yes</span>
+                      </div>
+                      {r.remarks && <p className="text-[10px] text-slate-500 italic mt-1">Remarks: {r.remarks}</p>}
+                      
+                      {/* Render attachments */}
+                      {((r.documents && r.documents.length > 0) || r.documentUrl) && (
+                        <div className="flex flex-wrap gap-1.5 pt-1.5">
+                          {r.documents?.map((doc, dIdx) => (
+                            <a 
+                              key={dIdx}
+                              href={doc.documentUrl} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="inline-flex items-center gap-1 bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-650 transition"
+                            >
+                              <FileText size={10} />
+                              <span className="truncate max-w-[100px]">{doc.originalFileName}</span>
+                            </a>
+                          ))}
+                          {r.documentUrl && !r.documents?.length && (
+                            <a 
+                              href={r.documentUrl} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="inline-flex items-center gap-1 bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-650 transition"
+                            >
+                              <FileText size={10} />
+                              <span className="truncate max-w-[100px]">{r.originalFileName || 'Legacy attachment'}</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {itrAssessment.responses?.filter(r => r.value === 'Yes').length === 0 && (
+                    <p className="text-slate-400 italic text-[11px]">No items marked as 'Yes' in this checklist.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Raise Balance Invoice Block */}
+              <div className="border-t pt-5 space-y-4">
+                <h5 className="font-black text-slate-900 uppercase tracking-tight text-xs flex items-center gap-2">
+                  <IndianRupee size={14} className="text-emerald-600" /> Raise Balance/Remaining Fees Invoice
+                </h5>
+
+                {invoiceError && (
+                  <div className="p-3 bg-rose-50 text-rose-700 text-[10px] font-bold rounded-lg">{invoiceError}</div>
+                )}
+                {invoiceSuccess && (
+                  <div className="p-3 bg-green-50 text-green-700 text-[10px] font-bold rounded-lg">{invoiceSuccess}</div>
+                )}
+
+                <form onSubmit={handleRaiseBalanceInvoice} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">Balance Amount (INR)</label>
+                      <input 
+                        type="number" 
+                        required
+                        placeholder="2500" 
+                        value={balanceInvoiceForm.amount}
+                        onChange={e => setBalanceInvoiceForm(prev => ({ ...prev, amount: e.target.value }))}
+                        className="w-full p-2.5 border rounded-xl text-xs font-bold outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">Due Date</label>
+                      <input 
+                        type="date" 
+                        value={balanceInvoiceForm.dueDate}
+                        onChange={e => setBalanceInvoiceForm(prev => ({ ...prev, dueDate: e.target.value }))}
+                        className="w-full p-2.5 border rounded-xl text-xs font-bold outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">Invoice Notes</label>
+                    <textarea 
+                      placeholder="Specify billing description..." 
+                      value={balanceInvoiceForm.notes}
+                      onChange={e => setBalanceInvoiceForm(prev => ({ ...prev, notes: e.target.value }))}
+                      rows={2}
+                      className="w-full p-2.5 border rounded-xl text-xs font-medium outline-none focus:border-indigo-500 resize-none"
+                    />
+                  </div>
+                  <button 
+                    type="submit" 
+                    disabled={isRaisingInvoice}
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50"
+                  >
+                    {isRaisingInvoice ? 'Generating Invoice...' : 'Generate & Email Balance Invoice'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
 
         </div>
 
