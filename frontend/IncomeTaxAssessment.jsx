@@ -152,12 +152,13 @@ export default function IncomeTaxAssessment() {
     formData.append('document', file);
 
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
+      const headers = {
+        'Content-Type': 'multipart/form-data'
       };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      const config = { headers };
       const { data } = await axios.post('/api/income-tax-assessment/upload', formData, config);
       
       setResponses(prev => {
@@ -224,12 +225,13 @@ export default function IncomeTaxAssessment() {
     setIsSubmitting(true);
 
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      const headers = {
+        'Content-Type': 'application/json'
       };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      const config = { headers };
 
       const payload = {
         clientName,

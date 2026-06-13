@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import IncomeTaxAssessment from '../models/IncomeTaxAssessment.js';
+import { logOrderActivity } from '../utils/activityLogger.js';
 
 // @desc    Upload document for checklist item
 // @route   POST /api/income-tax-assessment/upload
@@ -38,6 +39,20 @@ const submitAssessment = asyncHandler(async (req, res) => {
         responses,
         status: 'Pending'
     });
+
+    if (orderId) {
+        try {
+            await logOrderActivity(
+                orderId,
+                req.user ? req.user._id : orderId, // Actor fallback
+                'REQUIREMENT_UPLOAD',
+                `ITR Assessment Checklist submitted by client for PAN ${pan}`,
+                { pan, clientName }
+            );
+        } catch (logErr) {
+            console.error('Failed to log ITR assessment submission activity:', logErr.message);
+        }
+    }
 
     res.status(201).json(assessment);
 });

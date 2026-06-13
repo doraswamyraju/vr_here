@@ -205,11 +205,98 @@ const OrdersModule = ({
     }
   };
 
+  const [itrAssessment, setItrAssessment] = useState(null);
+  const fetchItrAssessment = async () => {
+    if (!config || !selectedOrderId) return;
+    const order = orders.find(o => o._id === selectedOrderId);
+    const isITR = order?.serviceName?.toLowerCase().includes('income tax') || order?.packageName?.toLowerCase().includes('itr');
+    if (!isITR) {
+      setItrAssessment(null);
+      return;
+    }
+    try {
+      const { data } = await axios.get(`/api/income-tax-assessment?orderId=${selectedOrderId}`, config);
+      if (data && data.length > 0) {
+        setItrAssessment(data[0]);
+      } else {
+        setItrAssessment(null);
+      }
+    } catch (err) {
+      console.error('Error fetching ITR assessment:', err.message);
+    }
+  };
+
+  const handleDownloadAllDocs = () => {
+    if (!selectedOrder) return;
+    const urls = [];
+    
+    if (selectedOrder.finalCertificateUrl) {
+      urls.push({ name: 'Final_Certificate', url: selectedOrder.finalCertificateUrl });
+    }
+    
+    (selectedOrder.customerRequirements || []).forEach(r => {
+      if (r.uploadedDocumentUrl) {
+        urls.push({ name: r.title || 'Requirement', url: r.uploadedDocumentUrl });
+      }
+    });
+
+    const requirementUrls = new Set(
+      (selectedOrder.customerRequirements || [])
+        .map(r => r.uploadedDocumentUrl)
+        .filter(Boolean)
+    );
+
+    (selectedOrder.clientDocuments || []).forEach(doc => {
+      if (doc.url && !requirementUrls.has(doc.url)) {
+        urls.push({ name: doc.name || 'ClientDoc', url: doc.url });
+      }
+    });
+
+    (selectedOrder.adminDocuments || []).forEach(doc => {
+      if (doc.url) {
+        urls.push({ name: doc.name || 'AdminDoc', url: doc.url });
+      }
+    });
+
+    if (itrAssessment) {
+      itrAssessment.responses?.forEach(r => {
+        if (r.documents && r.documents.length > 0) {
+          r.documents.forEach((doc, dIdx) => {
+            if (doc.documentUrl) {
+              urls.push({ name: `${r.description}_${dIdx + 1}`, url: doc.documentUrl });
+            }
+          });
+        } else if (r.documentUrl) {
+          urls.push({ name: r.description, url: r.documentUrl });
+        }
+      });
+    }
+
+    if (urls.length === 0) {
+      alert('No documents available to download.');
+      return;
+    }
+
+    // Trigger download for each URL with a short delay to bypass browser blocking
+    urls.forEach((item, index) => {
+      setTimeout(() => {
+        const a = document.createElement('a');
+        a.href = item.url;
+        a.target = '_blank';
+        a.download = item.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, index * 400);
+    });
+  };
+
   useEffect(() => {
     if (selectedOrderId) {
       fetchPayments();
       fetchHistory();
       fetchTodos();
+      fetchItrAssessment();
     }
   }, [selectedOrderId, orderDetailTab, config]);
 
@@ -537,9 +624,18 @@ const OrdersModule = ({
               )}
               {orderDetailTab === 'Docs' && (
                 <div className="space-y-4">
-                  <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm">
-                    Documents Vault
-                  </h4>
+                  <div className="flex items-center justify-between border-b pb-2 mb-4">
+                    <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm">
+                      Documents Vault
+                    </h4>
+                    <button
+                      onClick={handleDownloadAllDocs}
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Download size={14} /> Download All
+                    </button>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {selectedOrder.finalCertificateUrl && (
                       <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
@@ -583,6 +679,30 @@ const OrdersModule = ({
                           </div>
                         ));
                     })()}
+
+                    {/* ITR Checklist Documents */}
+                    {itrAssessment && itrAssessment.responses?.map((r) => {
+                      const docs = [];
+                      if (r.documents && r.documents.length > 0) {
+                        r.documents.forEach((doc) => {
+                          docs.push({ name: `${r.description} - ${doc.originalFileName}`, url: doc.documentUrl });
+                        });
+                      } else if (r.documentUrl) {
+                        docs.push({ name: `${r.description} - ${r.originalFileName || 'Proof'}`, url: r.documentUrl });
+                      }
+                      return docs.map((doc, idx) => (
+                        <div key={`${r._id || r.itemId}-${idx}`} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
+                          <div>
+                            <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">ITR Checklist Upload</p>
+                          </div>
+                          <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                            <Eye size={16} />
+                          </a>
+                        </div>
+                      ));
+                    })}
+
                     {(selectedOrder.adminDocuments || []).map((doc) => (
                       <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
                         <div>
@@ -597,7 +717,8 @@ const OrdersModule = ({
                     {!selectedOrder.finalCertificateUrl && 
                      (selectedOrder.customerRequirements || []).filter(r => r.uploadedDocumentUrl).length === 0 && 
                      (selectedOrder.clientDocuments || []).length === 0 && 
-                     (selectedOrder.adminDocuments || []).length === 0 && (
+                     (selectedOrder.adminDocuments || []).length === 0 && 
+                     (!itrAssessment || !itrAssessment.responses?.some(r => r.documentUrl || r.documents?.length > 0)) && (
                       <p className="col-span-full text-center text-xs text-slate-400 italic py-4">No documents available inside the vault.</p>
                     )}
                   </div>
