@@ -6,33 +6,41 @@ import ITRAssessmentCustomerView from './ITRAssessmentCustomerView';
 
 const DocumentsView = ({ orders, refreshOrders, userInfo }) => {
   const [activeOrder, setActiveOrder] = useState(orders[0]?._id || '');
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
   const [activeTab, setActiveTab] = useState('requirements');
 
   const selectedOrder = useMemo(() => orders.find((order) => order._id === activeOrder), [orders, activeOrder]);
 
   const handleUpload = async (event) => {
     event.preventDefault();
-    if (!file || !activeOrder) return;
-
-    const formData = new FormData();
-    formData.append('document', file);
+    if (files.length === 0 || !activeOrder) return;
 
     setIsUploading(true);
     try {
-      await axios.post(`/api/orders/${activeOrder}/documents`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${userInfo.token}`
-        }
-      });
-      setFile(null);
+      for (let i = 0; i < files.length; i++) {
+        setUploadStatus(`Uploading ${i + 1} of ${files.length}...`);
+        const formData = new FormData();
+        formData.append('document', files[i]);
+        formData.append('name', files[i].name);
+
+        await axios.post(`/api/orders/${activeOrder}/documents`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${userInfo.token}`
+          }
+        });
+      }
+      setFiles([]);
       refreshOrders();
+      alert('All documents uploaded successfully.');
     } catch (error) {
-      alert('Error uploading document');
+      alert('Error uploading document(s)');
+    } finally {
+      setIsUploading(false);
+      setUploadStatus('');
     }
-    setIsUploading(false);
   };
 
   return (
@@ -104,15 +112,41 @@ const DocumentsView = ({ orders, refreshOrders, userInfo }) => {
 
           {activeTab === 'uploaded' && (
             <div className="space-y-4">
-              <form onSubmit={handleUpload} className="bg-slate-900 rounded-2xl p-5 text-white">
-                <p className="font-black text-sm">Upload General Document</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <input type="file" onChange={(event) => setFile(event.target.files?.[0] || null)} className="text-xs" />
-                  <button type="submit" disabled={isUploading || !file} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-black disabled:opacity-50 inline-flex items-center gap-1">
+              <form onSubmit={handleUpload} className="bg-slate-900 rounded-2xl p-5 text-white flex flex-col gap-3">
+                <p className="font-black text-sm">Upload General Documents</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input 
+                    type="file" 
+                    multiple 
+                    onChange={(event) => setFiles(Array.from(event.target.files || []))} 
+                    className="text-xs" 
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={isUploading || files.length === 0} 
+                    className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-black disabled:opacity-50 inline-flex items-center gap-1"
+                  >
                     <Upload size={12} />
-                    {isUploading ? 'Uploading...' : 'Upload'}
+                    {isUploading ? (uploadStatus || 'Uploading...') : 'Upload All'}
                   </button>
                 </div>
+                {files.length > 0 && (
+                  <div className="mt-1 space-y-1.5 w-full bg-slate-800/50 p-3 rounded-xl">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Selected Files ({files.length}):</p>
+                    {files.map((f, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs text-slate-200">
+                        <span className="truncate max-w-[250px] font-medium">{f.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                          className="text-red-400 hover:text-red-300 font-bold text-[10px] uppercase ml-2"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </form>
               {(selectedOrder.clientDocuments || []).map((doc) => (
                 <div key={doc._id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">

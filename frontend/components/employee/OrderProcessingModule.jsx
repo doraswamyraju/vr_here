@@ -35,6 +35,36 @@ const OrderProcessingModule = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
 
+  const [adminDocFile, setAdminDocFile] = useState(null);
+  const [adminDocName, setAdminDocName] = useState('');
+  const [isUploadingAdminDoc, setIsUploadingAdminDoc] = useState(false);
+  const [itrAssessment, setItrAssessment] = useState(null);
+  const [isUploadingFinal, setIsUploadingFinal] = useState(false);
+
+  const handleUploadFinalCertificate = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!file || !config) return;
+    setIsUploadingFinal(true);
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('isFinalCertificate', 'true');
+    try {
+      await axios.post(`/api/orders/${selectedOrder._id}/documents`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...config.headers
+        }
+      });
+      alert('Final certificate uploaded successfully and project status set to Completed!');
+      setFile(null);
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to upload final certificate');
+    } finally {
+      setIsUploadingFinal(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedOrder) {
       setEditedName(selectedOrder.serviceName || '');
@@ -77,10 +107,119 @@ const OrderProcessingModule = ({
     }
   };
 
+  const fetchItrAssessment = async () => {
+    if (!config || !selectedOrder?._id) return;
+    const isITR = selectedOrder?.serviceName?.toLowerCase().includes('income tax') || selectedOrder?.packageName?.toLowerCase().includes('itr');
+    if (!isITR) {
+      setItrAssessment(null);
+      return;
+    }
+    try {
+      const { data } = await axios.get(`/api/income-tax-assessment?orderId=${selectedOrder._id}`, config);
+      if (data && data.length > 0) {
+        setItrAssessment(data[0]);
+      } else {
+        setItrAssessment(null);
+      }
+    } catch (err) {
+      console.error('Error fetching ITR assessment:', err.message);
+    }
+  };
+
+  const handleUploadAdminDoc = async (e) => {
+    e.preventDefault();
+    if (!adminDocFile || !config) return;
+    setIsUploadingAdminDoc(true);
+    const formData = new FormData();
+    formData.append('document', adminDocFile);
+    formData.append('name', adminDocName.trim() || adminDocFile.name);
+    try {
+      await axios.post(`/api/orders/${selectedOrder._id}/documents`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...config.headers
+        }
+      });
+      alert('Document uploaded successfully to customer portal!');
+      setAdminDocFile(null);
+      setAdminDocName('');
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to upload document');
+    } finally {
+      setIsUploadingAdminDoc(false);
+    }
+  };
+
+  const handleDownloadAllDocs = () => {
+    if (!selectedOrder) return;
+    const urls = [];
+    
+    if (selectedOrder.finalCertificateUrl) {
+      urls.push({ name: 'Final_Certificate', url: selectedOrder.finalCertificateUrl });
+    }
+    
+    (selectedOrder.customerRequirements || []).forEach(r => {
+      if (r.uploadedDocumentUrl) {
+        urls.push({ name: r.title || 'Requirement', url: r.uploadedDocumentUrl });
+      }
+    });
+
+    const requirementUrls = new Set(
+      (selectedOrder.customerRequirements || [])
+        .map(r => r.uploadedDocumentUrl)
+        .filter(Boolean)
+    );
+
+    (selectedOrder.clientDocuments || []).forEach(doc => {
+      if (doc.url && !requirementUrls.has(doc.url)) {
+        urls.push({ name: doc.name || 'ClientDoc', url: doc.url });
+      }
+    });
+
+    (selectedOrder.adminDocuments || []).forEach(doc => {
+      if (doc.url) {
+        urls.push({ name: doc.name || 'AdminDoc', url: doc.url });
+      }
+    });
+
+    if (itrAssessment) {
+      itrAssessment.responses?.forEach(r => {
+        if (r.documents && r.documents.length > 0) {
+          r.documents.forEach((doc, dIdx) => {
+            if (doc.documentUrl) {
+              urls.push({ name: `${r.description}_${dIdx + 1}`, url: doc.documentUrl });
+            }
+          });
+        } else if (r.documentUrl) {
+          urls.push({ name: r.description, url: r.documentUrl });
+        }
+      });
+    }
+
+    if (urls.length === 0) {
+      alert('No documents available to download.');
+      return;
+    }
+
+    urls.forEach((item, index) => {
+      setTimeout(() => {
+        const a = document.createElement('a');
+        a.href = item.url;
+        a.target = '_blank';
+        a.download = item.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, index * 400);
+    });
+  };
+
   useEffect(() => {
     if (selectedOrder?._id) {
       fetchPayments();
       fetchHistory();
+      fetchItrAssessment();
     }
   }, [selectedOrder?._id, detailTab, config]);
 
@@ -154,9 +293,7 @@ const OrderProcessingModule = ({
 
   const handleUpload = (event) => {
     event.preventDefault();
-    if (!file) return;
-    onUploadCertificate(file);
-    setFile(null);
+    handleUploadFinalCertificate(event);
   };
 
   return (
@@ -287,7 +424,7 @@ const OrderProcessingModule = ({
               View Uploaded Certificate
             </a>
           ) : (
-            <form onSubmit={handleUpload} className="space-y-3">
+            <form onSubmit={handleUploadFinalCertificate} className="space-y-3">
               <input
                 type="file"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
@@ -296,11 +433,11 @@ const OrderProcessingModule = ({
               />
               <button
                 type="submit"
-                disabled={isUploading || !file}
+                disabled={isUploadingFinal || !file}
                 className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-bold text-sm disabled:opacity-50"
               >
                 <Upload size={14} className="mr-2" />
-                {isUploading ? 'Uploading...' : 'Upload Final Certificate'}
+                {isUploadingFinal ? 'Uploading...' : 'Upload Final Certificate'}
               </button>
             </form>
           )}
@@ -528,9 +665,18 @@ const OrderProcessingModule = ({
 
           {detailTab === 'Docs' && (
             <div className="space-y-4">
-              <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm">
-                Documents Vault
-              </h4>
+              <div className="flex items-center justify-between border-b pb-2 mb-4">
+                <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm">
+                  Documents Vault
+                </h4>
+                <button
+                  onClick={handleDownloadAllDocs}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+                >
+                  <Download size={14} /> Download All
+                </button>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {selectedOrder.finalCertificateUrl && (
                   <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
@@ -574,6 +720,30 @@ const OrderProcessingModule = ({
                       </div>
                     ));
                 })()}
+
+                {/* ITR Checklist Documents */}
+                {itrAssessment && itrAssessment.responses?.map((r) => {
+                  const docs = [];
+                  if (r.documents && r.documents.length > 0) {
+                    r.documents.forEach((doc) => {
+                      docs.push({ name: `${r.description} - ${doc.originalFileName}`, url: doc.documentUrl });
+                    });
+                  } else if (r.documentUrl) {
+                    docs.push({ name: `${r.description} - ${r.originalFileName || 'Proof'}`, url: r.documentUrl });
+                  }
+                  return docs.map((doc, idx) => (
+                    <div key={`${r._id || r.itemId}-${idx}`} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">ITR Checklist Upload</p>
+                      </div>
+                      <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                        <Eye size={16} />
+                      </a>
+                    </div>
+                  ));
+                })}
+
                 {(selectedOrder.adminDocuments || []).map((doc) => (
                   <div key={doc._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
                     <div>
@@ -588,9 +758,71 @@ const OrderProcessingModule = ({
                 {!selectedOrder.finalCertificateUrl && 
                  (selectedOrder.customerRequirements || []).filter(r => r.uploadedDocumentUrl).length === 0 && 
                  (selectedOrder.clientDocuments || []).length === 0 && 
-                 (selectedOrder.adminDocuments || []).length === 0 && (
+                 (selectedOrder.adminDocuments || []).length === 0 && 
+                 (!itrAssessment || !itrAssessment.responses?.some(r => r.documentUrl || r.documents?.length > 0)) && (
                   <p className="col-span-full text-center text-xs text-slate-400 italic py-4">No documents available inside the vault.</p>
                 )}
+              </div>
+
+              {/* Upload Controls Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-5">
+                {/* Finish & Deliver Column */}
+                <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-3">
+                  <h5 className="font-black text-emerald-800 uppercase tracking-tight text-xs flex items-center gap-1.5">
+                    <CheckCircle size={14} /> Finish & Deliver (Final Certificate)
+                  </h5>
+                  {selectedOrder.finalCertificateUrl ? (
+                    <div className="p-3 bg-white border border-emerald-100 rounded-xl flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Certificate uploaded</span>
+                      <a href={selectedOrder.finalCertificateUrl} target="_blank" rel="noreferrer" className="text-xs font-black text-indigo-600 hover:underline">View File</a>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleUploadFinalCertificate} className="space-y-3">
+                      <input 
+                        type="file" 
+                        required
+                        onChange={e => setFile(e.target.files[0])}
+                        className="w-full text-xs font-semibold"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isUploadingFinal || !file}
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50"
+                      >
+                        {isUploadingFinal ? 'Uploading...' : 'Upload & Deliver Final Doc'}
+                      </button>
+                    </form>
+                  )}
+                </div>
+
+                {/* Send General Doc Column */}
+                <div className="bg-indigo-50/40 border border-indigo-100 rounded-2xl p-4 space-y-3">
+                  <h5 className="font-black text-indigo-900 uppercase tracking-tight text-xs flex items-center gap-1.5">
+                    <Upload size={14} /> Send Document to Customer (for download/signing)
+                  </h5>
+                  <form onSubmit={handleUploadAdminDoc} className="space-y-3">
+                    <input 
+                      type="text" 
+                      placeholder="Document Name (e.g. Agreement for Sign)"
+                      value={adminDocName}
+                      onChange={e => setAdminDocName(e.target.value)}
+                      className="w-full p-2 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    />
+                    <input 
+                      type="file" 
+                      required
+                      onChange={e => setAdminDocFile(e.target.files[0])}
+                      className="w-full text-xs font-semibold"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isUploadingAdminDoc || !adminDocFile}
+                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50"
+                    >
+                      {isUploadingAdminDoc ? 'Uploading...' : 'Send Document'}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           )}
