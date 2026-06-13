@@ -62,6 +62,8 @@ const authUser = asyncHandler(async (req, res) => {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
+        isClockedIn: user.isClockedIn || false,
+        activeOrderId: user.activeOrderId || null,
         token: generateToken(user._id)
     });
 });
@@ -256,7 +258,9 @@ const getUserProfile = asyncHandler(async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            isActive: user.isActive
+            isActive: user.isActive,
+            isClockedIn: user.isClockedIn || false,
+            activeOrderId: user.activeOrderId || null
         });
     } else {
         res.status(404);

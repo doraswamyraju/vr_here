@@ -40,6 +40,13 @@ const FreelancerDashboard = ({ userInfo, onLogout }) => {
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        if (userInfo) {
+            setLiveClockedIn(userInfo.isClockedIn || false);
+            setActiveOrderId(userInfo.activeOrderId || null);
+        }
+    }, [userInfo]);
+
     const fetchOverviewData = async () => {
         setLoading(true);
         try {
