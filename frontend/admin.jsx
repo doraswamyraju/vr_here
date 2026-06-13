@@ -744,7 +744,7 @@ function AdminApp() {
       );
     }
     if (activeTab === 'Users') return <UsersModule token={userInfo?.token} users={users} orders={orders} onRefresh={fetchData} />;
-    if (activeTab === 'Freelancers') return <FreelancersModule token={userInfo?.token} />;
+    if (activeTab === 'Freelancers') return <FreelancersModule token={userInfo?.token} orders={orders} employees={employees} />;
     if (activeTab === 'ToDo') return (
       <TodoModule 
         todos={todos} 

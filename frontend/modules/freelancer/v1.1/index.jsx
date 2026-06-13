@@ -20,6 +20,12 @@ const FreelancerDashboard = ({ userInfo, onLogout }) => {
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
 
+    const [projectDetailTab, setProjectDetailTab] = useState('Overview');
+    const [projectTodos, setProjectTodos] = useState([]);
+    const [projectHistory, setProjectHistory] = useState([]);
+    const [projectPayments, setProjectPayments] = useState([]);
+    const [isLoadingProjectData, setIsLoadingProjectData] = useState(false);
+
     const token = localStorage.getItem('token');
     const config = {
         headers: { Authorization: `Bearer ${token}` }
@@ -80,6 +86,31 @@ const FreelancerDashboard = ({ userInfo, onLogout }) => {
             console.error('Failed to fetch ledger', err);
         }
     };
+
+  const fetchProjectData = async (orderId) => {
+        if (!orderId) return;
+        setIsLoadingProjectData(true);
+        try {
+            const [todosRes, historyRes, paymentsRes] = await Promise.all([
+                axios.get(`/api/todos?orderId=${orderId}`, config),
+                axios.get(`/api/orders/${orderId}/history`, config),
+                axios.get(`/api/payments?orderId=${orderId}`, config).catch(() => ({ data: [] }))
+            ]);
+            setProjectTodos(todosRes.data || []);
+            setProjectHistory(historyRes.data || []);
+            setProjectPayments(paymentsRes.data || []);
+        } catch (err) {
+            console.error('Error fetching project specific details:', err);
+        } finally {
+            setIsLoadingProjectData(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedOrder) {
+            fetchProjectData(selectedOrder._id);
+        }
+    }, [selectedOrder]);
 
     const handleClaimJob = async (orderId) => {
         try {
@@ -255,9 +286,39 @@ const FreelancerDashboard = ({ userInfo, onLogout }) => {
                     </div>
 
                     <div className="flex items-center gap-3 md:gap-5">
-                        {liveClockedIn && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl border border-red-100 text-[10px] font-black uppercase tracking-widest animate-pulse">
-                                <span className="w-2.5 h-2.5 bg-red-600 rounded-full"></span> Live Clocked-In
+                        {liveClockedIn ? (
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl border border-red-100 text-[10px] font-black uppercase tracking-widest animate-pulse max-w-[200px] truncate">
+                                    <span className="w-2 h-2 bg-red-600 rounded-full shrink-0"></span> Clocked-In: {orders.find(o => o._id === activeOrderId)?.packageName || 'Active'}
+                                </div>
+                                <button 
+                                    onClick={() => handleClockOut(activeOrderId)}
+                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black transition active:scale-[0.98] shadow-sm shadow-red-100"
+                                >
+                                    Clock Out
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <select 
+                                    id="headerProjectSelect"
+                                    className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white max-w-[180px] text-slate-700"
+                                >
+                                    <option value="">Select Project to Work...</option>
+                                    {orders.map(o => (
+                                        <option key={o._id} value={o._id}>{o.packageName}</option>
+                                    ))}
+                                </select>
+                                <button 
+                                    onClick={async () => {
+                                        const orderId = document.getElementById('headerProjectSelect')?.value;
+                                        if (!orderId) return alert('Please select a project to clock in to.');
+                                        await handleClockIn(orderId);
+                                    }}
+                                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition active:scale-[0.98]"
+                                >
+                                    Clock In
+                                </button>
                             </div>
                         )}
                         <div className="hidden md:flex items-center px-4 py-2 bg-green-50 text-green-600 rounded-xl border border-green-100 text-[10px] font-black uppercase tracking-widest">
@@ -457,73 +518,338 @@ const FreelancerDashboard = ({ userInfo, onLogout }) => {
                                         {/* Right col: details of selected order */}
                                         <div className="md:col-span-2">
                                             {selectedOrder ? (
-                                                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
-                                                    <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+                                                <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+                                                    <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                                         <div>
-                                                            <h3 className="text-xl font-black text-slate-900">{selectedOrder.packageName}</h3>
-                                                            <p className="text-sm text-slate-400 font-bold mt-1">{selectedOrder.serviceName}</p>
+                                                            <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">{selectedOrder.serviceName}</span>
+                                                            <h3 className="text-xl font-black text-slate-900 mt-2">{selectedOrder.packageName}</h3>
                                                         </div>
                                                         <div className="text-right">
-                                                            <p className="text-xs text-slate-400 font-black uppercase tracking-widest">Payout</p>
-                                                            <p className="text-2xl font-black text-slate-900">₹{selectedOrder.freelancerPayout}</p>
+                                                            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Payout Budget</p>
+                                                            <p className="text-2xl font-black text-slate-900 mt-1">₹{selectedOrder.freelancerPayout || 0}</p>
                                                         </div>
                                                     </div>
 
-                                                    {/* Work Timer section */}
-                                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <Clock className="w-6 h-6 text-slate-400" />
-                                                            <div>
-                                                                <h4 className="font-bold text-slate-800 text-sm">Task Time Clocking</h4>
-                                                                <p className="text-xs text-slate-400 font-medium">Record hours spent working on this order.</p>
+                                                    <div className="px-6 border-b border-slate-100 bg-white flex flex-wrap gap-2">
+                                                        {['Overview', 'Tasks', 'Requirements', 'ToDo', 'Activities', 'Docs', 'Transactions'].map((tab) => (
+                                                            <button
+                                                                key={tab}
+                                                                onClick={() => setProjectDetailTab(tab)}
+                                                                className={`px-4 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition ${projectDetailTab === tab ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
+                                                            >
+                                                                {tab}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="p-6 md:p-8">
+                                                        {isLoadingProjectData ? (
+                                                            <div className="flex flex-col items-center justify-center p-12">
+                                                                <div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin mb-3"></div>
+                                                                <p className="text-xs text-slate-400 font-bold">Syncing project workspace...</p>
                                                             </div>
-                                                        </div>
-                                                        <div>
-                                                            {liveClockedIn && activeOrderId === selectedOrder._id ? (
-                                                                <button 
-                                                                    onClick={() => handleClockOut(selectedOrder._id)}
-                                                                    className="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl text-xs hover:bg-red-700 transition flex items-center gap-2 shadow-sm shadow-red-100"
-                                                                >
-                                                                    <Square className="w-4 h-4 fill-white" /> Stop Clock
-                                                                </button>
-                                                            ) : (
-                                                                <button 
-                                                                    onClick={() => handleClockIn(selectedOrder._id)}
-                                                                    disabled={liveClockedIn}
-                                                                    className={`px-6 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition flex items-center gap-2 shadow-sm ${liveClockedIn ? 'opacity-40 cursor-not-allowed' : ''}`}
-                                                                >
-                                                                    <Play className="w-4 h-4 fill-white" /> Start Clock
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Client requirements list */}
-                                                    <div>
-                                                        <h4 className="font-black text-slate-900 mb-3 text-sm">Customer Requirements</h4>
-                                                        {selectedOrder.customerRequirements?.length === 0 ? (
-                                                            <p className="text-xs text-slate-400 font-bold">No documentation checklist imported yet.</p>
                                                         ) : (
-                                                            <div className="space-y-3">
-                                                                {selectedOrder.customerRequirements.map((req, idx) => (
-                                                                    <div key={idx} className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100 text-xs">
-                                                                        <div>
-                                                                            <p className="font-bold text-slate-800">{req.title}</p>
-                                                                            <p className="text-[10px] text-slate-400 mt-0.5">{req.description || 'No notes'}</p>
-                                                                        </div>
-                                                                        <span className={`px-2.5 py-1 rounded-full font-black uppercase tracking-wider text-[9px] ${req.status === 'Verified' ? 'bg-green-100 text-green-700' : req.status === 'Received' ? 'bg-indigo-100 text-indigo-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                                            {req.status}
-                                                                        </span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                            <>
+                                                                {projectDetailTab === 'Overview' && (
+                                                                    <div className="space-y-6">
+                                                                        {(!liveClockedIn || activeOrderId !== selectedOrder._id) && (
+                                                                            <div className="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-700 text-xs font-bold rounded-r-xl flex items-center gap-2">
+                                                                                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                                                                                <span>You must Clock In to this project in the top header to start working.</span>
+                                                                            </div>
+                                                                        )}
 
-                                                    {/* Final Deliverables Submission */}
-                                                    <div className="pt-4 border-t border-slate-100">
-                                                        <h4 className="font-black text-slate-900 mb-3 text-sm">Submit Deliverables</h4>
-                                                        <p className="text-xs text-slate-400 leading-relaxed font-medium">Use the chat panel or upload deliverables for validation. Once finished, checker/admin will verify, lock total billing logs, and approve payment.</p>
+                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                                                <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Payout Status</p>
+                                                                                <p className="text-slate-900 font-black mt-1 text-sm">₹{selectedOrder.freelancerPayout}</p>
+                                                                                <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider mt-2 inline-block border border-green-100">Claimed</span>
+                                                                            </div>
+                                                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                                                <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Time Logs</p>
+                                                                                <p className="text-slate-900 font-black mt-1 text-sm">
+                                                                                    {selectedOrder.freelancerTimeLogs?.reduce((sum, log) => sum + log.minutes, 0) || 0} Minutes
+                                                                                </p>
+                                                                                <span className="text-[9px] text-slate-400 mt-2 block font-semibold">Accumulated Effort</span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="space-y-3">
+                                                                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-indigo-650" /> To-Dos Checklist</h4>
+                                                                            <div className="space-y-2">
+                                                                                {projectTodos.map(todo => (
+                                                                                    <div 
+                                                                                        key={todo._id} 
+                                                                                        onClick={() => handleTodoStatusChange(todo._id, todo.status)}
+                                                                                        className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/40 text-xs font-semibold text-slate-700 cursor-pointer transition-all"
+                                                                                    >
+                                                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${todo.status === 'Completed' ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'}`}>
+                                                                                            {todo.status === 'Completed' && <Check className="w-3 h-3" />}
+                                                                                        </div>
+                                                                                        <span className={todo.status === 'Completed' ? 'line-through text-slate-400' : ''}>{todo.title}</span>
+                                                                                    </div>
+                                                                                ))}
+                                                                                {projectTodos.length === 0 && (
+                                                                                    <p className="text-slate-400 italic text-xs py-4 text-center">No tasks listed.</p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {projectDetailTab === 'Tasks' && (
+                                                                    <div className="space-y-4">
+                                                                        {(!liveClockedIn || activeOrderId !== selectedOrder._id) && (
+                                                                            <div className="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-700 text-xs font-bold rounded-r-xl flex items-center gap-2">
+                                                                                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                                                                                <span>You must Clock In to this project in the top header to start working.</span>
+                                                                            </div>
+                                                                        )}
+                                                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Project Tasks</h4>
+                                                                        <div className="space-y-3">
+                                                                            {(selectedOrder.tasks || []).map((t) => (
+                                                                                <div key={t._id} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-2">
+                                                                                    <div className="flex justify-between items-center">
+                                                                                        <div>
+                                                                                            <p className="font-bold text-slate-800 text-xs">{t.title}</p>
+                                                                                            {t.taskCode && <p className="text-[9px] text-slate-400 font-bold uppercase">{t.taskCode}</p>}
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${t.status === 'Completed' ? 'bg-green-100 text-green-700' : t.status === 'In Progress' ? 'bg-indigo-100 text-indigo-700' : 'bg-yellow-100 text-yellow-700'}`}>{t.status || 'Pending'}</span>
+                                                                                            {t.status === 'Pending' && (
+                                                                                                <button 
+                                                                                                    onClick={() => handleTaskStatusChange(t._id, 'In Progress')}
+                                                                                                    className="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-650 hover:bg-indigo-650 hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition"
+                                                                                                >
+                                                                                                    Start
+                                                                                                </button>
+                                                                                            )}
+                                                                                            {t.status !== 'Completed' && (
+                                                                                                <button 
+                                                                                                    onClick={() => handleTaskStatusChange(t._id, 'Completed')}
+                                                                                                    className="px-2.5 py-1 bg-white border border-green-200 text-green-650 hover:bg-green-650 hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition"
+                                                                                                >
+                                                                                                    Done
+                                                                                                </button>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    {t.subtasks?.length > 0 && (
+                                                                                        <div className="border-t border-slate-200/50 pt-2 space-y-2">
+                                                                                            {t.subtasks.map((st) => (
+                                                                                                <div key={st._id} className="flex justify-between items-center text-[10px] text-slate-650 pl-2">
+                                                                                                    <span>• {st.title}</span>
+                                                                                                    <div className="flex items-center gap-1.5">
+                                                                                                        <span className="font-black uppercase tracking-tight">{st.status}</span>
+                                                                                                        {st.status !== 'Completed' && (
+                                                                                                            <button 
+                                                                                                                onClick={() => handleUpdateSubtask(t._id, st._id, { status: 'Completed', isCompleted: true })}
+                                                                                                                className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-900 transition"
+                                                                                                                title="Mark Subtask Completed"
+                                                                                                            >
+                                                                                                                <Check className="w-3.5 h-3.5" />
+                                                                                                            </button>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                            {(selectedOrder.tasks || []).length === 0 && (
+                                                                                <p className="text-slate-400 italic text-xs py-4 text-center">No workflow tasks defined.</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {projectDetailTab === 'Requirements' && (
+                                                                    <div className="space-y-4">
+                                                                        {(!liveClockedIn || activeOrderId !== selectedOrder._id) && (
+                                                                            <div className="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-700 text-xs font-bold rounded-r-xl flex items-center gap-2">
+                                                                                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                                                                                <span>You must Clock In to this project in the top header to start working.</span>
+                                                                            </div>
+                                                                        )}
+                                                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Customer Requirements</h4>
+                                                                        <div className="space-y-3">
+                                                                            {(selectedOrder.customerRequirements || []).map((r) => (
+                                                                                <div key={r._id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between text-xs gap-4 flex-wrap">
+                                                                                    <div>
+                                                                                        <p className="font-bold text-slate-805">{r.title}</p>
+                                                                                        {r.description && <p className="text-[10px] text-slate-400 mt-0.5">{r.description}</p>}
+                                                                                        {(r.clientValue || r.value) && <p className="text-[10px] text-indigo-750 font-bold mt-1">Value: {r.clientValue || r.value}</p>}
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        {r.uploadedDocumentUrl && (
+                                                                                            <a href={r.uploadedDocumentUrl} target="_blank" rel="noreferrer" className="p-1.5 bg-white border border-slate-200 text-indigo-650 hover:bg-indigo-50 rounded-lg transition flex items-center gap-1 font-bold text-[10px]">
+                                                                                                <Eye className="w-3.5 h-3.5" /> View
+                                                                                            </a>
+                                                                                        )}
+                                                                                        {r.type === 'Document' && r.status !== 'Verified' && (
+                                                                                            <input 
+                                                                                                type="file" 
+                                                                                                onChange={(e) => {
+                                                                                                    const file = e.target.files?.[0];
+                                                                                                    if (file) handleUploadRequirementFile(r._id, file);
+                                                                                                }}
+                                                                                                className="text-[10px] max-w-[150px]"
+                                                                                            />
+                                                                                        )}
+                                                                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${r.status === 'Verified' ? 'bg-green-150 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{r.status}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                            {(selectedOrder.customerRequirements || []).length === 0 && (
+                                                                                <p className="text-slate-400 italic text-xs py-4 text-center">No checklist requirements Raised.</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {projectDetailTab === 'ToDo' && (
+                                                                    <div className="space-y-4">
+                                                                        {(!liveClockedIn || activeOrderId !== selectedOrder._id) && (
+                                                                            <div className="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-700 text-xs font-bold rounded-r-xl flex items-center gap-2">
+                                                                                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                                                                                <span>You must Clock In to this project in the top header to start working.</span>
+                                                                            </div>
+                                                                        )}
+                                                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">To-Dos Checklist</h4>
+                                                                        <div className="space-y-2">
+                                                                            {projectTodos.map(todo => (
+                                                                                <div 
+                                                                                    key={todo._id} 
+                                                                                    onClick={() => handleTodoStatusChange(todo._id, todo.status)}
+                                                                                    className="p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl flex justify-between items-center text-xs font-semibold text-slate-700 cursor-pointer transition-colors"
+                                                                                >
+                                                                                    <span className={todo.status === 'Completed' ? 'line-through text-slate-400' : ''}>{todo.title}</span>
+                                                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${todo.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{todo.status}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                            {projectTodos.length === 0 && (
+                                                                                <p className="text-slate-400 italic text-xs py-4 text-center">No checklist tasks logged.</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {projectDetailTab === 'Activities' && (
+                                                                    <div className="space-y-4">
+                                                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Milestone Logs</h4>
+                                                                        <div className="relative pl-4 border-l border-slate-100 space-y-4 pr-1 text-xs">
+                                                                            {projectHistory.map(log => (
+                                                                                <div key={log._id} className="relative group">
+                                                                                    <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full border-2 border-white bg-indigo-500" />
+                                                                                    <p className="font-black text-indigo-600 uppercase text-[9px] tracking-wider">{log.action}</p>
+                                                                                    <p className="text-slate-700 font-bold mt-0.5">{log.description}</p>
+                                                                                    <p className="text-[9px] text-slate-400 mt-0.5">{new Date(log.createdAt).toLocaleString()}</p>
+                                                                                </div>
+                                                                            ))}
+                                                                            {projectHistory.length === 0 && (
+                                                                                <p className="text-slate-400 italic text-xs py-4 text-center">No milestones registered.</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {projectDetailTab === 'Docs' && (
+                                                                    <div className="space-y-6">
+                                                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Documents Vault</h4>
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                                                            {selectedOrder.finalCertificateUrl && (
+                                                                                <div className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                                                                                    <div>
+                                                                                        <p className="font-bold text-slate-800">Final Deliverable Certificate</p>
+                                                                                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Final Deliverable</p>
+                                                                                    </div>
+                                                                                    <a href={selectedOrder.finalCertificateUrl} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition">
+                                                                                        <Eye className="w-4 h-4" />
+                                                                                    </a>
+                                                                                </div>
+                                                                            )}
+                                                                            {(selectedOrder.customerRequirements || []).filter(r => r.uploadedDocumentUrl).map((r, idx) => (
+                                                                                <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                                                                                    <div>
+                                                                                        <p className="font-bold text-slate-800 truncate max-w-[150px]">{r.title}</p>
+                                                                                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Uploaded Requirement</p>
+                                                                                    </div>
+                                                                                    <a href={r.uploadedDocumentUrl} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition">
+                                                                                        <Eye className="w-4 h-4" />
+                                                                                    </a>
+                                                                                </div>
+                                                                            ))}
+                                                                            {(selectedOrder.clientDocuments || []).map((doc, idx) => (
+                                                                                <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                                                                                    <div>
+                                                                                        <p className="font-bold text-slate-850 truncate max-w-[150px]">{doc.name}</p>
+                                                                                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Client Uploaded</p>
+                                                                                    </div>
+                                                                                    <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition">
+                                                                                        <Eye className="w-4 h-4" />
+                                                                                    </a>
+                                                                                </div>
+                                                                            ))}
+                                                                            {(selectedOrder.adminDocuments || []).map((doc, idx) => (
+                                                                                <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                                                                                    <div>
+                                                                                        <p className="font-bold text-slate-800 truncate max-w-[150px]">{doc.name}</p>
+                                                                                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Staff Uploaded</p>
+                                                                                    </div>
+                                                                                    <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition">
+                                                                                        <Eye className="w-4 h-4" />
+                                                                                    </a>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+
+                                                                        <div className="bg-slate-50 border border-slate-200 p-6 rounded-[24px] space-y-4">
+                                                                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-emerald-600" /> Deliver Certificate / File</h4>
+                                                                            <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">Once all workflow requirements are checked off, upload the final deliverable (e.g. CA Certificate, Income Tax report, incorporation receipt) for administrative sign-off and ledger payout authorization.</p>
+                                                                            <input 
+                                                                                type="file" 
+                                                                                id="deliverableFileInput"
+                                                                                className="text-xs font-bold text-slate-700"
+                                                                            />
+                                                                            <button 
+                                                                                onClick={() => {
+                                                                                    const file = document.getElementById('deliverableFileInput')?.files?.[0];
+                                                                                    if (!file) return alert('Please choose a file to upload first.');
+                                                                                    handleUploadCertificate(file);
+                                                                                }}
+                                                                                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-xl text-xs transition flex items-center gap-1.5"
+                                                                            >
+                                                                                Upload Deliverable
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {projectDetailTab === 'Transactions' && (
+                                                                    <div className="space-y-4">
+                                                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Payments History for this Project</h4>
+                                                                        <div className="space-y-2">
+                                                                            {projectPayments.map(p => (
+                                                                                <div key={p._id} className="p-3 rounded-xl border border-slate-100 bg-white flex items-center justify-between text-xs font-semibold">
+                                                                                    <div>
+                                                                                        <p className="font-black text-slate-800">{p.paymentId}</p>
+                                                                                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{p.method} | {new Date(p.createdAt).toLocaleDateString()}</p>
+                                                                                    </div>
+                                                                                    <div className="text-right">
+                                                                                        <p className="font-black text-slate-950">₹{p.amount}</p>
+                                                                                        <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-50 text-emerald-700">{p.status}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                            {projectPayments.length === 0 && (
+                                                                                <p className="text-slate-400 italic text-xs py-4 text-center">No transactions registered for this project.</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ) : (

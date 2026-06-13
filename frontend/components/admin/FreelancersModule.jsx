@@ -7,7 +7,7 @@ import {
     Clock, DollarSign, Landmark, Check, Trash2, Edit, Eye
 } from 'lucide-react';
 
-const FreelancersModule = ({ token }) => {
+const FreelancersModule = ({ token, orders = [], employees = [] }) => {
     const [freelancers, setFreelancers] = useState([]);
     const [payouts, setPayouts] = useState([]);
     const [liveAttendance, setLiveAttendance] = useState([]);
@@ -26,6 +26,45 @@ const FreelancersModule = ({ token }) => {
     // Detail/Edit Modal States
     const [selectedFreelancer, setSelectedFreelancer] = useState(null);
     const [editMode, setEditMode] = useState(false);
+    
+    // Freelancer detailed workspace states
+    const [selectedFreelancerForWorkspace, setSelectedFreelancerForWorkspace] = useState(null);
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
+    const [orderDetailTab, setOrderDetailTab] = useState('Overview');
+    const [orderTodos, setOrderTodos] = useState([]);
+    const [orderHistory, setOrderHistory] = useState([]);
+    const [orderPayments, setOrderPayments] = useState([]);
+    const [isLoadingOrderData, setIsLoadingOrderData] = useState(false);
+
+    const config = {
+        headers: { Authorization: `Bearer ${token}` }
+    };
+
+    const fetchOrderData = async (orderId) => {
+        if (!config || !orderId) return;
+        setIsLoadingOrderData(true);
+        try {
+            const [todosRes, historyRes, paymentsRes] = await Promise.all([
+                axios.get(`/api/todos?orderId=${orderId}`, config),
+                axios.get(`/api/orders/${orderId}/history`, config),
+                axios.get(`/api/payments?orderId=${orderId}`, config)
+            ]);
+            setOrderTodos(todosRes.data || []);
+            setOrderHistory(historyRes.data || []);
+            setOrderPayments(paymentsRes.data || []);
+        } catch (err) {
+            console.error('Error fetching order specific details:', err);
+        } finally {
+            setIsLoadingOrderData(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedOrderId) {
+            fetchOrderData(selectedOrderId);
+        }
+    }, [selectedOrderId]);
+
     const [editForm, setEditForm] = useState({
         name: '',
         email: '',
@@ -42,10 +81,6 @@ const FreelancersModule = ({ token }) => {
         },
         isActive: false
     });
-
-    const config = {
-        headers: { Authorization: `Bearer ${token}` }
-    };
 
     useEffect(() => {
         if (token) {
@@ -169,6 +204,369 @@ const FreelancersModule = ({ token }) => {
         f.phone?.includes(searchTerm)
     );
 
+    const renderFreelancerWorkspace = () => {
+        const fl = selectedFreelancerForWorkspace;
+        const flOrders = orders.filter(o => (o.assignedFreelancer?._id || o.assignedFreelancer) === fl._id);
+        const selectedOrder = flOrders.find(o => o._id === selectedOrderId) || null;
+        const flPayouts = payouts.filter(p => (p.freelancer?._id || p.freelancer) === fl._id);
+
+        return (
+            <div className="space-y-6 animate-in fade-in duration-300">
+                {/* Header card with freelancer summary */}
+                <div className="bg-slate-900 text-white rounded-[32px] p-6 md:p-8 shadow-xl border border-slate-800">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-500/30">Freelancer Profile Workspace</span>
+                            <h2 className="text-3xl font-black mt-3 text-white tracking-tight">{fl.name}</h2>
+                            <p className="text-slate-400 mt-1 font-semibold text-xs">{fl.phone} | {fl.email}</p>
+                            <div className="flex flex-wrap gap-1 mt-3">
+                                {fl.skills?.map((s, idx) => (
+                                    <span key={idx} className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">{s}</span>
+                                ))}
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setSelectedFreelancerForWorkspace(null)}
+                            className="px-6 py-3 bg-white text-slate-900 rounded-2xl text-xs font-black shadow-lg hover:bg-slate-100 transition active:scale-[0.98]"
+                        >
+                            Back to Freelancers List
+                        </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800 text-xs">
+                        <div>
+                            <p className="text-slate-400 uppercase font-black tracking-widest text-[9px]">Experience</p>
+                            <p className="font-bold text-sm text-white mt-0.5">{fl.yearsOfExperience} Years</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-400 uppercase font-black tracking-widest text-[9px]">PAN Card</p>
+                            <p className="font-bold text-sm text-white mt-0.5">{fl.panCard || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-400 uppercase font-black tracking-widest text-[9px]">Bank Account</p>
+                            <p className="font-bold text-white mt-0.5 truncate">{fl.bankDetails?.bankName || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5 truncate">A/C: {fl.bankDetails?.accountNumber}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-400 uppercase font-black tracking-widest text-[9px]">Total Assignments</p>
+                            <p className="font-bold text-sm text-white mt-0.5">{flOrders.length} Projects</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+                    {/* Left Column: Projects List */}
+                    <div className="lg:col-span-1 space-y-4">
+                        <div className="bg-white rounded-[32px] p-4 border border-slate-100 shadow-sm space-y-3">
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-2">Assigned Projects</h3>
+                            <div className="space-y-2">
+                                {flOrders.map((o) => (
+                                    <div 
+                                        key={o._id}
+                                        onClick={() => {
+                                            setSelectedOrderId(o._id);
+                                            setOrderDetailTab('Overview');
+                                        }}
+                                        className={`p-3.5 rounded-2xl border cursor-pointer transition-all text-xs ${selectedOrderId === o._id ? 'bg-slate-900 border-slate-900 text-white shadow-md' : 'bg-slate-50 hover:bg-slate-100 border-slate-100 text-slate-700'}`}
+                                    >
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${selectedOrderId === o._id ? 'bg-white/10 text-white' : 'bg-red-50 text-red-650'}`}>{o.status}</span>
+                                            <span className="font-bold">₹{o.freelancerPayout || 0}</span>
+                                        </div>
+                                        <p className="font-black truncate">{o.packageName}</p>
+                                        <p className={`text-[10px] truncate ${selectedOrderId === o._id ? 'text-slate-400' : 'text-slate-450'}`}>{o.serviceName}</p>
+                                    </div>
+                                ))}
+                                {flOrders.length === 0 && (
+                                    <p className="text-center text-xs text-slate-400 italic py-4">No projects assigned.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Freelancer-level Transactions Summary */}
+                        <div className="bg-white rounded-[32px] p-4 border border-slate-100 shadow-sm space-y-3">
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-2">Transactions Ledger</h3>
+                            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                {flPayouts.map(p => (
+                                    <div key={p._id} className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[10px] space-y-1">
+                                        <div className="flex justify-between font-bold">
+                                            <span className="text-slate-800 truncate max-w-[100px]">{p.order?.packageName || 'Payout'}</span>
+                                            <span className="text-slate-950 font-black">{formatCurrency(p.amount)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-[9px] text-slate-400">
+                                            <span>{new Date(p.createdAt).toLocaleDateString()}</span>
+                                            <span className={`px-1 rounded font-black uppercase ${p.status === 'Paid' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{p.status}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                {flPayouts.length === 0 && (
+                                    <p className="text-center text-xs text-slate-400 italic py-4">No payouts found.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Active Project Workspace */}
+                    <div className="lg:col-span-3">
+                        {selectedOrder ? (
+                            <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+                                <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div>
+                                        <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">{selectedOrder.serviceName}</span>
+                                        <h3 className="text-xl font-black text-slate-900 mt-2">{selectedOrder.packageName}</h3>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Payout Budget</p>
+                                        <p className="text-2xl font-black text-slate-900 mt-1">₹{selectedOrder.freelancerPayout || 0}</p>
+                                    </div>
+                                </div>
+
+                                <div className="px-6 border-b border-slate-100 bg-white flex flex-wrap gap-2">
+                                    {['Overview', 'Tasks', 'Requirements', 'ToDo', 'Activities', 'Docs', 'Transactions'].map((tab) => (
+                                        <button
+                                            key={tab}
+                                            onClick={() => setOrderDetailTab(tab)}
+                                            className={`px-4 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition ${orderDetailTab === tab ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
+                                        >
+                                            {tab}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="p-6 md:p-8">
+                                    {isLoadingOrderData ? (
+                                        <div className="flex flex-col items-center justify-center p-12">
+                                            <div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin mb-3"></div>
+                                            <p className="text-xs text-slate-400 font-bold">Syncing project parameters...</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {orderDetailTab === 'Overview' && (
+                                                <div className="space-y-6">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                            <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Payout Status</p>
+                                                            <p className="text-slate-900 font-black mt-1 text-sm">₹{selectedOrder.freelancerPayout}</p>
+                                                            <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider mt-2 inline-block border border-green-100">Claimed</span>
+                                                        </div>
+                                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                            <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Time Logs</p>
+                                                            <p className="text-slate-900 font-black mt-1 text-sm">
+                                                                {selectedOrder.freelancerTimeLogs?.reduce((sum, log) => sum + log.minutes, 0) || 0} Minutes
+                                                            </p>
+                                                            <span className="text-[9px] text-slate-400 mt-2 block font-semibold">Accumulated Effort</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-indigo-600" /> To-Dos Checklist</h4>
+                                                        <div className="space-y-2">
+                                                            {orderTodos.map(todo => (
+                                                                <div key={todo._id} className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-100 bg-slate-50/40 text-xs font-semibold text-slate-700">
+                                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${todo.status === 'Completed' ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'}`}>
+                                                                        {todo.status === 'Completed' && <Check className="w-3 h-3" />}
+                                                                    </div>
+                                                                    <span className={todo.status === 'Completed' ? 'line-through text-slate-400' : ''}>{todo.title}</span>
+                                                                </div>
+                                                            ))}
+                                                            {orderTodos.length === 0 && (
+                                                                <p className="text-slate-400 italic text-xs py-4 text-center">No tasks listed.</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {orderDetailTab === 'Tasks' && (
+                                                <div className="space-y-4">
+                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Project Tasks</h4>
+                                                    <div className="space-y-3">
+                                                        {(selectedOrder.tasks || []).map((t, idx) => (
+                                                            <div key={idx} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-2">
+                                                                <div className="flex justify-between items-center">
+                                                                    <div>
+                                                                        <p className="font-bold text-slate-800 text-xs">{t.title}</p>
+                                                                        {t.taskCode && <p className="text-[9px] text-slate-400 font-bold uppercase">{t.taskCode}</p>}
+                                                                    </div>
+                                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${t.status === 'Completed' ? 'bg-green-100 text-green-700' : t.status === 'In Progress' ? 'bg-indigo-100 text-indigo-700' : 'bg-yellow-100 text-yellow-700'}`}>{t.status || 'Pending'}</span>
+                                                                </div>
+                                                                {t.subtasks?.length > 0 && (
+                                                                    <div className="border-t border-slate-200/50 pt-2 space-y-1">
+                                                                        {t.subtasks.map((st, sIdx) => (
+                                                                            <div key={sIdx} className="flex justify-between text-[10px] text-slate-650 pl-2">
+                                                                                <span>• {st.title}</span>
+                                                                                <span className="font-black uppercase tracking-tight">{st.status}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        {(selectedOrder.tasks || []).length === 0 && (
+                                                            <p className="text-slate-400 italic text-xs py-4 text-center">No workflow tasks defined.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {orderDetailTab === 'Requirements' && (
+                                                <div className="space-y-4">
+                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Customer Requirements</h4>
+                                                    <div className="space-y-3">
+                                                        {(selectedOrder.customerRequirements || []).map((r, idx) => (
+                                                            <div key={idx} className="p-3.5 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between text-xs">
+                                                                <div>
+                                                                    <p className="font-bold text-slate-805">{r.title}</p>
+                                                                    {r.description && <p className="text-[10px] text-slate-400 mt-0.5">{r.description}</p>}
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    {r.uploadedDocumentUrl && (
+                                                                        <a href={r.uploadedDocumentUrl} target="_blank" rel="noreferrer" className="p-1.5 bg-white border border-slate-250 text-indigo-650 hover:bg-indigo-50 rounded-lg transition">
+                                                                            <Eye className="w-4 h-4" />
+                                                                        </a>
+                                                                    )}
+                                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${r.status === 'Verified' ? 'bg-green-150 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{r.status}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {(selectedOrder.customerRequirements || []).length === 0 && (
+                                                            <p className="text-slate-400 italic text-xs py-4 text-center">No checklist requirements Raised.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {orderDetailTab === 'ToDo' && (
+                                                <div className="space-y-4">
+                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">To-Dos Checklist</h4>
+                                                    <div className="space-y-2">
+                                                        {orderTodos.map(todo => (
+                                                            <div key={todo._id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center text-xs font-semibold text-slate-700">
+                                                                <span>{todo.title}</span>
+                                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${todo.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{todo.status}</span>
+                                                            </div>
+                                                        ))}
+                                                        {orderTodos.length === 0 && (
+                                                            <p className="text-slate-400 italic text-xs py-4 text-center">No checklist tasks logged.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {orderDetailTab === 'Activities' && (
+                                                <div className="space-y-4">
+                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Milestone Logs</h4>
+                                                    <div className="relative pl-4 border-l border-slate-100 space-y-4 pr-1 text-xs">
+                                                        {orderHistory.map(log => (
+                                                            <div key={log._id} className="relative group">
+                                                                <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full border-2 border-white bg-indigo-500" />
+                                                                <p className="font-black text-indigo-600 uppercase text-[9px] tracking-wider">{log.action}</p>
+                                                                <p className="text-slate-700 font-bold mt-0.5">{log.description}</p>
+                                                                <p className="text-[9px] text-slate-400 mt-0.5">{new Date(log.createdAt).toLocaleString()}</p>
+                                                            </div>
+                                                        ))}
+                                                        {orderHistory.length === 0 && (
+                                                            <p className="text-slate-400 italic text-xs py-4 text-center">No milestones registered.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {orderDetailTab === 'Docs' && (
+                                                <div className="space-y-4">
+                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Documents Vault</h4>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                                        {selectedOrder.finalCertificateUrl && (
+                                                            <div className="p-3.5 rounded-xl border border-slate-205 bg-white flex items-center justify-between">
+                                                                <div>
+                                                                    <p className="font-bold text-slate-800">Final Deliverable Certificate</p>
+                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Final Deliverable</p>
+                                                                </div>
+                                                                <a href={selectedOrder.finalCertificateUrl} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition">
+                                                                    <Eye className="w-4 h-4" />
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                        {(selectedOrder.customerRequirements || []).filter(r => r.uploadedDocumentUrl).map((r, idx) => (
+                                                            <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                                                                <div>
+                                                                    <p className="font-bold text-slate-800 truncate max-w-[150px]">{r.title}</p>
+                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Uploaded Requirement</p>
+                                                                </div>
+                                                                <a href={r.uploadedDocumentUrl} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition">
+                                                                    <Eye className="w-4 h-4" />
+                                                                </a>
+                                                            </div>
+                                                        ))}
+                                                        {(selectedOrder.clientDocuments || []).map((doc, idx) => (
+                                                            <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                                                                <div>
+                                                                    <p className="font-bold text-slate-850 truncate max-w-[150px]">{doc.name}</p>
+                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Client Uploaded</p>
+                                                                </div>
+                                                                <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition">
+                                                                    <Eye className="w-4 h-4" />
+                                                                </a>
+                                                            </div>
+                                                        ))}
+                                                        {(selectedOrder.adminDocuments || []).map((doc, idx) => (
+                                                            <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                                                                <div>
+                                                                    <p className="font-bold text-slate-800 truncate max-w-[150px]">{doc.name}</p>
+                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Staff Uploaded</p>
+                                                                </div>
+                                                                <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition">
+                                                                    <Eye className="w-4 h-4" />
+                                                                </a>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {orderDetailTab === 'Transactions' && (
+                                                <div className="space-y-4">
+                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b pb-1.5">Payments History for this Project</h4>
+                                                    <div className="space-y-2">
+                                                        {orderPayments.map(p => (
+                                                            <div key={p._id} className="p-3 rounded-xl border border-slate-100 bg-white flex items-center justify-between text-xs font-semibold">
+                                                                <div>
+                                                                    <p className="font-black text-slate-800">{p.paymentId}</p>
+                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{p.method} | {new Date(p.createdAt).toLocaleDateString()}</p>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="font-black text-slate-950">₹{p.amount}</p>
+                                                                    <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-50 text-emerald-700">{p.status}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {orderPayments.length === 0 && (
+                                                            <p className="text-slate-400 italic text-xs py-4 text-center">No transactions registered for this project.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-sm">
+                                <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                                <h4 className="text-lg font-bold text-slate-800">Select a Project</h4>
+                                <p className="text-slate-400 mt-1 max-w-sm mx-auto font-semibold text-xs leading-relaxed">Select one of the freelancer's assigned projects from the side list to inspect tasks, log sessions, documents and payment records.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    if (selectedFreelancerForWorkspace) {
+        return renderFreelancerWorkspace();
+    }
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header section */}
@@ -249,7 +647,21 @@ const FreelancersModule = ({ token }) => {
                                         {filteredFreelancers.length > 0 ? filteredFreelancers.map((freelancer) => (
                                             <tr key={freelancer._id} className="hover:bg-slate-50/30 transition">
                                                 <td className="px-8 py-5">
-                                                    <div className="font-black text-slate-900 text-sm">{freelancer.name}</div>
+                                                    <div 
+                                                        onClick={() => {
+                                                            setSelectedFreelancerForWorkspace(freelancer);
+                                                            const freelancerOrders = orders.filter(o => (o.assignedFreelancer?._id || o.assignedFreelancer) === freelancer._id);
+                                                            if (freelancerOrders.length > 0) {
+                                                                setSelectedOrderId(freelancerOrders[0]._id);
+                                                            } else {
+                                                                setSelectedOrderId(null);
+                                                            }
+                                                            setOrderDetailTab('Overview');
+                                                        }} 
+                                                        className="font-black text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer text-sm"
+                                                    >
+                                                        {freelancer.name}
+                                                    </div>
                                                     <div className="text-slate-400 text-[10px] mt-1 font-bold">
                                                         <span>{freelancer.phone} | {freelancer.email}</span>
                                                     </div>
