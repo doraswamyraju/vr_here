@@ -118,6 +118,12 @@ const OrdersModule = ({
     return activeToken ? { headers: { Authorization: `Bearer ${activeToken}` } } : null;
   }, [token]);
 
+  const [finalCertFile, setFinalCertFile] = useState(null);
+  const [adminDocFile, setAdminDocFile] = useState(null);
+  const [adminDocName, setAdminDocName] = useState('');
+  const [isUploadingFinal, setIsUploadingFinal] = useState(false);
+  const [isUploadingAdminDoc, setIsUploadingAdminDoc] = useState(false);
+
   const [billingLoading, setBillingLoading] = useState(false);
   const handleInitiateBilling = async (payload) => {
     setBillingLoading(true);
@@ -129,6 +135,55 @@ const OrdersModule = ({
       alert(err.response?.data?.message || 'Failed to initiate billing.');
     } finally {
       setBillingLoading(false);
+    }
+  };
+
+  const handleUploadFinalCertificate = async (e) => {
+    e.preventDefault();
+    if (!finalCertFile || !config) return;
+    setIsUploadingFinal(true);
+    const formData = new FormData();
+    formData.append('document', finalCertFile);
+    formData.append('isFinalCertificate', 'true');
+    try {
+      await axios.post(`/api/orders/${selectedOrder._id}/documents`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...config.headers
+        }
+      });
+      alert('Final certificate uploaded successfully and project status set to Completed!');
+      setFinalCertFile(null);
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to upload final certificate');
+    } finally {
+      setIsUploadingFinal(false);
+    }
+  };
+
+  const handleUploadAdminDoc = async (e) => {
+    e.preventDefault();
+    if (!adminDocFile || !config) return;
+    setIsUploadingAdminDoc(true);
+    const formData = new FormData();
+    formData.append('document', adminDocFile);
+    formData.append('name', adminDocName.trim() || adminDocFile.name);
+    try {
+      await axios.post(`/api/orders/${selectedOrder._id}/documents`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...config.headers
+        }
+      });
+      alert('Document uploaded successfully to customer portal!');
+      setAdminDocFile(null);
+      setAdminDocName('');
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to upload document');
+    } finally {
+      setIsUploadingAdminDoc(false);
     }
   };
 
@@ -721,6 +776,67 @@ const OrdersModule = ({
                      (!itrAssessment || !itrAssessment.responses?.some(r => r.documentUrl || r.documents?.length > 0)) && (
                       <p className="col-span-full text-center text-xs text-slate-400 italic py-4">No documents available inside the vault.</p>
                     )}
+                  </div>
+
+                  {/* Upload Controls Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-5">
+                    {/* Finish & Deliver Column */}
+                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-3">
+                      <h5 className="font-black text-emerald-800 uppercase tracking-tight text-xs flex items-center gap-1.5">
+                        <CheckCircle size={14} /> Finish & Deliver (Final Certificate)
+                      </h5>
+                      {selectedOrder.finalCertificateUrl ? (
+                        <div className="p-3 bg-white border border-emerald-100 rounded-xl flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-700">Certificate uploaded</span>
+                          <a href={selectedOrder.finalCertificateUrl} target="_blank" rel="noreferrer" className="text-xs font-black text-indigo-600 hover:underline">View File</a>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleUploadFinalCertificate} className="space-y-3">
+                          <input 
+                            type="file" 
+                            required
+                            onChange={e => setFinalCertFile(e.target.files[0])}
+                            className="w-full text-xs font-semibold"
+                          />
+                          <button
+                            type="submit"
+                            disabled={isUploadingFinal || !finalCertFile}
+                            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50"
+                          >
+                            {isUploadingFinal ? 'Uploading...' : 'Upload & Deliver Final Doc'}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+
+                    {/* Send General Doc Column */}
+                    <div className="bg-indigo-50/40 border border-indigo-100 rounded-2xl p-4 space-y-3">
+                      <h5 className="font-black text-indigo-900 uppercase tracking-tight text-xs flex items-center gap-1.5">
+                        <Upload size={14} /> Send Document to Customer (for download/signing)
+                      </h5>
+                      <form onSubmit={handleUploadAdminDoc} className="space-y-3">
+                        <input 
+                          type="text" 
+                          placeholder="Document Name (e.g. Agreement for Sign)"
+                          value={adminDocName}
+                          onChange={e => setAdminDocName(e.target.value)}
+                          className="w-full p-2 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                        />
+                        <input 
+                          type="file" 
+                          required
+                          onChange={e => setAdminDocFile(e.target.files[0])}
+                          className="w-full text-xs font-semibold"
+                        />
+                        <button
+                          type="submit"
+                          disabled={isUploadingAdminDoc || !adminDocFile}
+                          className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50"
+                        >
+                          {isUploadingAdminDoc ? 'Uploading...' : 'Send Document'}
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 </div>
               )}
