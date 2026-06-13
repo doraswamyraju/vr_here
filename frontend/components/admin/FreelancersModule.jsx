@@ -647,20 +647,27 @@ const FreelancersModule = ({ token, orders = [], employees = [] }) => {
                                         {filteredFreelancers.length > 0 ? filteredFreelancers.map((freelancer) => (
                                             <tr key={freelancer._id} className="hover:bg-slate-50/30 transition">
                                                 <td className="px-8 py-5">
-                                                    <div 
-                                                        onClick={() => {
-                                                            setSelectedFreelancerForWorkspace(freelancer);
-                                                            const freelancerOrders = orders.filter(o => (o.assignedFreelancer?._id || o.assignedFreelancer) === freelancer._id);
-                                                            if (freelancerOrders.length > 0) {
-                                                                setSelectedOrderId(freelancerOrders[0]._id);
-                                                            } else {
-                                                                setSelectedOrderId(null);
-                                                            }
-                                                            setOrderDetailTab('Overview');
-                                                        }} 
-                                                        className="font-black text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer text-sm"
-                                                    >
-                                                        {freelancer.name}
+                                                    <div className="flex items-center gap-2">
+                                                        <div 
+                                                            onClick={() => {
+                                                                setSelectedFreelancerForWorkspace(freelancer);
+                                                                const freelancerOrders = orders.filter(o => (o.assignedFreelancer?._id || o.assignedFreelancer) === freelancer._id);
+                                                                if (freelancerOrders.length > 0) {
+                                                                    setSelectedOrderId(freelancerOrders[0]._id);
+                                                                } else {
+                                                                    setSelectedOrderId(null);
+                                                                }
+                                                                setOrderDetailTab('Overview');
+                                                            }} 
+                                                            className="font-black text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer text-sm"
+                                                        >
+                                                            {freelancer.name}
+                                                        </div>
+                                                        {freelancer.isClockedIn && (
+                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-50 text-red-600 rounded-md text-[8px] font-black uppercase tracking-wider animate-pulse border border-red-100">
+                                                                <span className="w-1 h-1 bg-red-600 rounded-full"></span> Clocked In
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="text-slate-400 text-[10px] mt-1 font-bold">
                                                         <span>{freelancer.phone} | {freelancer.email}</span>
