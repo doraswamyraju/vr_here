@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   CheckCircle, Clock, FileText, User, 
-  Plus, CheckSquare, RefreshCcw, IndianRupee, AlertCircle 
+  Plus, CheckSquare, RefreshCcw, IndianRupee, AlertCircle, Check 
 } from 'lucide-react';
 import { rupees } from '../utils/helpers';
 
