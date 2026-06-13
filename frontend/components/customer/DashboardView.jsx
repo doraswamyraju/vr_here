@@ -41,7 +41,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
         { id: 5, name: 'Trademark', icon: Shield, color: 'bg-purple-50 text-purple-600', key: 'New' },
         { id: 6, name: 'Audit', icon: ClipboardCheck, color: 'bg-rose-50 text-rose-600', key: 'New' },
         { id: 7, name: 'Funding', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600', key: 'New' },
-        { id: 8, name: 'Compliance', icon: Settings, color: 'bg-slate-50 text-slate-600', key: 'New' },
+        { id: 8, name: 'IT Checklist', icon: ClipboardCheck, color: 'bg-indigo-50 text-indigo-700', key: '/income-tax-assessment' },
     ];
 
     const SEARCH_SUGGESTIONS = [
@@ -208,7 +208,13 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                             {topServices.map(service => (
                                 <button
                                     key={service.id}
-                                    onClick={() => setActiveTab(service.key)}
+                                    onClick={() => {
+                                        if (service.key.startsWith('/')) {
+                                            window.location.href = service.key;
+                                        } else {
+                                            setActiveTab(service.key);
+                                        }
+                                    }}
                                     className="flex flex-col items-center gap-3 group"
                                 >
                                     <div className={`w-14 h-14 lg:w-16 lg:h-16 ${service.color} rounded-3xl flex items-center justify-center shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300`}>

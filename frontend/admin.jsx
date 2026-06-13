@@ -40,6 +40,7 @@ import ReferralPartnersModule from './components/admin/referrals/ReferralPartner
 import FinanceModule from './components/admin/finance/FinanceModule';
 import EmployeeAnalysisModule from './components/admin/users/EmployeeAnalysisModule';
 import ComplianceModule from './components/admin/compliance/ComplianceModule';
+import IncomeTaxAssessmentModule from './components/admin/IncomeTaxAssessmentModule';
 import { RevenueChart, ServiceDistributionChart, EmployeeWorkloadChart } from './components/admin/DashboardCharts';
 import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, ShieldCheck, CalendarCheck } from 'lucide-react';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
@@ -684,6 +685,7 @@ function AdminApp() {
     { key: 'ToDo', label: 'To Do', icon: CheckSquare },
     { key: 'Finance', label: 'Finance', icon: DollarSign },
     { key: 'Compliance', label: 'Compliance', icon: CalendarCheck },
+    { key: 'ITChecklist', label: 'IT Checklist', icon: FileText },
     { key: 'Performance', label: 'Performance', icon: BarChart3 },
     { key: 'HRMS', label: 'HRMS Portal', icon: Users },
     { key: 'Reports', label: 'Reports', icon: Activity },
@@ -757,6 +759,7 @@ function AdminApp() {
     );
     if (activeTab === 'Finance') return <FinanceModule token={userInfo?.token} />;
     if (activeTab === 'Compliance') return <ComplianceModule token={userInfo?.token} />;
+    if (activeTab === 'ITChecklist') return <IncomeTaxAssessmentModule token={userInfo?.token} />;
     if (activeTab === 'Performance') return <EmployeeAnalysisModule token={userInfo?.token} users={users} />;
     if (activeTab === 'HRMS') return <HRMSModule role={userInfo?.role} />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;

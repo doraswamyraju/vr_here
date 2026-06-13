@@ -12,6 +12,7 @@ import PrivateLimitedPage from './PrivateLimited';
 import PartnershipFirmPage from './PartnershipFirm';
 import GSTRegistrationPage from './GSTRegistration';
 import IncomeTaxPage from './IncomeTax';
+import IncomeTaxAssessment from './IncomeTaxAssessment';
 import AdminPage from './admin';
 import CustomerPage from './customer';
 import EmployeePage from './employee';
@@ -56,6 +57,7 @@ const App = () => {
       <Route path="/partnership-firm" element={<PartnershipFirmPage />} />
       <Route path="/gst-registration" element={<GSTRegistrationPage />} />
       <Route path="/income-tax-return" element={<IncomeTaxPage />} />
+      <Route path="/income-tax-assessment" element={<IncomeTaxAssessment />} />
       <Route path="/all-services" element={<AllServicesPage />} />
       <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
       <Route path="/compliance-scheme-2026" element={<CompaniesComplianceScheme />} />
