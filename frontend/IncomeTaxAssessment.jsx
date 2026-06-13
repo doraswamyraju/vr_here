@@ -255,10 +255,28 @@ export default function IncomeTaxAssessment() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24 selection:bg-indigo-500/10">
-      
+      {/* VR Here Brand Header */}
+      <header className="bg-white border-b border-slate-100 py-4 shadow-sm mb-8">
+        <div className="max-w-4xl mx-auto px-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center flex-shrink-0 group cursor-pointer decoration-transparent">
+            <img src="/logo.png" alt="VR Here" className="h-12 w-auto object-contain mr-2 transition-transform duration-300 group-hover:scale-105" />
+            <div className="flex flex-col">
+              <span className="text-2xl font-extrabold text-black leading-none tracking-tight transition-colors group-hover:text-indigo-600">VR Here</span>
+              <span className="text-[10px] font-bold text-red-650 uppercase tracking-widest mt-0.5">Business Management Solutions</span>
+            </div>
+          </Link>
+          {token && (
+            <Link 
+              to="/dashboard" 
+              className="text-xs font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center gap-1.5 transition"
+            >
+              <ArrowLeft size={14} /> Back to Dashboard
+            </Link>
+          )}
+        </div>
+      </header>
 
-
-      <div className="max-w-4xl mx-auto px-4 pt-12">
+      <div className="max-w-4xl mx-auto px-4">
         
         {/* Page Title */}
         <div className="text-center mb-10">

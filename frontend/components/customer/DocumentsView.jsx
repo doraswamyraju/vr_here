@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Download, FileText, FolderOpen, Upload } from 'lucide-react';
 import axios from 'axios';
 import RequirementsWorkspace from './RequirementsWorkspace';
+import ITRAssessmentCustomerView from './ITRAssessmentCustomerView';
 
 const DocumentsView = ({ orders, refreshOrders, userInfo }) => {
   const [activeOrder, setActiveOrder] = useState(orders[0]?._id || '');
@@ -132,7 +133,11 @@ const DocumentsView = ({ orders, refreshOrders, userInfo }) => {
           )}
 
           {activeTab === 'requirements' && (
-            <RequirementsWorkspace selectedOrder={selectedOrder} userInfo={userInfo} refreshOrders={refreshOrders} />
+            selectedOrder.serviceName?.toLowerCase().includes('income tax') || selectedOrder.packageName?.toLowerCase().includes('itr') ? (
+              <ITRAssessmentCustomerView selectedOrder={selectedOrder} userInfo={userInfo} />
+            ) : (
+              <RequirementsWorkspace selectedOrder={selectedOrder} userInfo={userInfo} refreshOrders={refreshOrders} />
+            )
           )}
         </div>
       ) : (
