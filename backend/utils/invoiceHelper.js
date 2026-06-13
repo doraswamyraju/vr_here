@@ -77,6 +77,7 @@ export const generateAndEmailInvoice = async (order, baseAmount, options = {}) =
                         orderId: order._id.toString(),
                         invoiceNumber: finalInvoiceNumber,
                         adjustConsultation: String(adjustConsultation)
+                    }
                 };
                 const isITR = order.serviceName?.toLowerCase().includes('income tax') || order.packageName?.toLowerCase().includes('itr');
                 if (isITR) {
