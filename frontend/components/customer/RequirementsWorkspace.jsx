@@ -45,20 +45,25 @@ const RequirementsWorkspace = ({ selectedOrder, userInfo, refreshOrders }) => {
     refreshOrders();
   };
 
-  const uploadForRequirement = async (requirementId, file) => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('document', file);
-    formData.append('requirementId', requirementId);
+  const uploadForRequirement = async (requirementId, filesList) => {
+    if (!filesList || filesList.length === 0) return;
     setUploadingId(requirementId);
     try {
-      await axios.post(`/api/orders/${selectedOrder._id}/documents`, formData, {
-        headers: {
-          Authorization: `Bearer ${userInfo.token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      for (let i = 0; i < filesList.length; i++) {
+        const formData = new FormData();
+        formData.append('document', filesList[i]);
+        formData.append('requirementId', requirementId);
+        
+        await axios.post(`/api/orders/${selectedOrder._id}/documents`, formData, {
+          headers: {
+            Authorization: `Bearer ${userInfo.token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
       refreshOrders();
+    } catch (error) {
+      alert('Error uploading file(s).');
     } finally {
       setUploadingId('');
     }
@@ -119,7 +124,8 @@ const RequirementsWorkspace = ({ selectedOrder, userInfo, refreshOrders }) => {
           <div className="relative">
             <input
               type="file"
-              onChange={(event) => uploadForRequirement(item._id, event.target.files?.[0])}
+              multiple
+              onChange={(event) => uploadForRequirement(item._id, event.target.files)}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
             <button
@@ -127,7 +133,7 @@ const RequirementsWorkspace = ({ selectedOrder, userInfo, refreshOrders }) => {
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 transition text-white text-xs font-bold inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
             >
               <Upload size={14} />
-              {uploadingId === item._id ? 'Uploading...' : (item.uploadedDocumentUrl ? 'Replace File' : 'Choose File')}
+              {uploadingId === item._id ? 'Uploading...' : (item.uploadedDocumentUrl ? 'Replace Files' : 'Choose Files')}
             </button>
           </div>
         </div>

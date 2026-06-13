@@ -144,13 +144,10 @@ export default function IncomeTaxAssessment() {
   };
 
   const handleFileUpload = async (id, e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const filesList = e.target.files;
+    if (!filesList || filesList.length === 0) return;
 
     setUploadingItem(id);
-    const formData = new FormData();
-    formData.append('document', file);
-
     try {
       const headers = {
         'Content-Type': 'multipart/form-data'
@@ -159,21 +156,27 @@ export default function IncomeTaxAssessment() {
         headers.Authorization = `Bearer ${token}`;
       }
       const config = { headers };
-      const { data } = await axios.post('/api/income-tax-assessment/upload', formData, config);
-      
-      setResponses(prev => {
-        const item = prev[id] || {};
-        const docs = item.documents || [];
-        return {
-          ...prev,
-          [id]: {
-            ...item,
-            documents: [...docs, { documentUrl: data.documentUrl, originalFileName: data.originalFileName }]
-          }
-        };
-      });
+
+      for (let i = 0; i < filesList.length; i++) {
+        const formData = new FormData();
+        formData.append('document', filesList[i]);
+        
+        const { data } = await axios.post('/api/income-tax-assessment/upload', formData, config);
+        
+        setResponses(prev => {
+          const item = prev[id] || {};
+          const docs = item.documents || [];
+          return {
+            ...prev,
+            [id]: {
+              ...item,
+              documents: [...docs, { documentUrl: data.documentUrl, originalFileName: data.originalFileName }]
+            }
+          };
+        });
+      }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to upload document');
+      alert(err.response?.data?.message || 'Failed to upload document(s)');
     } finally {
       setUploadingItem(null);
     }
@@ -419,6 +422,7 @@ export default function IncomeTaxAssessment() {
                               {uploadingItem === q.id ? 'Uploading...' : 'Attach Proof'}
                               <input 
                                 type="file" 
+                                multiple
                                 className="hidden" 
                                 onChange={e => handleFileUpload(q.id, e)}
                                 accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
