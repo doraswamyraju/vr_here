@@ -29,7 +29,7 @@ const submitAssessment = asyncHandler(async (req, res) => {
     }
 
     const assessment = await IncomeTaxAssessment.create({
-        user: req.user._id,
+        user: req.user ? req.user._id : null,
         clientName,
         pan,
         financialYear,

@@ -6,17 +6,17 @@ import {
     getAssessmentById,
     updateAssessmentStatus
 } from '../controllers/incomeTaxAssessmentController.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect, protectOptional, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
 router.route('/')
-    .post(protect, submitAssessment)
+    .post(protectOptional, submitAssessment)
     .get(protect, getAssessments);
 
 router.route('/upload')
-    .post(protect, upload.single('document'), uploadAssessmentDocument);
+    .post(protectOptional, upload.single('document'), uploadAssessmentDocument);
 
 router.route('/:id')
     .get(protect, getAssessmentById);

@@ -110,9 +110,7 @@ export default function IncomeTaxAssessment() {
   const [token, setToken] = useState('');
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    if (!userInfo?.token) {
-      navigate('/login');
-    } else {
+    if (userInfo?.token) {
       setToken(userInfo.token);
       setClientName(userInfo.name || '');
     }
@@ -131,7 +129,7 @@ export default function IncomeTaxAssessment() {
       };
     });
     setResponses(initialResponses);
-  }, [navigate]);
+  }, []);
 
   const handleResponseChange = (id, field, val) => {
     setResponses(prev => ({
@@ -235,17 +233,7 @@ export default function IncomeTaxAssessment() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24 selection:bg-indigo-500/10">
       
-      {/* Header */}
-      <header className="h-20 bg-white border-b border-slate-100 sticky top-0 z-40 backdrop-blur-md px-6 md:px-12 flex items-center justify-between shadow-sm">
-        <Link to="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition">
-          <ArrowLeft size={18} />
-          <span className="text-xs font-black uppercase tracking-wider">Back to Dashboard</span>
-        </Link>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-sm">VR</div>
-          <span className="font-black text-slate-800 text-sm tracking-tight uppercase">VR HERE</span>
-        </div>
-      </header>
+
 
       <div className="max-w-4xl mx-auto px-4 pt-12">
         
