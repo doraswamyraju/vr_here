@@ -1523,21 +1523,32 @@ const getOrderAttendance = asyncHandler(async (req, res) => {
     });
 
     const Attendance = (await import('../models/Attendance.js')).default;
-    const staffList = await User.find({ _id: { $in: Array.from(employeeIds) } }).select('name email role');
+    const staffList = await User.find({ _id: { $in: Array.from(employeeIds) } })
+        .select('name email role isClockedIn activeOrderId lastClockInTime');
 
     const result = await Promise.all(staffList.map(async (staff) => {
-        const activeSession = await Attendance.findOne({
-            employee: staff._id,
-            clockOutAt: null
-        });
+        let isClockedIn = false;
+        let clockInAt = null;
+
+        if (staff.role === 'freelancer') {
+            isClockedIn = !!(staff.isClockedIn && staff.activeOrderId?.toString() === order._id.toString());
+            clockInAt = isClockedIn ? staff.lastClockInTime : null;
+        } else {
+            const activeSession = await Attendance.findOne({
+                employee: staff._id,
+                clockOutAt: null
+            });
+            isClockedIn = !!activeSession;
+            clockInAt = activeSession ? activeSession.clockInAt : null;
+        }
 
         return {
             _id: staff._id,
             name: staff.name,
             email: staff.email,
             role: staff.role,
-            isClockedIn: !!activeSession,
-            clockInAt: activeSession ? activeSession.clockInAt : null
+            isClockedIn,
+            clockInAt
         };
     }));
 
