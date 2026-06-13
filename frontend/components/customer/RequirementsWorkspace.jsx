@@ -116,7 +116,15 @@ const RequirementsWorkspace = ({ selectedOrder, userInfo, refreshOrders }) => {
           <p className="text-xs text-slate-500 mt-1">{item.description || 'Upload requested document.'}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {item.uploadedDocumentUrl ? (
+          {item.documents && item.documents.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {item.documents.map((doc, idx) => (
+                <a key={idx} href={doc.url} target="_blank" rel="noreferrer" className="text-xs text-emerald-700 font-bold inline-flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-lg">
+                  <CheckCircle2 size={14} /> <span className="truncate max-w-[120px]">{doc.name || `Upload ${idx + 1}`}</span>
+                </a>
+              ))}
+            </div>
+          ) : item.uploadedDocumentUrl ? (
             <a href={item.uploadedDocumentUrl} target="_blank" rel="noreferrer" className="text-xs text-emerald-700 font-bold inline-flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-lg">
               <CheckCircle2 size={14} /> View Upload
             </a>

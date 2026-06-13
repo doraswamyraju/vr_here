@@ -679,6 +679,13 @@ const uploadDocument = asyncHandler(async (req, res) => {
         if (req.body.requirementId) {
             const requirement = order.customerRequirements.id(req.body.requirementId);
             if (requirement) {
+                if (!requirement.documents) {
+                    requirement.documents = [];
+                }
+                requirement.documents.push({
+                    name: docName,
+                    url: documentUrl
+                });
                 requirement.uploadedDocumentUrl = documentUrl;
                 requirement.uploadedDocumentName = docName;
                 requirement.documentUrl = documentUrl;

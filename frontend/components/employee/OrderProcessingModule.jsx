@@ -160,16 +160,28 @@ const OrderProcessingModule = ({
     }
     
     (selectedOrder.customerRequirements || []).forEach(r => {
-      if (r.uploadedDocumentUrl) {
+      if (r.documents && r.documents.length > 0) {
+        r.documents.forEach((doc, idx) => {
+          if (doc.url) {
+            urls.push({ name: `${r.title || 'Requirement'}_${idx + 1}`, url: doc.url });
+          }
+        });
+      } else if (r.uploadedDocumentUrl) {
         urls.push({ name: r.title || 'Requirement', url: r.uploadedDocumentUrl });
       }
     });
 
-    const requirementUrls = new Set(
-      (selectedOrder.customerRequirements || [])
-        .map(r => r.uploadedDocumentUrl)
-        .filter(Boolean)
-    );
+    const requirementUrls = new Set();
+    (selectedOrder.customerRequirements || []).forEach(r => {
+      if (r.documents && r.documents.length > 0) {
+        r.documents.forEach(doc => {
+          if (doc.url) requirementUrls.add(doc.url);
+        });
+      }
+      if (r.uploadedDocumentUrl) {
+        requirementUrls.add(r.uploadedDocumentUrl);
+      }
+    });
 
     (selectedOrder.clientDocuments || []).forEach(doc => {
       if (doc.url && !requirementUrls.has(doc.url)) {
@@ -689,23 +701,46 @@ const OrderProcessingModule = ({
                     </a>
                   </div>
                 )}
-                {(selectedOrder.customerRequirements || []).filter(r => r.uploadedDocumentUrl).map((item) => (
-                  <div key={item._id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
+                {(selectedOrder.customerRequirements || []).flatMap((item) => {
+                  if (item.documents && item.documents.length > 0) {
+                    return item.documents.map((doc, idx) => ({
+                      id: `${item._id}-${idx}`,
+                      title: `${item.title} - ${doc.name || `File ${idx + 1}`}`,
+                      url: doc.url,
+                      type: 'Uploaded Requirement'
+                    }));
+                  } else if (item.uploadedDocumentUrl) {
+                    return [{
+                      id: item._id,
+                      title: item.title,
+                      url: item.uploadedDocumentUrl,
+                      type: 'Uploaded Requirement'
+                    }];
+                  }
+                  return [];
+                }).map((doc) => (
+                  <div key={doc.id} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-sm">
                     <div>
-                      <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{item.title}</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Uploaded Requirement</p>
+                      <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.title}</p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{doc.type}</p>
                     </div>
-                    <a href={item.uploadedDocumentUrl} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                    <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
                       <Eye size={16} />
                     </a>
                   </div>
                 ))}
                 {(() => {
-                  const requirementUrls = new Set(
-                    (selectedOrder.customerRequirements || [])
-                      .map(r => r.uploadedDocumentUrl)
-                      .filter(Boolean)
-                  );
+                  const requirementUrls = new Set();
+                  (selectedOrder.customerRequirements || []).forEach(r => {
+                    if (r.documents && r.documents.length > 0) {
+                      r.documents.forEach(doc => {
+                        if (doc.url) requirementUrls.add(doc.url);
+                      });
+                    }
+                    if (r.uploadedDocumentUrl) {
+                      requirementUrls.add(r.uploadedDocumentUrl);
+                    }
+                  });
                   return (selectedOrder.clientDocuments || [])
                     .filter(doc => !requirementUrls.has(doc.url))
                     .map((doc) => (
