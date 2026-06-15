@@ -1,20 +1,36 @@
  // swift-tools-version: 5.9
 import PackageDescription
+import AppleProductTypes
 
 let package = Package(
     name: "VRHereIOS",
     platforms: [
-        .iOS(.v16),
-        .macOS(.v13)
+        .iOS(.v16)
     ],
     products: [
-        .library(
+        .iOSApplication(
             name: "VRHereIOS",
-            targets: ["VRHereIOS"]),
+            targets: ["VRHereIOS"],
+            bundleIdentifier: "com.sbr.vrherebms.ios",
+            teamIdentifier: "",
+            displayVersion: "1.0",
+            bundleVersion: "1",
+            appIcon: .placeholder(icon: .appIcon),
+            supportedDeviceFamilies: [
+                .pad,
+                .phone
+            ],
+            supportedInterfaceOrientations: [
+                .portrait,
+                .landscapeLeft,
+                .landscapeRight,
+                .portraitUpsideDown
+            ]
+        )
     ],
     dependencies: [],
     targets: [
-        .target(
+        .executableTarget(
             name: "VRHereIOS",
             dependencies: [],
             path: "VRHereIOS"
