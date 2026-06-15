@@ -153,6 +153,13 @@ data class ChecklistItem(
 
 // --- PAYMENT DATA CLASSES ---
 
+data class PaymentOrderReference(
+    @SerializedName("_id") val id: String,
+    val serviceName: String = "",
+    val packageName: String = "",
+    val status: String = ""
+)
+
 data class PaymentResponse(
     @SerializedName("_id") val id: String,
     val amount: Double,
@@ -167,6 +174,7 @@ data class PaymentResponse(
     val serviceName: String = "",
     val packageName: String = "",
     val invoiceUrl: String? = null,
+    val order: PaymentOrderReference? = null,
     val createdAt: String = ""
 )
 
