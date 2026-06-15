@@ -243,7 +243,7 @@ struct CustomerHomeTab: View {
                                 Text("ACTIVE PORTFOLIO")
                                     .font(.system(size: 10, weight: .black))
                                     .foregroundColor(.white.opacity(0.8))
-                                    .letterSpacing(1.0)
+                                    .tracking(1.0)
                             }
                             
                             HStack(alignment: .bottom) {
