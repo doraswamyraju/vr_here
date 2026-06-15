@@ -443,60 +443,130 @@ struct CustomerSidebarView: View {
     let onLogout: () -> Void
     let onClose: () -> Void
     
+    private let menuItems = [
+        ("Home", "square.grid.2x2", "Dashboard"),
+        ("Services", "briefcase", "Services Catalog"),
+        ("Orders", "bag", "My Orders"),
+        ("Invoices", "doc.text", "Invoices"),
+        ("Vault", "folder", "Vault Documents"),
+        ("Support", "headphones", "Help & Support"),
+        ("Account", "person", "My Profile")
+    ]
+    
     var body: some View {
+        let initials = userName.components(separatedBy: " ")
+            .compactMap { $0.first }
+            .map { String($0).uppercased() }
+            .prefix(2)
+            .joined()
+        
         VStack(alignment: .leading, spacing: 0) {
-            // Header Banner
-            VStack(alignment: .leading, spacing: 4) {
-                Text("VR Here BMS")
-                    .font(.system(size: 18, weight: .black))
-                    .foregroundColor(.white)
-                Text(userName)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white.opacity(0.8))
+            // 1. Sidebar Header (Brand Logo + Close Button)
+            HStack {
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color(red: 99/255, green: 102/255, blue: 241/255))
+                            .frame(width: 36, height: 36)
+                        Text("VR")
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text("VRHERE BMS")
+                        .font(.system(size: 16, weight: .black))
+                        .foregroundColor(.white)
+                        .tracking(-0.3)
+                }
+                
+                Spacer()
+                
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.8))
+                        .frame(width: 36, height: 36)
+                        .background(Color.white.opacity(0.05))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(PlainButtonStyle())
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-            .background(LinearGradient(gradient: Gradient(colors: [.blue, .purple]), startPoint: .topLeading, endPoint: .bottomTrailing))
+            .padding(.horizontal, 24)
+            .padding(.top, 60)
+            .padding(.bottom, 20)
             
-            // Nav Items List
+            Divider().background(Color.white.opacity(0.08))
+            
+            // 2. Profile Details Section (Premium glassmorphism wrapper + initials avatar)
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(gradient: Gradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 139/255, green: 92/255, blue: 246/255)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 48, height: 48)
+                        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 2))
+                    
+                    Text(initials.isEmpty ? "C" : initials)
+                        .font(.system(size: 16, weight: .black))
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(userName)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    Text("Customer Account")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                }
+                Spacer()
+            }
+            .padding(16)
+            .background(Color.white.opacity(0.02))
+            .cornerRadius(20)
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.04), lineWidth: 1))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 20)
+            
+            Divider().background(Color.white.opacity(0.08))
+            
+            // 3. Navigation List
             ScrollView {
-                VStack(spacing: 4) {
-                    SidebarItem(label: "My Home", iconName: "house", tabId: "Home", activeTab: $activeTab, onClose: onClose)
-                    SidebarItem(label: "Master Catalog", iconName: "briefcase", tabId: "Services", activeTab: $activeTab, onClose: onClose)
-                    SidebarItem(label: "Manage Orders", iconName: "bag", tabId: "Orders", activeTab: $activeTab, onClose: onClose)
-                    SidebarItem(label: "Bills & Receipts", iconName: "doc.text", tabId: "Invoices", activeTab: $activeTab, onClose: onClose)
-                    SidebarItem(label: "Document Vault", iconName: "folder", tabId: "Vault", activeTab: $activeTab, onClose: onClose)
-                    SidebarItem(label: "Support Tickets", iconName: "headphones", tabId: "Support", activeTab: $activeTab, onClose: onClose)
-                    SidebarItem(label: "Profile Account", iconName: "person", tabId: "Account", activeTab: $activeTab, onClose: onClose)
-                    
-                    Divider()
-                        .background(Color.borderLight)
-                        .padding(.vertical, 12)
-                    
-                    // Logout
-                    Button(action: {
-                        onClose()
-                        onLogout()
-                    }) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .foregroundColor(.red)
-                            Text("Sign Out")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.red)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+                VStack(spacing: 8) {
+                    ForEach(menuItems, id: \.0) { tabId, icon, label in
+                        SidebarItem(label: label, iconName: icon, tabId: tabId, activeTab: $activeTab, onClose: onClose)
                     }
                 }
-                .padding(8)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
             }
-            Spacer()
+            
+            Divider().background(Color.white.opacity(0.08))
+            
+            // 4. Logout Action Footer
+            Button(action: {
+                onClose()
+                onLogout()
+            }) {
+                HStack(spacing: 16) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                    Text("Sign Out")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 16)
+            .padding(.bottom, 30)
         }
-        .frame(width: 270)
-        .background(Color.white)
-        .edgesIgnoringSafeArea(.bottom)
+        .frame(width: 300)
+        .background(Color(red: 15/255, green: 23/255, blue: 42/255)) // darkSlate #0F172A
+        .edgesIgnoringSafeArea(.all)
     }
 }
 
@@ -513,18 +583,20 @@ struct SidebarItem: View {
             activeTab = tabId
             onClose()
         }) {
-            HStack(spacing: 12) {
-                Image(systemName: iconName)
-                    .foregroundColor(isSelected ? .white : .textMuted)
+            HStack(spacing: 16) {
+                Image(systemName: iconName + (isSelected ? ".fill" : ""))
+                    .font(.system(size: 18))
+                    .foregroundColor(isSelected ? Color(red: 129/255, green: 140/255, blue: 248/255) : Color(red: 148/255, green: 163/255, blue: 184/255))
+                    .frame(width: 24)
                 Text(label)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(isSelected ? .white : .textDark)
+                    .font(.system(size: 14, weight: isSelected ? .bold : .medium))
+                    .foregroundColor(isSelected ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(isSelected ? Color.primaryRed : Color.clear)
-            .cornerRadius(10)
+            .frame(height: 48)
+            .background(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.15) : Color.clear)
+            .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
     }
