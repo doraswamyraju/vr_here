@@ -61,7 +61,8 @@ struct CustomerDashboardView: View {
                                     webviewUrl = url
                                     webviewTitle = name
                                 }
-                            }
+                            },
+                            onLogout: onLogout
                         )
                     case "Services":
                         CustomerServicesTab(
@@ -359,7 +360,29 @@ struct CustomerDashboardView: View {
     }
 }
 
-// --- Floating Dock view ---
+struct AnimatedGradientBorder: View {
+    @State private var rotateAngle: Double = 0.0
+    
+    var body: some View {
+        RoundedRectangle(cornerRadius: 24)
+            .stroke(
+                AngularGradient(
+                    gradient: Gradient(colors: [.red, .purple, .blue, .green, .yellow, .red]),
+                    center: .center,
+                    startAngle: .degrees(rotateAngle),
+                    endAngle: .degrees(rotateAngle + 360)
+                ),
+                lineWidth: 1.5
+            )
+            .onAppear {
+                withAnimation(Animation.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                    rotateAngle = 360.0
+                }
+            }
+    }
+}
+
+// --- Redesigned Floating Dock view ---
 struct CustomFloatingDock: View {
     @Binding var activeTab: String
     var onTabSelected: (String) -> Void
@@ -374,36 +397,39 @@ struct CustomFloatingDock: View {
     ]
     
     var body: some View {
-        VStack(spacing: 0) {
-            Divider().background(Color.borderLight)
-            
-            HStack(spacing: 0) {
-                ForEach(tabs, id: \.0) { tabId, iconName, label in
-                    let isSelected = activeTab == tabId
-                    
-                    Button(action: {
-                        activeTab = tabId
-                        onTabSelected(tabId)
-                    }) {
-                        VStack(spacing: 4) {
-                            Image(systemName: iconName + (isSelected ? ".fill" : ""))
-                                .font(.system(size: 18))
-                                .foregroundColor(isSelected ? .primaryRed : .textMuted)
-                            
-                            Text(label)
-                                .font(.system(size: 9, weight: isSelected ? .black : .medium))
-                                .foregroundColor(isSelected ? .primaryRed : .textMuted)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+        HStack(spacing: 0) {
+            ForEach(tabs, id: \.0) { tabId, iconName, label in
+                let isSelected = activeTab == tabId
+                
+                Button(action: {
+                    activeTab = tabId
+                    onTabSelected(tabId)
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: iconName + (isSelected ? ".fill" : ""))
+                            .font(.system(size: 16))
+                            .foregroundColor(isSelected ? .white : .textMuted)
+                        
+                        Text(label)
+                            .font(.system(size: 9, weight: isSelected ? .black : .semibold))
+                            .foregroundColor(isSelected ? .white : .textMuted)
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
                 }
+                .buttonStyle(PlainButtonStyle())
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
-            .background(Color.white)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .background(Color.darkSlate)
+        .cornerRadius(24)
+        .overlay(
+            AnimatedGradientBorder()
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 10)
     }
 }
 
