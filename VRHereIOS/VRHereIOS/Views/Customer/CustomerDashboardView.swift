@@ -38,63 +38,66 @@ struct CustomerDashboardView: View {
                     onLogoutClick: onLogout
                 )
                 
-                // Tab Contents
-                ZStack {
+                // Tab Contents & Floating Dock
+                ZStack(alignment: .bottom) {
                     Color.bgLight.ignoresSafeArea()
                     
-                    switch activeTab {
-                    case "Home":
-                        CustomerHomeTab(
-                            viewModel: viewModel,
-                            userName: userName,
-                            searchQuery: $searchQuery,
-                            onSelectTab: { activeTab = $0 },
-                            onOpenProject: { orderId in
-                                selectedOrderId = orderId
-                                activeTab = "Orders"
-                            },
-                            onOpenLiveService: { name, url in
-                                let key = url.components(separatedBy: "/").last ?? ""
-                                if ServiceCatalog.shared.items[key] != nil {
-                                    activeServiceKey = key
-                                } else {
-                                    webviewUrl = url
-                                    webviewTitle = name
+                    Group {
+                        switch activeTab {
+                        case "Home":
+                            CustomerHomeTab(
+                                viewModel: viewModel,
+                                userName: userName,
+                                searchQuery: $searchQuery,
+                                onSelectTab: { activeTab = $0 },
+                                onOpenProject: { orderId in
+                                    selectedOrderId = orderId
+                                    activeTab = "Orders"
+                                },
+                                onOpenLiveService: { name, url in
+                                    let key = url.components(separatedBy: "/").last ?? ""
+                                    if ServiceCatalog.shared.items[key] != nil {
+                                        activeServiceKey = key
+                                    } else {
+                                        webviewUrl = url
+                                        webviewTitle = name
+                                    }
+                                },
+                                onLogout: onLogout
+                            )
+                        case "Services":
+                            CustomerServicesTab(
+                                viewModel: viewModel,
+                                onSelectTab: { activeTab = $0 },
+                                onOpenLiveService: { name, url in
+                                    let key = url.components(separatedBy: "/").last ?? ""
+                                    if ServiceCatalog.shared.items[key] != nil {
+                                        activeServiceKey = key
+                                    } else {
+                                        webviewUrl = url
+                                        webviewTitle = name
+                                    }
                                 }
-                            },
-                            onLogout: onLogout
-                        )
-                    case "Services":
-                        CustomerServicesTab(
-                            viewModel: viewModel,
-                            onSelectTab: { activeTab = $0 },
-                            onOpenLiveService: { name, url in
-                                let key = url.components(separatedBy: "/").last ?? ""
-                                if ServiceCatalog.shared.items[key] != nil {
-                                    activeServiceKey = key
-                                } else {
-                                    webviewUrl = url
-                                    webviewTitle = name
-                                }
-                            }
-                        )
-                    case "Orders":
-                        CustomerOrdersTab(
-                            viewModel: viewModel,
-                            selectedOrderId: $selectedOrderId,
-                            onSelectTab: { activeTab = $0 }
-                        )
-                    case "Invoices":
-                        CustomerInvoicesTab(viewModel: viewModel)
-                    case "Vault":
-                        CustomerVaultTab(viewModel: viewModel)
-                    case "Support":
-                        CustomerSupportTab(viewModel: viewModel)
-                    case "Account":
-                        CustomerAccountTab(viewModel: viewModel, onSelectTab: { activeTab = $0 })
-                    default:
-                        Text("Unknown Tab")
+                            )
+                        case "Orders":
+                            CustomerOrdersTab(
+                                viewModel: viewModel,
+                                selectedOrderId: $selectedOrderId,
+                                onSelectTab: { activeTab = $0 }
+                            )
+                        case "Invoices":
+                            CustomerInvoicesTab(viewModel: viewModel)
+                        case "Vault":
+                            CustomerVaultTab(viewModel: viewModel)
+                        case "Support":
+                            CustomerSupportTab(viewModel: viewModel)
+                        case "Account":
+                            CustomerAccountTab(viewModel: viewModel, onSelectTab: { activeTab = $0 })
+                        default:
+                            Text("Unknown Tab")
+                        }
                     }
+                    .ignoresSafeArea(edges: .bottom)
                     
                     // Persistence WhatsApp & Ticket floating triggers in Bottom Right
                     VStack(spacing: 12) {
@@ -140,16 +143,16 @@ struct CustomerDashboardView: View {
                                 .buttonStyle(ScaleOnPressButtonStyle())
                             }
                             .padding(.trailing, 20)
-                            .padding(.bottom, 90) // clear the floating dock
+                            .padding(.bottom, 110) // clear the floating dock
                         }
                     }
-                }
-                
-                // Floating Glow Island Bottom Dock Navigation Bar
-                if activeServiceKey == nil {
-                    CustomFloatingDock(activeTab: $activeTab, onTabSelected: {
-                        if $0 != "Orders" { selectedOrderId = "" }
-                    })
+                    
+                    // Floating Glow Island Bottom Dock Navigation Bar
+                    if activeServiceKey == nil {
+                        CustomFloatingDock(activeTab: $activeTab, onTabSelected: {
+                            if $0 != "Orders" { selectedOrderId = "" }
+                        })
+                    }
                 }
             }
             
