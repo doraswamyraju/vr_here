@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 // --- Service Package & Service Detail Models ---
 struct ServicePackage: Codable, Identifiable {
