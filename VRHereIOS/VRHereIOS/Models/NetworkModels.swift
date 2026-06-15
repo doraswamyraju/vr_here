@@ -117,6 +117,35 @@ struct OrderResponse: Codable, Identifiable {
         case adminDocuments, finalCertificateUrl, tasks, invoices, customerRequirements
         case checklists, consultationAdjusted, linkedTodos, activityHistory, attendance, createdAt, updatedAt
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
+        clientName = try container.decodeIfPresent(String.self, forKey: .clientName) ?? ""
+        email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
+        phone = try container.decodeIfPresent(String.self, forKey: .phone) ?? ""
+        serviceName = try container.decodeIfPresent(String.self, forKey: .serviceName) ?? ""
+        packageName = try container.decodeIfPresent(String.self, forKey: .packageName) ?? ""
+        price = try container.decodeIfPresent(Double.self, forKey: .price) ?? 0.0
+        paymentId = try container.decodeIfPresent(String.self, forKey: .paymentId) ?? ""
+        razorpayOrderId = try container.decodeIfPresent(String.self, forKey: .razorpayOrderId) ?? ""
+        paymentStatus = try container.decodeIfPresent(String.self, forKey: .paymentStatus) ?? ""
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
+        assignedEmployee = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedEmployee)
+        clientDocuments = try container.decodeIfPresent([OrderDocument].self, forKey: .clientDocuments) ?? []
+        adminDocuments = try container.decodeIfPresent([OrderDocument].self, forKey: .adminDocuments) ?? []
+        finalCertificateUrl = try container.decodeIfPresent(String.self, forKey: .finalCertificateUrl)
+        tasks = try container.decodeIfPresent([OrderTask].self, forKey: .tasks) ?? []
+        invoices = try container.decodeIfPresent([OrderInvoice].self, forKey: .invoices) ?? []
+        customerRequirements = try container.decodeIfPresent([CustomerRequirement].self, forKey: .customerRequirements) ?? []
+        checklists = try container.decodeIfPresent([ChecklistItem].self, forKey: .checklists) ?? []
+        consultationAdjusted = try container.decodeIfPresent(Bool.self, forKey: .consultationAdjusted) ?? false
+        linkedTodos = try container.decodeIfPresent([TodoResponse].self, forKey: .linkedTodos) ?? []
+        activityHistory = try container.decodeIfPresent([OrderHistoryResponse].self, forKey: .activityHistory) ?? []
+        attendance = try container.decodeIfPresent([OrderAttendanceResponse].self, forKey: .attendance) ?? []
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
+    }
 }
 
 struct OrderDocument: Codable, Identifiable {
@@ -309,6 +338,25 @@ struct NotificationResponse: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case title, message, type, isRead, createdAt
+    }
+    
+    init(idVal: String, title: String, message: String, type: String, isRead: Bool, createdAt: String) {
+        self.idVal = idVal
+        self.title = title
+        self.message = message
+        self.type = type
+        self.isRead = isRead
+        self.createdAt = createdAt
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        message = try container.decodeIfPresent(String.self, forKey: .message) ?? ""
+        type = try container.decodeIfPresent(String.self, forKey: .type) ?? "System"
+        isRead = try container.decodeIfPresent(Bool.self, forKey: .isRead) ?? false
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
     }
 }
 
