@@ -66,8 +66,8 @@ fun resolveComposeIcon(iconKey: String): ImageVector {
         "people", "group" -> Icons.Default.People
         "calculate", "calculator" -> Icons.Default.Calculate
         "star" -> Icons.Default.Star
-        "globe" -> Icons.Default.Globe
-        "zap" -> Icons.Default.Zap
+        "globe" -> Icons.Default.Language
+        "zap" -> Icons.Default.FlashOn
         "phone" -> Icons.Default.Phone
         else -> Icons.Default.Work
     }
@@ -224,8 +224,6 @@ object ServiceCatalog {
             )
         }
         items = updatedMap
-    }
-
     }
 }
 

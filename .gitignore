@@ -21,4 +21,19 @@ node_modules/
 # NOTE: /frontend/build is NO LONGER IGNORED, so it will be pushed!
 
 # 4. Uploaded Files
-/backend/uploads/
+/backend/uploads/
+
+# 5. Swift / iOS Build Artifacts and Xcode User Settings
+VRHereIOS/.build/
+VRHereIOS/.swiftpm/
+**/DerivedData/
+**/*.xcuserstate
+**/xcuserdata/
+
+# 6. Android/IntelliJ IDE configs (untracked files)
+**/gradle-daemon-jvm.properties
+.idea/
+**/codeStyles/
+**/deviceManager.xml
+**/inspectionProfiles/
+

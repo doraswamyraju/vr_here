@@ -1,0 +1,210 @@
+import SwiftUI
+
+// --- Color Styling Extensions ---
+extension Color {
+    static let primaryRed = Color(red: 200/255, green: 35/255, blue: 35/255) // #C82323
+    static let textDark = Color(red: 30/255, green: 41/255, blue: 59/255)    // #1E293B
+    static let textMuted = Color(red: 100/255, green: 116/255, blue: 139/255) // #64748B
+    static let bgLight = Color(red: 248/255, green: 250/255, blue: 252/255)  // #F8FAFC
+    static let borderLight = Color(red: 241/255, green: 245/255, blue: 249/255) // #F1F5F9
+    static let bgInput = Color(red: 238/255, green: 242/255, blue: 246/255)   // #EEF2F6
+    static let darkSlate = Color(red: 15/255, green: 23/255, blue: 42/255)   // #0F172A
+}
+
+// Scale-on-Press Button Style for micro-animations
+struct ScaleOnPressButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: configuration.isPressed)
+    }
+}
+
+// Glassmorphic Card Style
+struct GlassCardModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(Color.white)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.borderLight, lineWidth: 1)
+            )
+    }
+}
+
+extension View {
+    func glassCard() -> some View {
+        self.modifier(GlassCardModifier())
+    }
+}
+
+// Custom Header Style
+struct VRHeader: View {
+    let title: String
+    var showMenu: Bool = false
+    var onMenuClick: (() -> Void)? = nil
+    var showLogout: Bool = false
+    var onLogoutClick: (() -> Void)? = nil
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                if showMenu {
+                    Button(action: { onMenuClick?() }) {
+                        Image(systemName: "line.horizontal.3")
+                            .font(.title3)
+                            .foregroundColor(.textMuted)
+                            .padding(8)
+                    }
+                    .buttonStyle(ScaleOnPressButtonStyle())
+                }
+                
+                Spacer()
+                
+                HStack(spacing: 4) {
+                    Text("VR")
+                        .font(.system(size: 20, weight: .black))
+                        .foregroundColor(.primaryRed)
+                    Text("HERE")
+                        .font(.system(size: 20, weight: .black))
+                        .foregroundColor(.textDark)
+                }
+                
+                Spacer()
+                
+                if showLogout {
+                    Button(action: { onLogoutClick?() }) {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.title3)
+                            .foregroundColor(.red)
+                            .padding(8)
+                    }
+                    .buttonStyle(ScaleOnPressButtonStyle())
+                } else if showMenu {
+                    // Balancing empty spacer placeholder
+                    Spacer().frame(width: 40)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.white)
+            
+            Divider()
+                .background(Color.borderLight)
+        }
+    }
+}
+
+// Toast View Overlay
+struct ToastView: View {
+    let message: String
+    
+    var body: some View {
+        Text(message)
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.black.opacity(0.85))
+            .cornerRadius(24)
+            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+            .padding(.bottom, 50)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+}
+
+// Custom Input Textfield with standard icons
+struct CustomInputField: View {
+    let label: String
+    let placeholder: String
+    let iconName: String
+    @Binding var text: String
+    var isSecure: Bool = false
+    @State private var isPasswordVisible: Bool = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.textDark)
+            
+            HStack(spacing: 12) {
+                Image(systemName: iconName)
+                    .foregroundColor(.textMuted)
+                    .frame(width: 20)
+                
+                if isSecure && !isPasswordVisible {
+                    SecureField(placeholder, text: $text)
+                        .font(.system(size: 15))
+                        .foregroundColor(.textDark)
+                } else {
+                    TextField(placeholder, text: $text)
+                        .font(.system(size: 15))
+                        .foregroundColor(.textDark)
+                }
+                
+                if isSecure {
+                    Button(action: { isPasswordVisible.toggle() }) {
+                        Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
+                            .foregroundColor(.textMuted)
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color.bgInput)
+            .cornerRadius(12)
+        }
+    }
+}
+
+// Banner Headless Notification System
+struct BannerNotificationView: View {
+    let title: String
+    let message: String
+    let type: String
+    let onClose: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                HStack(spacing: 8) {
+                    Text("VR")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(.white)
+                        .padding(4)
+                        .background(Color.primaryRed)
+                        .cornerRadius(4)
+                    Text("VR Here BMS • \(type)")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(Color.primaryRed.opacity(0.8))
+                }
+                Spacer()
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.caption2)
+                        .foregroundColor(.textMuted)
+                }
+            }
+            
+            Text(title)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.textDark)
+            
+            Text(message)
+                .font(.system(size: 12))
+                .foregroundColor(.textMuted)
+                .lineLimit(2)
+        }
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primaryRed.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
