@@ -108,6 +108,16 @@ func getIconName(key: String) -> String {
     }
 }
 
+func getAbsoluteURL(path: String) -> URL? {
+    let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty { return nil }
+    if trimmed.lowercased().hasPrefix("http://") || trimmed.lowercased().hasPrefix("https://") {
+        return URL(string: trimmed)
+    }
+    let cleanPath = trimmed.hasPrefix("/") ? String(trimmed.dropFirst()) : trimmed
+    return URL(string: "https://vrhere.in/\(cleanPath)")
+}
+
 // ==========================================
 // 1. CUSTOMER HOME TAB
 // ==========================================
