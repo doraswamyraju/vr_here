@@ -682,6 +682,7 @@ const FreelancerApp = () => {
             selectedOrder={selectedOrder}
             onUpdateRequirementStatus={handleUpdateRequirementStatus}
             onRaiseRequirement={handleRaiseRequirement}
+            isClockedIn={isClockedIn}
           />
         );
       case 'support':

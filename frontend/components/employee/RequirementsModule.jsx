@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 
-const RequirementsModule = ({ selectedOrder, onUpdateRequirementStatus, onRaiseRequirement }) => {
+const RequirementsModule = ({ selectedOrder, onUpdateRequirementStatus, onRaiseRequirement, isClockedIn }) => {
   const [activeSubTab, setActiveSubTab] = useState('details');
   const [quickRequirementText, setQuickRequirementText] = useState('');
   const [quickRequirementType, setQuickRequirementType] = useState('Detail');
@@ -17,6 +17,10 @@ const RequirementsModule = ({ selectedOrder, onUpdateRequirementStatus, onRaiseR
   const additionalRequirements = useMemo(() => requirements.filter(r => r.isAdditional), [requirements]);
 
   const handleRaise = async () => {
+    if (!isClockedIn) {
+      alert('Please clock in before starting work.');
+      return;
+    }
     if (!quickRequirementText.trim() || !onRaiseRequirement) return;
     await onRaiseRequirement(selectedOrder._id, {
       title: quickRequirementText,
@@ -53,7 +57,13 @@ const RequirementsModule = ({ selectedOrder, onUpdateRequirementStatus, onRaiseR
                 {onUpdateRequirementStatus && (
                   <select
                     value={item.status || 'Pending'}
-                    onChange={(event) => onUpdateRequirementStatus(selectedOrder._id, item._id, event.target.value)}
+                    onChange={(event) => {
+                      if (!isClockedIn) {
+                        alert('Please clock in before starting work.');
+                        return;
+                      }
+                      onUpdateRequirementStatus(selectedOrder._id, item._id, event.target.value);
+                    }}
                     className="p-1 border rounded"
                   >
                     <option value="Pending">Pending</option>

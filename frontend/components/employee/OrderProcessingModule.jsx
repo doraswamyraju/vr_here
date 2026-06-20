@@ -43,6 +43,10 @@ const OrderProcessingModule = ({
 
   const handleUploadFinalCertificate = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
+    if (!isClockedIn) {
+      alert('Please clock in before starting work.');
+      return;
+    }
     if (!file || !config) return;
     setIsUploadingFinal(true);
     const formData = new FormData();
@@ -128,6 +132,10 @@ const OrderProcessingModule = ({
 
   const handleUploadAdminDoc = async (e) => {
     e.preventDefault();
+    if (!isClockedIn) {
+      alert('Please clock in before starting work.');
+      return;
+    }
     if (!adminDocFile || !config) return;
     setIsUploadingAdminDoc(true);
     const formData = new FormData();
@@ -323,6 +331,10 @@ const OrderProcessingModule = ({
                 />
                 <button 
                   onClick={async () => {
+                    if (!isClockedIn) {
+                      alert('Please clock in before starting work.');
+                      return;
+                    }
                     if (!editedName.trim()) return;
                     await onUpdateOrderName(selectedOrder._id, editedName.trim());
                     setIsEditingName(false);
@@ -408,7 +420,13 @@ const OrderProcessingModule = ({
             </div>
             <select
               value={selectedOrder.status}
-              onChange={(e) => onStatusChange(selectedOrder._id, e.target.value)}
+              onChange={(e) => {
+                if (!isClockedIn) {
+                  alert('Please clock in before starting work.');
+                  return;
+                }
+                onStatusChange(selectedOrder._id, e.target.value);
+              }}
               className="w-full p-3 border border-slate-300 rounded-lg bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {ORDER_STATUSES.map((status) => (
@@ -552,6 +570,7 @@ const OrderProcessingModule = ({
               selectedOrder={selectedOrder}
               onUpdateRequirementStatus={onUpdateRequirementStatus}
               onRaiseRequirement={onRaiseRequirement}
+              isClockedIn={isClockedIn}
             />
           )}
 

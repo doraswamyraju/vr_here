@@ -236,11 +236,15 @@ const TaskManagementModule = ({
                           </div>
                           <button
                             onClick={() => {
+                              if (!isClockedIn) {
+                                alert('Please clock in before moving tasks.');
+                                return;
+                              }
                               const nextStatus =
                                 column === 'Pending' ? 'In Progress' : column === 'In Progress' ? 'Completed' : 'Pending';
                               onTaskStatusChange(boardOrder._id, task._id, nextStatus);
                             }}
-                            className="text-[10px] px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-bold"
+                            className="text-[10px] px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-bold disabled:opacity-50"
                           >
                             Move
                           </button>
@@ -252,7 +256,13 @@ const TaskManagementModule = ({
                                 <input
                                   type="checkbox"
                                   checked={Boolean(subtask.isCompleted)}
-                                  onChange={(event) => onUpdateSubtask(boardOrder._id, task._id, subtask._id, { isCompleted: event.target.checked })}
+                                  onChange={(event) => {
+                                    if (!isClockedIn) {
+                                      alert('Please clock in before updating subtasks.');
+                                      return;
+                                    }
+                                    onUpdateSubtask(boardOrder._id, task._id, subtask._id, { isCompleted: event.target.checked });
+                                  }}
                                 />
                                 <span className={subtask.isCompleted ? 'line-through text-slate-400' : 'text-slate-600'}>
                                   {subtask.subTaskCode ? `${subtask.subTaskCode} - ${subtask.title}` : subtask.title}
@@ -264,7 +274,13 @@ const TaskManagementModule = ({
                                 </span>
                                 <select
                                   value={subtask.status || 'Pending'}
-                                  onChange={(event) => onUpdateSubtask(boardOrder._id, task._id, subtask._id, { status: event.target.value })}
+                                  onChange={(event) => {
+                                    if (!isClockedIn) {
+                                      alert('Please clock in before updating subtasks.');
+                                      return;
+                                    }
+                                    onUpdateSubtask(boardOrder._id, task._id, subtask._id, { status: event.target.value });
+                                  }}
                                   className="text-[10px] p-1 border rounded border-slate-300"
                                 >
                                   <option value="Pending">Pending</option>

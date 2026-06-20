@@ -10,6 +10,13 @@ const WorkQueueModule = ({ orders, todos = [], onOpenOrder, onTodoStatusChange, 
     }
     onTodoStatusChange(id, status);
   };
+  const handleOpenOrder = (order) => {
+    if (!isClockedIn) {
+      alert('Please clock in before starting work.');
+      return;
+    }
+    onOpenOrder(order);
+  };
   const [view, setView] = useState('orders'); // 'orders' or 'tasks'
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -107,7 +114,7 @@ const WorkQueueModule = ({ orders, todos = [], onOpenOrder, onTodoStatusChange, 
                   <td className="p-3 text-slate-500 text-xs font-bold">{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="p-3 text-right">
                     <button
-                      onClick={() => onOpenOrder(order)}
+                      onClick={() => handleOpenOrder(order)}
                       className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-lg shadow-indigo-100 group-hover:scale-105 active:scale-95"
                     >
                       Process Now
