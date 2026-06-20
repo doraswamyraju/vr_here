@@ -374,7 +374,7 @@ const adminReassignOrder = asyncHandler(async (req, res) => {
     } else {
         // Unassign
         order.assignedFreelancer = null;
-        order.broadcastStatus = 'Pending';
+        order.broadcastStatus = 'Draft';
         order.assignedEmployee = null;
     }
 
