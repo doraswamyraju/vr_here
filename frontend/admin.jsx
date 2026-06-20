@@ -933,6 +933,7 @@ function AdminApp() {
         }} 
         orders={orders} 
         employees={employees} 
+        freelancers={freelancers}
         token={userInfo?.token} 
         onCreated={fetchData} 
         todoToEdit={todoToEdit}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, CheckSquare, User as UsersIcon, Calendar, Link, Zap } from 'lucide-react';
 import axios from 'axios';
 
-const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, todoToEdit = null }) => {
+const NewTodoModal = ({ isOpen, onClose, orders, employees, freelancers = [], token, onCreated, todoToEdit = null }) => {
   const [loading, setLoading] = useState(false);
   const [taskType, setTaskType] = useState('standalone'); // 'standalone' or 'order'
   
@@ -16,18 +16,29 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, to
     dueDate: ''
   });
 
+  const [searchTermEmployee, setSearchTermEmployee] = useState('');
+  const [showEmployeeResults, setShowEmployeeResults] = useState(false);
+  const [searchTermFreelancer, setSearchTermFreelancer] = useState('');
+  const [showFreelancerResults, setShowFreelancerResults] = useState(false);
+
   React.useEffect(() => {
     if (todoToEdit) {
+      const assignedId = todoToEdit.assignedTo?._id || todoToEdit.assignedTo || '';
+      const emp = (employees || []).find(e => e._id === assignedId);
+      const free = (freelancers || []).find(f => f._id === assignedId);
+
       setFormData({
         title: todoToEdit.title || '',
         description: todoToEdit.description || '',
         status: todoToEdit.status || 'Pending',
         priority: todoToEdit.priority || 'Medium',
-        assignedTo: todoToEdit.assignedTo?._id || todoToEdit.assignedTo || '',
+        assignedTo: assignedId,
         orderId: todoToEdit.orderId?._id || todoToEdit.orderId || '',
         dueDate: todoToEdit.dueDate ? new Date(todoToEdit.dueDate).toISOString().split('T')[0] : ''
       });
       setTaskType(todoToEdit.orderId ? 'order' : 'standalone');
+      setSearchTermEmployee(emp ? emp.name : '');
+      setSearchTermFreelancer(free ? free.name : '');
     } else {
       setFormData({
         title: '',
@@ -39,8 +50,10 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, to
         dueDate: ''
       });
       setTaskType('standalone');
+      setSearchTermEmployee('');
+      setSearchTermFreelancer('');
     }
-  }, [todoToEdit, isOpen]);
+  }, [todoToEdit, isOpen, employees, freelancers]);
 
   const [searchTermOrder, setSearchTermOrder] = useState('');
   const [showOrderResults, setShowOrderResults] = useState(false);
@@ -48,6 +61,14 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, to
   const filteredOrders = (orders || []).filter(order => 
     order.serviceName?.toLowerCase().includes(searchTermOrder.toLowerCase()) ||
     order.clientName?.toLowerCase().includes(searchTermOrder.toLowerCase())
+  );
+
+  const filteredEmployees = (employees || []).filter(emp =>
+    emp.name?.toLowerCase().includes(searchTermEmployee.toLowerCase())
+  );
+
+  const filteredFreelancers = (freelancers || []).filter(free =>
+    free.name?.toLowerCase().includes(searchTermFreelancer.toLowerCase())
   );
 
   const handleSubmit = async (e) => {
@@ -206,33 +227,146 @@ const NewTodoModal = ({ isOpen, onClose, orders, employees, token, onCreated, to
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Employee Searchable Input */}
+              <div className="space-y-1.5 relative">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
                   <UsersIcon size={12} /> Assign Employee
                 </label>
-                <select 
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none bg-slate-50"
-                  value={formData.assignedTo}
-                  onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                >
-                  <option value="">Unassigned</option>
-                  {(employees || []).map(emp => (
-                    <option key={emp._id} value={emp._id}>{emp.name}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-800"
+                    placeholder="Search employee..."
+                    value={searchTermEmployee}
+                    onChange={(e) => {
+                      setSearchTermEmployee(e.target.value);
+                      setShowEmployeeResults(true);
+                      if (formData.assignedTo && (employees || []).some(emp => emp._id === formData.assignedTo)) {
+                        setFormData({ ...formData, assignedTo: '' });
+                      }
+                    }}
+                    onFocus={() => {
+                      setShowEmployeeResults(true);
+                      setShowFreelancerResults(false);
+                    }}
+                    onBlur={() => setTimeout(() => setShowEmployeeResults(false), 200)}
+                  />
+                  {searchTermEmployee && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchTermEmployee('');
+                        if ((employees || []).some(emp => emp._id === formData.assignedTo)) {
+                          setFormData({ ...formData, assignedTo: '' });
+                        }
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                {showEmployeeResults && (
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto">
+                    {filteredEmployees.length > 0 ? (
+                      filteredEmployees.map(emp => (
+                        <button
+                          key={emp._id}
+                          type="button"
+                          className="w-full text-left px-4 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-0 text-xs font-semibold text-slate-700"
+                          onClick={() => {
+                            setFormData({ ...formData, assignedTo: emp._id });
+                            setSearchTermEmployee(emp.name);
+                            setSearchTermFreelancer(''); // Clear freelancer selection
+                            setShowEmployeeResults(false);
+                          }}
+                        >
+                          {emp.name}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-slate-400 text-xs italic">No employees found</div>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="space-y-1.5">
+
+              {/* Freelancer Searchable Input */}
+              <div className="space-y-1.5 relative">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                  <Calendar size={12} /> Due Date
+                  <UsersIcon size={12} /> Assign Freelancer
                 </label>
-                <input 
-                  type="date"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none bg-slate-50"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-800"
+                    placeholder="Search freelancer..."
+                    value={searchTermFreelancer}
+                    onChange={(e) => {
+                      setSearchTermFreelancer(e.target.value);
+                      setShowFreelancerResults(true);
+                      if (formData.assignedTo && (freelancers || []).some(f => f._id === formData.assignedTo)) {
+                        setFormData({ ...formData, assignedTo: '' });
+                      }
+                    }}
+                    onFocus={() => {
+                      setShowFreelancerResults(true);
+                      setShowEmployeeResults(false);
+                    }}
+                    onBlur={() => setTimeout(() => setShowFreelancerResults(false), 200)}
+                  />
+                  {searchTermFreelancer && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchTermFreelancer('');
+                        if ((freelancers || []).some(f => f._id === formData.assignedTo)) {
+                          setFormData({ ...formData, assignedTo: '' });
+                        }
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                {showFreelancerResults && (
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto">
+                    {filteredFreelancers.length > 0 ? (
+                      filteredFreelancers.map(f => (
+                        <button
+                          key={f._id}
+                          type="button"
+                          className="w-full text-left px-4 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-0 text-xs font-semibold text-slate-700"
+                          onClick={() => {
+                            setFormData({ ...formData, assignedTo: f._id });
+                            setSearchTermFreelancer(f.name);
+                            setSearchTermEmployee(''); // Clear employee selection
+                            setShowFreelancerResults(false);
+                          }}
+                        >
+                          {f.name}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-slate-400 text-xs italic">No freelancers found</div>
+                    )}
+                  </div>
+                )}
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                <Calendar size={12} /> Due Date
+              </label>
+              <input 
+                type="date"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none bg-slate-50 text-sm font-semibold text-slate-700"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              />
             </div>
 
             <div className="space-y-1.5">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pause, Play, RefreshCw, Square } from 'lucide-react';
+import { Pause, Play, RefreshCw, Square, Bell } from 'lucide-react';
 import { FREELANCER_TABS } from './constants';
 
 const FreelancerTopbar = ({
@@ -13,7 +13,9 @@ const FreelancerTopbar = ({
   activeTaskDetails,
   activeTaskElapsedLabel,
   onPauseTask,
-  onCompleteTask
+  onCompleteTask,
+  unreadCount = 0,
+  onNotificationClick
 }) => {
   const active = FREELANCER_TABS.find((tab) => tab.id === activeTab);
 
@@ -48,6 +50,20 @@ const FreelancerTopbar = ({
             <RefreshCw size={14} className="mr-2" />
             Refresh
           </button>
+
+          <button
+            onClick={onNotificationClick}
+            className="relative inline-flex items-center p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
+            title="View Notifications"
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 text-white font-black flex items-center justify-center text-[10px] animate-pulse">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 text-white flex items-center justify-center font-semibold text-xs">
             {userInfo?.name?.charAt(0) || 'F'}
           </div>

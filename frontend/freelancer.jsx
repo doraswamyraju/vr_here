@@ -685,10 +685,6 @@ const FreelancerApp = () => {
             isClockedIn={isClockedIn}
           />
         );
-      case 'support':
-        return <SupportModule tickets={tickets} />;
-      case 'commercials':
-        return <CommercialsModule selectedOrder={selectedOrder} />;
       case 'ledger':
         return <EarningsLedgerModule ledger={ledger} />;
       case 'notifications':
@@ -698,20 +694,10 @@ const FreelancerApp = () => {
             onMarkRead={markRead}
             onMarkAllRead={markAllRead}
             onClickAction={(notif) => {
-              if (notif.type === 'Ticket') {
-                setActiveTab('support');
-              } else {
-                setActiveTab('queue');
-              }
+              setActiveTab('queue');
             }}
           />
         );
-      case 'security':
-        return <SecurityModule />;
-      case 'hrms':
-        return <HRMSModule role={userInfo?.role} />;
-      case 'services':
-        return <ServicesMasterView token={userInfo?.token} />;
       default:
         return <FreelancerOverviewModule userInfo={userInfo} />;
     }
@@ -727,13 +713,8 @@ const FreelancerApp = () => {
     { id: 'time', label: 'Time Tracking', icon: Clock3 },
     { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'requirements', label: 'Requirements', icon: ClipboardList },
-    { id: 'support', label: 'Support', icon: MessageSquare },
-    { id: 'commercials', label: 'Commercials', icon: IndianRupee },
     { id: 'ledger', label: 'Earnings Ledger', icon: DollarSign },
-    { id: 'hrms', label: 'HRMS Portal', icon: Users },
-    { id: 'services', label: 'Services Master', icon: Layers },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Security', icon: ShieldCheck }
+    { id: 'notifications', label: 'Notifications', icon: Bell }
   ];
 
   return (
@@ -759,6 +740,8 @@ const FreelancerApp = () => {
           activeTaskElapsedLabel={formatDuration(activeTaskElapsedSeconds)}
           onPauseTask={pauseTaskSession}
           onCompleteTask={completeTaskSession}
+          unreadCount={unreadCount}
+          onNotificationClick={() => setActiveTab('notifications')}
         />
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">{renderActiveModule()}</div>
       </main>
