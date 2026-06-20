@@ -34,6 +34,12 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [isLoadingTodos, setIsLoadingTodos] = useState(false);
   const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null
+  });
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [freelancers, setFreelancers] = useState([]);
   const [isReassigning, setIsReassigning] = useState(false);
@@ -373,15 +379,21 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
 
                 <div className="flex flex-col sm:flex-row gap-2">
                   <button 
-                    onClick={async () => {
-                      if (!window.confirm('Are you sure you want to approve this work and authorize payout?')) return;
-                      try {
-                        await axios.post(`/api/freelancer/admin/approve-payout/${selectedOrder._id}`, {}, config);
-                        alert('Work effort verified and payout approved successfully!');
-                        window.location.reload();
-                      } catch (err) {
-                        alert(err.response?.data?.message || 'Failed to approve payout');
-                      }
+                    onClick={() => {
+                      setConfirmModal({
+                        isOpen: true,
+                        title: 'Approve Payout',
+                        message: 'Are you sure you want to approve this work and authorize payout?',
+                        onConfirm: async () => {
+                          try {
+                            await axios.post(`/api/freelancer/admin/approve-payout/${selectedOrder._id}`, {}, config);
+                            alert('Work effort verified and payout approved successfully!');
+                            window.location.reload();
+                          } catch (err) {
+                            alert(err.response?.data?.message || 'Failed to approve payout');
+                          }
+                        }
+                      });
                     }}
                     className="flex-grow h-11 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-2"
                   >
@@ -398,15 +410,21 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
                   )}
 
                   <button 
-                    onClick={async () => {
-                      if (!window.confirm('Are you sure you want to remove the assigned freelancer? This will return the order to the broadcast pool.')) return;
-                      try {
-                        await axios.post(`/api/freelancer/admin/reassign/${selectedOrder._id}`, { freelancerId: null }, config);
-                        alert('Freelancer assignment removed successfully!');
-                        window.location.reload();
-                      } catch (err) {
-                        alert(err.response?.data?.message || 'Failed to remove freelancer');
-                      }
+                    onClick={() => {
+                      setConfirmModal({
+                        isOpen: true,
+                        title: 'Remove Assignment',
+                        message: 'Are you sure you want to remove the assigned freelancer? This will return the order to the broadcast pool.',
+                        onConfirm: async () => {
+                          try {
+                            await axios.post(`/api/freelancer/admin/reassign/${selectedOrder._id}`, { freelancerId: null }, config);
+                            alert('Freelancer assignment removed successfully!');
+                            window.location.reload();
+                          } catch (err) {
+                            alert(err.response?.data?.message || 'Failed to remove freelancer');
+                          }
+                        }
+                      });
                     }}
                     className="px-4 h-11 border border-rose-250 hover:bg-rose-50 text-rose-600 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5"
                   >
@@ -640,6 +658,35 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
         </div>
 
       </div>
+
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[32px] p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4">
+            <h3 className="text-lg font-black text-slate-900">{confirmModal.title}</h3>
+            <p className="text-xs text-slate-550 font-semibold leading-relaxed text-slate-600">{confirmModal.message}</p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                className="flex-1 py-2.5 bg-slate-105 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const onConfirm = confirmModal.onConfirm;
+                  setConfirmModal({ ...confirmModal, isOpen: false });
+                  if (onConfirm) {
+                    await onConfirm();
+                  }
+                }}
+                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
