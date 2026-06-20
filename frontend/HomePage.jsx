@@ -292,8 +292,16 @@ const HomePage = () => {
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-          <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/80 text-xs font-bold mb-8 uppercase tracking-widest animate-fade-in">
-            <span className="text-red-500 mr-2">●</span> Trusted by 1000+ Businesses
+          <div className="inline-flex flex-wrap justify-center gap-3 mb-8 animate-fade-in">
+            <div className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/80 text-[10px] sm:text-xs font-bold uppercase tracking-widest">
+              <span className="text-red-500 mr-2">●</span> Trusted by 1000+ Businesses
+            </div>
+            <div className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/80 text-[10px] sm:text-xs font-bold uppercase tracking-widest">
+              <span className="text-emerald-500 mr-2">●</span> ISO 9001:2015, ISO 27001:2022 Certified
+            </div>
+            <div className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/80 text-[10px] sm:text-xs font-bold uppercase tracking-widest">
+              <span className="text-blue-500 mr-2">●</span> DPDP Compliant
+            </div>
           </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-8">
             Build Your Business.<br />
