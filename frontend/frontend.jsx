@@ -26,7 +26,7 @@ import AccountingServices from './AccountingServices';
 import PartnerSignupPage from './PartnerSignup';
 import PartnerDashboardPage from './partner';
 import FreelancerSignupPage from './FreelancerSignup';
-import FreelancerDashboardPage from './modules/freelancer/v1.1';
+import FreelancerDashboardPage from './freelancer';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);

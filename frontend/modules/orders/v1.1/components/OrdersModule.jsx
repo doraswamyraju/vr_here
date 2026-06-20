@@ -68,6 +68,7 @@ const OrdersModule = ({
   setActiveTab,
   orders,
   employees,
+  freelancers = [],
   selectedOrderId,
   setSelectedOrderId,
   ordersViewMode,
@@ -574,6 +575,7 @@ const OrdersModule = ({
                 <OrderTasksTab
                   selectedOrder={selectedOrder}
                   employees={employees}
+                  freelancers={freelancers}
                   onTaskStatusChange={(taskId, status) => onTaskStatusChange(selectedOrder._id, taskId, status)}
                   onTaskAssign={(taskId, payload) => onTaskAssign(selectedOrder._id, taskId, payload)}
                   onSubtaskUpdate={(taskId, subtaskId, payload) => onSubtaskUpdate(selectedOrder._id, taskId, subtaskId, payload)}

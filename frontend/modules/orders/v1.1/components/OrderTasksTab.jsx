@@ -2,28 +2,39 @@ import React, { useState } from 'react';
 import { Upload, Plus, Trash2, ListPlus } from 'lucide-react';
 import { TASK_STATUSES } from '../constants/constants';
 
-const AssignmentSelect = ({ value, employees, onChange, label = 'Unassigned' }) => (
-  <select
-    value={value || ''}
-    onChange={(event) => onChange(event.target.value || null)}
-    className="p-2 border rounded-lg border-slate-300 bg-white text-xs"
-  >
-    <option value="">{label}</option>
-    {employees.map((employee) => (
-      <option key={employee._id} value={employee._id}>{employee.name}</option>
-    ))}
-  </select>
-);
-
 const OrderTasksTab = ({
   selectedOrder,
   employees,
+  freelancers = [],
   onTaskStatusChange,
   onTaskAssign,
   onSubtaskUpdate,
   onImportTaskWorkbook,
   onAddTask
 }) => {
+  const AssignmentSelect = ({ value, employees: _ignored, onChange, label = 'Unassigned' }) => (
+    <select
+      value={value || ''}
+      onChange={(event) => onChange(event.target.value || null)}
+      className="p-2 border rounded-lg border-slate-300 bg-white text-xs"
+    >
+      <option value="">{label}</option>
+      {employees && employees.length > 0 && (
+        <optgroup label="Employees">
+          {employees.map((employee) => (
+            <option key={employee._id} value={employee._id}>{employee.name}</option>
+          ))}
+        </optgroup>
+      )}
+      {freelancers && freelancers.length > 0 && (
+        <optgroup label="Freelancers">
+          {freelancers.map((freelancer) => (
+            <option key={freelancer._id} value={freelancer._id}>{freelancer.name}</option>
+          ))}
+        </optgroup>
+      )}
+    </select>
+  );
   const [taskFile, setTaskFile] = useState(null);
   const [replaceExisting, setReplaceExisting] = useState(true);
   const [isImporting, setIsImporting] = useState(false);

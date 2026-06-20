@@ -67,6 +67,7 @@ function AdminApp() {
   const [orders, setOrders] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [users, setUsers] = useState([]);
+  const [freelancers, setFreelancers] = useState([]);
   const [invoiceForm, setInvoiceForm] = useState({ invoiceNumber: '', amount: '', status: 'Draft', dueDate: '', notes: '' });
   const [commercialDraft, setCommercialDraft] = useState({ packageName: '', price: '', serviceName: '' });
   const [todos, setTodos] = useState([]);
@@ -105,18 +106,20 @@ function AdminApp() {
 
   const fetchData = async () => {
     if (!config) return;
-    const [ordersRes, employeesRes, usersRes, todosRes, recurringRes] = await Promise.all([
+    const [ordersRes, employeesRes, usersRes, todosRes, recurringRes, freelancersRes] = await Promise.all([
       axios.get('/api/orders', config),
       axios.get('/api/auth/employees', config),
       axios.get('/api/auth/users', config),
       axios.get('/api/todos', config),
-      axios.get('/api/recurring', config).catch(() => ({ data: [] }))
+      axios.get('/api/recurring', config).catch(() => ({ data: [] })),
+      axios.get('/api/freelancer/admin/users', config).catch(() => ({ data: [] }))
     ]);
     setOrders(ordersRes.data || []);
     setEmployees(employeesRes.data || []);
     setUsers(usersRes.data || []);
     setTodos(todosRes.data || []);
     setRecurring(recurringRes.data || []);
+    setFreelancers(freelancersRes.data || []);
   };
 
   useEffect(() => {
@@ -708,6 +711,7 @@ function AdminApp() {
           setActiveTab={setActiveTab}
           orders={orders}
           employees={employees}
+          freelancers={freelancers}
           selectedOrderId={selectedOrderId}
           setSelectedOrderId={setSelectedOrderId}
           ordersViewMode={ordersViewMode}
