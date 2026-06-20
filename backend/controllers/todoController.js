@@ -51,12 +51,29 @@ const getTodos = asyncHandler(async (req, res) => {
         }).select('_id');
         
         const orderIds = employeeOrders.map(o => o._id);
-
+ 
         query = {
             $or: [
                 { assignedTo: req.user._id }, // Explicitly assigned to todo
                 { orderId: { $in: orderIds } }, // Linked to employee's orders
                 { assignedTo: null, orderId: null } // Optionally allow employees to see unassigned standalone todos
+            ]
+        };
+    }
+
+    // If freelancer, see assigned todos OR todos linked to orders they are assigned to
+    if (req.user.role === 'freelancer') {
+        const Order = (await import('../models/Order.js')).default;
+        const freelancerOrders = await Order.find({
+            assignedFreelancer: req.user._id
+        }).select('_id');
+        
+        const orderIds = freelancerOrders.map(o => o._id);
+ 
+        query = {
+            $or: [
+                { assignedTo: req.user._id }, // Explicitly assigned to todo
+                { orderId: { $in: orderIds } } // Linked to freelancer's orders
             ]
         };
     }
