@@ -40,6 +40,42 @@ export default function CustomerApp() {
    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
    const [serviceSearchQuery, setServiceSearchQuery] = useState('');
    const navigate = useNavigate();
+   const [menuExpanded, setMenuExpanded] = useState(false);
+
+   // -- Live Chat Custom styling/triggering hook --
+   useEffect(() => {
+      const injectWidgetCSS = () => {
+         const widgetRoot = document.getElementById('letstrack-widget-root');
+         if (widgetRoot && widgetRoot.shadowRoot) {
+            if (!widgetRoot.shadowRoot.querySelector('#lt-custom-styles')) {
+               const style = document.createElement('style');
+               style.id = 'lt-custom-styles';
+               style.textContent = `
+                  .lt-widget-btn, .lt-notification-popup {
+                     display: none !important;
+                  }
+                  .lt-chat-window {
+                     margin-bottom: 0px !important;
+                  }
+               `;
+               widgetRoot.shadowRoot.appendChild(style);
+            }
+         }
+      };
+
+      const interval = setInterval(injectWidgetCSS, 1000);
+      return () => clearInterval(interval);
+   }, []);
+
+   const toggleLiveChat = () => {
+      const widgetRoot = document.getElementById('letstrack-widget-root');
+      if (widgetRoot && widgetRoot.shadowRoot) {
+         const btn = widgetRoot.shadowRoot.querySelector('.lt-widget-btn');
+         if (btn) {
+            btn.click();
+         }
+      }
+   };
 
    // -- Authentication --
    useEffect(() => {
@@ -294,26 +330,64 @@ export default function CustomerApp() {
             </nav>
 
             {/* --- FLOATING CONTACT BUTTON --- */}
-            <div className="fixed bottom-24 right-5 z-40 flex flex-col gap-3 md:bottom-10 md:right-10">
-               <a
-                  href="https://wa.me/918008530606"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-14 h-14 bg-emerald-500 text-white rounded-full shadow-2xl shadow-emerald-200 flex items-center justify-center hover:bg-emerald-600 transform hover:scale-110 active:scale-90 transition-all group relative border-4 border-white"
-               >
-                  <MessageSquare size={24} />
-                  <span className="absolute right-full mr-4 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
-                     Chat on WhatsApp
-                  </span>
-               </a>
+            <div className="fixed bottom-24 right-5 z-40 flex flex-col items-end gap-3 md:bottom-10 md:right-10">
+               {/* Stacked Menu Options */}
+               <div className={`flex flex-col gap-3 transition-all duration-300 origin-bottom ${
+                  menuExpanded 
+                     ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' 
+                     : 'opacity-0 translate-y-4 scale-90 pointer-events-none'
+               }`}>
+                  {/* Option 1: Live Chat */}
+                  <button
+                     onClick={() => {
+                        toggleLiveChat();
+                        setMenuExpanded(false);
+                     }}
+                     className="w-12 h-12 bg-rose-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-rose-600 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
+                  >
+                     <MessageSquare size={20} />
+                     <span className="absolute right-full mr-3 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+                        Live Chat
+                     </span>
+                  </button>
+
+                  {/* Option 2: WhatsApp */}
+                  <a
+                     href="https://wa.me/918008530606"
+                     target="_blank"
+                     rel="noreferrer"
+                     onClick={() => setMenuExpanded(false)}
+                     className="w-12 h-12 bg-emerald-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-emerald-600 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
+                  >
+                     <Phone size={20} />
+                     <span className="absolute right-full mr-3 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+                        WhatsApp
+                     </span>
+                  </a>
+
+                  {/* Option 3: Raise Ticket */}
+                  <button
+                     onClick={() => {
+                        setActiveTab('New');
+                        setMenuExpanded(false);
+                     }}
+                     className="w-12 h-12 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-indigo-700 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
+                  >
+                     <Headphones size={20} />
+                     <span className="absolute right-full mr-3 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+                        Raise Support Ticket
+                     </span>
+                  </button>
+               </div>
+
+               {/* Main Toggle Button */}
                <button
-                  onClick={() => setActiveTab('New')}
-                  className="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl shadow-indigo-200 flex items-center justify-center hover:bg-indigo-700 transform hover:scale-110 active:scale-90 transition-all group relative border-4 border-white"
+                  onClick={() => setMenuExpanded(!menuExpanded)}
+                  className="w-14 h-14 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-800 transform hover:scale-105 active:scale-95 transition-all border-4 border-white z-50 relative"
                >
-                  <Headphones size={24} />
-                  <span className="absolute right-full mr-4 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
-                     Raise Support Ticket
-                  </span>
+                  <div className={`transition-transform duration-300 transform ${menuExpanded ? 'rotate-[135deg]' : ''}`}>
+                     <Plus size={28} />
+                  </div>
                </button>
             </div>
             <InAppBanner 
