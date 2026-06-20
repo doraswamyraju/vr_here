@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Todo from '../models/Todo.js';
+import { triggerNotification } from '../services/notificationService.js';
 
 // @desc    Create a new todo
 // @route   POST /api/todos
@@ -19,6 +20,20 @@ const createTodo = asyncHandler(async (req, res) => {
     });
 
     const createdTodo = await todo.save();
+
+    if (createdTodo.assignedTo) {
+        try {
+            await triggerNotification({
+                userId: createdTodo.assignedTo,
+                title: 'New Task Assigned',
+                message: `You have been assigned a new task: "${createdTodo.title}".`,
+                type: 'System'
+            });
+        } catch (notifErr) {
+            console.error('Failed to trigger notification on todo creation:', notifErr.message);
+        }
+    }
+
     res.status(201).json(createdTodo);
 });
 
@@ -114,6 +129,7 @@ const updateTodo = asyncHandler(async (req, res) => {
         throw new Error('Not authorized to update this todo');
     }
 
+    const oldAssignedTo = todo.assignedTo?.toString();
     if (title !== undefined) todo.title = title;
     if (description !== undefined) todo.description = description;
     if (status !== undefined) todo.status = status;
@@ -123,6 +139,20 @@ const updateTodo = asyncHandler(async (req, res) => {
     if (dueDate !== undefined) todo.dueDate = dueDate || null;
 
     const updatedTodo = await todo.save();
+
+    if (updatedTodo.assignedTo && updatedTodo.assignedTo.toString() !== oldAssignedTo) {
+        try {
+            await triggerNotification({
+                userId: updatedTodo.assignedTo,
+                title: 'Task Assigned',
+                message: `You have been assigned the task: "${updatedTodo.title}".`,
+                type: 'System'
+            });
+        } catch (notifErr) {
+            console.error('Failed to trigger notification on todo update:', notifErr.message);
+        }
+    }
+
     res.json(updatedTodo);
 });
 

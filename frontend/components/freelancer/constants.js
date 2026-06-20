@@ -33,11 +33,6 @@ export const FREELANCER_TABS = [
   { id: 'time', label: 'Time Tracking', icon: Clock3 },
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'requirements', label: 'Requirements', icon: ClipboardList },
-  { id: 'support', label: 'Support', icon: MessageSquare },
-  { id: 'commercials', label: 'Commercials', icon: IndianRupee },
   { id: 'ledger', label: 'Earnings Ledger', icon: DollarSign },
-  { id: 'hrms', label: 'HRMS Portal', icon: Users },
-  { id: 'services', label: 'Services Master', icon: Layers },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'security', label: 'Security', icon: ShieldCheck }
+  { id: 'notifications', label: 'Notifications', icon: Bell }
 ];

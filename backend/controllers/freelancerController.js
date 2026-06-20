@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Order from '../models/Order.js';
 import Payout from '../models/Payout.js';
 import jwt from 'jsonwebtoken';
+import { triggerNotification } from '../services/notificationService.js';
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -371,6 +372,21 @@ const adminReassignOrder = asyncHandler(async (req, res) => {
         order.assignedFreelancer = freelancer._id;
         order.broadcastStatus = 'Claimed';
         order.assignedEmployee = freelancer._id;
+
+        try {
+            await triggerNotification({
+                userId: freelancer._id,
+                title: 'New Order Assigned',
+                message: `You have been assigned to compliance project: ${order.serviceName} (${order.packageName}).`,
+                type: 'Order',
+                emailOpts: {
+                    send: true,
+                    subject: `New Project Assigned: ${order.serviceName} - VR HERE`
+                }
+            });
+        } catch (notifErr) {
+            console.error('Failed to trigger notification on freelancer assignment:', notifErr.message);
+        }
     } else {
         // Unassign
         order.assignedFreelancer = null;
