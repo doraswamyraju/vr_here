@@ -198,6 +198,298 @@ const FreelancerOverviewModule = ({ userInfo }) => (
   </div>
 );
 
+const FreelancerSettingsModule = ({ token }) => {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    skills: '',
+    yearsOfExperience: '',
+    resumeUrl: '',
+    panCard: '',
+    bankDetails: {
+      bankName: '',
+      accountName: '',
+      accountNumber: '',
+      ifscCode: ''
+    }
+  });
+
+  const authConfig = useMemo(() => ({
+    headers: { Authorization: `Bearer ${token}` }
+  }), [token]);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get('/api/auth/profile', authConfig);
+      setProfile(data);
+      
+      const source = data.pendingProfileUpdate || data;
+      setFormData({
+        name: source.name || '',
+        phone: source.phone || '',
+        skills: Array.isArray(source.skills) ? source.skills.join(', ') : source.skills || '',
+        yearsOfExperience: source.yearsOfExperience ?? '',
+        resumeUrl: source.resumeUrl || '',
+        panCard: source.panCard || '',
+        bankDetails: {
+          bankName: source.bankDetails?.bankName || '',
+          accountName: source.bankDetails?.accountName || '',
+          accountNumber: source.bankDetails?.accountNumber || '',
+          ifscCode: source.bankDetails?.ifscCode || ''
+        }
+      });
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [authConfig]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const skillsArray = formData.skills.split(',').map(s => s.trim()).filter(Boolean);
+      const payload = {
+        ...formData,
+        skills: skillsArray,
+        yearsOfExperience: Number(formData.yearsOfExperience)
+      };
+      await axios.put('/api/freelancer/profile-update', payload, authConfig);
+      alert('Profile update request submitted successfully. Awaiting admin approval.');
+      fetchProfile();
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Failed to update profile.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-12 font-bold text-slate-500">Loading profile details...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {profile?.pendingProfileUpdate && (
+        <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 text-amber-800 text-sm font-semibold flex items-center gap-3">
+          <Clock3 className="w-5 h-5 shrink-0" />
+          <div>
+            <p className="font-bold text-amber-900">Pending Admin Approval</p>
+            <p className="mt-0.5 text-xs text-amber-700">You have submitted a profile update request. You can modify your request below. The changes will be applied to your active profile once approved by the admin.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Approved Current Profile Card */}
+        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
+          <h3 className="text-lg font-black text-slate-900 border-b border-slate-50 pb-4">Approved Profile (Active)</h3>
+          
+          <div className="space-y-4 font-semibold text-slate-600">
+            <div className="flex justify-between pb-2 border-b border-slate-50">
+              <span>Name:</span>
+              <span className="text-slate-900 font-bold">{profile?.name}</span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-slate-50">
+              <span>Phone Number:</span>
+              <span className="text-slate-900 font-bold">{profile?.phone || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-slate-50">
+              <span>Years of Experience:</span>
+              <span className="text-slate-900 font-bold">{profile?.yearsOfExperience} years</span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-slate-50">
+              <span>Skills & Specializations:</span>
+              <span className="text-slate-900 font-bold">{profile?.skills?.join(', ') || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-slate-50">
+              <span>PAN Card:</span>
+              <span className="text-slate-900 font-bold">{profile?.panCard || 'N/A'}</span>
+            </div>
+            {profile?.resumeUrl && (
+              <div className="flex justify-between pb-2 border-b border-slate-50">
+                <span>Resume Link:</span>
+                <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-bold">
+                  View Resume
+                </a>
+              </div>
+            )}
+
+            <h4 className="text-sm font-black text-slate-800 pt-4 pb-2">Settlement Account</h4>
+            <div className="flex justify-between pb-2 border-b border-slate-50">
+              <span>Bank Name:</span>
+              <span className="text-slate-900 font-bold">{profile?.bankDetails?.bankName || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-slate-50">
+              <span>Account Name:</span>
+              <span className="text-slate-900 font-bold">{profile?.bankDetails?.accountName || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-slate-50">
+              <span>Account Number:</span>
+              <span className="text-slate-900 font-bold">{profile?.bankDetails?.accountNumber || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between pb-2">
+              <span>IFSC Code:</span>
+              <span className="text-slate-900 font-bold">{profile?.bankDetails?.ifscCode || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Update Form Card */}
+        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
+          <h3 className="text-lg font-black text-slate-900 border-b border-slate-50 pb-4 mb-6">Edit Profile Details</h3>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.phone}
+                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Experience (Years)</label>
+                <input
+                  type="number"
+                  required
+                  value={formData.yearsOfExperience}
+                  onChange={e => setFormData({ ...formData, yearsOfExperience: e.target.value })}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">PAN Card</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.panCard}
+                  onChange={e => setFormData({ ...formData, panCard: e.target.value })}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Specializations (comma separated)</label>
+              <input
+                type="text"
+                placeholder="GST Return, ITR, Bookkeeping..."
+                value={formData.skills}
+                onChange={e => setFormData({ ...formData, skills: e.target.value })}
+                className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Resume URL</label>
+              <input
+                type="url"
+                value={formData.resumeUrl}
+                onChange={e => setFormData({ ...formData, resumeUrl: e.target.value })}
+                className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+              />
+            </div>
+
+            <h4 className="text-xs font-black text-slate-800 pt-4 uppercase tracking-wider">Settlement Bank Account</h4>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Bank Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.bankDetails.bankName}
+                  onChange={e => setFormData({
+                    ...formData,
+                    bankDetails: { ...formData.bankDetails, bankName: e.target.value }
+                  })}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Account Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.bankDetails.accountName}
+                  onChange={e => setFormData({
+                    ...formData,
+                    bankDetails: { ...formData.bankDetails, accountName: e.target.value }
+                  })}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Account Number</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.bankDetails.accountNumber}
+                  onChange={e => setFormData({
+                    ...formData,
+                    bankDetails: { ...formData.bankDetails, accountNumber: e.target.value }
+                  })}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">IFSC Code</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.bankDetails.ifscCode}
+                  onChange={e => setFormData({
+                    ...formData,
+                    bankDetails: { ...formData.bankDetails, ifscCode: e.target.value }
+                  })}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-indigo-150 transition active:scale-95 disabled:opacity-50 mt-6"
+            >
+              {saving ? 'Submitting request...' : 'Submit Profile Changes'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ACTIVE_TASK_STORAGE_KEY = 'freelancer_active_task_v2';
 
 const formatDuration = (totalSeconds) => {
@@ -620,7 +912,16 @@ const FreelancerApp = () => {
   const renderActiveModule = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <FreelancerOverviewModule userInfo={userInfo} />;
+        return (
+          <DashboardOverviewModule
+            userInfo={userInfo}
+            orders={orders}
+            todos={todos}
+            onOpenOrder={openOrderInProcessing}
+            onTodoStatusChange={handleTodoStatusChange}
+            isClockedIn={isClockedIn}
+          />
+        );
       case 'jobs':
         return <AvailableJobsModule broadcasts={broadcasts} onClaimJob={handleClaimJob} />;
       case 'queue':
@@ -698,8 +999,19 @@ const FreelancerApp = () => {
             }}
           />
         );
+      case 'settings':
+        return <FreelancerSettingsModule token={userInfo?.token} />;
       default:
-        return <FreelancerOverviewModule userInfo={userInfo} />;
+        return (
+          <DashboardOverviewModule
+            userInfo={userInfo}
+            orders={orders}
+            todos={todos}
+            onOpenOrder={openOrderInProcessing}
+            onTodoStatusChange={handleTodoStatusChange}
+            isClockedIn={isClockedIn}
+          />
+        );
     }
   };
 
@@ -714,7 +1026,8 @@ const FreelancerApp = () => {
     { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'requirements', label: 'Requirements', icon: ClipboardList },
     { id: 'ledger', label: 'Earnings Ledger', icon: DollarSign },
-    { id: 'notifications', label: 'Notifications', icon: Bell }
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'settings', label: 'Account Settings', icon: ShieldCheck }
   ];
 
   return (

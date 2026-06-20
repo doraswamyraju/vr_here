@@ -17,7 +17,10 @@ import {
     adminGetLiveAttendance,
     adminReassignOrder,
     adminUpdateFreelancer,
-    adminDeleteFreelancer
+    adminDeleteFreelancer,
+    updateFreelancerProfile,
+    adminApproveProfileUpdate,
+    adminRejectProfileUpdate
 } from '../controllers/freelancerController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -43,6 +46,9 @@ router.route('/admin/users/:userId')
     .delete(protect, admin, adminDeleteFreelancer);
 router.route('/admin/payouts').get(protect, admin, adminGetPayouts);
 router.route('/admin/pay/:payoutId').put(protect, admin, adminPayFreelancer);
+router.route('/profile-update').put(protect, updateFreelancerProfile);
+router.route('/admin/approve-profile-update/:userId').put(protect, admin, adminApproveProfileUpdate);
+router.route('/admin/reject-profile-update/:userId').put(protect, admin, adminRejectProfileUpdate);
 router.route('/admin/live-attendance').get(protect, admin, adminGetLiveAttendance);
 
 export default router;

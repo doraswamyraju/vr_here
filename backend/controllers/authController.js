@@ -260,7 +260,13 @@ const getUserProfile = asyncHandler(async (req, res) => {
             role: user.role,
             isActive: user.isActive,
             isClockedIn: user.isClockedIn || false,
-            activeOrderId: user.activeOrderId || null
+            activeOrderId: user.activeOrderId || null,
+            skills: user.skills,
+            yearsOfExperience: user.yearsOfExperience,
+            resumeUrl: user.resumeUrl,
+            panCard: user.panCard,
+            bankDetails: user.bankDetails,
+            pendingProfileUpdate: user.pendingProfileUpdate
         });
     } else {
         res.status(404);

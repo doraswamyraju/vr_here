@@ -34,5 +34,6 @@ export const FREELANCER_TABS = [
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'requirements', label: 'Requirements', icon: ClipboardList },
   { id: 'ledger', label: 'Earnings Ledger', icon: DollarSign },
-  { id: 'notifications', label: 'Notifications', icon: Bell }
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'settings', label: 'Account Settings', icon: ShieldCheck }
 ];

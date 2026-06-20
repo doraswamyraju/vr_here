@@ -134,6 +134,32 @@ const FreelancersModule = ({ token, orders = [], employees = [] }) => {
         }
     };
 
+    const handleApproveProfileUpdate = async (userId) => {
+        try {
+            setError('');
+            await axios.put(`/api/freelancer/admin/approve-profile-update/${userId}`, {}, config);
+            setSuccessMsg('Freelancer profile update approved successfully!');
+            setSelectedFreelancer(null);
+            fetchData();
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to approve profile update');
+        }
+    };
+
+    const handleRejectProfileUpdate = async (userId) => {
+        try {
+            setError('');
+            await axios.put(`/api/freelancer/admin/reject-profile-update/${userId}`, {}, config);
+            setSuccessMsg('Freelancer profile update rejected successfully!');
+            setSelectedFreelancer(null);
+            fetchData();
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to reject profile update');
+        }
+    };
+
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -692,10 +718,19 @@ const FreelancersModule = ({ token, orders = [], employees = [] }) => {
                                                         A/C: {freelancer.bankDetails?.accountNumber} | IFSC: {freelancer.bankDetails?.ifscCode}
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-5 text-center">
-                                                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${freelancer.isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                        {freelancer.isActive ? 'Active / Approved' : 'Pending Review'}
-                                                    </span>
+                                                <td className="px-8 py-5 text-center space-y-2">
+                                                    <div>
+                                                        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${freelancer.isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                            {freelancer.isActive ? 'Active / Approved' : 'Pending Review'}
+                                                        </span>
+                                                    </div>
+                                                    {freelancer.pendingProfileUpdate && (
+                                                        <div>
+                                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-705 rounded-full text-[9px] font-black uppercase tracking-wider animate-pulse border border-amber-100">
+                                                                Update Pending
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-8 py-5">
                                                     <div className="flex items-center justify-end gap-2.5">
@@ -1034,6 +1069,66 @@ const FreelancersModule = ({ token, orders = [], employees = [] }) => {
                                 </form>
                             ) : (
                                 <div className="space-y-6">
+                                    {selectedFreelancer.pendingProfileUpdate && (
+                                        <div className="bg-amber-50/70 border border-amber-200 rounded-3xl p-6 space-y-4">
+                                            <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
+                                                <AlertCircle className="w-5 h-5 shrink-0" />
+                                                <span>Requested Profile Changes (Pending Approval)</span>
+                                            </div>
+                                            
+                                            <div className="text-xs text-slate-700 bg-white rounded-2xl p-4 border border-slate-100 divide-y divide-slate-100">
+                                                {(() => {
+                                                    const pending = selectedFreelancer.pendingProfileUpdate;
+                                                    const rows = [];
+                                                    
+                                                    const addCompare = (label, activeVal, pendingVal) => {
+                                                        const activeStr = activeVal !== undefined && activeVal !== null ? String(activeVal) : 'N/A';
+                                                        const pendingStr = pendingVal !== undefined && pendingVal !== null ? String(pendingVal) : 'N/A';
+                                                        if (activeStr !== pendingStr) {
+                                                            rows.push({ label, active: activeStr, pending: pendingStr });
+                                                        }
+                                                    };
+                                                    
+                                                    addCompare('Full Name', selectedFreelancer.name, pending.name);
+                                                    addCompare('Phone', selectedFreelancer.phone, pending.phone);
+                                                    addCompare('Experience', `${selectedFreelancer.yearsOfExperience} Years`, `${pending.yearsOfExperience} Years`);
+                                                    addCompare('Skills', selectedFreelancer.skills?.join(', '), pending.skills?.join(', '));
+                                                    addCompare('PAN Card', selectedFreelancer.panCard, pending.panCard);
+                                                    addCompare('Resume Link', selectedFreelancer.resumeUrl, pending.resumeUrl);
+                                                    
+                                                    addCompare('Bank Name', selectedFreelancer.bankDetails?.bankName, pending.bankDetails?.bankName);
+                                                    addCompare('Account Name', selectedFreelancer.bankDetails?.accountName, pending.bankDetails?.accountName);
+                                                    addCompare('Account Number', selectedFreelancer.bankDetails?.accountNumber, pending.bankDetails?.accountNumber);
+                                                    addCompare('IFSC Code', selectedFreelancer.bankDetails?.ifscCode, pending.bankDetails?.ifscCode);
+                                                    
+                                                    if (rows.length === 0) return <p className="text-slate-400 italic py-2 text-center">No differences detected.</p>;
+                                                    
+                                                    return rows.map((r, i) => (
+                                                        <div key={i} className="py-2.5 grid grid-cols-3 gap-2">
+                                                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px] flex items-center">{r.label}</span>
+                                                            <span className="text-slate-505 line-through truncate">{r.active}</span>
+                                                            <span className="text-emerald-600 font-bold truncate">{r.pending}</span>
+                                                        </div>
+                                                    ));
+                                                })()}
+                                            </div>
+
+                                            <div className="flex gap-3 pt-2">
+                                                <button
+                                                    onClick={() => handleRejectProfileUpdate(selectedFreelancer._id)}
+                                                    className="flex-1 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-black uppercase tracking-wider transition border border-rose-100"
+                                                >
+                                                    Reject Changes
+                                                </button>
+                                                <button
+                                                    onClick={() => handleApproveProfileUpdate(selectedFreelancer._id)}
+                                                    className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-lg shadow-green-100"
+                                                >
+                                                    Approve Changes
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                                             <p className="text-[9px] font-black text-slate-450 uppercase tracking-widest">Email Address</p>

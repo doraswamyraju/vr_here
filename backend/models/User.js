@@ -68,6 +68,23 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: true
     },
+    pendingProfileUpdate: {
+        type: {
+            name: String,
+            phone: String,
+            skills: [String],
+            yearsOfExperience: Number,
+            resumeUrl: String,
+            panCard: String,
+            bankDetails: {
+                accountName: String,
+                accountNumber: String,
+                ifscCode: String,
+                bankName: String
+            }
+        },
+        default: null
+    },
     fcmToken: {
         type: String,
         default: null

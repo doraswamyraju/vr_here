@@ -3,7 +3,7 @@ import User from '../models/User.js';
 import Order from '../models/Order.js';
 import Payout from '../models/Payout.js';
 import jwt from 'jsonwebtoken';
-import { triggerNotification } from '../services/notificationService.js';
+import { triggerNotification, notifyAdmins } from '../services/notificationService.js';
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -441,6 +441,132 @@ const adminDeleteFreelancer = asyncHandler(async (req, res) => {
     res.json({ message: 'Freelancer deleted successfully' });
 });
 
+// @desc    Freelancer update profile (requires admin approval)
+// @route   PUT /api/freelancer/profile-update
+// @access  Private (Freelancer)
+const updateFreelancerProfile = asyncHandler(async (req, res) => {
+    if (req.user.role !== 'freelancer') {
+        res.status(403);
+        throw new Error('Access denied');
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    const { name, phone, skills, yearsOfExperience, resumeUrl, panCard, bankDetails } = req.body;
+
+    user.pendingProfileUpdate = {
+        name: name || user.name,
+        phone: phone || user.phone,
+        skills: skills || user.skills,
+        yearsOfExperience: yearsOfExperience !== undefined ? yearsOfExperience : user.yearsOfExperience,
+        resumeUrl: resumeUrl !== undefined ? resumeUrl : user.resumeUrl,
+        panCard: panCard !== undefined ? panCard : user.panCard,
+        bankDetails: bankDetails || user.bankDetails
+    };
+
+    await user.save();
+
+    // Notify admins about the profile update request
+    try {
+        await notifyAdmins({
+            title: 'Freelancer Profile Update Request',
+            message: `Freelancer "${user.name}" has requested a profile update. Admin review and approval is required.`,
+            type: 'System',
+            email: false
+        });
+    } catch (err) {
+        console.error('Failed to notify admins of profile update:', err.message);
+    }
+
+    res.json({ message: 'Profile update request submitted successfully. Awaiting admin approval.', user });
+});
+
+// @desc    Admin approve freelancer profile update
+// @route   PUT /api/freelancer/admin/approve-profile-update/:userId
+// @access  Private (Admin)
+const adminApproveProfileUpdate = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.userId);
+
+    if (!user || user.role !== 'freelancer') {
+        res.status(404);
+        throw new Error('Freelancer not found');
+    }
+
+    if (!user.pendingProfileUpdate) {
+        res.status(400);
+        throw new Error('No pending profile update request for this freelancer');
+    }
+
+    const update = user.pendingProfileUpdate;
+
+    user.name = update.name || user.name;
+    user.phone = update.phone || user.phone;
+    user.skills = update.skills || user.skills;
+    user.yearsOfExperience = update.yearsOfExperience !== undefined ? update.yearsOfExperience : user.yearsOfExperience;
+    user.resumeUrl = update.resumeUrl !== undefined ? update.resumeUrl : user.resumeUrl;
+    user.panCard = update.panCard !== undefined ? update.panCard : user.panCard;
+    user.bankDetails = update.bankDetails || user.bankDetails;
+    
+    // Clear pending update
+    user.pendingProfileUpdate = null;
+
+    await user.save();
+
+    // Notify freelancer about approval
+    try {
+        await triggerNotification({
+            userId: user._id,
+            title: 'Profile Update Approved',
+            message: 'Your profile update request has been approved by the admin.',
+            type: 'System'
+        });
+    } catch (err) {
+        console.error('Failed to notify freelancer of profile approval:', err.message);
+    }
+
+    res.json({ message: 'Freelancer profile update approved successfully', user });
+});
+
+// @desc    Admin reject freelancer profile update
+// @route   PUT /api/freelancer/admin/reject-profile-update/:userId
+// @access  Private (Admin)
+const adminRejectProfileUpdate = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.userId);
+
+    if (!user || user.role !== 'freelancer') {
+        res.status(404);
+        throw new Error('Freelancer not found');
+    }
+
+    if (!user.pendingProfileUpdate) {
+        res.status(400);
+        throw new Error('No pending profile update request for this freelancer');
+    }
+
+    // Clear pending update
+    user.pendingProfileUpdate = null;
+
+    await user.save();
+
+    // Notify freelancer about rejection
+    try {
+        await triggerNotification({
+            userId: user._id,
+            title: 'Profile Update Rejected',
+            message: 'Your profile update request has been rejected by the admin.',
+            type: 'System'
+        });
+    } catch (err) {
+        console.error('Failed to notify freelancer of profile rejection:', err.message);
+    }
+
+    res.json({ message: 'Freelancer profile update rejected', user });
+});
+
 export {
     registerFreelancer,
     getBroadcastedOrders,
@@ -458,5 +584,8 @@ export {
     adminGetLiveAttendance,
     adminReassignOrder,
     adminUpdateFreelancer,
-    adminDeleteFreelancer
+    adminDeleteFreelancer,
+    updateFreelancerProfile,
+    adminApproveProfileUpdate,
+    adminRejectProfileUpdate
 };
