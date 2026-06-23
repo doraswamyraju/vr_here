@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
 
 // Pages
@@ -44,6 +44,36 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 const App = () => {
   const { logout } = useContext(AuthContext);
+  const location = useLocation();
+
+  React.useEffect(() => {
+    const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard)/.test(location.pathname);
+    let styleEl = document.getElementById('hide-live-chat-style');
+    
+    if (isDashboardPath) {
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'hide-live-chat-style';
+        styleEl.innerHTML = `
+          iframe[src*="livechat.vrhere.in"],
+          div[class*="letstrack"],
+          div[id*="letstrack"],
+          #letstrack-widget,
+          .letstrack-chat-widget {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+          }
+        `;
+        document.head.appendChild(styleEl);
+      }
+    } else {
+      if (styleEl) {
+        styleEl.remove();
+      }
+    }
+  }, [location.pathname]);
 
   return (
     <Routes>
