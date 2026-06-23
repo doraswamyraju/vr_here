@@ -313,8 +313,7 @@ export const verifyPayment = async (req, res) => {
         try {
             await generateAndEmailInvoice(createdOrder, parsedAmount, {
                 status: 'Paid',
-                notes: 'Primary Invoice generated automatically on successful website checkout.',
-                invoiceNumber: `INV_${razorpay_payment_id || Date.now()}`
+                notes: 'Primary Invoice generated automatically on successful website checkout.'
             });
         } catch (invErr) {
             console.error('Failed to generate initial paid invoice on payment verification:', invErr.message);

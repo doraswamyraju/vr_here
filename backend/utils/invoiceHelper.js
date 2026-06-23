@@ -2,6 +2,7 @@ import Razorpay from 'razorpay';
 import sendEmail from './sendEmail.js';
 import { logOrderActivity } from './activityLogger.js';
 import User from '../models/User.js';
+import Order from '../models/Order.js';
 
 /**
  * Helper to generate an invoice, calculate adjustments/splits, generate Razorpay links, and notify client + admins.
@@ -44,7 +45,42 @@ export const generateAndEmailInvoice = async (order, baseAmount, options = {}) =
     const firstInvoiceAmount = isSplit ? Math.round(finalAmount * (splitPercentVal / 100)) : finalAmount;
     const secondInvoiceAmount = finalAmount - firstInvoiceAmount;
 
-    const finalInvoiceNumber = invoiceNumber || `INV_${Date.now()}`;
+    let finalInvoiceNumber = invoiceNumber;
+    if (!finalInvoiceNumber) {
+        const d = new Date();
+        // Convert to IST (UTC + 5.5 hours) to ensure date consistency
+        const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+        const istDate = new Date(utc + (3600000 * 5.5));
+        
+        const dd = String(istDate.getDate()).padStart(2, '0');
+        const mm = String(istDate.getMonth() + 1).padStart(2, '0');
+        const yy = String(istDate.getFullYear()).slice(-2);
+        const datePrefix = `${dd}${mm}${yy}`;
+        const prefix = `INV-${datePrefix}`;
+
+        // Find all orders that contain an invoice matching this date prefix
+        const orders = await Order.find({
+            'invoices.invoiceNumber': { $regex: new RegExp(`^${prefix}`) }
+        });
+
+        let maxSeq = 0;
+        for (const ord of orders) {
+            for (const inv of ord.invoices || []) {
+                if (inv.invoiceNumber && inv.invoiceNumber.startsWith(prefix)) {
+                    // Extract base invoice number (e.g. INV-ddmmyyXXXX_BAL -> INV-ddmmyyXXXX)
+                    const basePart = inv.invoiceNumber.split('_')[0];
+                    const seqStr = basePart.slice(prefix.length);
+                    const seqNum = parseInt(seqStr, 10);
+                    if (!isNaN(seqNum) && seqNum > maxSeq) {
+                        maxSeq = seqNum;
+                    }
+                }
+            }
+        }
+        const nextSeq = maxSeq + 1;
+        const nextSeqStr = String(nextSeq).padStart(4, '0');
+        finalInvoiceNumber = `${prefix}${nextSeqStr}`;
+    }
     const invoiceStatus = status || 'Sent';
 
     let paymentLinkUrl = '';
