@@ -23,14 +23,15 @@ const storage = multer.diskStorage({
 });
 
 function checkFileType(file, cb) {
-    const filetypes = /jpg|jpeg|png|pdf|doc|docx/;
+    const filetypes = /jpg|jpeg|png|pdf|doc|docx|xls|xlsx|csv|txt|zip/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    const allowedMimeRegex = /image|pdf|word|excel|spreadsheet|csv|text\/plain|zip|octet-stream/;
+    const mimetype = allowedMimeRegex.test(file.mimetype) || filetypes.test(file.mimetype);
 
     if (extname && mimetype) {
         return cb(null, true);
     } else {
-        cb('Images and PDFs only!');
+        cb(new Error('Invalid file type! Allowed types: Images, PDFs, Word, Excel, CSV, TXT, ZIP.'));
     }
 }
 

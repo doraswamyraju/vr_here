@@ -35,7 +35,7 @@ const OrderProcessingModule = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
 
-  const [adminDocFile, setAdminDocFile] = useState(null);
+  const [adminDocFiles, setAdminDocFiles] = useState([]);
   const [adminDocName, setAdminDocName] = useState('');
   const [isUploadingAdminDoc, setIsUploadingAdminDoc] = useState(false);
   const [itrAssessment, setItrAssessment] = useState(null);
@@ -136,24 +136,29 @@ const OrderProcessingModule = ({
       alert('Please clock in before starting work.');
       return;
     }
-    if (!adminDocFile || !config) return;
+    if (adminDocFiles.length === 0 || !config) return;
     setIsUploadingAdminDoc(true);
-    const formData = new FormData();
-    formData.append('document', adminDocFile);
-    formData.append('name', adminDocName.trim() || adminDocFile.name);
     try {
-      await axios.post(`/api/orders/${selectedOrder._id}/documents`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...config.headers
-        }
-      });
-      alert('Document uploaded successfully to customer portal!');
-      setAdminDocFile(null);
+      for (const file of adminDocFiles) {
+        const formData = new FormData();
+        formData.append('document', file);
+        const displayName = adminDocFiles.length === 1 && adminDocName.trim()
+          ? adminDocName.trim()
+          : file.name;
+        formData.append('name', displayName);
+        await axios.post(`/api/orders/${selectedOrder._id}/documents`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            ...config.headers
+          }
+        });
+      }
+      alert('Document(s) uploaded successfully to customer portal!');
+      setAdminDocFiles([]);
       setAdminDocName('');
       window.location.reload();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to upload document');
+      alert(err.response?.data?.message || 'Failed to upload document(s)');
     } finally {
       setIsUploadingAdminDoc(false);
     }
@@ -865,12 +870,13 @@ const OrderProcessingModule = ({
                     <input 
                       type="file" 
                       required
-                      onChange={e => setAdminDocFile(e.target.files[0])}
+                      multiple
+                      onChange={e => setAdminDocFiles(Array.from(e.target.files))}
                       className="w-full text-xs font-semibold"
                     />
                     <button
                       type="submit"
-                      disabled={isUploadingAdminDoc || !adminDocFile}
+                      disabled={isUploadingAdminDoc || adminDocFiles.length === 0}
                       className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50"
                     >
                       {isUploadingAdminDoc ? 'Uploading...' : 'Send Document'}
