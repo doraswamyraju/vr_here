@@ -21,7 +21,8 @@ const OrderProcessingModule = ({
   onTodoStatusChange,
   isClockedIn,
   onTaskStatusChange,
-  onUpdateSubtask
+  onUpdateSubtask,
+  onRefresh
 }) => {
   const handleTodoUpdate = (id, status) => {
     if (!isClockedIn) {
@@ -61,7 +62,11 @@ const OrderProcessingModule = ({
       });
       alert('Final certificate uploaded successfully and project status set to Completed!');
       setFile(null);
-      window.location.reload();
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to upload final certificate');
     } finally {
@@ -156,7 +161,11 @@ const OrderProcessingModule = ({
       alert('Document(s) uploaded successfully to customer portal!');
       setAdminDocFiles([]);
       setAdminDocName('');
-      window.location.reload();
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to upload document(s)');
     } finally {

@@ -421,6 +421,7 @@ const EmployeeApp = () => {
             isClockedIn={isClockedIn}
             onTaskStatusChange={handleTaskStatusChange}
             onUpdateSubtask={handleUpdateSubtask}
+            onRefresh={refreshAll}
           />
         );
       case 'tasks':

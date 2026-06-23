@@ -97,7 +97,8 @@ const OrdersModule = ({
   onOpenRecurringModal,
   onAddTask,
   orderFilter = 'All',
-  setOrderFilter
+  setOrderFilter,
+  onRefresh
 }) => {
   const filteredOrders = useMemo(() => {
     if (orderFilter === 'All') return orders;
@@ -131,7 +132,11 @@ const OrdersModule = ({
     try {
       await axios.post(`/api/orders/${selectedOrder._id}/invoices/adjusted`, payload, config);
       alert('Billing initiated successfully! Invoice has been generated and dispatched to both the customer and admin.');
-      window.location.reload();
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to initiate billing.');
     } finally {
@@ -155,7 +160,11 @@ const OrdersModule = ({
       });
       alert('Final certificate uploaded successfully and project status set to Completed!');
       setFinalCertFile(null);
-      window.location.reload();
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to upload final certificate');
     } finally {
@@ -185,7 +194,11 @@ const OrdersModule = ({
       alert('Document(s) uploaded successfully to customer portal!');
       setAdminDocFiles([]);
       setAdminDocName('');
-      window.location.reload();
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to upload document(s)');
     } finally {

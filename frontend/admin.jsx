@@ -744,6 +744,7 @@ function AdminApp() {
           onOpenRecurringModal={() => setIsMakeRecurringModalOpen(true)}
           orderFilter={orderFilter}
           setOrderFilter={setOrderFilter}
+          onRefresh={fetchData}
         />
       );
     }
