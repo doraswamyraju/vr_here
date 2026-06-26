@@ -167,6 +167,22 @@ const FAQS = [
   {
     q: "How safe is my financial data with VR HERE?",
     a: "We prioritize your privacy above all. All files uploaded to our document vault are protected by bank-grade SSL encryption and accessed solely by the assigned CA working on your compliance files."
+  },
+  {
+    q: "Is ITR filing mandatory for income up to ₹12 lakh?",
+    a: "Yes, filing is still mandatory if your gross total income exceeds the basic exemption limit (₹4 lakh under the new regime, ₹2.5 lakh under the old regime), even if Section 87A rebate makes your net tax liability zero up to ₹12 lakh. You must file to stay compliant and claim refunds or visa approvals."
+  },
+  {
+    q: "What happens if there is a mismatch between my ITR and my AIS?",
+    a: "The Income Tax Department's automated systems cross-reference your filed return against AIS. Unexplained mismatches or under-reported income will trigger automated intimations under Section 143(1) or notices. Our CAs reconcile AIS/TIS data before filing to eliminate this risk."
+  },
+  {
+    q: "What is the difference between ITR-U and belated return?",
+    a: "A belated return is filed after the due date but before the end of the assessment year (e.g. December 31st), carrying a late fee. ITR-U (Updated Return) under Section 139(8A) can be filed up to 48 months later to correct errors or declare missed income, subject to an additional tax of 25%-50%."
+  },
+  {
+    q: "What is the penalty for not e-verifying the ITR?",
+    a: "An unverified return is treated as invalid (as if it was never filed). If you miss the 30-day e-verification window, you would need to request a condonation of delay or file a belated return, which triggers late fees."
   }
 ];
 
@@ -197,6 +213,114 @@ const RELATED_SERVICES = [
   }
 ];
 
+/* --- NEW DATA STRUCTURES MERGED FROM VAKILSEARCH --- */
+const ITR_BENEFITS = [
+  {
+    title: "Tax Refund Claims",
+    desc: "Claim excess tax paid or TDS deducted during the financial year directly back to your pre-validated bank account.",
+    icon: RefreshCw,
+    color: "text-blue-500 bg-blue-50"
+  },
+  {
+    title: "Legal Compliance",
+    desc: "Avoid notices, late filing fees, and compliance penalties under Section 234F by staying fully compliant with the Income Tax Department.",
+    icon: ShieldCheck,
+    color: "text-emerald-500 bg-emerald-50"
+  },
+  {
+    title: "Easy Loan Approval",
+    desc: "Banks and financial institutions require the last 2-3 years of ITR receipts as standard and reliable proof of income for processing home, car, or personal loans.",
+    icon: Landmark,
+    color: "text-indigo-500 bg-indigo-50"
+  },
+  {
+    title: "Visa Processing",
+    desc: "Many embassies ask for copies of your filed tax returns during visa applications to verify your financial ties and standing in India.",
+    icon: FileCheck,
+    color: "text-orange-500 bg-orange-50"
+  },
+  {
+    title: "Income Verification",
+    desc: "Serves as an official, government-recognized income statement for self-employed professionals, freelancers, and business owners.",
+    icon: FileText,
+    color: "text-purple-500 bg-purple-50"
+  },
+  {
+    title: "Carry Forward Losses",
+    desc: "Filing within the due date allows you to carry forward capital losses (both short-term and long-term) to offset against future taxable gains for up to 8 assessment years.",
+    icon: TrendingUp,
+    color: "text-red-500 bg-red-50"
+  },
+  {
+    title: "Government Tenders",
+    desc: "If you plan to bid for government contracts, projects, or public tenders, submitting past ITR history is often a mandatory pre-qualification criteria.",
+    icon: Briefcase,
+    color: "text-teal-500 bg-teal-50"
+  },
+  {
+    title: "Quick Document Access",
+    desc: "Keep a clean, systematic record of your financial history ready for any sudden requirement in financial planning or corporate audits.",
+    icon: FileSpreadsheet,
+    color: "text-pink-500 bg-pink-50"
+  }
+];
+
+const ITR_ELIGIBILITY = [
+  {
+    title: "Income Threshold",
+    desc: "Individuals whose total annual income exceeds the basic exemption limit (revised to ₹4 Lakhs under the new tax regime, and ₹2.5 Lakhs to ₹3 Lakhs under the old regime depending on age) must file ITR."
+  },
+  {
+    title: "Residential Status",
+    desc: "Tax liability and reporting obligations depend on residential status (Resident, Resident but Not Ordinarily Resident, or Non-Resident) based on the number of days stayed in India."
+  },
+  {
+    title: "NRI Criteria",
+    desc: "Non-Resident Indians (NRIs) must file an ITR if they have Indian-source income exceeding the basic exemption limit, such as rental income, capital gains, bank interest, or dividends."
+  },
+  {
+    title: "Business & Profession",
+    desc: "Self-employed professionals, freelancers, consultants, and business owners must file ITR if their gross receipts or business turnover exceed prescribed statutory thresholds."
+  },
+  {
+    title: "Foreign Assets & Interests",
+    desc: "Resident individuals who hold foreign bank accounts, signatory authority, financial interest, or assets outside India are mandated to file an ITR regardless of their income level."
+  }
+];
+
+const ITR_DOCUMENTS = [
+  {
+    category: "Salary Income Documents",
+    items: [
+      "Form 16 and Form 12BA (provided by employer)",
+      "Monthly salary slips",
+      "PAN Card & Aadhaar Card (linked correctly)",
+      "Form 26AS (tax credit statement)",
+      "All active Bank statements showing interest credits"
+    ]
+  },
+  {
+    category: "Business & Capital Gains",
+    items: [
+      "Profit & Loss statement and Balance sheet",
+      "Capital gains statement from stock/crypto brokers",
+      "GST returns and sales ledgers",
+      "Form 26AS and AIS (Annual Information Statement)",
+      "TDS certificates under Form 16A"
+    ]
+  },
+  {
+    category: "Other Income & Tax Savings",
+    items: [
+      "Tax saving investment proofs (LIC, PPF, ELSS, NSC, etc.)",
+      "Rent receipts for HRA claims",
+      "Home loan interest certificate (Section 24)",
+      "Donation receipts for Section 80G tax deductions",
+      "Annual Information Statement (AIS) data matching"
+    ]
+  }
+];
+
 const IncomeTaxPage = () => {
   const navigate = useNavigate();
   
@@ -211,6 +335,7 @@ const IncomeTaxPage = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [activeFaq, setActiveFaq] = useState(null);
   const [isSeoExpanded, setIsSeoExpanded] = useState(false);
+  const [activeDocTab, setActiveDocTab] = useState(0);
 
   /* --- Interactive ITR Finder Tool State --- */
   const [incomeSalary, setIncomeSalary] = useState(false);
@@ -636,6 +761,96 @@ const IncomeTaxPage = () => {
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+        
+        {/* NEW SECTION: BENEFITS OF FILING ITR */}
+        <section className="py-20 bg-slate-900 text-white relative overflow-hidden border-t border-slate-800">
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+          <div className="max-w-7xl mx-auto px-4 relative z-10">
+            <div className="text-center mb-16">
+              <span className="text-xs uppercase font-black tracking-widest text-red-400 bg-white/5 px-3 py-1.5 rounded-full font-bold">Why File ITR?</span>
+              <h2 className="text-3xl lg:text-5xl font-black text-white mt-4 tracking-tight">Benefits of Income Tax Return Filing</h2>
+              <p className="text-slate-400 mt-2 font-medium">Filing your returns is not just a legal obligation—it unlocks multiple financial benefits.</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {ITR_BENEFITS.map((benefit, i) => {
+                const IconComponent = benefit.icon;
+                return (
+                  <div key={i} className="bg-slate-800/40 p-6 rounded-2xl border border-slate-700/30 hover:border-red-500/50 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl flex flex-col">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-slate-800 border border-slate-700">
+                      <IconComponent className="w-6 h-6 text-red-500" />
+                    </div>
+                    <h3 className="font-bold text-lg text-slate-100 mb-2">{benefit.title}</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed font-medium mt-auto">{benefit.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* NEW SECTION: ELIGIBILITY CRITERIA */}
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-16">
+              <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3 py-1.5 rounded-full font-bold">Eligibility Check</span>
+              <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mt-4 tracking-tight">Who Should File an ITR in India?</h2>
+              <p className="text-slate-600 mt-2 font-medium">Learn about the mandatory criteria and income thresholds under current tax laws.</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {ITR_ELIGIBILITY.map((item, i) => (
+                <div key={i} className="bg-slate-50 p-7 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 font-bold text-xs mb-4">
+                      {i + 1}
+                    </div>
+                    <h3 className="font-black text-lg text-slate-950 mb-3">{item.title}</h3>
+                    <p className="text-slate-600 text-xs leading-relaxed font-semibold">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* NEW SECTION: DOCUMENTS REQUIRED FOR ITR FILING */}
+        <section className="py-20 bg-slate-50 border-t border-slate-200">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="text-center mb-16">
+              <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3 py-1.5 rounded-full font-bold">Checklist Guide</span>
+              <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mt-4 tracking-tight">Documents Required for ITR Filing</h2>
+              <p className="text-slate-600 mt-2 font-medium">Keep these documents ready to ensure quick, accurate, and notice-free e-filing.</p>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+              {/* Tab Switcher Headers */}
+              <div className="flex border-b border-slate-200 bg-slate-50/50">
+                {ITR_DOCUMENTS.map((tab, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveDocTab(idx)}
+                    className={`flex-1 py-4 px-3 text-center text-xs md:text-sm font-bold border-b-2 transition ${activeDocTab === idx ? 'border-red-600 text-red-600 bg-white font-black' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                  >
+                    {tab.category}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab Content */}
+              <div className="p-6 md:p-8">
+                <ul className="space-y-4">
+                  {ITR_DOCUMENTS[activeDocTab].items.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm font-semibold text-slate-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </section>
