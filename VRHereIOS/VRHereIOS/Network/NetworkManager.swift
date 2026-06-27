@@ -349,6 +349,20 @@ class NetworkManager {
     func getDynamicServices() async throws -> [MobileServiceDetail] {
         return try await performRequest(path: "api/service-pages", method: "GET")
     }
+    
+    func getAdminFreelancers() async throws -> [FreelancerResponse] {
+        return try await performRequest(path: "api/freelancer/admin/users", method: "GET")
+    }
+    
+    func getIncomeTaxAssessments() async throws -> [ITAssessmentResponse] {
+        return try await performRequest(path: "api/income-tax-assessment", method: "GET")
+    }
+    
+    func updateIncomeTaxAssessmentStatus(id: String, status: String, notes: String) async throws -> ITAssessmentResponse {
+        let payload = ["status": status, "notes": notes]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/income-tax-assessment/\(id)/status", method: "PUT", body: data)
+    }
 }
 
 // AnyCodable helper struct to encode/decode dynamic types in Swift
@@ -395,5 +409,31 @@ struct AnyCodable: Codable {
         } else {
             throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Unable to encode AnyCodable"))
         }
+    }
+}
+
+struct FreelancerResponse: Codable, Identifiable {
+    let id: String
+    let name: String
+    let email: String
+    let role: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case name, email, role
+    }
+}
+
+struct ITAssessmentResponse: Codable, Identifiable {
+    let id: String
+    let clientName: String
+    let pan: String
+    let financialYear: String
+    let assessmentYear: String
+    let status: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case clientName, pan, financialYear, assessmentYear, status
     }
 }

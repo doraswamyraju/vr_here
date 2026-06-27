@@ -23,58 +23,60 @@ struct AdminDashboardView: View {
                     onLogoutClick: onLogout
                 )
                 
-                // Active tabs switcher
-                ZStack {
+                // Active tabs switcher with floating dock
+                ZStack(alignment: .bottom) {
                     Color.bgLight.ignoresSafeArea()
                     
-                    switch activeTab {
-                    case "Overview":
-                        AdminOverviewTab(viewModel: adminViewModel, userName: userName) { tab in
-                            activeTab = tab
+                    Group {
+                        switch activeTab {
+                        case "Overview":
+                            AdminOverviewTab(viewModel: adminViewModel, userName: userName) { tab in
+                                activeTab = tab
+                            }
+                        case "Orders":
+                            AdminOrdersTab(viewModel: adminViewModel)
+                        case "CRM":
+                            AdminCrmTab(viewModel: adminViewModel)
+                        case "HRMS":
+                            AdminHrmsTab(viewModel: adminViewModel)
+                        case "Users":
+                            AdminUsersTab(viewModel: adminViewModel)
+                        case "Todo":
+                            AdminTodoTab(viewModel: adminViewModel)
+                        case "Finance":
+                            AdminFinanceTab(viewModel: adminViewModel)
+                        case "Compliance":
+                            AdminComplianceTab(viewModel: adminViewModel)
+                        case "Performance":
+                            AdminPerformanceTab(viewModel: adminViewModel)
+                        case "Reports":
+                            AdminReportsTab(viewModel: adminViewModel)
+                        case "Notifications":
+                            AdminNotificationsTab(viewModel: adminViewModel)
+                        case "KB":
+                            AdminKbTab(viewModel: adminViewModel)
+                        case "Support":
+                            AdminSupportTab(viewModel: adminViewModel)
+                        case "Services":
+                            AdminServicesTab(viewModel: adminViewModel)
+                        case "Referral":
+                            AdminReferralTab(viewModel: adminViewModel)
+                        case "Recurring":
+                            AdminRecurringTab(viewModel: adminViewModel)
+                        case "Settings":
+                            AdminSettingsTab(viewModel: adminViewModel)
+                        case "ITChecklist":
+                            AdminITChecklistTab(viewModel: adminViewModel)
+                        case "Freelancers":
+                            AdminFreelancersTab(viewModel: adminViewModel)
+                        default:
+                            Text("Unknown Tab")
                         }
-                    case "Orders":
-                        AdminOrdersTab(viewModel: adminViewModel)
-                    case "CRM":
-                        AdminCrmTab(viewModel: adminViewModel)
-                    case "HRMS":
-                        AdminHrmsTab(viewModel: adminViewModel)
-                    case "Users":
-                        AdminUsersTab(viewModel: adminViewModel)
-                    case "Todo":
-                        AdminTodoTab(viewModel: adminViewModel)
-                    case "Finance":
-                        AdminFinanceTab(viewModel: adminViewModel)
-                    case "Compliance":
-                        AdminComplianceTab(viewModel: adminViewModel)
-                    case "Performance":
-                        AdminPerformanceTab(viewModel: adminViewModel)
-                    case "Reports":
-                        AdminReportsTab(viewModel: adminViewModel)
-                    case "Notifications":
-                        AdminNotificationsTab(viewModel: adminViewModel)
-                    case "KB":
-                        AdminKbTab(viewModel: adminViewModel)
-                    case "Support":
-                        AdminSupportTab(viewModel: adminViewModel)
-                    case "Services":
-                        AdminServicesTab(viewModel: adminViewModel)
-                    case "Referral":
-                        AdminReferralTab(viewModel: adminViewModel)
-                    case "Recurring":
-                        AdminRecurringTab(viewModel: adminViewModel)
-                    case "Settings":
-                        AdminSettingsTab(viewModel: adminViewModel)
-                    case "ITChecklist":
-                        AdminITChecklistTab(viewModel: adminViewModel)
-                    case "Freelancers":
-                        AdminFreelancersTab(viewModel: adminViewModel)
-                    default:
-                        Text("Unknown Tab")
                     }
+                    .ignoresSafeArea(edges: .bottom)
+                    
+                    AdminFloatingDock(activeTab: $activeTab)
                 }
-                
-                // Floating Bottom Dock
-                AdminFloatingDock(activeTab: $activeTab)
             }
             
             // Drawer Menu overlay
@@ -138,29 +140,34 @@ struct AdminFloatingDock: View {
     ]
     
     var body: some View {
-        VStack(spacing: 0) {
-            Divider().background(Color.borderLight)
-            HStack(spacing: 0) {
-                ForEach(tabs, id: \.0) { tabId, iconName, label in
-                    let isSelected = activeTab == tabId
-                    Button(action: { activeTab = tabId }) {
-                        VStack(spacing: 4) {
-                            Image(systemName: iconName + (isSelected ? ".fill" : ""))
-                                .font(.system(size: 18))
-                                .foregroundColor(isSelected ? .primaryRed : .textMuted)
-                            Text(label)
-                                .font(.system(size: 9, weight: isSelected ? .black : .semibold))
-                                .foregroundColor(isSelected ? .primaryRed : .textMuted)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+        HStack(spacing: 0) {
+            ForEach(tabs, id: \.0) { tabId, iconName, label in
+                let isSelected = activeTab == tabId
+                Button(action: { activeTab = tabId }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: iconName + (isSelected ? ".fill" : ""))
+                            .font(.system(size: 16))
+                            .foregroundColor(isSelected ? .white : .textMuted)
+                        Text(label)
+                            .font(.system(size: 9, weight: isSelected ? .black : .semibold))
+                            .foregroundColor(isSelected ? .white : .textMuted)
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
                 }
+                .buttonStyle(PlainButtonStyle())
             }
-            .padding(.vertical, 6)
-            .background(Color.white)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .background(Color.darkSlate)
+        .cornerRadius(24)
+        .overlay(
+            AnimatedGradientBorder()
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 10)
     }
 }
 

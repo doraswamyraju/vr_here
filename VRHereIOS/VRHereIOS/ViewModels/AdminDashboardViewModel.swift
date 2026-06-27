@@ -9,6 +9,8 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var notifications: [NotificationResponse] = []
     @Published var payments: [PaymentResponse] = []
     @Published var activeBannerNotification: NotificationResponse? = nil
+    @Published var freelancers: [FreelancerResponse] = []
+    @Published var assessments: [ITAssessmentResponse] = []
     @Published var isLoading = false
     @Published var toastMessage: String? = nil
     
@@ -100,6 +102,16 @@ class AdminDashboardViewModel: ObservableObject {
                     payments = pays
                 }
                 
+                // 6. Fetch Freelancers
+                if let frees = try? await NetworkManager.shared.getAdminFreelancers() {
+                    freelancers = frees
+                }
+                
+                // 7. Fetch Assessments
+                if let assess = try? await NetworkManager.shared.getIncomeTaxAssessments() {
+                    assessments = assess
+                }
+                
                 isLoading = false
             } catch {
                 if !silent {
@@ -107,6 +119,20 @@ class AdminDashboardViewModel: ObservableObject {
                     toastMessage = "Sync error: \(error.localizedDescription)"
                 }
             }
+        }
+    }
+    
+    func updateAssessmentStatus(id: String, status: String, notes: String) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.updateIncomeTaxAssessmentStatus(id: id, status: status, notes: notes)
+                toastMessage = "Assessment status updated successfully!"
+                syncDashboardData()
+            } catch {
+                toastMessage = "Status update failed: \(error.localizedDescription)"
+            }
+            isLoading = false
         }
     }
     
