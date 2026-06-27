@@ -38,6 +38,12 @@ extension View {
     func glassCard() -> some View {
         self.modifier(GlassCardModifier())
     }
+    
+    func glassCardStyle() -> some View {
+        self.padding(16)
+            .background(Color.white)
+            .cornerRadius(16)
+    }
 }
 
 // Custom Header Style
