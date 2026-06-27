@@ -34,7 +34,7 @@ struct AdminTodoTab: View {
                         
                         Button("Add Task") {
                             guard !newTaskTitle.isEmpty else { return }
-                            let req = CreateTodoRequest(title: newTaskTitle, description: "", priority: selectedPriority.lowercased(), orderId: nil)
+                            let req = CreateTodoRequest(title: newTaskTitle, description: "", priority: selectedPriority.lowercased(), assignedTo: nil, orderId: nil, dueDate: nil)
                             viewModel.createTodo(request: req) { _ in
                                 newTaskTitle = ""
                             }

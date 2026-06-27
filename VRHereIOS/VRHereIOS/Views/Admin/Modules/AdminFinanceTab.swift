@@ -36,7 +36,7 @@ struct AdminFinanceTab: View {
                     ForEach(viewModel.payments) { pay in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Order #\(pay.orderId.prefix(8))")
+                                Text("Order #\(pay.paymentId.prefix(8))")
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(.textDark)
                                 Text("Mode: \(pay.method) • Status: \(pay.status)")
