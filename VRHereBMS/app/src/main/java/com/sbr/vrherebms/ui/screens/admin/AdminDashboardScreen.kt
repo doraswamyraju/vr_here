@@ -147,6 +147,8 @@ fun AdminDashboardScreen(
                         Triple("Services", Icons.Default.Settings, "Services Master"),
                         Triple("Referral", Icons.Default.Share, "Referral Ledger"),
                         Triple("Recurring", Icons.Default.Loop, "Recurring Hub"),
+                        Triple("Freelancers", Icons.Default.People, "Freelancer Hub"),
+                        Triple("ITChecklist", Icons.Default.Description, "IT Checklist"),
                         Triple("Settings", Icons.Default.SettingsApplications, "Global Settings")
                     )
 
@@ -485,6 +487,12 @@ fun AdminDashboardScreen(
                 }
                 "Recurring" -> {
                     AdminRecurringScreen(adminViewModel = adminViewModel)
+                }
+                "Freelancers" -> {
+                    AdminFreelancersScreen(adminViewModel = adminViewModel)
+                }
+                "ITChecklist" -> {
+                    AdminITChecklistScreen(adminViewModel = adminViewModel)
                 }
                 "Settings" -> {
                     AdminSettingsScreen()

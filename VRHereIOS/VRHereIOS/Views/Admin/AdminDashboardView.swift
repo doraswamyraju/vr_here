@@ -64,6 +64,10 @@ struct AdminDashboardView: View {
                         AdminRecurringTab(viewModel: adminViewModel)
                     case "Settings":
                         AdminSettingsTab(viewModel: adminViewModel)
+                    case "ITChecklist":
+                        AdminITChecklistTab(viewModel: adminViewModel)
+                    case "Freelancers":
+                        AdminFreelancersTab(viewModel: adminViewModel)
                     default:
                         Text("Unknown Tab")
                     }
@@ -201,6 +205,8 @@ struct AdminSidebarView: View {
                     AdminSidebarItem(label: "Services Master", iconName: "gearshape.2", tabId: "Services", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Referral Ledger", iconName: "square.and.arrow.up", tabId: "Referral", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Recurring Hub", iconName: "arrow.triangle.2.circlepath", tabId: "Recurring", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Freelancer Hub", iconName: "person.2", tabId: "Freelancers", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "IT Checklist", iconName: "doc.plaintext", tabId: "ITChecklist", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Global Settings", iconName: "slider.horizontal.3", tabId: "Settings", activeTab: $activeTab, onClose: onClose)
 
                     

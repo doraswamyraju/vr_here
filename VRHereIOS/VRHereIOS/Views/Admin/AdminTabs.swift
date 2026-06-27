@@ -1097,3 +1097,141 @@ struct AdminSettingsTab: View {
         }
     }
 }
+
+// ==========================================
+// 18. ADMIN IT CHECKLIST TAB
+// ==========================================
+struct AdminITChecklistTab: View {
+    @ObservedObject var viewModel: AdminDashboardViewModel
+    @State private var searchQuery = ""
+    @State private var selectedStatus = "Pending"
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Income Tax Checklist Submissions")
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundColor(.textDark)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                
+                TextField("Search by client name or PAN...", text: $searchQuery)
+                    .padding(12)
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .padding(.horizontal, 20)
+                
+                VStack(spacing: 12) {
+                    // Seed mock assessments matching Web IncomeTaxAssessmentModule
+                    let assessments = [
+                        ("Kalyan Chakravarthy", "ABCDE1234F", "2025-26", "2026-27", "Approved"),
+                        ("Dora Raju Corp", "XYZAB5678C", "2025-26", "2026-27", "Pending"),
+                        ("Chandra & Co", "QWERP9876D", "2024-25", "2025-26", "In Progress"),
+                        ("Suneetha Ram", "LKJHG4321A", "2025-26", "2026-27", "Rejected")
+                    ].filter {
+                        searchQuery.isEmpty ||
+                        $0.0.localizedCaseInsensitiveContains(searchQuery) ||
+                        $0.1.localizedCaseInsensitiveContains(searchQuery)
+                    }
+                    
+                    ForEach(assessments, id: \.0) { name, pan, fy, ay, status in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text(name)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.textDark)
+                                Spacer()
+                                Text(status)
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(status == "Approved" ? Color.green : (status == "Rejected" ? Color.red : Color.orange))
+                                    .cornerRadius(6)
+                            }
+                            
+                            HStack {
+                                Text("PAN: \(pan)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.textMuted)
+                                Spacer()
+                                Text("FY \(fy) / AY \(ay)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.textMuted)
+                            }
+                        }
+                        .glassCardStyle()
+                        .padding(.horizontal, 20)
+                    }
+                }
+                
+                Spacer().frame(height: 100)
+            }
+        }
+    }
+}
+
+// ==========================================
+// 19. ADMIN FREELANCERS TAB
+// ==========================================
+struct AdminFreelancersTab: View {
+    @ObservedObject var viewModel: AdminDashboardViewModel
+    @State private var searchQuery = ""
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Freelancer Hub Management")
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundColor(.textDark)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                
+                TextField("Search freelancers...", text: $searchQuery)
+                    .padding(12)
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .padding(.horizontal, 20)
+                
+                VStack(spacing: 12) {
+                    // Seed mock freelancers matching Web FreelancersModule
+                    let specialists = [
+                        ("Rajesh Kumar", "rajesh.ca@gmail.com", "Accounting", "Active"),
+                        ("Lakshmi Prasad", "lakshmi.cs@outlook.com", "Legal Compliance", "Pending Approval"),
+                        ("Sai Teja", "saiteja.tax@gmail.com", "GST Filing", "Active"),
+                        ("Priya Vardhan", "priya.v@gmail.com", "ITR Reviewer", "Suspended")
+                    ].filter {
+                        searchQuery.isEmpty ||
+                        $0.0.localizedCaseInsensitiveContains(searchQuery) ||
+                        $0.2.localizedCaseInsensitiveContains(searchQuery)
+                    }
+                    
+                    ForEach(specialists, id: \.0) { name, email, domain, status in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(name)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.textDark)
+                                Text("Domain: \(domain) • \(email)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.textMuted)
+                            }
+                            Spacer()
+                            Text(status)
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(status == "Active" ? Color.green : (status == "Suspended" ? Color.red : Color.orange))
+                                .cornerRadius(6)
+                        }
+                        .glassCardStyle()
+                        .padding(.horizontal, 20)
+                    }
+                }
+                
+                Spacer().frame(height: 100)
+            }
+        }
+    }
+}
