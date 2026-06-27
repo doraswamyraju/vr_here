@@ -509,7 +509,7 @@ struct AdminTodoTab: View {
                         
                         Button("Add Task") {
                             guard !newTaskTitle.isEmpty else { return }
-                            let req = CreateTodoRequest(title: newTaskTitle, description: "", priority: selectedPriority.lowercased(), orderId: nil)
+                            let req = CreateTodoRequest(title: newTaskTitle, description: "", priority: selectedPriority.lowercased(), assignedTo: nil, orderId: nil, dueDate: nil)
                             viewModel.createTodo(request: req) { _ in
                                 newTaskTitle = ""
                             }
@@ -589,7 +589,7 @@ struct AdminFinanceTab: View {
                     ForEach(viewModel.payments) { pay in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Order #\(pay.orderId.prefix(8))")
+                                Text("Order #\(pay.paymentId.prefix(8))")
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(.textDark)
                                 Text("Mode: \(pay.method) • Status: \(pay.status)")
