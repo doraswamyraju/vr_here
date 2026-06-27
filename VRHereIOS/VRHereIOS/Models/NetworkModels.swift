@@ -580,6 +580,10 @@ struct TodoResponse: Codable, Identifiable {
     let dueDate: String?
     let createdBy: UserProfile?
     let createdAt: String
+    
+    var completed: Bool {
+        status.lowercased() == "completed"
+    }
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
