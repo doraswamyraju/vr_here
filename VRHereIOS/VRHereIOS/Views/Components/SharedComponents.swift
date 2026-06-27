@@ -214,3 +214,60 @@ struct BannerNotificationView: View {
         )
     }
 }
+
+struct QuickActionCard: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundColor(color)
+                Text(title)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.textDark)
+                Spacer()
+            }
+            .padding(14)
+            .background(Color.white)
+            .cornerRadius(14)
+            .shadow(color: Color.black.opacity(0.02), radius: 4)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct TelemetryRow: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundColor(color)
+                .padding(8)
+                .background(color.opacity(0.1))
+                .clipShape(Circle())
+            
+            Text(title)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.textDark)
+            
+            Spacer()
+            
+            Text(value)
+                .font(.system(size: 14, weight: .black))
+                .foregroundColor(.textDark)
+        }
+        .padding(12)
+        .background(Color.white)
+        .cornerRadius(12)
+    }
+}
