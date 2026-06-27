@@ -29,7 +29,9 @@ struct AdminDashboardView: View {
                     
                     switch activeTab {
                     case "Overview":
-                        AdminOverviewTab(viewModel: adminViewModel, userName: userName)
+                        AdminOverviewTab(viewModel: adminViewModel, userName: userName) { tab in
+                            activeTab = tab
+                        }
                     case "Orders":
                         AdminOrdersTab(viewModel: adminViewModel)
                     case "CRM":
@@ -38,6 +40,30 @@ struct AdminDashboardView: View {
                         AdminHrmsTab(viewModel: adminViewModel)
                     case "Users":
                         AdminUsersTab(viewModel: adminViewModel)
+                    case "Todo":
+                        AdminTodoTab(viewModel: adminViewModel)
+                    case "Finance":
+                        AdminFinanceTab(viewModel: adminViewModel)
+                    case "Compliance":
+                        AdminComplianceTab(viewModel: adminViewModel)
+                    case "Performance":
+                        AdminPerformanceTab(viewModel: adminViewModel)
+                    case "Reports":
+                        AdminReportsTab(viewModel: adminViewModel)
+                    case "Notifications":
+                        AdminNotificationsTab(viewModel: adminViewModel)
+                    case "KB":
+                        AdminKbTab(viewModel: adminViewModel)
+                    case "Support":
+                        AdminSupportTab(viewModel: adminViewModel)
+                    case "Services":
+                        AdminServicesTab(viewModel: adminViewModel)
+                    case "Referral":
+                        AdminReferralTab(viewModel: adminViewModel)
+                    case "Recurring":
+                        AdminRecurringTab(viewModel: adminViewModel)
+                    case "Settings":
+                        AdminSettingsTab(viewModel: adminViewModel)
                     default:
                         Text("Unknown Tab")
                     }
@@ -161,9 +187,22 @@ struct AdminSidebarView: View {
                 VStack(spacing: 4) {
                     AdminSidebarItem(label: "Dashboard Summary", iconName: "chart.pie", tabId: "Overview", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Manage Orders", iconName: "bag", tabId: "Orders", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Customer CRM", iconName: "ticket", tabId: "CRM", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Customer CRM", iconName: "hub", tabId: "CRM", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "HRMS Portal", iconName: "person.3", tabId: "HRMS", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Users Matrix", iconName: "person.badge.shield.check", tabId: "Users", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Tasks Board", iconName: "checkmark.circle", tabId: "Todo", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Finance Ledger", iconName: "indianrupeesign.circle", tabId: "Finance", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Compliance Panel", iconName: "doc.text.badge.checkmark", tabId: "Compliance", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Performance Metrics", iconName: "line.diagonal.trend.upward", tabId: "Performance", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Business Reports", iconName: "chart.bar.doc.horizontal", tabId: "Reports", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Admin Notifications", iconName: "bell", tabId: "Notifications", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "KB Hub", iconName: "book", tabId: "KB", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Client Support", iconName: "envelope", tabId: "Support", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Services Master", iconName: "gearshape.2", tabId: "Services", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Referral Ledger", iconName: "square.and.arrow.up", tabId: "Referral", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Recurring Hub", iconName: "arrow.triangle.2.circlepath", tabId: "Recurring", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Global Settings", iconName: "slider.horizontal.3", tabId: "Settings", activeTab: $activeTab, onClose: onClose)
+
                     
                     Divider()
                         .background(Color.borderLight)
