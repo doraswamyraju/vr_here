@@ -483,7 +483,7 @@ struct BMSAppSidebar: View {
                 LinearGradient(colors: [Color.darkSlate.opacity(0.65), Color(red: 10/255, green: 15/255, blue: 30/255).opacity(0.8)], startPoint: .top, endPoint: .bottom)
                 
                 // Reflection glow
-                RadialGradient(colors: [.white.opacity(0.12), .clear], center: .topLeading, radius: 250)
+                RadialGradient(colors: [.white.opacity(0.12), .clear], center: .topLeading, startRadius: 0, endRadius: 250)
             }
         )
         .clipShape(LiquidSidebarShape())
