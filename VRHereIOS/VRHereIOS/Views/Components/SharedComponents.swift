@@ -311,6 +311,35 @@ struct AnimatedGradientBorder: View {
     }
 }
 
+struct LiquidSidebarShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        // Top horizontal edge
+        path.addLine(to: CGPoint(x: rect.maxX - 40, y: rect.minY))
+        // Curve to the right edge with a gentle wave or bulb
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX, y: rect.minY + 40),
+            control: CGPoint(x: rect.maxX, y: rect.minY)
+        )
+        // Right edge with inward bend (waist effect)
+        path.addCurve(
+            to: CGPoint(x: rect.maxX, y: rect.maxY - 40),
+            control1: CGPoint(x: rect.maxX - 15, y: rect.height * 0.35),
+            control2: CGPoint(x: rect.maxX - 15, y: rect.height * 0.65)
+        )
+        // Curve to bottom edge
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX - 40, y: rect.maxY),
+            control: CGPoint(x: rect.maxX, y: rect.maxY)
+        )
+        // Bottom horizontal edge
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
 struct BMSAppSidebar: View {
     let userName: String
     let roleName: String
@@ -327,52 +356,33 @@ struct BMSAppSidebar: View {
             .joined()
             
         VStack(alignment: .leading, spacing: 0) {
-            // 1. Sidebar Header (Brand Logo + Close Button)
+            // Close Button header (VR brand text removed)
             HStack {
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(LinearGradient(gradient: Gradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 139/255, green: 92/255, blue: 246/255)]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(width: 36, height: 36)
-                        Text("VR")
-                            .font(.system(size: 14, weight: .black))
-                            .foregroundColor(.white)
-                    }
-                    
-                    Text("VRHERE BMS")
-                        .font(.system(size: 16, weight: .black))
-                        .foregroundColor(.white)
-                        .tracking(-0.3)
-                }
-                
                 Spacer()
-                
                 Button(action: onClose) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.white.opacity(0.8))
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.05))
+                        .frame(width: 32, height: 32)
+                        .background(Color.white.opacity(0.1))
                         .clipShape(Circle())
                 }
                 .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 24)
-            .padding(.top, 60)
-            .padding(.bottom, 20)
+            .padding(.top, 55)
+            .padding(.bottom, 12)
             
-            Divider().background(Color.white.opacity(0.08))
-            
-            // 2. Profile Details Section (Premium glassmorphism wrapper + initials avatar)
+            // 2. Profile Details Section (Integrated Glass bubble)
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
                         .fill(LinearGradient(gradient: Gradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 139/255, green: 92/255, blue: 246/255)]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 48, height: 48)
-                        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 2))
+                        .frame(width: 46, height: 46)
+                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1.5))
                     
                     Text(initials.isEmpty ? userName.prefix(1).uppercased() : initials)
-                        .font(.system(size: 16, weight: .black))
+                        .font(.system(size: 15, weight: .black))
                         .foregroundColor(.white)
                 }
                 
@@ -383,16 +393,16 @@ struct BMSAppSidebar: View {
                         .lineLimit(1)
                     Text(roleName)
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                        .foregroundColor(Color(red: 180/255, green: 190/255, blue: 210/255))
                 }
                 Spacer()
             }
             .padding(16)
-            .background(Color.white.opacity(0.02))
-            .cornerRadius(20)
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.04), lineWidth: 1))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 20)
+            .background(Color.white.opacity(0.04))
+            .cornerRadius(18)
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.06), lineWidth: 1))
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
             
             Divider().background(Color.white.opacity(0.08))
             
@@ -409,23 +419,27 @@ struct BMSAppSidebar: View {
                         }) {
                             HStack(spacing: 16) {
                                 Image(systemName: item.iconName + (isSelected ? ".fill" : ""))
-                                    .font(.system(size: 18))
+                                    .font(.system(size: 16))
                                     .foregroundColor(isSelected ? Color(red: 129/255, green: 140/255, blue: 248/255) : Color(red: 148/255, green: 163/255, blue: 184/255))
                                     .frame(width: 24)
                                 Text(item.label)
-                                    .font(.system(size: 14, weight: isSelected ? .bold : .medium))
-                                    .foregroundColor(isSelected ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
+                                    .font(.system(size: 13, weight: isSelected ? .bold : .medium))
+                                    .foregroundColor(isSelected ? .white : Color(red: 180/255, green: 190/255, blue: 210/255))
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
-                            .frame(height: 48)
-                            .background(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.15) : Color.clear)
+                            .frame(height: 44)
+                            .background(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.18) : Color.clear)
                             .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(isSelected ? Color.white.opacity(0.08) : Color.clear, lineWidth: 1)
+                            )
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 20)
                 .padding(.vertical, 16)
             }
             
@@ -438,22 +452,45 @@ struct BMSAppSidebar: View {
             }) {
                 HStack(spacing: 16) {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                        .font(.system(size: 18))
+                        .foregroundColor(Color(red: 255/255, green: 100/255, blue: 100/255))
                     Text("Sign Out")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(Color(red: 255/255, green: 100/255, blue: 100/255))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 16)
+                .padding(.vertical, 14)
+                .background(Color.red.opacity(0.08))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.red.opacity(0.15), lineWidth: 1)
+                )
             }
             .buttonStyle(PlainButtonStyle())
-            .padding(.horizontal, 16)
-            .padding(.bottom, 30)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
         }
-        .frame(width: 300)
-        .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+        .frame(width: 290)
+        .background(
+            ZStack {
+                // Blur material
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                
+                // Color overlay tint
+                LinearGradient(colors: [Color.darkSlate.opacity(0.65), Color(red: 10/255, green: 15/255, blue: 30/255).opacity(0.8)], startPoint: .top, endPoint: .bottom)
+                
+                // Reflection glow
+                RadialGradient(colors: [.white.opacity(0.12), .clear], center: .topLeading, radius: 250)
+            }
+        )
+        .clipShape(LiquidSidebarShape())
+        .overlay(
+            LiquidSidebarShape()
+                .stroke(LinearGradient(colors: [.white.opacity(0.22), .white.opacity(0.05), .purple.opacity(0.1), .white.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.5)
+        )
         .edgesIgnoringSafeArea(.all)
     }
 }
