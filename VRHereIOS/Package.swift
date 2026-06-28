@@ -15,7 +15,7 @@ let package = Package(
             teamIdentifier: "",
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .placeholder(icon: .appIcon),
+            appIcon: .asset("AppIcon"),
             supportedDeviceFamilies: [
                 .pad,
                 .phone
