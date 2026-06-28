@@ -183,22 +183,27 @@ struct AdminSidebarView: View {
             // Header with App logo & Close action
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("VR HERE")
-                        .font(.system(size: 18, weight: .black))
-                        .foregroundColor(.white)
-                        .tracking(2)
+                    HStack(spacing: 4) {
+                        Text("VR HERE")
+                            .font(.system(size: 18, weight: .black))
+                            .foregroundColor(.textDark)
+                            .tracking(2)
+                        Circle()
+                            .fill(Color.primaryRed)
+                            .frame(width: 6, height: 6)
+                    }
                     Text("OPERATIONS HUB")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(Color.cyan)
+                        .foregroundColor(.textMuted)
                         .tracking(1)
                 }
                 Spacer()
                 Button(action: onClose) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white.opacity(0.6))
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.textMuted)
                         .padding(8)
-                        .background(Color.white.opacity(0.1))
+                        .background(Color.bgLight)
                         .clipShape(Circle())
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -207,63 +212,64 @@ struct AdminSidebarView: View {
             .padding(.top, 24)
             .padding(.bottom, 20)
             
-            // Translucent Profile card
+            // Premium Profile card (Light Glassmorphic look)
             HStack(spacing: 12) {
                 // Circular Avatar with Gradient Border
                 Image(systemName: "person.crop.circle.fill")
                     .resizable()
-                    .frame(width: 36, height: 36)
-                    .foregroundColor(.white.opacity(0.9))
+                    .frame(width: 38, height: 38)
+                    .foregroundColor(.textMuted)
                     .padding(2)
-                    .background(LinearGradient(gradient: Gradient(colors: [Color.cyan, Color.purple]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .background(LinearGradient(gradient: Gradient(colors: [Color.primaryRed, Color.orange]), startPoint: .topLeading, endPoint: .bottomTrailing))
                     .clipShape(Circle())
+                    .shadow(color: Color.primaryRed.opacity(0.15), radius: 4, x: 0, y: 2)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(userName)
                         .font(.system(size: 14, weight: .black))
-                        .foregroundColor(.white)
-                    Text("Administrator")
+                        .foregroundColor(.textDark)
+                    Text("System Administrator")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(Color.white.opacity(0.6))
+                        .foregroundColor(.textMuted)
                 }
                 Spacer()
             }
             .padding(12)
-            .background(Color.white.opacity(0.06))
+            .background(Color.bgLight)
             .cornerRadius(16)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Color.borderLight, lineWidth: 1)
             )
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
             
             Divider()
-                .background(Color.white.opacity(0.1))
+                .background(Color.borderLight)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 12)
             
             // Scroll list Menu
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 6) {
-                    AdminSidebarItem(label: "Dashboard Summary", iconName: "chart.pie", tabId: "Overview", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Manage Orders", iconName: "bag", tabId: "Orders", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Customer CRM", iconName: "ticket", tabId: "CRM", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "HRMS Portal", iconName: "person.3", tabId: "HRMS", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Users Matrix", iconName: "person.badge.shield.check", tabId: "Users", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Tasks Board", iconName: "checkmark.circle", tabId: "Todo", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Finance Ledger", iconName: "indianrupeesign.circle", tabId: "Finance", activeTab: $activeTab, onClose: onClose)
+                VStack(spacing: 4) {
+                    AdminSidebarItem(label: "Dashboard Summary", iconName: "chart.pie.fill", tabId: "Overview", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Manage Orders", iconName: "bag.fill", tabId: "Orders", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Customer CRM", iconName: "ticket.fill", tabId: "CRM", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "HRMS Portal", iconName: "person.3.fill", tabId: "HRMS", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Users Matrix", iconName: "person.badge.shield.checkmark.fill", tabId: "Users", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Tasks Board", iconName: "checkmark.circle.fill", tabId: "Todo", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Finance Ledger", iconName: "banknote.fill", tabId: "Finance", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Compliance Panel", iconName: "doc.text.badge.checkmark", tabId: "Compliance", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Performance Metrics", iconName: "trending.up", tabId: "Performance", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Business Reports", iconName: "chart.bar.doc.horizontal", tabId: "Reports", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Admin Notifications", iconName: "bell", tabId: "Notifications", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "KB Hub", iconName: "book", tabId: "KB", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Client Support", iconName: "envelope", tabId: "Support", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Services Master", iconName: "gearshape.2", tabId: "Services", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Referral Ledger", iconName: "square.and.arrow.up", tabId: "Referral", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Business Reports", iconName: "chart.bar.fill", tabId: "Reports", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Admin Notifications", iconName: "bell.fill", tabId: "Notifications", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "KB Hub", iconName: "book.fill", tabId: "KB", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Client Support", iconName: "envelope.fill", tabId: "Support", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Services Master", iconName: "gearshape.fill", tabId: "Services", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Referral Ledger", iconName: "square.and.arrow.up.fill", tabId: "Referral", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Recurring Hub", iconName: "arrow.triangle.2.circlepath", tabId: "Recurring", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "Freelancer Hub", iconName: "person.2", tabId: "Freelancers", activeTab: $activeTab, onClose: onClose)
-                    AdminSidebarItem(label: "IT Checklist", iconName: "doc.text", tabId: "ITChecklist", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "Freelancer Hub", iconName: "person.2.fill", tabId: "Freelancers", activeTab: $activeTab, onClose: onClose)
+                    AdminSidebarItem(label: "IT Checklist", iconName: "doc.text.fill", tabId: "ITChecklist", activeTab: $activeTab, onClose: onClose)
                     AdminSidebarItem(label: "Global Settings", iconName: "slider.horizontal.3", tabId: "Settings", activeTab: $activeTab, onClose: onClose)
                 }
                 .padding(.horizontal, 16)
@@ -272,7 +278,7 @@ struct AdminSidebarView: View {
             // Footer Section with Styled Sign Out Card
             VStack(spacing: 0) {
                 Divider()
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.borderLight)
                     .padding(.bottom, 12)
                 
                 Button(action: {
@@ -289,11 +295,11 @@ struct AdminSidebarView: View {
                         Spacer()
                     }
                     .padding(14)
-                    .background(Color.red.opacity(0.1))
+                    .background(Color.red.opacity(0.08))
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.red.opacity(0.2), lineWidth: 1)
+                            .stroke(Color.red.opacity(0.15), lineWidth: 1)
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -302,9 +308,7 @@ struct AdminSidebarView: View {
             }
         }
         .frame(width: 280)
-        .background(
-            LinearGradient(gradient: Gradient(colors: [Color.darkSlate, Color(red: 10/255, green: 15/255, blue: 30/255)]), startPoint: .top, endPoint: .bottom)
-        )
+        .background(Color.white)
         .edgesIgnoringSafeArea(.bottom)
     }
 }
@@ -325,10 +329,10 @@ struct AdminSidebarItem: View {
             onClose()
         }) {
             HStack(spacing: 12) {
-                // Left indicator dot/pill
+                // Left indicator bar (Crimson/Red)
                 if isSelected {
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.white)
+                        .fill(Color.primaryRed)
                         .frame(width: 4, height: 16)
                         .transition(.scale)
                 } else {
@@ -336,13 +340,13 @@ struct AdminSidebarItem: View {
                 }
                 
                 Image(systemName: iconName)
-                    .font(.system(size: 16, weight: isSelected ? .bold : .regular))
-                    .foregroundColor(isSelected ? .white : .white.opacity(0.6))
+                    .font(.system(size: 15, weight: isSelected ? .bold : .regular))
+                    .foregroundColor(isSelected ? Color.primaryRed : .textMuted)
                     .frame(width: 24)
                 
                 Text(label)
                     .font(.system(size: 13, weight: isSelected ? .black : .semibold))
-                    .foregroundColor(isSelected ? .white : .white.opacity(0.7))
+                    .foregroundColor(isSelected ? Color.primaryRed : .textDark)
                 
                 Spacer()
             }
@@ -350,15 +354,14 @@ struct AdminSidebarItem: View {
             .padding(.vertical, 10)
             .background(
                 isSelected ? 
-                AnyView(LinearGradient(gradient: Gradient(colors: [Color.primaryRed, Color.primaryRed.opacity(0.8)]), startPoint: .leading, endPoint: .trailing)) : 
+                AnyView(Color.primaryRed.opacity(0.08)) : 
                 AnyView(Color.clear)
             )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.white.opacity(0.15) : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? Color.primaryRed.opacity(0.12) : Color.clear, lineWidth: 1)
             )
-            .shadow(color: isSelected ? Color.primaryRed.opacity(0.3) : Color.clear, radius: 8, x: 0, y: 4)
         }
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isSelected ? 1.02 : 1.0)
