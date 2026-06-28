@@ -271,3 +271,231 @@ struct TelemetryRow: View {
         .cornerRadius(12)
     }
 }
+
+// --- Standardized Navigation Data Models ---
+struct BMSSidebarItem: Identifiable {
+    let id = UUID()
+    let label: String
+    let iconName: String
+    let tabId: String
+}
+
+struct BMSDockItem: Identifiable {
+    let id = UUID()
+    let label: String
+    let iconName: String
+    let tabId: String
+}
+
+// --- Standardized Navigation Views ---
+
+struct AnimatedGradientBorder: View {
+    @State private var rotateAngle: Double = 0.0
+    
+    var body: some View {
+        RoundedRectangle(cornerRadius: 24)
+            .stroke(
+                AngularGradient(
+                    gradient: Gradient(colors: [.red, .purple, .blue, .green, .yellow, .red]),
+                    center: .center,
+                    startAngle: .degrees(rotateAngle),
+                    endAngle: .degrees(rotateAngle + 360)
+                ),
+                lineWidth: 1.5
+            )
+            .onAppear {
+                withAnimation(Animation.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                    rotateAngle = 360.0
+                }
+            }
+    }
+}
+
+struct BMSAppSidebar: View {
+    let userName: String
+    let roleName: String
+    let menuItems: [BMSSidebarItem]
+    @Binding var activeTab: String
+    let onLogout: () -> Void
+    let onClose: () -> Void
+    
+    var body: some View {
+        let initials = userName.components(separatedBy: " ")
+            .compactMap { $0.first }
+            .map { String($0).uppercased() }
+            .prefix(2)
+            .joined()
+            
+        VStack(alignment: .leading, spacing: 0) {
+            // 1. Sidebar Header (Brand Logo + Close Button)
+            HStack {
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(LinearGradient(gradient: Gradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 139/255, green: 92/255, blue: 246/255)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 36, height: 36)
+                        Text("VR")
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text("VRHERE BMS")
+                        .font(.system(size: 16, weight: .black))
+                        .foregroundColor(.white)
+                        .tracking(-0.3)
+                }
+                
+                Spacer()
+                
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.8))
+                        .frame(width: 36, height: 36)
+                        .background(Color.white.opacity(0.05))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 60)
+            .padding(.bottom, 20)
+            
+            Divider().background(Color.white.opacity(0.08))
+            
+            // 2. Profile Details Section (Premium glassmorphism wrapper + initials avatar)
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(gradient: Gradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 139/255, green: 92/255, blue: 246/255)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 48, height: 48)
+                        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 2))
+                    
+                    Text(initials.isEmpty ? userName.prefix(1).uppercased() : initials)
+                        .font(.system(size: 16, weight: .black))
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(userName)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    Text(roleName)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                }
+                Spacer()
+            }
+            .padding(16)
+            .background(Color.white.opacity(0.02))
+            .cornerRadius(20)
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.04), lineWidth: 1))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 20)
+            
+            Divider().background(Color.white.opacity(0.08))
+            
+            // 3. Navigation List
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 8) {
+                    ForEach(menuItems) { item in
+                        let isSelected = activeTab == item.tabId
+                        Button(action: {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                                activeTab = item.tabId
+                            }
+                            onClose()
+                        }) {
+                            HStack(spacing: 16) {
+                                Image(systemName: item.iconName + (isSelected ? ".fill" : ""))
+                                    .font(.system(size: 18))
+                                    .foregroundColor(isSelected ? Color(red: 129/255, green: 140/255, blue: 248/255) : Color(red: 148/255, green: 163/255, blue: 184/255))
+                                    .frame(width: 24)
+                                Text(item.label)
+                                    .font(.system(size: 14, weight: isSelected ? .bold : .medium))
+                                    .foregroundColor(isSelected ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                            .frame(height: 48)
+                            .background(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.15) : Color.clear)
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+            }
+            
+            Divider().background(Color.white.opacity(0.08))
+            
+            // 4. Logout Action Footer
+            Button(action: {
+                onClose()
+                onLogout()
+            }) {
+                HStack(spacing: 16) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                    Text("Sign Out")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 16)
+            .padding(.bottom, 30)
+        }
+        .frame(width: 300)
+        .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+        .edgesIgnoringSafeArea(.all)
+    }
+}
+
+struct BMSAppFloatingDock: View {
+    @Binding var activeTab: String
+    let dockItems: [BMSDockItem]
+    var onTabSelected: ((String) -> Void)? = nil
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(dockItems) { item in
+                let isSelected = activeTab == item.tabId
+                
+                Button(action: {
+                    activeTab = item.tabId
+                    onTabSelected?(item.tabId)
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: item.iconName + (isSelected ? ".fill" : ""))
+                            .font(.system(size: 16))
+                            .foregroundColor(isSelected ? .white : .textMuted)
+                        
+                        Text(item.label)
+                            .font(.system(size: 9, weight: isSelected ? .black : .semibold))
+                            .foregroundColor(isSelected ? .white : .textMuted)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .background(Color.darkSlate)
+        .cornerRadius(24)
+        .overlay(
+            AnimatedGradientBorder()
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 10)
+    }
+}
