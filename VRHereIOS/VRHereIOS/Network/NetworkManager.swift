@@ -182,17 +182,19 @@ class NetworkManager {
     // --- ATTENDANCE ---
     
     func getAttendance() async throws -> [AttendanceResponse] {
-        return try await performRequest(path: "api/attendance", method: "GET")
+        return try await performRequest(path: "api/attendance/my-logs", method: "GET")
     }
     
     func clockIn(notes: String) async throws -> AttendanceResponse {
         let req = ClockInRequest(notes: notes)
         let data = try JSONEncoder().encode(req)
-        return try await performRequest(path: "api/attendance/clock-in", method: "POST", body: data)
+        let wrapper: AttendanceSessionWrapper = try await performRequest(path: "api/attendance/clock-in", method: "POST", body: data)
+        return wrapper.session
     }
     
     func clockOut() async throws -> AttendanceResponse {
-        return try await performRequest(path: "api/attendance/clock-out", method: "POST")
+        let wrapper: AttendanceSessionWrapper = try await performRequest(path: "api/attendance/clock-out", method: "POST")
+        return wrapper.session
     }
     
     // --- HRMS Endpoints ---
@@ -354,6 +356,40 @@ class NetworkManager {
         return try await performRequest(path: "api/freelancer/admin/users", method: "GET")
     }
     
+    // --- FREELANCER ACTIONS ---
+    
+    func getFreelancerBroadcasts() async throws -> [OrderResponse] {
+        return try await performRequest(path: "api/freelancer/broadcasts", method: "GET")
+    }
+    
+    func claimBroadcast(orderId: String) async throws -> OrderResponse {
+        return try await performRequest(path: "api/freelancer/claim/\(orderId)", method: "POST")
+    }
+    
+    func getFreelancerOrders() async throws -> [OrderResponse] {
+        return try await performRequest(path: "api/freelancer/orders", method: "GET")
+    }
+    
+    func getFreelancerLedger() async throws -> [PayoutResponse] {
+        return try await performRequest(path: "api/freelancer/ledger", method: "GET")
+    }
+    
+    func clockInFreelancer(orderId: String) async throws -> FreelancerClockResponse {
+        return try await performRequest(path: "api/freelancer/clock-in/\(orderId)", method: "POST")
+    }
+    
+    func clockOutFreelancer(orderId: String, notes: String) async throws -> FreelancerClockResponse {
+        let payload = ["notes": notes]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/freelancer/clock-out/\(orderId)", method: "POST", body: data)
+    }
+    
+    func updateFreelancerProfile(payload: [String: AnyCodable]) async throws -> UserResponse {
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/freelancer/profile-update", method: "PUT", body: data)
+    }
+
+    
     func getIncomeTaxAssessments() async throws -> [ITAssessmentResponse] {
         return try await performRequest(path: "api/income-tax-assessment", method: "GET")
     }
@@ -362,6 +398,71 @@ class NetworkManager {
         let payload = ["status": status, "notes": notes]
         let data = try JSONSerialization.data(withJSONObject: payload)
         return try await performRequest(path: "api/income-tax-assessment/\(id)/status", method: "PUT", body: data)
+    }
+    
+    // --- COMPLIANCE ENDPOINTS ---
+    func getComplianceRecords() async throws -> [ComplianceResponse] {
+        return try await performRequest(path: "api/compliance", method: "GET")
+    }
+    
+    func updateComplianceStatus(id: String, status: String) async throws -> [String: AnyCodable] {
+        let payload = ["status": status]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/compliance/\(id)", method: "PUT", body: data)
+    }
+    
+    // --- FINANCE ENDPOINTS ---
+    func getFinanceRecords(type: String) async throws -> [FinanceRecordResponse] {
+        return try await performRequest(path: "api/finance?type=\(type)", method: "GET")
+    }
+    
+    func createFinanceRecord(payload: [String: AnyCodable]) async throws -> FinanceRecordResponse {
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/finance", method: "POST", body: data)
+    }
+    
+    func deleteFinanceRecord(id: String) async throws -> [String: AnyCodable] {
+        return try await performRequest(path: "api/finance/\(id)", method: "DELETE")
+    }
+    
+    // --- USER MANAGEMENT ENDPOINTS ---
+    func getUsers() async throws -> [UserResponse] {
+        return try await performRequest(path: "api/auth/users", method: "GET")
+    }
+    
+    func createUser(name: String, email: String, phone: String, role: String) async throws -> UserResponse {
+        let payload = ["name": name, "email": email, "phone": phone, "role": role]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/auth/users", method: "POST", body: data)
+    }
+    
+    func updateUser(id: String, name: String, email: String, phone: String, role: String) async throws -> UserResponse {
+        let payload = ["name": name, "email": email, "phone": phone, "role": role]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/auth/users/\(id)", method: "PUT", body: data)
+    }
+    
+    func toggleUserActive(id: String) async throws -> UserResponse {
+        return try await performRequest(path: "api/auth/users/\(id)/toggle-active", method: "PATCH")
+    }
+    
+    func deleteUser(id: String) async throws -> [String: AnyCodable] {
+        return try await performRequest(path: "api/auth/users/\(id)", method: "DELETE")
+    }
+    
+    // --- RECURRING HUB ENDPOINTS ---
+    func getRecurring() async throws -> [RecurringResponse] {
+        return try await performRequest(path: "api/recurring", method: "GET")
+    }
+    
+    func updateRecurringStatus(id: String, isActive: Bool) async throws -> [String: AnyCodable] {
+        let payload = ["isActive": isActive]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/recurring/\(id)", method: "PUT", body: data)
+    }
+    
+    func deleteRecurring(id: String) async throws -> [String: AnyCodable] {
+        return try await performRequest(path: "api/recurring/\(id)", method: "DELETE")
     }
 }
 
@@ -435,5 +536,18 @@ struct ITAssessmentResponse: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id = "_id"
         case clientName, pan, financialYear, assessmentYear, status
+    }
+}
+
+extension Error {
+    var isCancellationError: Bool {
+        if self is CancellationError {
+            return true
+        }
+        let nsError = self as NSError
+        if nsError.domain == NSURLErrorDomain && nsError.code == -999 {
+            return true
+        }
+        return false
     }
 }

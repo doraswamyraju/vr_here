@@ -24,6 +24,7 @@ struct CustomerDashboardView: View {
     
     @State private var showingToast = false
     @State private var toastMsg = ""
+    @State private var isShowingNotifications = false
     
     var body: some View {
         ZStack {
@@ -35,7 +36,12 @@ struct CustomerDashboardView: View {
                     showMenu: true,
                     onMenuClick: { withAnimation { isSidebarOpen.toggle() } },
                     showLogout: true,
-                    onLogoutClick: onLogout
+                    onLogoutClick: onLogout,
+                    showBack: activeTab != "Home",
+                    onBackClick: { withAnimation { activeTab = "Home" } },
+                    showNotifications: true,
+                    hasUnreadNotifications: viewModel.notifications.contains(where: { !$0.isRead }),
+                    onNotificationsClick: { isShowingNotifications = true }
                 )
                 
                 // Tab Contents & Floating Dock
@@ -162,6 +168,9 @@ struct CustomerDashboardView: View {
                         })
                     }
                 }
+            }
+            .refreshable {
+                await viewModel.refreshAllDataAsync(silent: false)
             }
             
             // Drawer Menu overlay
@@ -378,6 +387,13 @@ struct CustomerDashboardView: View {
                 showingToast = true
                 viewModel.toastMessage = nil
             }
+        }
+        .sheet(isPresented: $isShowingNotifications) {
+            NotificationsSheet(
+                notifications: viewModel.notifications,
+                onMarkAsRead: { viewModel.markNotificationAsRead(id: $0) },
+                onClose: { isShowingNotifications = false }
+            )
         }
     }
 }

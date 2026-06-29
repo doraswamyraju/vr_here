@@ -44,6 +44,89 @@ extension View {
             .background(Color.white)
             .cornerRadius(16)
     }
+    
+    func safeSystemIconName(baseName: String, isSelected: Bool) -> String {
+        if !isSelected { return baseName }
+        
+        let nonFillableSymbols = [
+            "activity",
+            "trending.up",
+            "doc.badge.checkmark",
+            "slider.horizontal.3",
+            "arrow.triangle.2.circlepath",
+            "signature",
+            "doc.text"
+        ]
+        
+        if nonFillableSymbols.contains(baseName) || baseName.hasSuffix(".fill") {
+            return baseName
+        }
+        return baseName + ".fill"
+    }
+    
+    func onSwipeBackGesture(perform action: @escaping () -> Void) -> some View {
+        self.gesture(
+            DragGesture(minimumDistance: 15, coordinateSpace: .local)
+                .onEnded { value in
+                    let horizontalDistance = value.translation.width
+                    let verticalDistance = value.translation.height
+                    
+                    if abs(verticalDistance) < 50 {
+                        if horizontalDistance > 80 { // Left to right
+                            action()
+                        } else if horizontalDistance < -80 { // Right to left
+                            action()
+                        }
+                    }
+                }
+        )
+    }
+}
+
+// Polished Horizontal Brand Logo Component
+struct VRLogoView: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Image("logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 26)
+            
+            // Vertical Divider line with a red dot centered on it
+            ZStack {
+                Rectangle()
+                    .fill(Color.textMuted.opacity(0.4))
+                    .frame(width: 1, height: 24)
+                
+                Circle()
+                    .fill(Color.primaryRed)
+                    .frame(width: 4.5, height: 4.5)
+            }
+            .frame(width: 6)
+            
+            VStack(alignment: .leading, spacing: 0) {
+                // "Here" with its red underline
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Here")
+                        .font(.custom("Georgia", size: 14).bold())
+                        .foregroundColor(Color.primaryRed)
+                    
+                    Rectangle()
+                        .fill(Color.primaryRed)
+                        .frame(height: 1)
+                }
+                .fixedSize()
+                
+                Spacer(minLength: 1)
+                
+                // "Business Management Solutions" subtitle
+                Text("Business Management Solutions")
+                    .font(.system(size: 6.5, weight: .bold))
+                    .foregroundColor(Color.textDark.opacity(0.85))
+            }
+            .frame(height: 26)
+        }
+    }
 }
 
 // Custom Header Style
@@ -54,43 +137,75 @@ struct VRHeader: View {
     var showLogout: Bool = false
     var onLogoutClick: (() -> Void)? = nil
     
+    var showBack: Bool = false
+    var onBackClick: (() -> Void)? = nil
+    var showNotifications: Bool = false
+    var hasUnreadNotifications: Bool = false
+    var onNotificationsClick: (() -> Void)? = nil
+    
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                if showMenu {
-                    Button(action: { onMenuClick?() }) {
-                        Image(systemName: "line.horizontal.3")
-                            .font(.title3)
-                            .foregroundColor(.textMuted)
-                            .padding(8)
+            ZStack {
+                // Logo in center
+                VRLogoView()
+                
+                HStack {
+                    // Left side buttons
+                    HStack(spacing: 4) {
+                        if showMenu {
+                            Button(action: { onMenuClick?() }) {
+                                Image(systemName: "line.horizontal.3")
+                                    .font(.title3)
+                                    .foregroundColor(.textMuted)
+                                    .padding(8)
+                            }
+                            .buttonStyle(ScaleOnPressButtonStyle())
+                        }
+                        
+                        if showBack {
+                            Button(action: { onBackClick?() }) {
+                                Image(systemName: "chevron.left")
+                                    .font(.title3)
+                                    .foregroundColor(.textMuted)
+                                    .padding(8)
+                            }
+                            .buttonStyle(ScaleOnPressButtonStyle())
+                        }
                     }
-                    .buttonStyle(ScaleOnPressButtonStyle())
-                }
-                
-                Spacer()
-                
-                HStack(spacing: 4) {
-                    Text("VR")
-                        .font(.system(size: 20, weight: .black))
-                        .foregroundColor(.primaryRed)
-                    Text("HERE")
-                        .font(.system(size: 20, weight: .black))
-                        .foregroundColor(.textDark)
-                }
-                
-                Spacer()
-                
-                if showLogout {
-                    Button(action: { onLogoutClick?() }) {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                            .font(.title3)
-                            .foregroundColor(.red)
-                            .padding(8)
+                    
+                    Spacer()
+                    
+                    // Right side buttons
+                    HStack(spacing: 4) {
+                        if showNotifications {
+                            Button(action: { onNotificationsClick?() }) {
+                                ZStack(alignment: .topTrailing) {
+                                    Image(systemName: "bell")
+                                        .font(.title3)
+                                        .foregroundColor(.textMuted)
+                                        .padding(8)
+                                    
+                                    if hasUnreadNotifications {
+                                        Circle()
+                                            .fill(Color.red)
+                                            .frame(width: 8, height: 8)
+                                            .offset(x: 4, y: -4)
+                                    }
+                                }
+                            }
+                            .buttonStyle(ScaleOnPressButtonStyle())
+                        }
+                        
+                        if showLogout {
+                            Button(action: { onLogoutClick?() }) {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    .font(.title3)
+                                    .foregroundColor(.red)
+                                    .padding(8)
+                            }
+                            .buttonStyle(ScaleOnPressButtonStyle())
+                        }
                     }
-                    .buttonStyle(ScaleOnPressButtonStyle())
-                } else if showMenu {
-                    // Balancing empty spacer placeholder
-                    Spacer().frame(width: 40)
                 }
             }
             .padding(.horizontal, 16)
@@ -100,6 +215,130 @@ struct VRHeader: View {
             Divider()
                 .background(Color.borderLight)
         }
+    }
+}
+
+// --- Beautiful Reusable Notifications Sheet ---
+struct NotificationsSheet: View {
+    let notifications: [NotificationResponse]
+    let onMarkAsRead: (String) -> Void
+    let onClose: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header bar
+            HStack {
+                Text("Notifications")
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundColor(.textDark)
+                
+                Spacer()
+                
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.textMuted)
+                        .frame(width: 30, height: 30)
+                        .background(Color.bgInput)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(ScaleOnPressButtonStyle())
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(Color.white)
+            
+            Divider()
+                .background(Color.borderLight)
+            
+            if notifications.isEmpty {
+                VStack(spacing: 16) {
+                    Spacer()
+                    Image(systemName: "bell.slash")
+                        .font(.system(size: 40))
+                        .foregroundColor(.textMuted)
+                    Text("No notifications recorded.")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.textMuted)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(notifications) { item in
+                            Button(action: {
+                                onMarkAsRead(item.id)
+                            }) {
+                                HStack(spacing: 14) {
+                                    Circle()
+                                        .fill(getNotificationColor(type: item.type))
+                                        .frame(width: 8, height: 8)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(item.title)
+                                            .font(.system(size: 13, weight: item.isRead ? .semibold : .bold))
+                                            .foregroundColor(.textDark)
+                                            .multilineTextAlignment(.leading)
+                                        
+                                        Text(item.message)
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.textMuted)
+                                            .multilineTextAlignment(.leading)
+                                        
+                                        Text(formatDateString(item.createdAt))
+                                            .font(.system(size: 9))
+                                            .foregroundColor(.textMuted.opacity(0.8))
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    if !item.isRead {
+                                        Circle()
+                                            .fill(Color.blue)
+                                            .frame(width: 6, height: 6)
+                                    }
+                                }
+                                .padding(14)
+                                .background(Color.white)
+                                .cornerRadius(14)
+                                .shadow(color: Color.black.opacity(0.02), radius: 6)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.borderLight, lineWidth: 1)
+                                )
+                                .opacity(item.isRead ? 0.7 : 1.0)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                    .padding(20)
+                }
+            }
+        }
+        .background(Color.bgLight)
+    }
+    
+    private func getNotificationColor(type: String) -> Color {
+        switch type.lowercased() {
+        case "alert", "error", "critical": return .red
+        case "warning": return .orange
+        case "success": return .green
+        case "info": return .blue
+        default: return .purple
+        }
+    }
+    
+    private func formatDateString(_ dateString: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: dateString) ?? ISO8601DateFormatter().date(from: dateString) {
+            let displayFormatter = DateFormatter()
+            displayFormatter.dateStyle = .short
+            displayFormatter.timeStyle = .short
+            return displayFormatter.string(from: date)
+        }
+        return dateString
     }
 }
 
@@ -311,29 +550,26 @@ struct AnimatedGradientBorder: View {
     }
 }
 
-struct LiquidSidebarShape: Shape {
+struct RightRoundedSidebarShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        // Top horizontal edge
-        path.addLine(to: CGPoint(x: rect.maxX - 40, y: rect.minY))
-        // Curve to the right edge with a gentle wave or bulb
-        path.addQuadCurve(
-            to: CGPoint(x: rect.maxX, y: rect.minY + 40),
-            control: CGPoint(x: rect.maxX, y: rect.minY)
+        path.addLine(to: CGPoint(x: rect.maxX - 48, y: rect.minY))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - 48, y: rect.minY + 48),
+            radius: 48,
+            startAngle: Angle(degrees: 270),
+            endAngle: Angle(degrees: 0),
+            clockwise: false
         )
-        // Right edge with inward bend (waist effect)
-        path.addCurve(
-            to: CGPoint(x: rect.maxX, y: rect.maxY - 40),
-            control1: CGPoint(x: rect.maxX - 15, y: rect.height * 0.35),
-            control2: CGPoint(x: rect.maxX - 15, y: rect.height * 0.65)
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 48))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - 48, y: rect.maxY - 48),
+            radius: 48,
+            startAngle: Angle(degrees: 0),
+            endAngle: Angle(degrees: 90),
+            clockwise: false
         )
-        // Curve to bottom edge
-        path.addQuadCurve(
-            to: CGPoint(x: rect.maxX - 40, y: rect.maxY),
-            control: CGPoint(x: rect.maxX, y: rect.maxY)
-        )
-        // Bottom horizontal edge
         path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
         path.closeSubpath()
         return path
@@ -356,15 +592,15 @@ struct BMSAppSidebar: View {
             .joined()
             
         VStack(alignment: .leading, spacing: 0) {
-            // Close Button header (VR brand text removed)
+            // Close Button header
             HStack {
                 Spacer()
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.85))
                         .frame(width: 32, height: 32)
-                        .background(Color.white.opacity(0.1))
+                        .background(Color.white.opacity(0.12))
                         .clipShape(Circle())
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -379,7 +615,7 @@ struct BMSAppSidebar: View {
                     Circle()
                         .fill(LinearGradient(gradient: Gradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 139/255, green: 92/255, blue: 246/255)]), startPoint: .topLeading, endPoint: .bottomTrailing))
                         .frame(width: 46, height: 46)
-                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1.5))
+                        .overlay(Circle().stroke(Color.white.opacity(0.35), lineWidth: 1.5))
                     
                     Text(initials.isEmpty ? userName.prefix(1).uppercased() : initials)
                         .font(.system(size: 15, weight: .black))
@@ -398,9 +634,9 @@ struct BMSAppSidebar: View {
                 Spacer()
             }
             .padding(16)
-            .background(Color.white.opacity(0.04))
+            .background(Color.white.opacity(0.05))
             .cornerRadius(18)
-            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.06), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.08), lineWidth: 1))
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
             
@@ -418,9 +654,9 @@ struct BMSAppSidebar: View {
                             onClose()
                         }) {
                             HStack(spacing: 16) {
-                                Image(systemName: item.iconName + (isSelected ? ".fill" : ""))
+                                Image(systemName: safeSystemIconName(baseName: item.iconName, isSelected: isSelected))
                                     .font(.system(size: 16))
-                                    .foregroundColor(isSelected ? Color(red: 129/255, green: 140/255, blue: 248/255) : Color(red: 148/255, green: 163/255, blue: 184/255))
+                                    .foregroundColor(isSelected ? Color(red: 129/255, green: 140/255, blue: 248/255) : Color(red: 160/255, green: 175/255, blue: 195/255))
                                     .frame(width: 24)
                                 Text(item.label)
                                     .font(.system(size: 13, weight: isSelected ? .bold : .medium))
@@ -429,11 +665,11 @@ struct BMSAppSidebar: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                             .frame(height: 44)
-                            .background(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.18) : Color.clear)
+                            .background(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.20) : Color.clear)
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(isSelected ? Color.white.opacity(0.08) : Color.clear, lineWidth: 1)
+                                    .stroke(isSelected ? Color.white.opacity(0.12) : Color.clear, lineWidth: 1)
                             )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -461,11 +697,11 @@ struct BMSAppSidebar: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(Color.red.opacity(0.08))
+                .background(Color.red.opacity(0.10))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.red.opacity(0.15), lineWidth: 1)
+                        .stroke(Color.red.opacity(0.20), lineWidth: 1)
                 )
             }
             .buttonStyle(PlainButtonStyle())
@@ -475,22 +711,29 @@ struct BMSAppSidebar: View {
         .frame(width: 290)
         .background(
             ZStack {
-                // Blur material
+                // Blur material layer
                 Rectangle()
                     .fill(.ultraThinMaterial)
                 
-                // Color overlay tint
-                LinearGradient(colors: [Color.darkSlate.opacity(0.65), Color(red: 10/255, green: 15/255, blue: 30/255).opacity(0.8)], startPoint: .top, endPoint: .bottom)
+                // Color refraction tint layer (liquid-like soft gradients)
+                LinearGradient(colors: [Color.darkSlate.opacity(0.55), Color(red: 10/255, green: 15/255, blue: 30/255).opacity(0.75)], startPoint: .top, endPoint: .bottom)
                 
-                // Reflection glow
-                RadialGradient(colors: [.white.opacity(0.12), .clear], center: .topLeading, startRadius: 0, endRadius: 250)
+                // Refractive gradient highlights
+                LinearGradient(colors: [.white.opacity(0.03), .purple.opacity(0.05), .blue.opacity(0.05), .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                
+                // Specular reflection diagonal stripe
+                LinearGradient(colors: [.clear, .white.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                
+                // Glow at top leading corner
+                RadialGradient(colors: [.white.opacity(0.12), .clear], center: .topLeading, startRadius: 0, endRadius: 300)
             }
         )
-        .clipShape(LiquidSidebarShape())
+        .clipShape(RightRoundedSidebarShape())
         .overlay(
-            LiquidSidebarShape()
-                .stroke(LinearGradient(colors: [.white.opacity(0.22), .white.opacity(0.05), .purple.opacity(0.1), .white.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.5)
+            RightRoundedSidebarShape()
+                .stroke(LinearGradient(colors: [.white.opacity(0.35), .white.opacity(0.08), .white.opacity(0.15), .white.opacity(0.28)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.5)
         )
+        .shadow(color: Color.black.opacity(0.3), radius: 25, x: 10, y: 0)
         .edgesIgnoringSafeArea(.all)
     }
 }
@@ -510,7 +753,7 @@ struct BMSAppFloatingDock: View {
                     onTabSelected?(item.tabId)
                 }) {
                     VStack(spacing: 4) {
-                        Image(systemName: item.iconName + (isSelected ? ".fill" : ""))
+                        Image(systemName: safeSystemIconName(baseName: item.iconName, isSelected: isSelected))
                             .font(.system(size: 16))
                             .foregroundColor(isSelected ? .white : .textMuted)
                         

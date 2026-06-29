@@ -11,6 +11,11 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var activeBannerNotification: NotificationResponse? = nil
     @Published var freelancers: [FreelancerResponse] = []
     @Published var assessments: [ITAssessmentResponse] = []
+    @Published var complianceRecords: [ComplianceResponse] = []
+    @Published var financeRecords: [FinanceRecordResponse] = []
+    @Published var users: [UserResponse] = []
+    @Published var tickets: [TicketResponse] = []
+    @Published var recurring: [RecurringResponse] = []
     @Published var isLoading = false
     @Published var toastMessage: String? = nil
     
@@ -61,63 +66,117 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     func syncDashboardData(silent: Bool = false) {
+        Task {
+            await syncDashboardDataAsync(silent: silent)
+        }
+    }
+    
+    func syncDashboardDataAsync(silent: Bool = false) async {
         if !silent {
             isLoading = true
         }
-        Task {
+        do {
+            // 1. Fetch Orders
             do {
-                // 1. Fetch Orders
-                if let ords = try? await NetworkManager.shared.getOrders() {
-                    orders = ords
-                }
-                
-                // 2. Fetch Todos
-                if let tds = try? await NetworkManager.shared.getTodos() {
-                    todos = tds
-                }
-                
-                // 3. Fetch Employees
-                if let emps = try? await NetworkManager.shared.getEmployees() {
-                    employees = emps
-                }
-                
-                // 4. Fetch Notifications
-                do {
-                    let newNotifications = try await NetworkManager.shared.getNotifications()
-                    if !notifications.isEmpty && !newNotifications.isEmpty {
-                        let newUnreads = newNotifications.filter { item in
-                            !item.isRead && !notifications.contains(where: { $0.id == item.id })
-                        }
-                        if let latest = newUnreads.first {
-                            activeBannerNotification = latest
-                        }
-                    }
-                    notifications = newNotifications
-                } catch {
-                    print("Admin notification fetch failed")
-                }
-                
-                // 5. Fetch Payments
-                if let pays = try? await NetworkManager.shared.getPayments() {
-                    payments = pays
-                }
-                
-                // 6. Fetch Freelancers
-                if let frees = try? await NetworkManager.shared.getAdminFreelancers() {
-                    freelancers = frees
-                }
-                
-                // 7. Fetch Assessments
-                if let assess = try? await NetworkManager.shared.getIncomeTaxAssessments() {
-                    assessments = assess
-                }
-                
-                isLoading = false
+                orders = try await NetworkManager.shared.getOrders()
             } catch {
-                if !silent {
-                    isLoading = false
-                    toastMessage = "Sync error: \(error.localizedDescription)"
+                if !error.isCancellationError {
+                    print("ORDER DECODING ERROR: \(error)")
+                    toastMessage = "Order parse failed: \(String(describing: error))"
                 }
+            }
+            
+            // 2. Fetch Todos
+            do {
+                todos = try await NetworkManager.shared.getTodos()
+            } catch {
+                print("TODO DECODING ERROR: \(error)")
+            }
+            
+            // 3. Fetch Employees
+            do {
+                employees = try await NetworkManager.shared.getEmployees()
+            } catch {
+                print("EMPLOYEE DECODING ERROR: \(error)")
+            }
+            
+            // 4. Fetch Notifications
+            do {
+                let newNotifications = try await NetworkManager.shared.getNotifications()
+                if !notifications.isEmpty && !newNotifications.isEmpty {
+                    let newUnreads = newNotifications.filter { item in
+                        !item.isRead && !notifications.contains(where: { $0.id == item.id })
+                    }
+                    if let latest = newUnreads.first {
+                        activeBannerNotification = latest
+                    }
+                }
+                notifications = newNotifications
+            } catch {
+                print("Admin notification fetch failed: \(error)")
+            }
+            
+            // 5. Fetch Payments
+            do {
+                payments = try await NetworkManager.shared.getPayments()
+            } catch {
+                print("PAYMENT DECODING ERROR: \(error)")
+            }
+            
+            // 6. Fetch Freelancers
+            do {
+                freelancers = try await NetworkManager.shared.getAdminFreelancers()
+            } catch {
+                print("FREELANCER DECODING ERROR: \(error)")
+            }
+            
+            // 7. Fetch Assessments
+            do {
+                assessments = try await NetworkManager.shared.getIncomeTaxAssessments()
+            } catch {
+                print("ASSESSMENT DECODING ERROR: \(error)")
+            }
+            
+            // 8. Fetch Compliance
+            do {
+                complianceRecords = try await NetworkManager.shared.getComplianceRecords()
+            } catch {
+                print("COMPLIANCE DECODING ERROR: \(error)")
+            }
+            
+            // 9. Fetch Finance
+            do {
+                financeRecords = try await NetworkManager.shared.getFinanceRecords(type: "Invoice")
+            } catch {
+                print("FINANCE DECODING ERROR: \(error)")
+            }
+            
+            // 10. Fetch Users
+            do {
+                users = try await NetworkManager.shared.getUsers()
+            } catch {
+                print("USERS DECODING ERROR: \(error)")
+            }
+            
+            // 11. Fetch Tickets
+            do {
+                tickets = try await NetworkManager.shared.getTickets()
+            } catch {
+                print("TICKETS DECODING ERROR: \(error)")
+            }
+            
+            // 12. Fetch Recurring
+            do {
+                recurring = try await NetworkManager.shared.getRecurring()
+            } catch {
+                print("RECURRING DECODING ERROR: \(error)")
+            }
+            
+            isLoading = false
+        } catch {
+            if !silent && !error.isCancellationError {
+                isLoading = false
+                toastMessage = "Sync error: \(error.localizedDescription)"
             }
         }
     }
@@ -131,6 +190,32 @@ class AdminDashboardViewModel: ObservableObject {
                 syncDashboardData()
             } catch {
                 toastMessage = "Status update failed: \(error.localizedDescription)"
+            }
+            isLoading = false
+        }
+    }
+    
+    func updateComplianceStatus(id: String, status: String) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.updateComplianceStatus(id: id, status: status)
+                toastMessage = "Compliance status updated!"
+                syncDashboardData()
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+            }
+            isLoading = false
+        }
+    }
+    
+    func fetchFinanceRecords(type: String) {
+        isLoading = true
+        Task {
+            do {
+                financeRecords = try await NetworkManager.shared.getFinanceRecords(type: type)
+            } catch {
+                toastMessage = "Failed to load \(type) records: \(error.localizedDescription)"
             }
             isLoading = false
         }
@@ -163,6 +248,94 @@ class AdminDashboardViewModel: ObservableObject {
             } catch {
                 toastMessage = "Failed to create task: \(error.localizedDescription)"
                 completion(false)
+            }
+            isLoading = false
+        }
+    }
+    
+    // --- USER MANAGEMENT ACTIONS ---
+    func createUser(name: String, email: String, phone: String, role: String) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.createUser(name: name, email: email, phone: phone, role: role)
+                toastMessage = "User created successfully!"
+                syncDashboardData()
+            } catch {
+                toastMessage = "Failed to create user: \(error.localizedDescription)"
+            }
+            isLoading = false
+        }
+    }
+    
+    func toggleUserActive(id: String) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.toggleUserActive(id: id)
+                toastMessage = "User status toggled!"
+                syncDashboardData()
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+            }
+            isLoading = false
+        }
+    }
+    
+    func deleteUser(id: String) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.deleteUser(id: id)
+                toastMessage = "User deleted successfully"
+                syncDashboardData()
+            } catch {
+                toastMessage = "Failed to delete user: \(error.localizedDescription)"
+            }
+            isLoading = false
+        }
+    }
+    
+    // --- RECURRING HUB ACTIONS ---
+    func toggleRecurringStatus(id: String, isActive: Bool) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.updateRecurringStatus(id: id, isActive: isActive)
+                toastMessage = "Subscription status updated!"
+                syncDashboardData()
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+            }
+            isLoading = false
+        }
+    }
+    
+    func deleteRecurring(id: String) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.deleteRecurring(id: id)
+                toastMessage = "Subscription removed"
+                syncDashboardData()
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+            }
+            isLoading = false
+        }
+    }
+    
+    // --- TO-DO TOGGLE STATUS ACTION ---
+    func toggleTodoStatus(todo: TodoResponse) {
+        let newStatus = todo.completed ? "Pending" : "Completed"
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.updateTodoStatus(id: todo.idVal, status: newStatus)
+                toastMessage = "Task updated successfully!"
+                syncDashboardData()
+            } catch {
+                toastMessage = "Failed to update task: \(error.localizedDescription)"
             }
             isLoading = false
         }

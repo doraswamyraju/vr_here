@@ -8,6 +8,7 @@ struct PartnerDashboardView: View {
     @State private var activeTab = "Overview"
     @State private var showingToast = false
     @State private var toastMsg = ""
+    @State private var isShowingNotifications = false
     
     var body: some View {
         ZStack {
@@ -17,7 +18,12 @@ struct PartnerDashboardView: View {
                     title: "PARTNER SUITE",
                     showMenu: false,
                     showLogout: true,
-                    onLogoutClick: onLogout
+                    onLogoutClick: onLogout,
+                    showBack: activeTab != "Overview",
+                    onBackClick: { withAnimation { activeTab = "Overview" } },
+                    showNotifications: true,
+                    hasUnreadNotifications: viewModel.notifications.contains(where: { !$0.isRead }),
+                    onNotificationsClick: { isShowingNotifications = true }
                 )
                 
                 // Main Tab Layout
@@ -40,6 +46,9 @@ struct PartnerDashboardView: View {
                 
                 // Dock Navigation
                 PartnerFloatingDock(activeTab: $activeTab)
+            }
+            .refreshable {
+                await viewModel.refreshAllDataAsync()
             }
             
             // Global Toast
@@ -65,6 +74,13 @@ struct PartnerDashboardView: View {
                 showingToast = true
                 viewModel.toastMessage = nil
             }
+        }
+        .sheet(isPresented: $isShowingNotifications) {
+            NotificationsSheet(
+                notifications: viewModel.notifications,
+                onMarkAsRead: { viewModel.markNotificationAsRead(id: $0) },
+                onClose: { isShowingNotifications = false }
+            )
         }
     }
 }

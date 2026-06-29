@@ -10,6 +10,8 @@ struct AdminDashboardView: View {
     @State private var isSidebarOpen = false
     @State private var showingToast = false
     @State private var toastMsg = ""
+    @State private var isShowingNotifications = false
+    @StateObject private var hrmsViewModel = HrmsViewModel()
     
     var body: some View {
         ZStack {
@@ -20,7 +22,12 @@ struct AdminDashboardView: View {
                     showMenu: true,
                     onMenuClick: { withAnimation { isSidebarOpen.toggle() } },
                     showLogout: true,
-                    onLogoutClick: onLogout
+                    onLogoutClick: onLogout,
+                    showBack: activeTab != "Overview",
+                    onBackClick: { withAnimation { activeTab = "Overview" } },
+                    showNotifications: true,
+                    hasUnreadNotifications: adminViewModel.notifications.contains(where: { !$0.isRead }),
+                    onNotificationsClick: { isShowingNotifications = true }
                 )
                 
                 // Active tabs switcher with floating dock
@@ -38,7 +45,7 @@ struct AdminDashboardView: View {
                         case "CRM":
                             AdminCrmTab(viewModel: adminViewModel)
                         case "HRMS":
-                            AdminHrmsTab(viewModel: adminViewModel)
+                            AdminHrmsTab(viewModel: adminViewModel, hrmsViewModel: hrmsViewModel)
                         case "Users":
                             AdminUsersTab(viewModel: adminViewModel)
                         case "Todo":
@@ -85,6 +92,9 @@ struct AdminDashboardView: View {
                     BMSAppFloatingDock(activeTab: $activeTab, dockItems: dockItems)
                 }
             }
+            .refreshable {
+                await adminViewModel.syncDashboardDataAsync(silent: false)
+            }
             
             // Drawer Menu overlay
             if isSidebarOpen {
@@ -103,8 +113,8 @@ struct AdminDashboardView: View {
                         BMSSidebarItem(label: "Users Matrix", iconName: "person.badge.shield.checkmark", tabId: "Users"),
                         BMSSidebarItem(label: "Tasks Board", iconName: "checkmark.circle", tabId: "Todo"),
                         BMSSidebarItem(label: "Finance Ledger", iconName: "banknote", tabId: "Finance"),
-                        BMSSidebarItem(label: "Compliance Panel", iconName: "doc.text.badge.checkmark", tabId: "Compliance"),
-                        BMSSidebarItem(label: "Performance Metrics", iconName: "trending.up", tabId: "Performance"),
+                        BMSSidebarItem(label: "Compliance Panel", iconName: "checkmark.seal", tabId: "Compliance"),
+                        BMSSidebarItem(label: "Performance Metrics", iconName: "chart.bar.fill", tabId: "Performance"),
                         BMSSidebarItem(label: "Business Reports", iconName: "chart.bar", tabId: "Reports"),
                         BMSSidebarItem(label: "Admin Notifications", iconName: "bell", tabId: "Notifications"),
                         BMSSidebarItem(label: "KB Hub", iconName: "book", tabId: "KB"),
@@ -153,6 +163,13 @@ struct AdminDashboardView: View {
                 showingToast = true
                 adminViewModel.toastMessage = nil
             }
+        }
+        .sheet(isPresented: $isShowingNotifications) {
+            NotificationsSheet(
+                notifications: adminViewModel.notifications,
+                onMarkAsRead: { adminViewModel.markNotificationAsRead(id: $0) },
+                onClose: { isShowingNotifications = false }
+            )
         }
     }
 }

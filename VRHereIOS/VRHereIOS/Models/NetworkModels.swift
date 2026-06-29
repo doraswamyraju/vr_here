@@ -50,6 +50,23 @@ struct UserProfile: Codable, Identifiable {
         case idVal = "_id"
         case name, email, role, isActive
     }
+    
+    init(idVal: String = "", name: String = "", email: String = "", role: String = "", isActive: Bool = false) {
+        self.idVal = idVal
+        self.name = name
+        self.email = email
+        self.role = role
+        self.isActive = isActive
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
+        name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+        email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
+        role = try container.decodeIfPresent(String.self, forKey: .role) ?? ""
+        isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? false
+    }
 }
 
 // --- ORDER DATA CLASSES ---
@@ -109,6 +126,9 @@ struct OrderResponse: Codable, Identifiable {
     let attendance: [OrderAttendanceResponse]
     let createdAt: String
     let updatedAt: String
+    let referralPartner: String?
+    let partnerCommissionAmount: Double?
+    let freelancerPayout: Double?
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
@@ -116,6 +136,7 @@ struct OrderResponse: Codable, Identifiable {
         case razorpayOrderId, paymentStatus, status, assignedEmployee, clientDocuments
         case adminDocuments, finalCertificateUrl, tasks, invoices, customerRequirements
         case checklists, consultationAdjusted, linkedTodos, activityHistory, attendance, createdAt, updatedAt
+        case referralPartner, partnerCommissionAmount, freelancerPayout
     }
     
     init(from decoder: Decoder) throws {
@@ -145,6 +166,9 @@ struct OrderResponse: Codable, Identifiable {
         attendance = try container.decodeIfPresent([OrderAttendanceResponse].self, forKey: .attendance) ?? []
         createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
         updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
+        referralPartner = try container.decodeIfPresent(String.self, forKey: .referralPartner)
+        partnerCommissionAmount = try container.decodeIfPresent(Double.self, forKey: .partnerCommissionAmount)
+        freelancerPayout = try container.decodeIfPresent(Double.self, forKey: .freelancerPayout)
     }
 }
 
@@ -158,6 +182,14 @@ struct OrderDocument: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case name, url, uploadedAt
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal)
+        name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+        url = try container.decodeIfPresent(String.self, forKey: .url) ?? ""
+        uploadedAt = try container.decodeIfPresent(String.self, forKey: .uploadedAt) ?? ""
     }
 }
 
@@ -175,6 +207,18 @@ struct OrderTask: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case taskCode, title, status, ownerRole, description, subtasks, totalMinutes
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal)
+        taskCode = try container.decodeIfPresent(String.self, forKey: .taskCode) ?? ""
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? "Pending"
+        ownerRole = try container.decodeIfPresent(String.self, forKey: .ownerRole) ?? ""
+        description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
+        subtasks = try container.decodeIfPresent([OrderSubtask].self, forKey: .subtasks) ?? []
+        totalMinutes = try container.decodeIfPresent(Int.self, forKey: .totalMinutes) ?? 0
     }
 }
 
@@ -195,6 +239,20 @@ struct OrderSubtask: Codable, Identifiable {
         case idVal = "_id"
         case subTaskCode, title, isCompleted, status, makerRole, checkerRole, duration, dependency, output
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal)
+        subTaskCode = try container.decodeIfPresent(String.self, forKey: .subTaskCode) ?? ""
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
+        makerRole = try container.decodeIfPresent(String.self, forKey: .makerRole) ?? ""
+        checkerRole = try container.decodeIfPresent(String.self, forKey: .checkerRole) ?? ""
+        duration = try container.decodeIfPresent(String.self, forKey: .duration) ?? ""
+        dependency = try container.decodeIfPresent(String.self, forKey: .dependency) ?? ""
+        output = try container.decodeIfPresent(String.self, forKey: .output) ?? ""
+    }
 }
 
 struct OrderInvoice: Codable, Identifiable {
@@ -211,6 +269,18 @@ struct OrderInvoice: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case invoiceNumber, amount, status, url, dueDate, notes, createdAt
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal)
+        invoiceNumber = try container.decodeIfPresent(String.self, forKey: .invoiceNumber) ?? ""
+        amount = try container.decodeIfPresent(Double.self, forKey: .amount) ?? 0.0
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
+        url = try container.decodeIfPresent(String.self, forKey: .url)
+        dueDate = try container.decodeIfPresent(String.self, forKey: .dueDate)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
     }
 }
 
@@ -241,6 +311,28 @@ struct CustomerRequirement: Codable, Identifiable {
         case status, description, value, clientValue, clientNotes, documentUrl, uploadedDocumentUrl
         case uploadedDocumentName, isClientCompleted
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal)
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        sheetName = try container.decodeIfPresent(String.self, forKey: .sheetName) ?? ""
+        category = try container.decodeIfPresent(String.self, forKey: .category) ?? ""
+        type = try container.decodeIfPresent(String.self, forKey: .type) ?? ""
+        itemCode = try container.decodeIfPresent(String.self, forKey: .itemCode) ?? ""
+        inputType = try container.decodeIfPresent(String.self, forKey: .inputType) ?? ""
+        placeholder = try container.decodeIfPresent(String.self, forKey: .placeholder) ?? ""
+        required = try container.decodeIfPresent(Bool.self, forKey: .required) ?? false
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
+        description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
+        value = try container.decodeIfPresent(String.self, forKey: .value) ?? ""
+        clientValue = try container.decodeIfPresent(String.self, forKey: .clientValue) ?? ""
+        clientNotes = try container.decodeIfPresent(String.self, forKey: .clientNotes) ?? ""
+        documentUrl = try container.decodeIfPresent(String.self, forKey: .documentUrl) ?? ""
+        uploadedDocumentUrl = try container.decodeIfPresent(String.self, forKey: .uploadedDocumentUrl) ?? ""
+        uploadedDocumentName = try container.decodeIfPresent(String.self, forKey: .uploadedDocumentName) ?? ""
+        isClientCompleted = try container.decodeIfPresent(Bool.self, forKey: .isClientCompleted) ?? false
+    }
 }
 
 struct ChecklistItem: Codable, Identifiable {
@@ -254,6 +346,15 @@ struct ChecklistItem: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case title, isCompleted, required, documentUrl
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal)
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
+        required = try container.decodeIfPresent(Bool.self, forKey: .required) ?? false
+        documentUrl = try container.decodeIfPresent(String.self, forKey: .documentUrl)
     }
 }
 
@@ -280,6 +381,24 @@ struct PaymentResponse: Codable, Identifiable {
         case idVal = "_id"
         case amount, currency, paymentId, razorpayOrderId, status, method, customerName, email, phone, serviceName, packageName, invoiceUrl, createdAt
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
+        amount = try container.decodeIfPresent(Double.self, forKey: .amount) ?? 0.0
+        currency = try container.decodeIfPresent(String.self, forKey: .currency) ?? ""
+        paymentId = try container.decodeIfPresent(String.self, forKey: .paymentId) ?? ""
+        razorpayOrderId = try container.decodeIfPresent(String.self, forKey: .razorpayOrderId) ?? ""
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
+        method = try container.decodeIfPresent(String.self, forKey: .method) ?? ""
+        customerName = try container.decodeIfPresent(String.self, forKey: .customerName) ?? ""
+        email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
+        phone = try container.decodeIfPresent(String.self, forKey: .phone) ?? ""
+        serviceName = try container.decodeIfPresent(String.self, forKey: .serviceName) ?? ""
+        packageName = try container.decodeIfPresent(String.self, forKey: .packageName) ?? ""
+        invoiceUrl = try container.decodeIfPresent(String.self, forKey: .invoiceUrl)
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+    }
 }
 
 // --- TICKET DATA CLASSES ---
@@ -291,13 +410,14 @@ struct TicketResponse: Codable, Identifiable {
     let description: String
     let status: String
     let priority: String
+    let user: UserProfile?
     let messages: [TicketMessage]
     let createdAt: String
     let updatedAt: String
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
-        case subject, description, status, priority, messages, createdAt, updatedAt
+        case subject, description, status, priority, user, messages, createdAt, updatedAt
     }
 }
 
@@ -376,6 +496,16 @@ struct AttendanceResponse: Codable, Identifiable {
         case clockInAt, clockOutAt, totalSeconds, dateKey, notes
     }
 }
+
+struct AttendanceSessionWrapper: Codable {
+    let message: String
+    let session: AttendanceResponse
+}
+
+struct FreelancerClockResponse: Codable {
+    let message: String
+}
+
 
 struct ClockInRequest: Codable {
     let notes: String
@@ -589,6 +719,43 @@ struct TodoResponse: Codable, Identifiable {
         case idVal = "_id"
         case title, description, status, priority, assignedTo, orderId, dueDate, createdBy, createdAt
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        description = try container.decodeIfPresent(String.self, forKey: .description)
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
+        priority = try container.decodeIfPresent(String.self, forKey: .priority) ?? ""
+        // Custom decode for assignedTo (could be a String ID or full EmployeeResponse object)
+        if let emp = try? container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedTo) {
+            assignedTo = emp
+        } else if let idString = try? container.decodeIfPresent(String.self, forKey: .assignedTo) {
+            assignedTo = EmployeeResponse(idVal: idString, name: "", email: "", role: "")
+        } else {
+            assignedTo = nil
+        }
+        
+        // Custom decode for orderId (could be a String or full OrderResponse object)
+        if let order = try? container.decodeIfPresent(OrderResponse.self, forKey: .orderId) {
+            orderId = order
+        } else {
+            orderId = nil
+        }
+        
+        dueDate = try container.decodeIfPresent(String.self, forKey: .dueDate)
+        
+        // Custom decode for createdBy (could be a String ID or full UserProfile object)
+        if let profile = try? container.decodeIfPresent(UserProfile.self, forKey: .createdBy) {
+            createdBy = profile
+        } else if let idString = try? container.decodeIfPresent(String.self, forKey: .createdBy) {
+            createdBy = UserProfile(idVal: idString, name: "", email: "", role: "admin", isActive: true)
+        } else {
+            createdBy = nil
+        }
+        
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+    }
 }
 
 struct CreateTodoRequest: Codable {
@@ -613,6 +780,16 @@ struct OrderHistoryResponse: Codable, Identifiable {
         case idVal = "_id"
         case order, user, action, description, createdAt
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
+        order = try container.decodeIfPresent(String.self, forKey: .order) ?? ""
+        user = try container.decodeIfPresent(UserProfile.self, forKey: .user)
+        action = try container.decodeIfPresent(String.self, forKey: .action) ?? ""
+        description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+    }
 }
 
 struct OrderAttendanceResponse: Codable, Identifiable {
@@ -627,6 +804,16 @@ struct OrderAttendanceResponse: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case name, email, role, isClockedIn, clockInAt
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal)
+        name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+        email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
+        role = try container.decodeIfPresent(String.self, forKey: .role) ?? ""
+        isClockedIn = try container.decodeIfPresent(Bool.self, forKey: .isClockedIn) ?? false
+        clockInAt = try container.decodeIfPresent(String.self, forKey: .clockInAt)
     }
 }
 
@@ -701,3 +888,121 @@ struct MobileServiceDetail: Codable, Identifiable {
     var steps: [MobileServiceStep] = []
     var faqs: [MobileServiceFaq] = []
 }
+
+// --- COMPLIANCE AND FINANCE MODELS ---
+
+struct ComplianceResponse: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let clientName: String
+    let category: String
+    let taskName: String
+    let dueDate: String
+    let status: String // Pending, Filed, Late, Missed
+    let periodMonth: String
+    let periodYear: String
+    let notes: String
+    
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case clientName, category, taskName, dueDate, status, periodMonth, periodYear, notes
+    }
+}
+
+struct FinanceRecordResponse: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let type: String // Estimate, Invoice, Payment, CreditNote, Proforma
+    let number: String
+    let date: String
+    let dueDate: String?
+    let client: FinanceClient
+    let items: [FinanceItem]
+    let totals: FinanceTotals
+    let status: String
+    let notes: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case type, number, date, dueDate, client, items, totals, status, notes
+    }
+}
+
+struct FinanceClient: Codable {
+    let name: String
+    let email: String?
+    let phone: String?
+    let address: String?
+    let gstin: String?
+}
+
+struct FinanceItem: Codable {
+    let description: String
+    let rate: Double
+    let qty: Double
+    let amount: Double
+}
+
+struct FinanceTotals: Codable {
+    let subtotal: Double
+    let total: Double
+}
+
+struct UserResponse: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let name: String
+    let email: String
+    let role: String
+    let phone: String?
+    let panCard: String?
+    let commissionPercentage: Double?
+    let isActive: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case name, email, role, phone, panCard, commissionPercentage, isActive
+    }
+}
+
+struct UserMinResponse: Codable {
+    let name: String
+}
+
+struct RecurringResponse: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let serviceName: String
+    let packageName: String
+    let price: Double
+    let frequency: String
+    let dayOfMonth: Int
+    let isActive: Bool
+    let clientName: String?
+    let user: UserMinResponse?
+    let nextRunDate: String
+    let lastOrderId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case serviceName, packageName, price, frequency, dayOfMonth, isActive, clientName, user, nextRunDate, lastOrderId
+    }
+}
+
+struct PayoutResponse: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let amount: Double
+    let status: String
+    let method: String
+    let transactionRef: String?
+    let notes: String?
+    let order: OrderResponse?
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case amount, status, method, transactionRef, notes, order, createdAt
+    }
+}
+

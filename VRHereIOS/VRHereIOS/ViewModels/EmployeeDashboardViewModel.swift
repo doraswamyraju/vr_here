@@ -17,34 +17,40 @@ class EmployeeDashboardViewModel: ObservableObject {
     @Published var toastMessage: String? = nil
     
     func syncDashboardData() {
-        isLoading = true
         Task {
-            do {
-                // Fetch attendance logs
-                let logs = try await NetworkManager.shared.getAttendance()
-                attendanceLogs = logs
-                let activeRecord = logs.first { $0.clockOutAt == nil }
-                isClockedIn = activeRecord != nil
-                currentAttendanceRecord = activeRecord
-                
-                // Fetch assigned orders/tasks
-                let orders = try await NetworkManager.shared.getOrders()
-                assignedOrders = orders
-                
-                // Fetch todos
-                let todos = try await NetworkManager.shared.getTodos()
-                assignedTodos = todos
-                
-                // Fetch tickets
-                let tickets = try await NetworkManager.shared.getTickets()
-                supportTickets = tickets
-                
-                // Fetch notifications
-                let notifs = try await NetworkManager.shared.getNotifications()
-                notifications = notifs
-                
-                isLoading = false
-            } catch {
+            await syncDashboardDataAsync()
+        }
+    }
+    
+    func syncDashboardDataAsync() async {
+        isLoading = true
+        do {
+            // Fetch attendance logs
+            let logs = try await NetworkManager.shared.getAttendance()
+            attendanceLogs = logs
+            let activeRecord = logs.first { $0.clockOutAt == nil }
+            isClockedIn = activeRecord != nil
+            currentAttendanceRecord = activeRecord
+            
+            // Fetch assigned orders/tasks
+            let orders = try await NetworkManager.shared.getOrders()
+            assignedOrders = orders
+            
+            // Fetch todos
+            let todos = try await NetworkManager.shared.getTodos()
+            assignedTodos = todos
+            
+            // Fetch tickets
+            let tickets = try await NetworkManager.shared.getTickets()
+            supportTickets = tickets
+            
+            // Fetch notifications
+            let notifs = try await NetworkManager.shared.getNotifications()
+            notifications = notifs
+            
+            isLoading = false
+        } catch {
+            if !error.isCancellationError {
                 isLoading = false
                 toastMessage = "Sync error: \(error.localizedDescription)"
             }

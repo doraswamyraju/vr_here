@@ -301,5 +301,8 @@ struct CustomerServiceWebView: View {
                 .edgesIgnoringSafeArea(.bottom)
         }
         .background(Color.white)
+        .onSwipeBackGesture {
+            onClose()
+        }
     }
 }

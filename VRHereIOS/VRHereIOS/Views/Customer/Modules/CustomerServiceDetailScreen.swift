@@ -200,6 +200,9 @@ struct CustomerServiceDetailScreen: View {
                     }
                 }
             }
+            .onSwipeBackGesture {
+                onBackClick()
+            }
         } else {
             Text("Service loading...")
         }

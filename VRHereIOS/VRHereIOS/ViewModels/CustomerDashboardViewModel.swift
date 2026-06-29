@@ -32,67 +32,75 @@ class CustomerDashboardViewModel: ObservableObject {
     }
     
     func refreshAllData(silent: Bool = false) {
+        Task {
+            await refreshAllDataAsync(silent: silent)
+        }
+    }
+    
+    func refreshAllDataAsync(silent: Bool = false) async {
         if !silent {
             dashboardState = .loading
         }
         
-        Task {
-            var hasErrors = false
-            var lastErrorMessage = ""
-            
-            // 1. Fetch Orders
-            do {
-                orders = try await NetworkManager.shared.getOrders()
-            } catch {
+        var hasErrors = false
+        var lastErrorMessage = ""
+        
+        // 1. Fetch Orders
+        do {
+            orders = try await NetworkManager.shared.getOrders()
+        } catch {
+            if !error.isCancellationError {
                 hasErrors = true
                 lastErrorMessage = "Orders: \(error.localizedDescription)"
                 print("Orders sync failed: \(error)")
             }
-            
-            // 2. Fetch Payments
-            do {
-                payments = try await NetworkManager.shared.getPayments()
-            } catch {
+        }
+        
+        // 2. Fetch Payments
+        do {
+            payments = try await NetworkManager.shared.getPayments()
+        } catch {
+            if !error.isCancellationError {
                 hasErrors = true
                 lastErrorMessage = "Payments: \(error.localizedDescription)"
                 print("Payments sync failed: \(error)")
             }
-            
-            // 3. Fetch Tickets
-            do {
-                tickets = try await NetworkManager.shared.getTickets()
-            } catch {
+        }
+        
+        // 3. Fetch Tickets
+        do {
+            tickets = try await NetworkManager.shared.getTickets()
+        } catch {
+            if !error.isCancellationError {
                 hasErrors = true
                 lastErrorMessage = "Tickets: \(error.localizedDescription)"
                 print("Tickets sync failed: \(error)")
             }
-            
-            // 4. Fetch Notifications
-            do {
-                let newNotifications = try await NetworkManager.shared.getNotifications()
-                if !notifications.isEmpty && !newNotifications.isEmpty {
-                    let newUnreads = newNotifications.filter { item in
-                        !item.isRead && !notifications.contains(where: { $0.id == item.id })
-                    }
-                    if let latest = newUnreads.first {
-                        activeBannerNotification = latest
-                        // In iOS, standard local notifications are triggered here if appropriate,
-                        // otherwise our in-app banner works beautifully.
-                    }
+        }
+        
+        // 4. Fetch Notifications
+        do {
+            let newNotifications = try await NetworkManager.shared.getNotifications()
+            if !notifications.isEmpty && !newNotifications.isEmpty {
+                let newUnreads = newNotifications.filter { item in
+                    !item.isRead && !notifications.contains(where: { $0.id == item.id })
                 }
-                notifications = newNotifications
-            } catch {
-                print("Notifications sync failed: \(error)")
-            }
-            
-            if hasErrors {
-                if !silent {
-                    dashboardState = .error(lastErrorMessage)
-                    toastMessage = lastErrorMessage
+                if let latest = newUnreads.first {
+                    activeBannerNotification = latest
                 }
-            } else {
-                dashboardState = .success
             }
+            notifications = newNotifications
+        } catch {
+            print("Notifications sync failed: \(error)")
+        }
+        
+        if hasErrors {
+            if !silent {
+                dashboardState = .error(lastErrorMessage)
+                toastMessage = lastErrorMessage
+            }
+        } else {
+            dashboardState = .success
         }
     }
     

@@ -15,6 +15,7 @@ struct VRHereIOSApp: App {
     @StateObject private var employeeViewModel = EmployeeDashboardViewModel()
     @StateObject private var partnerViewModel = PartnerDashboardViewModel()
     @StateObject private var adminViewModel = AdminDashboardViewModel()
+    @StateObject private var freelancerViewModel = FreelancerDashboardViewModel()
     
     #if os(iOS)
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
@@ -45,6 +46,12 @@ struct VRHereIOSApp: App {
                         case "partner":
                             PartnerDashboardView(
                                 viewModel: partnerViewModel,
+                                userName: authViewModel.getUserName(),
+                                onLogout: { authViewModel.logout() }
+                            )
+                        case "freelancer":
+                            FreelancerDashboardView(
+                                viewModel: freelancerViewModel,
                                 userName: authViewModel.getUserName(),
                                 onLogout: { authViewModel.logout() }
                             )

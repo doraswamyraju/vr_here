@@ -14,6 +14,7 @@ class PartnerDashboardViewModel: ObservableObject {
     
     @Published var orders: [PartnerOrderResponse] = []
     @Published var profile: PartnerProfileResponse? = nil
+    @Published var notifications: [NotificationResponse] = []
     
     // Settings inputs
     @Published var nameInput = ""
@@ -28,29 +29,58 @@ class PartnerDashboardViewModel: ObservableObject {
     @Published var profileUpdatedEvent = false
     
     func refreshAllData() {
-        dashboardState = .loading
         Task {
-            do {
-                async let profileCall = NetworkManager.shared.getPartnerProfile()
-                async let ordersCall = NetworkManager.shared.getPartnerOrders()
-                
-                let (p, ords) = try await (profileCall, ordersCall)
-                self.profile = p
-                self.orders = ords
-                
-                self.nameInput = p.name
-                self.panCardInput = p.panCard ?? ""
-                if let bank = p.bankDetails {
-                    self.bankAccountNameInput = bank.accountName
-                    self.bankAccountNumberInput = bank.accountNumber
-                    self.bankIfscCodeInput = bank.ifscCode
-                    self.bankNameInput = bank.bankName
-                }
-                
-                dashboardState = .success
-            } catch {
+            await refreshAllDataAsync()
+        }
+    }
+    
+    func refreshAllDataAsync() async {
+        dashboardState = .loading
+        do {
+            async let profileCall = NetworkManager.shared.getPartnerProfile()
+            async let ordersCall = NetworkManager.shared.getPartnerOrders()
+            async let notificationsCall = NetworkManager.shared.getNotifications()
+            
+            let (p, ords, notifs) = try await (profileCall, ordersCall, notificationsCall)
+            self.profile = p
+            self.orders = ords
+            self.notifications = notifs
+            
+            self.nameInput = p.name
+            self.panCardInput = p.panCard ?? ""
+            if let bank = p.bankDetails {
+                self.bankAccountNameInput = bank.accountName
+                self.bankAccountNumberInput = bank.accountNumber
+                self.bankIfscCodeInput = bank.ifscCode
+                self.bankNameInput = bank.bankName
+            }
+            
+            dashboardState = .success
+        } catch {
+            if !error.isCancellationError {
                 dashboardState = .error(error.localizedDescription)
                 toastMessage = "Sync error: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    func markNotificationAsRead(id: String) {
+        Task {
+            do {
+                _ = try await NetworkManager.shared.markNotificationAsRead(id: id)
+                if let index = notifications.firstIndex(where: { $0.id == id }) {
+                    var n = notifications[index]
+                    notifications[index] = NotificationResponse(
+                        idVal: n.idVal,
+                        title: n.title,
+                        message: n.message,
+                        type: n.type,
+                        isRead: true,
+                        createdAt: n.createdAt
+                    )
+                }
+            } catch {
+                print("Failed to mark notification \(id) as read: \(error)")
             }
         }
     }

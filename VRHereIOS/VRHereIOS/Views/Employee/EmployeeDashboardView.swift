@@ -12,6 +12,7 @@ struct EmployeeDashboardView: View {
     @State private var isSidebarOpen = false
     @State private var showingToast = false
     @State private var toastMsg = ""
+    @State private var isShowingNotifications = false
     
     var body: some View {
         ZStack {
@@ -23,7 +24,12 @@ struct EmployeeDashboardView: View {
                     showMenu: true,
                     onMenuClick: { withAnimation { isSidebarOpen.toggle() } },
                     showLogout: true,
-                    onLogoutClick: onLogout
+                    onLogoutClick: onLogout,
+                    showBack: activeTab != "Overview",
+                    onBackClick: { withAnimation { activeTab = "Overview" } },
+                    showNotifications: true,
+                    hasUnreadNotifications: viewModel.notifications.contains(where: { !$0.isRead }),
+                    onNotificationsClick: { isShowingNotifications = true }
                 )
                 
                 // Active Shift Timer Banner
@@ -66,6 +72,9 @@ struct EmployeeDashboardView: View {
                     BMSDockItem(label: "HRMS", iconName: "person.3", tabId: "HRMS")
                 ]
                 BMSAppFloatingDock(activeTab: $activeTab, dockItems: dockItems)
+            }
+            .refreshable {
+                await viewModel.syncDashboardDataAsync()
             }
             
             // Sidebar Drawer
@@ -123,6 +132,13 @@ struct EmployeeDashboardView: View {
                 showingToast = true
                 viewModel.toastMessage = nil
             }
+        }
+        .sheet(isPresented: $isShowingNotifications) {
+            NotificationsSheet(
+                notifications: viewModel.notifications,
+                onMarkAsRead: { viewModel.markNotificationAsRead(notificationId: $0) },
+                onClose: { isShowingNotifications = false }
+            )
         }
     }
 }
