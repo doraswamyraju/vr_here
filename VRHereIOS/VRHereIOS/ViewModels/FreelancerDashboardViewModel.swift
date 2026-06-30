@@ -27,24 +27,6 @@ class FreelancerDashboardViewModel: ObservableObject {
     @Published var isSavingProfile = false
     @Published var toastMessage: String? = nil
     
-    init() {
-        syncFreelancerData()
-        startFirestoreListener()
-    }
-    
-    private func startFirestoreListener() {
-        FirebaseNotificationHelper.shared.startListening { [weak self] list in
-            guard let self = self else { return }
-            DispatchQueue.main.async {
-                self.notifications = list
-            }
-        }
-    }
-    
-    deinit {
-        FirebaseNotificationHelper.shared.stopListening()
-    }
-    
     func syncFreelancerData() {
         Task {
             await syncFreelancerDataAsync()
@@ -174,10 +156,20 @@ class FreelancerDashboardViewModel: ObservableObject {
     }
     
     func markNotificationAsRead(id: String) {
-        FirebaseNotificationHelper.shared.markAsRead(notificationId: id)
         Task {
             do {
                 _ = try await NetworkManager.shared.markNotificationAsRead(id: id)
+                if let index = notifications.firstIndex(where: { $0.id == id }) {
+                    var n = notifications[index]
+                    notifications[index] = NotificationResponse(
+                        idVal: n.idVal,
+                        title: n.title,
+                        message: n.message,
+                        type: n.type,
+                        isRead: true,
+                        createdAt: n.createdAt
+                    )
+                }
             } catch {
                 print("Failed to mark notification \(id) as read: \(error)")
             }

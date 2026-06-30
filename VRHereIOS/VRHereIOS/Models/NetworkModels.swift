@@ -31,11 +31,10 @@ struct AuthResponse: Codable {
     let role: String
     let isActive: Bool
     let token: String
-    let firebaseCustomToken: String?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case name, email, phone, role, isActive, token, firebaseCustomToken
+        case name, email, phone, role, isActive, token
     }
 }
 

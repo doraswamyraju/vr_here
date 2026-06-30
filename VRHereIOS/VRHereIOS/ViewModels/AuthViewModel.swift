@@ -48,9 +48,6 @@ class AuthViewModel: ObservableObject {
                     isActive: authData.isActive
                 )
                 SessionManager.shared.savePhone(authData.phone ?? "")
-                SessionManager.shared.saveFirebaseCustomToken(authData.firebaseCustomToken)
-                
-                FirebaseNotificationHelper.shared.startListening { _ in }
                 
                 // Sync FCM Token here if we have it
                 if let token = SessionManager.shared.getFcmToken() {
@@ -110,9 +107,6 @@ class AuthViewModel: ObservableObject {
                     isActive: authData.isActive
                 )
                 SessionManager.shared.savePhone(authData.phone ?? "")
-                SessionManager.shared.saveFirebaseCustomToken(authData.firebaseCustomToken)
-                
-                FirebaseNotificationHelper.shared.startListening { _ in }
                 
                 if authData.isActive {
                     authState = .success(role: authData.role)

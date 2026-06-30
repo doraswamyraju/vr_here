@@ -1,6 +1,5 @@
 import SwiftUI
 import UserNotifications
-import FirebaseCore
 
 #if os(iOS)
 import UIKit
@@ -80,9 +79,6 @@ struct VRHereIOSApp: App {
             #endif
             .onAppear {
                 registerForPushNotifications()
-                if SessionManager.shared.isLoggedIn() {
-                    FirebaseNotificationHelper.shared.startListening { _ in }
-                }
             }
         }
     }
@@ -112,7 +108,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        FirebaseApp.configure()
         return true
     }
     
@@ -140,7 +135,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         UNUserNotificationCenter.current().delegate = self
-        FirebaseApp.configure()
     }
     
     func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {

@@ -3,7 +3,6 @@ import { randomBytes, createHash } from 'crypto';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
-import { generateFirebaseToken } from '../services/firebaseService.js';
 
 const buildResetUrl = (token) => {
     const baseUrl = process.env.FRONTEND_URL || 'https://vrhere.in';
@@ -57,8 +56,6 @@ const authUser = asyncHandler(async (req, res) => {
         throw new Error(message);
     }
 
-    const firebaseCustomToken = await generateFirebaseToken(user._id);
-
     res.json({
         _id: user._id,
         name: user.name,
@@ -67,8 +64,7 @@ const authUser = asyncHandler(async (req, res) => {
         isActive: user.isActive,
         isClockedIn: user.isClockedIn || false,
         activeOrderId: user.activeOrderId || null,
-        token: generateToken(user._id),
-        firebaseCustomToken
+        token: generateToken(user._id)
     });
 });
 
@@ -105,16 +101,13 @@ const registerUser = asyncHandler(async (req, res) => {
             console.error('Email send failure:', error);
         }
 
-        const firebaseCustomToken = await generateFirebaseToken(user._id);
-
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
             isActive: user.isActive,
-            token: generateToken(user._id),
-            firebaseCustomToken
+            token: generateToken(user._id)
         });
     } else {
         res.status(400);
@@ -179,8 +172,6 @@ const registerPartner = asyncHandler(async (req, res) => {
             console.error('Email send failure:', error);
         }
 
-        const firebaseCustomToken = await generateFirebaseToken(user._id);
-
         res.status(201).json({
             _id: user._id,
             name: user.name,
@@ -188,8 +179,7 @@ const registerPartner = asyncHandler(async (req, res) => {
             phone: user.phone,
             role: user.role,
             isActive: user.isActive,
-            token: generateToken(user._id),
-            firebaseCustomToken
+            token: generateToken(user._id)
         });
     } else {
         res.status(400);
@@ -249,13 +239,10 @@ const resetPassword = asyncHandler(async (req, res) => {
 
     await user.save();
 
-    const firebaseCustomToken = await generateFirebaseToken(user._id);
-
     res.status(201).json({
         success: true,
         data: 'Password reset success',
-        token: generateToken(user._id),
-        firebaseCustomToken
+        token: generateToken(user._id)
     });
 });
 
@@ -266,8 +253,6 @@ const getUserProfile = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-        const firebaseCustomToken = await generateFirebaseToken(user._id);
-
         res.json({
             _id: user._id,
             name: user.name,
@@ -281,8 +266,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
             resumeUrl: user.resumeUrl,
             panCard: user.panCard,
             bankDetails: user.bankDetails,
-            pendingProfileUpdate: user.pendingProfileUpdate,
-            firebaseCustomToken
+            pendingProfileUpdate: user.pendingProfileUpdate
         });
     } else {
         res.status(404);

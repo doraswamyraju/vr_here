@@ -1,7 +1,7 @@
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
-import { sendPushNotification, firebaseDb } from './firebaseService.js';
+import { sendPushNotification } from './firebaseService.js';
 
 /**
  * Creates an in-app notification and optionally sends an email to the user.
@@ -37,30 +37,7 @@ export const triggerNotification = async ({
             type
         });
 
-        console.log(`In-app notification created in MongoDB for User [${userId}]: ${title}`);
-
-        // 2. Write to Firestore subcollection for real-time sync
-        if (firebaseDb) {
-            try {
-                await firebaseDb
-                    .collection('users')
-                    .doc(userId.toString())
-                    .collection('notifications')
-                    .doc(notification._id.toString())
-                    .set({
-                        title,
-                        message,
-                        type,
-                        isRead: false,
-                        createdAt: notification.createdAt ? notification.createdAt.toISOString() : new Date().toISOString()
-                    });
-                console.log(`Firestore notification created for User [${userId}]: ${notification._id}`);
-            } catch (firestoreError) {
-                console.error(`Failed to write notification to Firestore for user [${userId}]:`, firestoreError.message);
-            }
-        } else {
-            console.log(`[SIMULATED FIRESTORE] To: users/${userId}/notifications/${notification._id} | Title: "${title}"`);
-        }
+        console.log(`In-app notification created for User [${userId}]: ${title}`);
 
         // Fetch user once for push and email notifications
         const user = await User.findById(userId);

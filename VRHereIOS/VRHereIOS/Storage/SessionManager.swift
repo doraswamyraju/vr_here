@@ -14,7 +14,6 @@ class SessionManager {
     private let keyUserActive = "user_active"
     private let keyUserPhone = "user_phone"
     private let keyFcmToken = "fcm_token"
-    private let keyFirebaseCustomToken = "firebase_custom_token"
     
     func saveSession(
         token: String,
@@ -72,14 +71,6 @@ class SessionManager {
         return prefs.string(forKey: keyFcmToken)
     }
     
-    func saveFirebaseCustomToken(_ token: String?) {
-        prefs.set(token, forKey: keyFirebaseCustomToken)
-    }
-    
-    func getFirebaseCustomToken() -> String? {
-        return prefs.string(forKey: keyFirebaseCustomToken)
-    }
-    
     func clearSession() {
         prefs.removeObject(forKey: keyAuthToken)
         prefs.removeObject(forKey: keyUserId)
@@ -88,7 +79,6 @@ class SessionManager {
         prefs.removeObject(forKey: keyUserRole)
         prefs.removeObject(forKey: keyUserActive)
         prefs.removeObject(forKey: keyUserPhone)
-        prefs.removeObject(forKey: keyFirebaseCustomToken)
     }
     
     func isLoggedIn() -> Bool {

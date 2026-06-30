@@ -32,24 +32,6 @@ class EmployeeDashboardViewModel(application: Application) : AndroidViewModel(ap
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    init {
-        syncDashboardData()
-        startFirestoreNotificationsListener()
-    }
-
-    private fun startFirestoreNotificationsListener() {
-        com.sbr.vrherebms.utils.FirestoreNotificationHelper.startListening(getApplication()) { list ->
-            if (list.isNotEmpty()) {
-                notifications = list
-            }
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        com.sbr.vrherebms.utils.FirestoreNotificationHelper.stopListening()
-    }
-
     sealed class UiEvent {
         data class ShowToast(val message: String) : UiEvent()
     }
@@ -282,13 +264,10 @@ class EmployeeDashboardViewModel(application: Application) : AndroidViewModel(ap
     }
 
     fun markNotificationAsRead(notificationId: String) {
-        // 1. Update Firestore
-        com.sbr.vrherebms.utils.FirestoreNotificationHelper.markAsRead(getApplication(), notificationId)
-
-        // 2. Sync MongoDB
         viewModelScope.launch {
             try {
                 api.markNotificationAsRead(notificationId)
+                syncDashboardData()
             } catch (e: Exception) {
                 // ignore
             }
