@@ -16,6 +16,24 @@ class EmployeeDashboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var toastMessage: String? = nil
     
+    init() {
+        syncDashboardData()
+        startFirestoreListener()
+    }
+    
+    private func startFirestoreListener() {
+        FirebaseNotificationHelper.shared.startListening { [weak self] list in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.notifications = list
+            }
+        }
+    }
+    
+    deinit {
+        FirebaseNotificationHelper.shared.stopListening()
+    }
+    
     func syncDashboardData() {
         Task {
             await syncDashboardDataAsync()
@@ -174,12 +192,12 @@ class EmployeeDashboardViewModel: ObservableObject {
     }
     
     func markNotificationAsRead(notificationId: String) {
+        FirebaseNotificationHelper.shared.markAsRead(notificationId: notificationId)
         Task {
             do {
                 _ = try await NetworkManager.shared.markNotificationAsRead(id: notificationId)
-                syncDashboardData()
             } catch {
-                print("Failed read status sync")
+                print("Failed read status sync: \(error)")
             }
         }
     }

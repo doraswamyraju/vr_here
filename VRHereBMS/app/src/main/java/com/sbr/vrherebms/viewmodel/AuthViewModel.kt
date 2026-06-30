@@ -48,6 +48,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         if (sessionManager.isLoggedIn()) {
             val role = sessionManager.getUserRole() ?: "client"
             authState = AuthState.Success(role)
+
+            // Auto authenticate with Firebase if user is logged in but Firebase auth is not active
+            val cachedFirebaseToken = sessionManager.getFirebaseCustomToken()
+            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            if (firebaseUser == null && cachedFirebaseToken != null && !cachedFirebaseToken.startsWith("mock-")) {
+                com.google.firebase.auth.FirebaseAuth.getInstance().signInWithCustomToken(cachedFirebaseToken)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            android.util.Log.d("AuthViewModel", "Auto-authenticated to Firebase with cached token on launch")
+                        } else {
+                            android.util.Log.e("AuthViewModel", "Auto-authentication to Firebase failed", task.exception)
+                        }
+                    }
+            }
         }
     }
 
@@ -74,6 +88,21 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         isActive = authData.isActive
                     )
                     sessionManager.savePhone(authData.phone ?: "")
+                    sessionManager.saveFirebaseCustomToken(authData.firebaseCustomToken)
+
+                    // Sign in to Firebase with the custom token
+                    val customToken = authData.firebaseCustomToken
+                    if (customToken != null && !customToken.startsWith("mock-")) {
+                        com.google.firebase.auth.FirebaseAuth.getInstance().signInWithCustomToken(customToken)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    android.util.Log.d("AuthViewModel", "Successfully authenticated to Firebase with Custom Token")
+                                } else {
+                                    android.util.Log.e("AuthViewModel", "Firebase Custom Token authentication failed", task.exception)
+                                }
+                            }
+                    }
+
                     authState = AuthState.Success(authData.role)
                     _eventFlow.emit(UiEvent.ShowToast("Welcome back, ${authData.name}!"))
                 } else {
@@ -138,6 +167,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         isActive = authData.isActive
                     )
                     sessionManager.savePhone(authData.phone ?: "")
+                    sessionManager.saveFirebaseCustomToken(authData.firebaseCustomToken)
+
+                    // Sign in to Firebase with the custom token
+                    val customToken = authData.firebaseCustomToken
+                    if (customToken != null && !customToken.startsWith("mock-")) {
+                        com.google.firebase.auth.FirebaseAuth.getInstance().signInWithCustomToken(customToken)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    android.util.Log.d("AuthViewModel", "Successfully authenticated to Firebase with Custom Token")
+                                } else {
+                                    android.util.Log.e("AuthViewModel", "Firebase Custom Token authentication failed", task.exception)
+                                }
+                            }
+                    }
                     
                     if (authData.isActive) {
                         authState = AuthState.Success(authData.role)

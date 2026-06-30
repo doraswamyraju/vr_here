@@ -32,7 +32,8 @@ data class AuthResponse(
     val phone: String?,
     val role: String,
     val isActive: Boolean,
-    val token: String
+    val token: String,
+    val firebaseCustomToken: String? = null
 )
 
 data class UserProfile(

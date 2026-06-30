@@ -34,6 +34,33 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
     var activeBannerNotification by mutableStateOf<NotificationResponse?>(null)
         private set
 
+    init {
+        refreshAllData()
+        startFirestoreNotificationsListener()
+    }
+
+    private fun startFirestoreNotificationsListener() {
+        com.sbr.vrherebms.utils.FirestoreNotificationHelper.startListening(getApplication()) { list ->
+            if (list.isNotEmpty()) {
+                val oldList = notifications
+                if (oldList.isNotEmpty()) {
+                    val newUnreads = list.filter { item ->
+                        !item.isRead && !oldList.any { old -> old.id == item.id }
+                    }
+                    if (newUnreads.isNotEmpty()) {
+                        activeBannerNotification = newUnreads.first()
+                    }
+                }
+                notifications = list
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        com.sbr.vrherebms.utils.FirestoreNotificationHelper.stopListening()
+    }
+
     fun dismissBanner() {
         activeBannerNotification = null
     }
@@ -200,13 +227,15 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
     }
 
     fun markNotificationAsRead(id: String) {
+        // 1. Update Firestore
+        com.sbr.vrherebms.utils.FirestoreNotificationHelper.markAsRead(getApplication(), id)
+
+        // 2. Sync MongoDB
         viewModelScope.launch {
             try {
-                val response = api.markNotificationAsRead(id)
-                if (response.isSuccessful) {
-                    notifications = notifications.map {
-                        if (it.id == id) it.copy(isRead = true) else it
-                    }
+                api.markNotificationAsRead(id)
+                notifications = notifications.map {
+                    if (it.id == id) it.copy(isRead = true) else it
                 }
             } catch (e: Exception) {
                 // Fail silently for background notification action

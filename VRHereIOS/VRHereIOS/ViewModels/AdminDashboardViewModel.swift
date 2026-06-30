@@ -19,6 +19,33 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var toastMessage: String? = nil
     
+    init() {
+        syncDashboardData()
+        startFirestoreListener()
+    }
+    
+    private func startFirestoreListener() {
+        FirebaseNotificationHelper.shared.startListening { [weak self] list in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                let oldList = self.notifications
+                if !oldList.isEmpty && !list.isEmpty {
+                    let newUnreads = list.filter { item in
+                        !item.isRead && !oldList.contains(where: { $0.id == item.id })
+                    }
+                    if let latest = newUnreads.first {
+                        self.activeBannerNotification = latest
+                    }
+                }
+                self.notifications = list
+            }
+        }
+    }
+    
+    deinit {
+        FirebaseNotificationHelper.shared.stopListening()
+    }
+    
     // Dynamic Calculations
     var activePipelineCount: Int {
         return orders.filter { $0.status != "Completed" }.count
@@ -45,22 +72,12 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     func markNotificationAsRead(id: String) {
+        FirebaseNotificationHelper.shared.markAsRead(notificationId: id)
         Task {
             do {
                 _ = try await NetworkManager.shared.markNotificationAsRead(id: id)
-                if let index = notifications.firstIndex(where: { $0.id == id }) {
-                    var n = notifications[index]
-                    notifications[index] = NotificationResponse(
-                        idVal: n.idVal,
-                        title: n.title,
-                        message: n.message,
-                        type: n.type,
-                        isRead: true,
-                        createdAt: n.createdAt
-                    )
-                }
             } catch {
-                print("Failed notification read update")
+                print("Failed to mark notification \(id) as read: \(error)")
             }
         }
     }

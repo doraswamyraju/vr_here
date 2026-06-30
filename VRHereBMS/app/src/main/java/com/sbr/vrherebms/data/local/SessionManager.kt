@@ -75,6 +75,14 @@ class SessionManager(context: Context) {
         return prefs.getString("fcm_token", null)
     }
 
+    fun saveFirebaseCustomToken(token: String?) {
+        prefs.edit().putString("firebase_custom_token", token).apply()
+    }
+
+    fun getFirebaseCustomToken(): String? {
+        return prefs.getString("firebase_custom_token", null)
+    }
+
     fun clearSession() {
         prefs.edit().clear().apply()
     }
