@@ -24,6 +24,7 @@ node_modules/
 /backend/uploads/
 
 # 5. Swift / iOS Build Artifacts and Xcode User Settings
+VRHereIOS/build/
 VRHereIOS/.build/
 VRHereIOS/.swiftpm/
 **/DerivedData/
