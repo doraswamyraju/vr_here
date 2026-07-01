@@ -27,6 +27,7 @@ import PartnerSignupPage from './PartnerSignup';
 import PartnerDashboardPage from './partner';
 import FreelancerSignupPage from './FreelancerSignup';
 import FreelancerDashboardPage from './freelancer';
+import PrivacyPolicyPage from './PrivacyPolicy';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -94,6 +95,7 @@ const App = () => {
       <Route path="/accounting-services" element={<AccountingServices />} />
       <Route path="/partner/signup" element={<PartnerSignupPage />} />
       <Route path="/freelancer/signup" element={<FreelancerSignupPage />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
       <Route path="/contact" element={<ContactUsPage />} />
 
