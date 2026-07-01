@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCo0w0bug9jiDj0mlB1qrZQ50y2Y2D7VUA</string>
+	<key>GCM_SENDER_ID</key>
+	<string>674627570227</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.sbr.vrherebms.ios</string>
+	<key>PROJECT_ID</key>
+	<string>vrherebms-82e2c</string>
+	<key>STORAGE_BUCKET</key>
+	<string>vrherebms-82e2c.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:674627570227:ios:ae4b77142c69978fa8f146</string>
+</dict>
+</plist>

@@ -60,6 +60,16 @@ struct UserProfile: Codable, Identifiable {
     }
     
     init(from decoder: Decoder) throws {
+        if let container = try? decoder.singleValueContainer(),
+           let idString = try? container.decode(String.self) {
+            self.idVal = idString
+            self.name = ""
+            self.email = ""
+            self.role = ""
+            self.isActive = false
+            return
+        }
+        
         let container = try decoder.container(keyedBy: CodingKeys.self)
         idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
