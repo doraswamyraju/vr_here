@@ -725,7 +725,7 @@ export const SharedFooter = () => (
                     </div>
                     <div className="pt-2">
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Download our App</p>
-                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3">
+                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 mb-4">
                             <a href="#" className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-white transition hover:bg-slate-800 w-[140px]">
                                 <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M17.05 20.28c-.98 1.56-2.02 3.1-3.72 3.14-1.67.03-2.2-.97-4.1-.97-1.9 0-2.48.94-4.08.99-1.67.06-2.86-1.66-3.85-3.08-2.02-2.9-3.56-8.17-1.48-11.75 1.03-1.78 2.87-2.9 4.88-2.93 1.52-.03 2.96 1.02 3.9 1.02.93 0 2.65-1.23 4.47-1.04.76.03 2.9.3 4.27 2.3-1.11.67-2.61 2.23-2.58 4.8.03 3.08 2.68 4.15 2.71 4.17-.02.08-.43 1.48-1.42 2.92M15 4.3c.77-.94 1.28-2.24 1.14-3.54-1.12.05-2.48.75-3.28 1.69-.7.8-1.32 2.12-1.15 3.4 1.25.1 2.52-.61 3.29-1.55z" />
@@ -744,6 +744,14 @@ export const SharedFooter = () => (
                                     <div className="text-xs font-bold leading-tight">Google Play</div>
                                 </div>
                             </a>
+                        </div>
+                    </div>
+                    <div className="pt-2">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Accreditations & Security</p>
+                        <div className="flex gap-3 items-center bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 max-w-[290px]">
+                            <img src="/iso9001.png" alt="ISO 9001:2015" className="h-10 w-auto opacity-90 hover:opacity-100 transition duration-300" />
+                            <img src="/iso27001.png" alt="ISO 27001:2022" className="h-10 w-auto opacity-90 hover:opacity-100 transition duration-300" />
+                            <img src="/dpdp.png" alt="DPDP Act Compliance" className="h-10 w-auto opacity-90 hover:opacity-100 transition duration-300" />
                         </div>
                     </div>
                 </div>
@@ -782,7 +790,10 @@ export const SharedFooter = () => (
                 </div>
             </div>
             <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-                <p>&copy; {new Date().getFullYear()} VR Here Business Management Solutions. All rights reserved.</p>
+                <div className="space-y-1">
+                    <p>&copy; {new Date().getFullYear()} VR Here Business Management Solutions. All rights reserved.</p>
+                    <p className="text-[11px] text-slate-600">Built with ❤️ by <a href="https://www.rajugariventures.com" target="_blank" rel="noreferrer" className="hover:text-red-500 transition-colors font-medium">Rajugari Ventures</a></p>
+                </div>
                 <div className="flex space-x-6">
                     <a href="/partner/signup" className="hover:text-red-500 transition font-medium">Become a Partner</a>
                     <a href="/privacy-policy" className="hover:text-white transition">Privacy Policy</a>
