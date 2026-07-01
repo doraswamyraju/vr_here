@@ -1,67 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 
-const sections = [
-    {
-        title: '1. Scope of Engagement',
-        content:
-            'These Terms and Conditions govern the professional engagement between VR HERE Business Management Solutions and the Client for accounting, bookkeeping, payroll, GST, TDS, and allied compliance services. Services are limited strictly to the scope agreed in writing.',
-    },
-    {
-        title: '2. Client Responsibilities',
-        content:
-            'The Client is solely responsible for providing complete, accurate, and timely information/documents. VR HERE is not responsible for consequences arising from delayed, inaccurate, incomplete, or misleading information supplied by the Client.',
-    },
-    {
-        title: '3. Timelines and Delays',
-        content:
-            'All timelines are indicative and depend on client cooperation and portal/system availability. Delays caused by client non-cooperation, non-payment, or government portal issues automatically extend timelines.',
-    },
-    {
-        title: '4. Fees and Payments',
-        content:
-            'Professional fees are payable as per agreed quotation/package without set-off or deduction. Government/statutory fees, penalties, and levies are extra unless expressly included. Fees once paid are non-refundable. Services may be suspended for non-payment.',
-    },
-    {
-        title: '5. Confidentiality',
-        content:
-            'VR HERE will maintain confidentiality of client information, except where disclosure is required by law, regulation, court order, or due to client acts/omissions.',
-    },
-    {
-        title: '6. Communications and Authorizations',
-        content:
-            'Email/messages and electronic communications from the Client are treated as valid instructions and approvals.',
-    },
-    {
-        title: '7. Limitation of Liability',
-        content:
-            'VR HERE does not guarantee approvals or outcomes. Liability, if any, is limited to the professional fee received for the specific service. VR HERE is not liable for indirect/consequential losses, penalties due to client defaults, or portal/system/legal changes.',
-    },
-    {
-        title: '8. Indemnity',
-        content:
-            'The Client agrees to indemnify and hold harmless VR HERE and its team from losses/claims/costs arising due to misrepresentation, non-disclosure, statutory non-compliance, or breach of these terms by the Client.',
-    },
-    {
-        title: '9. Termination',
-        content:
-            'Either party may terminate in writing. All outstanding dues become immediately payable. VR HERE may withhold further services until full settlement.',
-    },
-    {
-        title: '10. Force Majeure',
-        content:
-            'VR HERE is not liable for delay/failure due to events beyond reasonable control including government action, portal failure, system outage, and regulatory restrictions.',
-    },
-    {
-        title: '11. Governing Law and Jurisdiction',
-        content:
-            'These terms are governed by the laws of India. Disputes are subject to the exclusive jurisdiction of competent courts in the State of Telangana.',
-    },
-    {
-        title: '12. Acceptance',
-        content:
-            'By availing our services, the Client confirms they have read, understood, and agreed to these Terms and Conditions.',
-    },
+const paragraphs = [
+    "These Terms and Conditions govern the professional engagement between the Service Provider and the Client and shall be binding upon execution or commencement of services. The Service Provider shall render accounting, bookkeeping, payroll processing, GST, TDS, and other allied professional services strictly in accordance with the scope expressly agreed in writing. Any services not specifically agreed upon shall be deemed excluded and shall be undertaken only upon prior written approval and at such additional consideration as may be determined solely by the Service Provider. The Client acknowledges that the Service Provider does not provide any assurance, guarantee, or warranty of outcomes, approvals, or statutory acceptance.",
+    "The Client shall be solely responsible for furnishing all information, documents, records, explanations, and confirmations required for the performance of services, and such information shall be complete, accurate, true, and timely. The Service Provider shall not be obligated to verify, audit, or independently validate the information so provided. Any error, omission, delay, default, non-compliance, penalty, interest, demand, notice, or adverse consequence arising directly or indirectly from inaccurate, incomplete, misleading, or delayed information supplied by the Client shall be the sole responsibility of the Client, and the Service Provider shall bear no liability whatsoever in this regard.",
+    "All timelines communicated by the Service Provider are indicative and conditional upon the Client’s timely cooperation and submission of requisite information. Any delay or failure attributable to the Client or arising from issues on any government portal shall automatically extend the applicable timelines, and the Service Provider shall not be held responsible for any statutory non-compliance, penalty, or consequences arising therefrom. The Client expressly agrees that services may be suspended at the discretion of the Service Provider in the event of non-cooperation or non-payment.",
+    "Professional fees shall be payable strictly as per the agreed quotation or service package and within the stipulated timelines, without any deduction, adjustment, withholding, or set-off. Government fees, statutory dues, penalties, interest, or levies are expressly excluded unless specifically agreed in writing. Fees once paid shall be non-refundable under any circumstances, including termination, discontinuance, or partial utilization of services. Non-payment or delayed payment shall entitle the Service Provider to suspend services without any liability.",
+    "The Service Provider shall maintain confidentiality of Client information received in the course of service delivery; however, the Service Provider shall not be liable for disclosures required under law, regulation, judicial order, or disclosures necessitated due to acts, omissions, or defaults attributable to the Client. The Client acknowledges that electronic communication, including email and messaging platforms, shall constitute valid, binding, and legally enforceable instructions and approvals.",
+    "All reports, returns, filings, and submissions prepared by the Service Provider are based solely on information provided by the Client. The Client retains full responsibility for representations made before statutory authorities. While reasonable professional care shall be exercised, the Service Provider shall not be responsible for changes in law, retrospective amendments, technical interpretations, system errors of government portals, or differing views adopted by authorities.",
+    "The Client hereby agrees to fully indemnify and hold harmless the Service Provider, its proprietors, partners, employees, and representatives from and against any and all losses, claims, demands, penalties, damages, proceedings, costs, and expenses arising out of or in connection with inaccurate information, non-disclosure, misrepresentation, statutory non-compliance, or breach of these terms by the Client.",
+    "Notwithstanding anything contained herein, the aggregate liability of the Service Provider, if any, shall be strictly limited to the professional fees actually received for the specific service giving rise to the claim. Under no circumstances shall the Service Provider be liable for any indirect, incidental, consequential, special, or punitive damages, including loss of profits, business interruption, or reputational harm.",
+    "Either party may terminate this engagement by written notice; however, upon termination, all outstanding dues shall become immediately payable. The Service Provider shall not be obligated to continue services until full and final settlement is received. The Service Provider shall not be liable for any failure or delay caused by events beyond reasonable control, including acts of God, governmental actions, system failures, or regulatory restrictions.",
+    "These Terms and Conditions shall be governed by and construed in accordance with the laws of India, and all disputes arising out of or in connection herewith shall be subject to the exclusive jurisdiction of the competent courts situated in the State of Telangana."
 ];
 
 const TermsConditionsPage = () => {
@@ -80,18 +30,30 @@ const TermsConditionsPage = () => {
                 <div className="max-w-5xl mx-auto px-4">
                     <h1 className="text-4xl md:text-5xl font-black">Terms & Conditions</h1>
                     <p className="mt-4 text-slate-300 max-w-3xl">
-                        Terms governing accounting and compliance services provided by VR HERE Business Management Solutions.
+                        Accounting & Compliance Services terms governing the professional engagement with VR HERE.
                     </p>
                 </div>
             </section>
 
-            <section className="max-w-5xl mx-auto px-4 py-10 space-y-5">
-                {sections.map((section) => (
-                    <article key={section.title} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                        <h2 className="text-lg font-black text-slate-900">{section.title}</h2>
-                        <p className="text-slate-600 mt-3 leading-relaxed">{section.content}</p>
-                    </article>
-                ))}
+            <section className="max-w-5xl mx-auto px-4 py-10 space-y-6">
+                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+                    <h2 className="text-xl font-bold text-slate-950 border-b border-slate-100 pb-4">
+                        Terms & Conditions
+                    </h2>
+                    
+                    <div className="space-y-5 text-slate-600 leading-relaxed text-sm md:text-base">
+                        {paragraphs.map((para, idx) => (
+                            <p key={idx}>{para}</p>
+                        ))}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-slate-100 bg-slate-50 -mx-8 -mb-8 p-8 rounded-b-3xl">
+                        <h3 className="font-bold text-slate-900 mb-2">Acceptance: -</h3>
+                        <p className="text-slate-600 font-medium text-sm">
+                            By availing our services, the Client confirms that they have read, understood, and agreed to the above Terms & Conditions.
+                        </p>
+                    </div>
+                </div>
             </section>
             <SharedFooter />
         </div>
