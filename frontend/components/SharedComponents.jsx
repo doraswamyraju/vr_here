@@ -746,14 +746,6 @@ export const SharedFooter = () => (
                             </a>
                         </div>
                     </div>
-                    <div className="pt-2">
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Accreditations & Security</p>
-                        <div className="flex gap-3 items-center bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 max-w-[290px]">
-                            <img src="/iso9001.png" alt="ISO 9001:2015" className="h-10 w-auto opacity-90 hover:opacity-100 transition duration-300" />
-                            <img src="/iso27001.png" alt="ISO 27001:2022" className="h-10 w-auto opacity-90 hover:opacity-100 transition duration-300" />
-                            <img src="/dpdp.png" alt="DPDP Act Compliance" className="h-10 w-auto opacity-90 hover:opacity-100 transition duration-300" />
-                        </div>
-                    </div>
                 </div>
 
                 {/* Columns 2-4: Links Grid */}
@@ -793,6 +785,11 @@ export const SharedFooter = () => (
                 <div className="space-y-1">
                     <p>&copy; {new Date().getFullYear()} VR Here Business Management Solutions. All rights reserved.</p>
                     <p className="text-[11px] text-slate-600">Built with ❤️ by <a href="https://www.rajugariventures.com" target="_blank" rel="noreferrer" className="hover:text-red-500 transition-colors font-medium">Rajugari Ventures</a></p>
+                </div>
+                <div className="flex gap-4 items-center py-2 md:py-0">
+                    <img src="/iso9001.png" alt="ISO 9001:2015" className="h-8 w-auto opacity-70 hover:opacity-100 transition duration-300" />
+                    <img src="/iso27001.png" alt="ISO 27001:2022" className="h-8 w-auto opacity-70 hover:opacity-100 transition duration-300" />
+                    <img src="/dpdp.png" alt="DPDP Act Compliance" className="h-8 w-auto opacity-70 hover:opacity-100 transition duration-300" />
                 </div>
                 <div className="flex space-x-6">
                     <a href="/partner/signup" className="hover:text-red-500 transition font-medium">Become a Partner</a>
