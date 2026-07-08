@@ -3,7 +3,7 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "VRHereIOS",
+    name: "VRHereBMS",
     platforms: [
         .iOS(.v16)
     ],
