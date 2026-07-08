@@ -49,7 +49,7 @@ class AdminDashboardViewModel: ObservableObject {
             do {
                 _ = try await NetworkManager.shared.markNotificationAsRead(id: id)
                 if let index = notifications.firstIndex(where: { $0.id == id }) {
-                    var n = notifications[index]
+                    let n = notifications[index]
                     notifications[index] = NotificationResponse(
                         idVal: n.idVal,
                         title: n.title,
@@ -75,9 +75,8 @@ class AdminDashboardViewModel: ObservableObject {
         if !silent {
             isLoading = true
         }
+        // 1. Fetch Orders
         do {
-            // 1. Fetch Orders
-            do {
                 orders = try await NetworkManager.shared.getOrders()
             } catch {
                 if !error.isCancellationError {
@@ -173,12 +172,6 @@ class AdminDashboardViewModel: ObservableObject {
             }
             
             isLoading = false
-        } catch {
-            if !silent && !error.isCancellationError {
-                isLoading = false
-                toastMessage = "Sync error: \(error.localizedDescription)"
-            }
-        }
     }
     
     func updateAssessmentStatus(id: String, status: String, notes: String) {

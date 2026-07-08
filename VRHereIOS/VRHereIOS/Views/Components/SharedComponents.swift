@@ -55,7 +55,8 @@ extension View {
             "slider.horizontal.3",
             "arrow.triangle.2.circlepath",
             "signature",
-            "doc.text"
+            "doc.text",
+            "headphones"
         ]
         
         if nonFillableSymbols.contains(baseName) || baseName.hasSuffix(".fill") {

@@ -41,36 +41,6 @@ struct RegisterView: View {
                     
                     Spacer().frame(height: 16)
                     
-                    // 2. Role Selector Tab
-                    HStack(spacing: 0) {
-                        Button(action: { viewModel.roleInput = "client" }) {
-                            Text("Customer")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(viewModel.roleInput == "client" ? .white : .textMuted)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 40)
-                                .background(viewModel.roleInput == "client" ? Color.primaryRed : Color.clear)
-                                .cornerRadius(8)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        Button(action: { viewModel.roleInput = "partner" }) {
-                            Text("Partner/Freelancer")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(viewModel.roleInput == "partner" ? .white : .textMuted)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 40)
-                                .background(viewModel.roleInput == "partner" ? Color.primaryRed : Color.clear)
-                                .cornerRadius(8)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                    .padding(4)
-                    .background(Color.bgInput)
-                    .cornerRadius(10)
-                    
-                    Spacer().frame(height: 24)
-                    
                     // 3. Inputs
                     VStack(spacing: 16) {
                         CustomInputField(
@@ -101,15 +71,6 @@ struct RegisterView: View {
                             text: $viewModel.passwordInput,
                             isSecure: true
                         )
-                        
-                        if viewModel.roleInput == "partner" {
-                            CustomInputField(
-                                label: "PAN Card Number",
-                                placeholder: "Enter PAN Card",
-                                iconName: "creditcard",
-                                text: $viewModel.panCardInput
-                            )
-                        }
                     }
                     
                     Spacer().frame(height: 32)
@@ -186,6 +147,9 @@ struct RegisterView: View {
             if case .success = state {
                 onRegistrationSuccess()
             }
+        }
+        .onAppear {
+            viewModel.roleInput = "client"
         }
     }
 }

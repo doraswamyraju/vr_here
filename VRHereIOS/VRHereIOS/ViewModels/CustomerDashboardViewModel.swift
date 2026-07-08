@@ -151,7 +151,7 @@ class CustomerDashboardViewModel: ObservableObject {
             do {
                 _ = try await NetworkManager.shared.markNotificationAsRead(id: id)
                 if let index = notifications.firstIndex(where: { $0.id == id }) {
-                    var n = notifications[index]
+                    let n = notifications[index]
                     // Create updated notification copy since struct properties are read-only let.
                     notifications[index] = NotificationResponse(
                         idVal: n.idVal,

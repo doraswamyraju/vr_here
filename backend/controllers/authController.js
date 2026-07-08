@@ -465,6 +465,27 @@ const deleteUserByAdmin = asyncHandler(async (req, res) => {
     res.json({ message: 'User removed' });
 });
 
+// @desc    Delete self account
+// @route   DELETE /api/auth/delete-account
+// @access  Private
+const deleteSelfAccount = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    if (user.role === 'admin') {
+        res.status(400);
+        throw new Error('Admins cannot delete their own account from the app');
+    }
+
+    await User.deleteOne({ _id: req.user._id });
+
+    res.json({ success: true, message: 'Account deleted successfully' });
+});
+
 export {
     authUser,
     registerUser,
@@ -479,5 +500,6 @@ export {
     toggleUserActiveByAdmin,
     sendPasswordLinkByAdmin,
     deleteUserByAdmin,
+    deleteSelfAccount,
     updateFcmToken
 };

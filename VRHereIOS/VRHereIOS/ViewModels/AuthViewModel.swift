@@ -134,6 +134,24 @@ class AuthViewModel: ObservableObject {
         roleInput = "client"
     }
     
+    func deleteAccount() {
+        authState = .loading
+        Task {
+            do {
+                let res = try await NetworkManager.shared.deleteAccount()
+                if res.success {
+                    logout()
+                } else {
+                    toastMessage = res.message ?? "Could not delete account."
+                    authState = .idle
+                }
+            } catch {
+                toastMessage = error.localizedDescription
+                authState = .idle
+            }
+        }
+    }
+    
     func isUserLoggedIn() -> Bool {
         return SessionManager.shared.isLoggedIn()
     }

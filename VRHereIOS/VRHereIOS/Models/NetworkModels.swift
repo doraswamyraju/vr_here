@@ -12,7 +12,7 @@ struct RegisterRequest: Codable {
     let email: String
     let phone: String
     let password: String
-    let role: String = "client"
+    var role: String = "client"
 }
 
 struct RegisterPartnerRequest: Codable {
@@ -101,6 +101,15 @@ struct EmployeeResponse: Codable, Identifiable {
     }
     
     init(from decoder: Decoder) throws {
+        if let container = try? decoder.singleValueContainer(),
+           let idString = try? container.decode(String.self) {
+            self.idVal = idString
+            self.name = ""
+            self.email = ""
+            self.role = ""
+            return
+        }
+        
         let container = try decoder.container(keyedBy: CodingKeys.self)
         idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
@@ -150,6 +159,39 @@ struct OrderResponse: Codable, Identifiable {
     }
     
     init(from decoder: Decoder) throws {
+        if let container = try? decoder.singleValueContainer(),
+           let idString = try? container.decode(String.self) {
+            self.idVal = idString
+            self.clientName = ""
+            self.email = ""
+            self.phone = ""
+            self.serviceName = ""
+            self.packageName = ""
+            self.price = 0.0
+            self.paymentId = ""
+            self.razorpayOrderId = ""
+            self.paymentStatus = ""
+            self.status = ""
+            self.assignedEmployee = nil
+            self.clientDocuments = []
+            self.adminDocuments = []
+            self.finalCertificateUrl = nil
+            self.tasks = []
+            self.invoices = []
+            self.customerRequirements = []
+            self.checklists = []
+            self.consultationAdjusted = false
+            self.linkedTodos = []
+            self.activityHistory = []
+            self.attendance = []
+            self.createdAt = ""
+            self.updatedAt = ""
+            self.referralPartner = nil
+            self.partnerCommissionAmount = nil
+            self.freelancerPayout = nil
+            return
+        }
+        
         let container = try decoder.container(keyedBy: CodingKeys.self)
         idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
         clientName = try container.decodeIfPresent(String.self, forKey: .clientName) ?? ""
@@ -429,6 +471,19 @@ struct TicketResponse: Codable, Identifiable {
         case idVal = "_id"
         case subject, description, status, priority, user, messages, createdAt, updatedAt
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
+        subject = try container.decodeIfPresent(String.self, forKey: .subject) ?? ""
+        description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
+        priority = try container.decodeIfPresent(String.self, forKey: .priority) ?? ""
+        user = try container.decodeIfPresent(UserProfile.self, forKey: .user)
+        messages = try container.decodeIfPresent([TicketMessage].self, forKey: .messages) ?? []
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
+    }
 }
 
 struct TicketMessage: Codable, Identifiable {
@@ -441,6 +496,14 @@ struct TicketMessage: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case sender, message, createdAt
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal)
+        sender = try container.decodeIfPresent(UserProfile.self, forKey: .sender)
+        message = try container.decodeIfPresent(String.self, forKey: .message) ?? ""
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
     }
 }
 
@@ -1014,5 +1077,23 @@ struct PayoutResponse: Codable, Identifiable {
         case idVal = "_id"
         case amount, status, method, transactionRef, notes, order, createdAt
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
+        amount = try container.decodeIfPresent(Double.self, forKey: .amount) ?? 0.0
+        status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
+        method = try container.decodeIfPresent(String.self, forKey: .method) ?? ""
+        transactionRef = try container.decodeIfPresent(String.self, forKey: .transactionRef)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        order = try container.decodeIfPresent(OrderResponse.self, forKey: .order)
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+    }
 }
+
+struct GeneralResponse: Codable {
+    let success: Bool
+    let message: String?
+}
+
 

@@ -14,6 +14,7 @@ import {
     toggleUserActiveByAdmin,
     sendPasswordLinkByAdmin,
     deleteUserByAdmin,
+    deleteSelfAccount,
     updateFcmToken
 } from '../controllers/authController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
@@ -24,6 +25,7 @@ router.post('/login', authUser);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resetToken', resetPassword);
 router.route('/profile').get(protect, getUserProfile);
+router.delete('/delete-account', protect, deleteSelfAccount);
 router.route('/fcm-token').put(protect, updateFcmToken);
 router.route('/employees').get(protect, admin, getEmployees);
 router.route('/users').get(protect, admin, getUsers).post(protect, admin, createUserByAdmin);

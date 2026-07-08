@@ -4,6 +4,7 @@ struct CustomerDashboardView: View {
     @ObservedObject var viewModel: CustomerDashboardViewModel
     let userName: String
     let onLogout: () -> Void
+    let onDeleteAccount: () -> Void
     
     @Environment(\.openURL) private var openURL
     
@@ -98,7 +99,7 @@ struct CustomerDashboardView: View {
                         case "Support":
                             CustomerSupportTab(viewModel: viewModel)
                         case "Account":
-                            CustomerAccountTab(viewModel: viewModel, onSelectTab: { activeTab = $0 })
+                            CustomerAccountTab(viewModel: viewModel, onSelectTab: { activeTab = $0 }, onDeleteAccount: onDeleteAccount)
                         default:
                             Text("Unknown Tab")
                         }

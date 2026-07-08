@@ -4,6 +4,7 @@ struct PartnerDashboardView: View {
     @ObservedObject var viewModel: PartnerDashboardViewModel
     let userName: String
     let onLogout: () -> Void
+    let onDeleteAccount: () -> Void
     
     @State private var activeTab = "Overview"
     @State private var showingToast = false
@@ -38,7 +39,7 @@ struct PartnerDashboardView: View {
                     case "Earnings":
                         PartnerEarningsTab(viewModel: viewModel)
                     case "Settings":
-                        PartnerSettingsTab(viewModel: viewModel)
+                        PartnerSettingsTab(viewModel: viewModel, onDeleteAccount: onDeleteAccount)
                     default:
                         Text("Unknown Tab")
                     }

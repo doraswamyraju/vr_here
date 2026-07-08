@@ -17,6 +17,8 @@ struct VRHereIOSApp: App {
     @StateObject private var adminViewModel = AdminDashboardViewModel()
     @StateObject private var freelancerViewModel = FreelancerDashboardViewModel()
     
+    @State private var isShowingRegister = false
+    
     #if os(iOS)
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     #elseif os(macOS)
@@ -47,27 +49,38 @@ struct VRHereIOSApp: App {
                             PartnerDashboardView(
                                 viewModel: partnerViewModel,
                                 userName: authViewModel.getUserName(),
-                                onLogout: { authViewModel.logout() }
+                                onLogout: { authViewModel.logout() },
+                                onDeleteAccount: { authViewModel.deleteAccount() }
                             )
                         case "freelancer":
                             FreelancerDashboardView(
                                 viewModel: freelancerViewModel,
                                 userName: authViewModel.getUserName(),
-                                onLogout: { authViewModel.logout() }
+                                onLogout: { authViewModel.logout() },
+                                onDeleteAccount: { authViewModel.deleteAccount() }
                             )
                         default:
                             CustomerDashboardView(
                                 viewModel: customerViewModel,
                                 userName: authViewModel.getUserName(),
-                                onLogout: { authViewModel.logout() }
+                                onLogout: { authViewModel.logout() },
+                                onDeleteAccount: { authViewModel.deleteAccount() }
                             )
                         }
                     } else {
-                        LoginView(viewModel: authViewModel, onNavigateToRegister: {
-                            // Swift UI Navigation to Register
-                        }, onLoginSuccess: { role in
-                            // Auth transition happens reactively via authState published changes
-                        })
+                        if isShowingRegister {
+                            RegisterView(viewModel: authViewModel, onNavigateToLogin: {
+                                isShowingRegister = false
+                            }, onRegistrationSuccess: {
+                                isShowingRegister = false
+                            })
+                        } else {
+                            LoginView(viewModel: authViewModel, onNavigateToRegister: {
+                                isShowingRegister = true
+                            }, onLoginSuccess: { role in
+                                // Auth transition happens reactively via authState published changes
+                            })
+                        }
                     }
                 }
                 #if os(iOS)

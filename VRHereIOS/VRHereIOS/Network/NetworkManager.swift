@@ -179,6 +179,10 @@ class NetworkManager {
         return try await performRequest(path: "api/auth/fcm-token", method: "PUT", body: data)
     }
     
+    func deleteAccount() async throws -> GeneralResponse {
+        return try await performRequest(path: "api/auth/delete-account", method: "DELETE")
+    }
+    
     // --- ATTENDANCE ---
     
     func getAttendance() async throws -> [AttendanceResponse] {

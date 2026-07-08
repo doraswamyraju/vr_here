@@ -69,7 +69,7 @@ class PartnerDashboardViewModel: ObservableObject {
             do {
                 _ = try await NetworkManager.shared.markNotificationAsRead(id: id)
                 if let index = notifications.firstIndex(where: { $0.id == id }) {
-                    var n = notifications[index]
+                    let n = notifications[index]
                     notifications[index] = NotificationResponse(
                         idVal: n.idVal,
                         title: n.title,

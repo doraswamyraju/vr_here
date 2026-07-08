@@ -9,7 +9,7 @@ let package = Package(
     ],
     products: [
         .iOSApplication(
-            name: "VRHereIOS",
+            name: "VR Here BMS",
             targets: ["VRHereIOS"],
             bundleIdentifier: "com.sbr.vrherebms.ios",
             teamIdentifier: "",

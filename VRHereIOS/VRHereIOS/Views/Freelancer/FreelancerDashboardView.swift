@@ -4,6 +4,7 @@ struct FreelancerDashboardView: View {
     @ObservedObject var viewModel: FreelancerDashboardViewModel
     let userName: String
     let onLogout: () -> Void
+    let onDeleteAccount: () -> Void
     
     @State private var activeTab = "Overview"
     @State private var selectedOrderForProcessing: OrderResponse? = nil
@@ -52,7 +53,7 @@ struct FreelancerDashboardView: View {
                     case "Notifications":
                         FreelancerNotificationsTab(viewModel: viewModel)
                     case "Settings":
-                        FreelancerSettingsTab(viewModel: viewModel)
+                        FreelancerSettingsTab(viewModel: viewModel, onDeleteAccount: onDeleteAccount)
                     default:
                         Text("Unknown Tab")
                     }

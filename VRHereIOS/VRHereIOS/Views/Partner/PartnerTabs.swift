@@ -183,6 +183,9 @@ struct PartnerEarningsTab: View {
 // ==========================================
 struct PartnerSettingsTab: View {
     @ObservedObject var viewModel: PartnerDashboardViewModel
+    let onDeleteAccount: () -> Void
+    
+    @State private var showingDeleteAlert = false
     
     var body: some View {
         ScrollView {
@@ -234,8 +237,46 @@ struct PartnerSettingsTab: View {
                 .glassCard()
                 .padding(.horizontal, 20)
                 
+                // Danger Zone
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Danger Zone")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.primaryRed)
+                    
+                    Text("Permanently delete your partner account and all associated commission tracking. This action is irreversible.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.textMuted)
+                        .lineLimit(nil)
+                    
+                    Button(action: {
+                        showingDeleteAlert = true
+                    }) {
+                        Text("Delete Account")
+                            .font(.system(size: 12, weight: .black))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(Color.primaryRed)
+                            .cornerRadius(10)
+                    }
+                    .buttonStyle(ScaleOnPressButtonStyle())
+                }
+                .padding(16)
+                .glassCard()
+                .padding(.horizontal, 20)
+                
                 Spacer().frame(height: 100)
             }
+        }
+        .alert(isPresented: $showingDeleteAlert) {
+            Alert(
+                title: Text("Delete Account?"),
+                message: Text("Are you sure you want to permanently delete your partner account? All your commission history will be destroyed immediately. This cannot be undone."),
+                primaryButton: .destructive(Text("Delete Permanently")) {
+                    onDeleteAccount()
+                },
+                secondaryButton: .cancel()
+            )
         }
     }
 }
