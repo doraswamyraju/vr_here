@@ -59,8 +59,8 @@
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* VRHereIOS */,
 			);
-			name = VRHereIOS;
-			productName = VRHereIOS;
+			name = "VR Here BMS";
+			productName = "VR Here BMS";
 			productReference = 000000000000000000000120 /* VRHereIOS.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -248,6 +248,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "VR Here BMS";
+				INFOPLIST_KEY_CFBundleName = "VR Here BMS";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -289,6 +290,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "VR Here BMS";
+				INFOPLIST_KEY_CFBundleName = "VR Here BMS";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
