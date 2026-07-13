@@ -123,7 +123,7 @@ const BookkeepingView = ({ token }) => {
     // Automatic invoice numbering
     useEffect(() => {
         if (showAddForm) {
-            const prefix = txType === 'Sales' ? invoicePrefix : 'BILL-';
+            const prefix = txType === 'Sales' ? invoicePrefix : txType === 'Purchase' ? 'BILL-' : txType === 'Income' ? 'INC-' : 'EXP-';
             const count = transactions.filter(t => t.transactionType === txType).length + 1;
             const paddedCount = String(count).padStart(4, '0');
             setDocNumber(`${prefix}${paddedCount}`);
@@ -206,7 +206,23 @@ const BookkeepingView = ({ token }) => {
     const handleAddTransaction = async (e) => {
         e.preventDefault();
         try {
-            const mappedItems = items.map(item => {
+            const isVoucher = txType === 'Income' || txType === 'Expense';
+            
+            // Map items payload
+            const mappedItems = isVoucher ? [
+                {
+                    description: partyName, // use category entered
+                    hsnSac: '9999',
+                    qty: 1,
+                    rate: items[0]?.rate || 0,
+                    gstRate: 0,
+                    discount: 0,
+                    cgst: 0,
+                    sgst: 0,
+                    igst: 0,
+                    amount: items[0]?.rate || 0
+                }
+            ] : items.map(item => {
                 const discountAmount = Number(item.qty * item.rate * (item.discountPercent / 100));
                 const taxableVal = Number((item.qty * item.rate) - discountAmount);
                 const gstAmt = Number(taxableVal * (item.gstRate / 100));
@@ -229,8 +245,8 @@ const BookkeepingView = ({ token }) => {
                 transactionType: txType,
                 docNumber,
                 docDate,
-                partyName,
-                partyGstin,
+                partyName: isVoucher ? 'General Voucher Ledger' : partyName,
+                partyGstin: isVoucher ? 'N/A' : partyGstin,
                 placeOfSupply,
                 isInterstate,
                 notes,
@@ -265,37 +281,38 @@ const BookkeepingView = ({ token }) => {
 
         setUploadingBill(true);
         setTimeout(() => {
-            setPartyName('HighTech Solutions Ltd');
-            setPartyGstin('36AABCH4567D1Z8');
-            setDocNumber('OCR-BILL-' + Math.floor(Math.random() * 10000));
+            if (txType === 'Expense') {
+                setPartyName('Office Utilities');
+                setItems([
+                    { description: 'Office Utilities', qty: 1, unit: 'NONE', rate: 4500, discountPercent: 0, gstRate: 0 }
+                ]);
+                setDocNumber('OCR-EXP-' + Math.floor(Math.random() * 10000));
+            } else {
+                setPartyName('HighTech Solutions Ltd');
+                setPartyGstin('36AABCH4567D1Z8');
+                setDocNumber('OCR-BILL-' + Math.floor(Math.random() * 10000));
+                setItems([
+                    { description: 'Equipment Purchases & Office Supplies', qty: 2, unit: 'PCS', rate: 12000, discountPercent: 5, gstRate: 18 }
+                ]);
+            }
             setDocDate(new Date().toISOString().split('T')[0]);
-            setItems([
-                { description: 'Equipment Purchases & Office Supplies', qty: 2, unit: 'PCS', rate: 12000, discountPercent: 5, gstRate: 18 }
-            ]);
             setUploadingBill(false);
             alert('Bill successfully scanned! OCR details populated.');
         }, 1500);
     };
 
     const handleCopyShareLink = () => {
+        if (!selectedInvoice) return;
         const mockLink = `${window.location.origin}/invoice/view/${selectedInvoice._id}`;
         navigator.clipboard.writeText(mockLink);
         alert('Invoice share link copied to clipboard!');
     };
 
-    const filteredTransactions = transactions.filter(t => {
-        if (filterType !== 'All' && t.transactionType !== filterType) return false;
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            return t.partyName.toLowerCase().includes(query) || t.docNumber.toLowerCase().includes(query);
-        }
-        return true;
-    });
-
-    const totalSales = transactions.filter(t => t.transactionType === 'Sales').reduce((acc, c) => acc + c.summary.totalAmount, 0);
-    const totalPurchases = transactions.filter(t => t.transactionType === 'Purchase').reduce((acc, c) => acc + c.summary.totalAmount, 0);
-    const totalExpenses = transactions.filter(t => t.transactionType === 'Expense').reduce((acc, c) => acc + c.summary.totalAmount, 0);
-    const totalIncome = transactions.filter(t => t.transactionType === 'Income').reduce((acc, c) => acc + c.summary.totalAmount, 0);
+    // Safe totals calculation (using optional chaining to prevent crash if ledger returns corrupted/legacy formats)
+    const totalSales = transactions.filter(t => t?.transactionType === 'Sales').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
+    const totalPurchases = transactions.filter(t => t?.transactionType === 'Purchase').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
+    const totalExpenses = transactions.filter(t => t?.transactionType === 'Expense').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
+    const totalIncome = transactions.filter(t => t?.transactionType === 'Income').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
 
     if (selectedInvoice) {
         return (

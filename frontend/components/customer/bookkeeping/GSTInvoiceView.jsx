@@ -3,8 +3,116 @@ import { Printer, Share2 } from 'lucide-react';
 
 const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) => {
     if (!selectedInvoice) return null;
+    
     const isSales = selectedInvoice.transactionType === 'Sales';
+    const isPurchase = selectedInvoice.transactionType === 'Purchase';
+    const isVoucher = selectedInvoice.transactionType === 'Income' || selectedInvoice.transactionType === 'Expense';
 
+    // Safe retrieval with fallbacks to prevent crash
+    const docNumber = selectedInvoice.docNumber || 'N/A';
+    const docDate = selectedInvoice.docDate ? new Date(selectedInvoice.docDate).toLocaleDateString('en-IN') : 'N/A';
+    const partyName = selectedInvoice.partyName || 'N/A';
+    const partyGstin = selectedInvoice.partyGstin || 'N/A';
+    const placeOfSupply = selectedInvoice.placeOfSupply || 'N/A';
+    const notes = selectedInvoice.notes || '';
+    const items = selectedInvoice.items || [];
+    const totalAmount = selectedInvoice.summary?.totalAmount || 0;
+    const totalTaxableValue = selectedInvoice.summary?.totalTaxableValue || 0;
+
+    if (isVoucher) {
+        // Render Receipt/Payment Voucher matching industry standard
+        const isExpense = selectedInvoice.transactionType === 'Expense';
+        return (
+            <div className="space-y-6 pb-20 max-w-4xl mx-auto animate-in fade-in duration-300">
+                <div className="flex justify-between items-center bg-white p-4 rounded-3xl border border-slate-200 sticky top-0 z-10 shadow-sm no-print text-xs">
+                    <button 
+                        onClick={onBack} 
+                        className="flex items-center gap-2 text-slate-600 font-bold hover:text-slate-900 transition"
+                    >
+                         ← Back to Ledger
+                    </button>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={onCopyShareLink}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold flex items-center gap-1.5 transition"
+                        >
+                            <Share2 size={14} /> Copy Share Link
+                        </button>
+                        <button 
+                            onClick={() => window.print()} 
+                            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center gap-1.5 shadow-lg shadow-indigo-100"
+                        >
+                            <Printer size={14} /> Print / Save PDF
+                        </button>
+                    </div>
+                </div>
+
+                {/* Printable Voucher template */}
+                <div className="bg-white p-8 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-xl font-sans text-slate-800 printable-area">
+                    <div className="text-center border-b pb-4 mb-6">
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-widest">
+                            {company?.companyName || 'BUSINESS VOUCHER'}
+                        </h2>
+                        <p className="text-xs text-slate-500">{company?.tradeName}</p>
+                        <p className="text-[10px] text-slate-400 mt-1">{company?.address}</p>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-slate-900 text-white p-4 rounded-2xl mb-6">
+                        <span className="text-sm font-black uppercase tracking-wider">
+                            {isExpense ? 'PAYMENT VOUCHER' : 'RECEIPT VOUCHER'}
+                        </span>
+                        <span className="text-xs font-bold">Voucher No: {docNumber}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-xs mb-8">
+                        <div>
+                            <p className="text-slate-400 font-bold uppercase text-[9px] mb-1">Received From / Paid To:</p>
+                            <p className="font-bold text-slate-900 text-sm">{partyName}</p>
+                            {partyGstin !== 'N/A' && <p className="mt-1">GSTIN: {partyGstin}</p>}
+                        </div>
+                        <div className="text-right">
+                            <p className="text-slate-400 font-bold uppercase text-[9px] mb-1">Voucher Date:</p>
+                            <p className="font-bold text-slate-900 text-sm">{docDate}</p>
+                        </div>
+                    </div>
+
+                    {/* Voucher Description */}
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden mb-8">
+                        <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                    <th className="p-4">Particulars / Account Description</th>
+                                    <th className="p-4 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {items.map((item, idx) => (
+                                    <tr key={idx} className="border-b border-slate-100">
+                                        <td className="p-4 font-bold text-slate-800">{item.description}</td>
+                                        <td className="p-4 text-right font-black text-slate-900">₹{item.amount?.toLocaleString() || '0'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Footer / Total */}
+                    <div className="flex justify-between items-start pt-6 border-t border-slate-100 flex-wrap gap-4">
+                        <div className="text-xs max-w-sm">
+                            <p className="font-bold text-slate-500">Narration / Notes:</p>
+                            <p className="text-slate-700 italic mt-1">{notes || 'No remarks added.'}</p>
+                        </div>
+                        <div className="text-right text-lg">
+                            <span className="font-bold text-slate-400 mr-4">Total Amount:</span>
+                            <span className="font-black text-indigo-600">₹{totalAmount.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Tax Invoice / Purchase Bill Layout
     return (
         <div className="space-y-6 pb-20 max-w-4xl mx-auto animate-in fade-in duration-300">
             <div className="flex justify-between items-center bg-white p-4 rounded-3xl border border-slate-200 sticky top-0 z-10 shadow-sm no-print text-xs">
@@ -30,13 +138,13 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                 </div>
             </div>
 
-            {/* Standard GST Invoice visual layout */}
+            {/* Standard GST Invoice template */}
             <div className="bg-white p-8 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-xl font-sans text-slate-800 printable-area">
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8">
                     <div>
                         <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-none">
-                            {isSales ? (company?.companyName || 'TAX INVOICE') : (selectedInvoice.partyName)}
+                            {isSales ? (company?.companyName || 'TAX INVOICE') : partyName}
                         </h1>
                         <p className="text-xs font-black text-indigo-600 uppercase tracking-widest mt-1.5">
                             {isSales ? (company?.tradeName || 'GST Registered Supplier') : 'Supplier Vendor'}
@@ -44,8 +152,8 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                         
                         <div className="text-[11px] space-y-1 text-slate-500 font-medium mt-4">
                             <p>Address: {isSales ? (company?.address || 'N/A') : 'Refer to vendor records'}</p>
-                            <p className="font-bold text-slate-800">GSTIN: {isSales ? (company?.gstin || 'N/A') : (selectedInvoice.partyGstin || 'N/A')}</p>
-                            <p>State: {isSales ? (company?.state || 'N/A') : (selectedInvoice.placeOfSupply)}</p>
+                            <p className="font-bold text-slate-800">GSTIN: {isSales ? (company?.gstin || 'N/A') : partyGstin}</p>
+                            <p>State: {isSales ? (company?.state || 'N/A') : placeOfSupply}</p>
                         </div>
                     </div>
 
@@ -53,8 +161,8 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                         <h2 className="text-2xl font-black text-slate-900 uppercase tracking-wide mb-1">
                             {isSales ? 'TAX INVOICE' : 'PURCHASE BILL'}
                         </h2>
-                        <p className="text-xs font-bold text-slate-400">Invoice No: {selectedInvoice.docNumber}</p>
-                        <p className="text-xs font-bold text-slate-500 mt-2">Date: {new Date(selectedInvoice.docDate).toLocaleDateString('en-IN')}</p>
+                        <p className="text-xs font-bold text-slate-400">Invoice No: {docNumber}</p>
+                        <p className="text-xs font-bold text-slate-500 mt-2">Date: {docDate}</p>
                     </div>
                 </div>
 
@@ -63,17 +171,17 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                     <div>
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Billed To (Recipient):</h3>
                         <p className="font-black text-slate-900 text-lg leading-none mb-2">
-                            {isSales ? (selectedInvoice.partyName) : (company?.companyName || 'N/A')}
+                            {isSales ? partyName : (company?.companyName || 'N/A')}
                         </p>
                         <p className="text-xs font-bold text-slate-800">
-                            GSTIN: {isSales ? (selectedInvoice.partyGstin || 'N/A') : (company?.gstin || 'N/A')}
+                            GSTIN: {isSales ? partyGstin : (company?.gstin || 'N/A')}
                         </p>
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-center gap-2 text-xs">
                         <div className="flex justify-between">
                             <span className="text-slate-400 font-bold uppercase text-[9px]">Place of Supply:</span>
-                            <span className="font-bold text-slate-800">{selectedInvoice.placeOfSupply}</span>
+                            <span className="font-bold text-slate-800">{placeOfSupply}</span>
                         </div>
                     </div>
                 </div>
@@ -91,13 +199,13 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-xs">
-                            {selectedInvoice.items.map((item, idx) => (
+                            {items.map((item, idx) => (
                                 <tr key={idx}>
                                     <td className="p-4 font-bold text-slate-900">{item.description}</td>
                                     <td className="p-4 text-center font-bold text-slate-800">{item.qty}</td>
-                                    <td className="p-4 text-right font-medium">₹{item.rate.toLocaleString()}</td>
+                                    <td className="p-4 text-right font-medium">₹{item.rate ? item.rate.toLocaleString() : '0'}</td>
                                     <td className="p-4 text-right text-slate-600">{item.gstRate}%</td>
-                                    <td className="p-4 text-right font-black text-slate-900">₹{item.amount.toLocaleString()}</td>
+                                    <td className="p-4 text-right font-black text-slate-900">₹{item.amount ? item.amount.toLocaleString() : '0'}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -120,12 +228,12 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                     <div className="w-80 space-y-3 text-sm">
                         <div className="flex justify-between">
                             <span className="font-bold text-slate-500">Taxable Subtotal:</span>
-                            <span className="font-bold text-slate-900">₹{selectedInvoice.summary.totalTaxableValue.toLocaleString()}</span>
+                            <span className="font-bold text-slate-900">₹{totalTaxableValue.toLocaleString()}</span>
                         </div>
                         <div className="h-px bg-slate-200" />
                         <div className="flex justify-between text-lg">
                             <span className="font-black text-slate-900">Total Invoice Value:</span>
-                            <span className="font-black text-indigo-600">₹{selectedInvoice.summary.totalAmount.toLocaleString()}</span>
+                            <span className="font-black text-indigo-600">₹{totalAmount.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>

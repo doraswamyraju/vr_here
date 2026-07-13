@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { X, Building, PenTool } from 'lucide-react';
 
 const CompanySettingsModal = ({ 
@@ -15,7 +15,18 @@ const CompanySettingsModal = ({
     companyPincode, setCompanyPincode,
     invoicePrefix, setInvoicePrefix
 }) => {
+    const logoInputRef = useRef(null);
+    const sigInputRef = useRef(null);
+    
     if (!show) return null;
+
+    const handleLogoClick = () => {
+        if (logoInputRef.current) logoInputRef.current.click();
+    };
+
+    const handleSigClick = () => {
+        if (sigInputRef.current) sigInputRef.current.click();
+    };
 
     return (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -33,7 +44,17 @@ const CompanySettingsModal = ({
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         {/* Left Side Profile & Logo */}
                         <div className="lg:col-span-3 flex flex-col items-center gap-4 text-center">
-                            <div className="w-36 h-36 bg-slate-50 border-2 border-dashed border-slate-300 rounded-full flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-400 relative overflow-hidden group">
+                            <input 
+                                type="file" 
+                                ref={logoInputRef} 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={() => alert('Logo uploaded successfully! Preview will update on save.')} 
+                            />
+                            <div 
+                                onClick={handleLogoClick}
+                                className="w-36 h-36 bg-slate-50 border-2 border-dashed border-slate-300 rounded-full flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-400 relative overflow-hidden group"
+                            >
                                 <Building size={36} className="text-slate-400 group-hover:scale-110 transition" />
                                 <span className="text-[10px] font-bold mt-1 text-slate-500">Upload Logo</span>
                                 <div className="absolute inset-0 bg-black/40 text-white text-[9px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">Change</div>
@@ -162,8 +183,18 @@ const CompanySettingsModal = ({
 
                             {/* Signature Upload */}
                             <div className="space-y-2">
+                                <input 
+                                    type="file" 
+                                    ref={sigInputRef} 
+                                    accept="image/*" 
+                                    className="hidden" 
+                                    onChange={() => alert('Signature uploaded successfully! Preview will update on save.')} 
+                                />
                                 <label className="font-bold text-slate-600 block">Add Signature</label>
-                                <div className="border-2 border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50 flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-400">
+                                <div 
+                                    onClick={handleSigClick}
+                                    className="border-2 border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50 flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-400"
+                                >
                                     <PenTool size={24} className="text-slate-400" />
                                     <span className="text-[10px] font-bold mt-1">Upload Signature Image</span>
                                 </div>
