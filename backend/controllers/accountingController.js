@@ -229,7 +229,11 @@ export const getCompanyDetails = asyncHandler(async (req, res) => {
 // @route   POST /api/accounting/company
 // @access  Private
 export const upsertCompanyDetails = asyncHandler(async (req, res) => {
-    const { companyName, tradeName, gstin, address, state, bankDetails } = req.body;
+    const { 
+        companyName, tradeName, gstin, address, state, bankDetails,
+        phone, email, businessType, businessCategory, pincode,
+        logo, signature, upiId, qrCode
+    } = req.body;
 
     let company = await CompanyDetails.findOne({ user: req.user._id });
 
@@ -239,6 +243,15 @@ export const upsertCompanyDetails = asyncHandler(async (req, res) => {
         company.gstin = gstin || company.gstin;
         company.address = address || company.address;
         company.state = state || company.state;
+        company.phone = phone !== undefined ? phone : company.phone;
+        company.email = email !== undefined ? email : company.email;
+        company.businessType = businessType !== undefined ? businessType : company.businessType;
+        company.businessCategory = businessCategory !== undefined ? businessCategory : company.businessCategory;
+        company.pincode = pincode !== undefined ? pincode : company.pincode;
+        company.logo = logo !== undefined ? logo : company.logo;
+        company.signature = signature !== undefined ? signature : company.signature;
+        company.upiId = upiId !== undefined ? upiId : company.upiId;
+        company.qrCode = qrCode !== undefined ? qrCode : company.qrCode;
         if (bankDetails) {
             company.bankDetails = { ...company.bankDetails, ...bankDetails };
         }
@@ -251,6 +264,15 @@ export const upsertCompanyDetails = asyncHandler(async (req, res) => {
             gstin,
             address,
             state,
+            phone,
+            email,
+            businessType,
+            businessCategory,
+            pincode,
+            logo,
+            signature,
+            upiId,
+            qrCode,
             bankDetails
         });
     }

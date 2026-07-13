@@ -86,10 +86,14 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-800 pb-6">
                     <div className="flex items-start gap-4">
-                        {/* Beautiful generated logo badge */}
-                        <div className="w-14 h-14 bg-slate-900 rounded-2xl flex flex-col items-center justify-center text-white font-black text-lg shadow-md shrink-0">
-                            {company?.companyName ? company.companyName.split(' ').map(n=>n[0]).join('').slice(0, 3).toUpperCase() : 'CO'}
-                        </div>
+                        {/* Beautiful company logo or initials badge fallback */}
+                        {company?.logo ? (
+                            <img src={company.logo} className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-sm shrink-0" alt="Logo" />
+                        ) : (
+                            <div className="w-14 h-14 bg-slate-900 rounded-2xl flex flex-col items-center justify-center text-white font-black text-lg shadow-md shrink-0">
+                                {company?.companyName ? company.companyName.split(' ').map(n=>n[0]).join('').slice(0, 3).toUpperCase() : 'CO'}
+                            </div>
+                        )}
                         <div>
                             <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">
                                 {isSales ? (company?.companyName || 'TAX INVOICE') : partyName}
@@ -177,15 +181,26 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                 {/* Totals & Signatures Block */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
                     <div className="space-y-4">
-                        {/* Bank Details */}
-                        {bankAccount && bankAccount !== 'N/A' && (
-                            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl max-w-sm text-xs">
-                                <h4 className="font-black text-slate-800 mb-2 uppercase tracking-wide text-[9px] text-indigo-600">Bank Details (For Transfers)</h4>
-                                <p className="font-semibold">Bank: {bankName}</p>
-                                <p className="font-semibold">A/c Number: {bankAccount}</p>
-                                <p className="font-semibold">IFSC Code: {bankIfsc}</p>
-                            </div>
-                        )}
+                        {/* Bank Details & QR */}
+                        <div className="flex flex-col sm:flex-row gap-4 items-start">
+                            {bankAccount && bankAccount !== 'N/A' && (
+                                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl max-w-sm text-xs flex-1">
+                                    <h4 className="font-black text-slate-800 mb-2 uppercase tracking-wide text-[9px] text-indigo-600">Bank Details (For Transfers)</h4>
+                                    <p className="font-semibold">Bank: {bankName}</p>
+                                    <p className="font-semibold">A/c: {bankAccount}</p>
+                                    <p className="font-semibold">IFSC: {bankIfsc}</p>
+                                    {company?.upiId && (
+                                        <p className="font-bold text-indigo-600 mt-1">UPI: {company.upiId}</p>
+                                    )}
+                                </div>
+                            )}
+                            {company?.qrCode && (
+                                <div className="p-2 bg-white border border-slate-200 rounded-2xl text-center shrink-0">
+                                    <img src={company.qrCode} className="w-24 h-24 object-contain animate-in zoom-in duration-300" alt="Payment QR" />
+                                    <span className="text-[8px] font-bold text-slate-400 block mt-1">SCAN TO PAY</span>
+                                </div>
+                            )}
+                        </div>
                         <p className="text-[10px] text-slate-400 font-medium italic leading-relaxed">
                             Declaration: We declare that this voucher/invoice shows the actual price of the goods or services described and that all particulars are true and correct.
                         </p>
@@ -206,11 +221,14 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                         </div>
 
                         {/* Signatures block */}
-                        <div className="text-center pt-8 border-t border-slate-100 w-64">
-                            {/* Signature Placeholder script */}
-                            <p className="font-script text-indigo-700 text-lg leading-none select-none tracking-widest italic font-bold">
-                                {company?.companyName || 'Signatory'}
-                            </p>
+                        <div className="text-center pt-8 border-t border-slate-100 w-64 flex flex-col items-center">
+                            {company?.signature ? (
+                                <img src={company.signature} className="h-12 object-contain mb-1" alt="Signature" />
+                            ) : (
+                                <p className="font-script text-indigo-700 text-lg leading-none select-none tracking-widest italic font-bold mb-2">
+                                    {company?.companyName || 'Signatory'}
+                                </p>
+                            )}
                             <div className="h-px bg-slate-300 w-full my-1" />
                             <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Authorized Signatory</p>
                         </div>

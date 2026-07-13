@@ -16,12 +16,27 @@ const CompanySettingsModal = ({
     invoicePrefix, setInvoicePrefix,
     bankName, setBankName,
     bankAccount, setBankAccount,
-    bankIfsc, setBankIfsc
+    bankIfsc, setBankIfsc,
+    logo, setLogo,
+    signature, setSignature,
+    upiId, setUpiId,
+    qrCode, setQrCode
 }) => {
     const logoInputRef = useRef(null);
     const sigInputRef = useRef(null);
+    const qrInputRef = useRef(null);
     
     if (!show) return null;
+
+    const handleFileChange = (e, setter) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setter(reader.result);
+        };
+        reader.readAsDataURL(file);
+    };
 
     const handleLogoClick = () => {
         if (logoInputRef.current) logoInputRef.current.click();
@@ -52,14 +67,20 @@ const CompanySettingsModal = ({
                                 ref={logoInputRef} 
                                 accept="image/*" 
                                 className="hidden" 
-                                onChange={() => alert('Logo uploaded successfully! Preview will update on save.')} 
+                                onChange={e => handleFileChange(e, setLogo)} 
                             />
                             <div 
                                 onClick={handleLogoClick}
                                 className="w-36 h-36 bg-slate-50 border-2 border-dashed border-slate-300 rounded-full flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-400 relative overflow-hidden group"
                             >
-                                <Building size={36} className="text-slate-400 group-hover:scale-110 transition" />
-                                <span className="text-[10px] font-bold mt-1 text-slate-500">Upload Logo</span>
+                                {logo ? (
+                                    <img src={logo} className="w-full h-full object-cover animate-in fade-in" alt="Logo" />
+                                ) : (
+                                    <>
+                                        <Building size={36} className="text-slate-400 group-hover:scale-110 transition" />
+                                        <span className="text-[10px] font-bold mt-1 text-slate-500">Upload Logo</span>
+                                    </>
+                                )}
                                 <div className="absolute inset-0 bg-black/40 text-white text-[9px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">Change</div>
                             </div>
                             <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Logo helps brand invoices</p>
@@ -210,6 +231,37 @@ const CompanySettingsModal = ({
                                     onChange={e => setBankIfsc(e.target.value)} 
                                     className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 focus:outline-none uppercase"
                                 />
+                                
+                                {/* UPI / QR details */}
+                                <div className="pt-2 space-y-2">
+                                    <label className="font-bold text-slate-700 block">UPI ID for Payments Collection</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g. business@upi" 
+                                        value={upiId} 
+                                        onChange={e => setUpiId(e.target.value)} 
+                                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 focus:outline-none"
+                                    />
+                                    
+                                    <label className="font-bold text-slate-700 block">Payment QR Code</label>
+                                    <input 
+                                        type="file" 
+                                        ref={qrInputRef} 
+                                        accept="image/*" 
+                                        className="hidden" 
+                                        onChange={e => handleFileChange(e, setQrCode)} 
+                                    />
+                                    <div 
+                                        onClick={() => qrInputRef.current && qrInputRef.current.click()}
+                                        className="border border-slate-300 rounded-2xl p-4 bg-slate-50 flex items-center justify-center text-slate-400 cursor-pointer hover:bg-indigo-50/50"
+                                    >
+                                        {qrCode ? (
+                                            <img src={qrCode} className="w-20 h-20 object-contain" alt="QR Preview" />
+                                        ) : (
+                                            <span className="text-[10px] font-bold">Upload QR Code Image</span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Signature Upload */}
@@ -219,15 +271,21 @@ const CompanySettingsModal = ({
                                     ref={sigInputRef} 
                                     accept="image/*" 
                                     className="hidden" 
-                                    onChange={() => alert('Signature uploaded successfully! Preview will update on save.')} 
+                                    onChange={e => handleFileChange(e, setSignature)} 
                                 />
                                 <label className="font-bold text-slate-600 block">Add Signature</label>
                                 <div 
                                     onClick={handleSigClick}
-                                    className="border-2 border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50 flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-400"
+                                    className="border-2 border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50 flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-400 relative overflow-hidden"
                                 >
-                                    <PenTool size={24} className="text-slate-400" />
-                                    <span className="text-[10px] font-bold mt-1">Upload Signature Image</span>
+                                    {signature ? (
+                                        <img src={signature} className="w-full h-16 object-contain" alt="Signature" />
+                                    ) : (
+                                        <>
+                                            <PenTool size={24} className="text-slate-400" />
+                                            <span className="text-[10px] font-bold mt-1">Upload Signature Image</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>

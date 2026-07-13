@@ -76,6 +76,11 @@ const BookkeepingView = ({ token }) => {
     const [bankAccount, setBankAccount] = useState('');
     const [bankIfsc, setBankIfsc] = useState('');
 
+    const [logo, setLogo] = useState('');
+    const [signature, setSignature] = useState('');
+    const [upiId, setUpiId] = useState('');
+    const [qrCode, setQrCode] = useState('');
+
     const config = { headers: { Authorization: `Bearer ${token}` } };
 
     // Save parties
@@ -105,6 +110,10 @@ const BookkeepingView = ({ token }) => {
                 setCompanyType(c.businessType || 'Service');
                 setCompanyCategory(c.businessCategory || 'Consultancy');
                 setCompanyPincode(c.pincode || '');
+                setLogo(c.logo || '');
+                setSignature(c.signature || '');
+                setUpiId(c.upiId || '');
+                setQrCode(c.qrCode || '');
                 if (c.bankDetails) {
                     setBankName(c.bankDetails.bankName || '');
                     setBankAccount(c.bankDetails.accountNumber || '');
@@ -153,6 +162,10 @@ const BookkeepingView = ({ token }) => {
                 businessType: companyType,
                 businessCategory: companyCategory,
                 pincode: companyPincode,
+                logo,
+                signature,
+                upiId,
+                qrCode,
                 bankDetails: {
                     bankName,
                     accountNumber: bankAccount,
@@ -510,6 +523,14 @@ const BookkeepingView = ({ token }) => {
                 setBankAccount={setBankAccount}
                 bankIfsc={bankIfsc}
                 setBankIfsc={setBankIfsc}
+                logo={logo}
+                setLogo={setLogo}
+                signature={signature}
+                setSignature={setSignature}
+                upiId={upiId}
+                setUpiId={setUpiId}
+                qrCode={qrCode}
+                setQrCode={setQrCode}
             />
         </div>
     );

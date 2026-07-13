@@ -316,7 +316,7 @@ export default function CustomerApp() {
 
             {/* --- MOBILE BOTTOM NAVBAR --- */}
             <nav className="md:hidden fixed bottom-1.5 left-4 right-4 h-16 bg-slate-900/90 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-around px-2 z-50 shadow-2xl shadow-indigo-200/50">
-               {NavItems.filter(i => i.id !== 'New').map((item) => (
+               {NavItems.filter(i => i.id !== 'New' && i.id !== 'Bookkeeping').map((item) => (
                   <button
                      key={item.id}
                      onClick={() => setActiveTab(item.id)}
