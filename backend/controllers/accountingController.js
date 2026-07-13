@@ -99,9 +99,14 @@ export const createTransaction = asyncHandler(async (req, res) => {
 // @route   GET /api/accounting/transactions
 // @access  Private
 export const getTransactions = asyncHandler(async (req, res) => {
-    const { type, status, startDate, endDate } = req.query;
+    const { type, status, startDate, endDate, clientId } = req.query;
 
-    const query = { clientUser: req.user._id };
+    let targetUserId = req.user._id;
+    if (clientId && (req.user.role === 'admin' || req.user.role === 'employee')) {
+        targetUserId = clientId;
+    }
+
+    const query = { clientUser: targetUserId };
 
     if (type) query.transactionType = type;
     if (status) query.status = status;
@@ -257,8 +262,12 @@ export const upsertCompanyDetails = asyncHandler(async (req, res) => {
 // @route   GET /api/accounting/export/tally
 // @access  Private
 export const exportTallyVouchers = asyncHandler(async (req, res) => {
-    const { startDate, endDate } = req.query;
-    const query = { clientUser: req.user._id };
+    const { startDate, endDate, clientId } = req.query;
+    let targetUserId = req.user._id;
+    if (clientId && (req.user.role === 'admin' || req.user.role === 'employee')) {
+        targetUserId = clientId;
+    }
+    const query = { clientUser: targetUserId };
     if (startDate || endDate) {
         query.docDate = {};
         if (startDate) query.docDate.$gte = new Date(startDate);
@@ -364,8 +373,12 @@ export const exportTallyVouchers = asyncHandler(async (req, res) => {
 // @route   GET /api/accounting/export/gstr1
 // @access  Private
 export const exportGstr1Data = asyncHandler(async (req, res) => {
-    const { startDate, endDate } = req.query;
-    const query = { clientUser: req.user._id, transactionType: 'Sales' };
+    const { startDate, endDate, clientId } = req.query;
+    let targetUserId = req.user._id;
+    if (clientId && (req.user.role === 'admin' || req.user.role === 'employee')) {
+        targetUserId = clientId;
+    }
+    const query = { clientUser: targetUserId, transactionType: 'Sales' };
     if (startDate || endDate) {
         query.docDate = {};
         if (startDate) query.docDate.$gte = new Date(startDate);
@@ -373,7 +386,7 @@ export const exportGstr1Data = asyncHandler(async (req, res) => {
     }
 
     const sales = await Transaction.find(query);
-    const company = await CompanyDetails.findOne({ user: req.user._id });
+    const company = await CompanyDetails.findOne({ user: targetUserId });
     const gstinSender = company?.gstin || '';
 
     // GSTR-1 structure

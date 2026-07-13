@@ -47,6 +47,7 @@ import { useNotifications, NotificationsFeed, InAppBanner } from './modules/noti
 import HRMSModule from './modules/hrms/v1.1/index.jsx';
 import CustomersModule from './components/admin/crm/CustomersModule';
 import FreelancersModule from './components/admin/FreelancersModule';
+import AdminBookkeepingView from './components/admin/AdminBookkeepingView';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -699,6 +700,7 @@ function AdminApp() {
     { key: 'Services', label: 'Services Master', icon: FileText },
     { key: 'Referrals', label: 'Referral Partners', icon: TrendingUp },
     { key: 'Recurring', label: 'Recurring Hub', icon: RefreshCcw },
+    { key: 'Bookkeeping', label: 'Bookkeeping Audits', icon: BookOpen },
     { key: 'Settings', label: 'Settings', icon: Settings }
   ];
 
@@ -807,6 +809,7 @@ function AdminApp() {
         }}
       />
     );
+    if (activeTab === 'Bookkeeping') return <AdminBookkeepingView token={userInfo?.token} />;
     return <DummyView title="Settings" />;
   };
 

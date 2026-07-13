@@ -20,6 +20,7 @@ import { dummyTickets } from './components/employee/mockData';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 import HRMSModule from './modules/hrms/v1.1/index.jsx';
 import ServicesMasterView from './components/admin/ServicesMasterView';
+import AdminBookkeepingView from './components/admin/AdminBookkeepingView';
 
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
 
@@ -470,6 +471,8 @@ const EmployeeApp = () => {
         return <CommercialsModule selectedOrder={selectedOrder} />;
       case 'finance':
         return <FinanceModule token={userInfo?.token} />;
+      case 'bookkeeping':
+        return <AdminBookkeepingView token={userInfo?.token} />;
       case 'notifications':
         return (
           <NotificationsFeed 
