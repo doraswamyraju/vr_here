@@ -73,6 +73,7 @@ import hrmsRoutes from './routes/hrmsRoutes.js';
 import servicePageRoutes from './routes/servicePageRoutes.js';
 import freelancerRoutes from './routes/freelancerRoutes.js';
 import incomeTaxAssessmentRoutes from './routes/incomeTaxAssessmentRoutes.js';
+import accountingRoutes from './routes/accountingRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 
 // Routes
@@ -94,6 +95,7 @@ app.use('/api/hrms', hrmsRoutes);
 app.use('/api/service-pages', servicePageRoutes);
 app.use('/api/freelancer', freelancerRoutes);
 app.use('/api/income-tax-assessment', incomeTaxAssessmentRoutes);
+app.use('/api/accounting', accountingRoutes);
 
 // Serve Frontend in Production
 

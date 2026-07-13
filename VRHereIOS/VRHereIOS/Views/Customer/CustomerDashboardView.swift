@@ -100,6 +100,8 @@ struct CustomerDashboardView: View {
                             CustomerSupportTab(viewModel: viewModel)
                         case "Account":
                             CustomerAccountTab(viewModel: viewModel, onSelectTab: { activeTab = $0 }, onDeleteAccount: onDeleteAccount)
+                        case "Bookkeeping":
+                            CustomerBookkeepingTab(viewModel: viewModel)
                         default:
                             Text("Unknown Tab")
                         }
@@ -189,6 +191,7 @@ struct CustomerDashboardView: View {
                         BMSSidebarItem(label: "My Orders", iconName: "bag", tabId: "Orders"),
                         BMSSidebarItem(label: "Invoices", iconName: "doc.text", tabId: "Invoices"),
                         BMSSidebarItem(label: "Vault Documents", iconName: "folder", tabId: "Vault"),
+                        BMSSidebarItem(label: "Bookkeeping", iconName: "book", tabId: "Bookkeeping"),
                         BMSSidebarItem(label: "Help & Support", iconName: "headphones", tabId: "Support"),
                         BMSSidebarItem(label: "My Profile", iconName: "person", tabId: "Account")
                     ]

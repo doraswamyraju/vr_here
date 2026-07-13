@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
    LayoutDashboard, Briefcase, Package, FileText,
    Wallet, Headphones, User, Bell, LogOut,
-   Menu, MessageSquare, Plus, X, Phone
+   Menu, MessageSquare, Plus, X, Phone, BookOpen
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ import SupportView from './components/customer/SupportView';
 import AccountingServicesView from './components/customer/AccountingServicesView';
 import ServiceDetailView from './components/customer/ServiceDetailView';
 import CustomerFinanceView from './components/customer/CustomerFinanceView';
+import BookkeepingView from './components/customer/BookkeepingView';
 import { SERVICE_CATALOG } from './data/serviceCatalog';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 
@@ -162,6 +163,7 @@ export default function CustomerApp() {
          );
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
          case 'Invoices': return <CustomerFinanceView token={userInfo?.token} />;
+         case 'Bookkeeping': return <BookkeepingView token={userInfo?.token} />;
          case 'Account': return <AccountsView orders={orders} payments={payments} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: 
@@ -178,6 +180,7 @@ export default function CustomerApp() {
       { id: 'Orders', icon: Package, label: 'Orders' },
       { id: 'Invoices', icon: Wallet, label: 'Invoices' },
       { id: 'Documents', icon: FileText, label: 'Vault' },
+      { id: 'Bookkeeping', icon: BookOpen, label: 'Bookkeeping' },
       { id: 'New', icon: MessageSquare, label: 'Support' },
       { id: 'Account', icon: User, label: 'Account' },
    ];

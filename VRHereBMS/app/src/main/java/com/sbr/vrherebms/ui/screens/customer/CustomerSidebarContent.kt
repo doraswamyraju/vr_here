@@ -53,6 +53,7 @@ fun CustomerSidebarContent(
         Triple("Orders", Icons.Default.ShoppingBag, "My Orders"),
         Triple("Invoices", Icons.Default.ReceiptLong, "Invoices"),
         Triple("Vault", Icons.Default.Folder, "Vault Documents"),
+        Triple("Bookkeeping", Icons.Default.Book, "Bookkeeping"),
         Triple("Support", Icons.Default.HeadsetMic, "Help & Support"),
         Triple("Account", Icons.Default.Person, "My Profile")
     )

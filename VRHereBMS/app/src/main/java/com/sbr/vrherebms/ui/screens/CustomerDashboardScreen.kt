@@ -453,6 +453,7 @@ fun CustomerDashboardScreen(
                             )
                             "Invoices" -> CustomerInvoicesTab(viewModel)
                             "Vault" -> CustomerVaultTab(viewModel)
+                            "Bookkeeping" -> BookkeepingScreen(viewModel)
                             "Support" -> CustomerSupportTab(viewModel)
                             "Account" -> CustomerAccountTab(
                                 viewModel = viewModel,
