@@ -207,19 +207,27 @@ const BookkeepingView = ({ token }) => {
         }
     };
 
-    const handleAddNewParty = (e) => {
-        e.preventDefault();
-        const name = e.target.pName.value;
-        const gstin = e.target.pGstin.value;
-        const address = e.target.pAddress.value;
-        const phone = e.target.pPhone.value;
-
+    const handleAddNewParty = (partyData) => {
+        const { index, name, gstin, address, phone } = partyData;
         if (!name) return;
 
         const newParty = { name, gstin, address, phone };
-        setParties([...parties, newParty]);
+        if (index !== null && index !== undefined) {
+            const updated = [...parties];
+            updated[index] = newParty;
+            setParties(updated);
+            alert('Customer details updated successfully!');
+        } else {
+            setParties([...parties, newParty]);
+            alert('Customer added successfully!');
+        }
         setShowAddPartyModal(false);
-        alert('Customer added successfully!');
+    };
+
+    const handleDeleteParty = (index) => {
+        if (window.confirm('Are you sure you want to delete this customer?')) {
+            setParties(parties.filter((_, i) => i !== index));
+        }
     };
 
     const handleAddUnit = () => {
@@ -409,6 +417,7 @@ const BookkeepingView = ({ token }) => {
                     onShowAddPartyModal={() => setShowAddPartyModal(true)}
                     onCloseAddPartyModal={() => setShowAddPartyModal(false)}
                     onSaveParty={handleAddNewParty}
+                    onDeleteParty={handleDeleteParty}
                 />
             ) : (
                 <TransactionListTab 
