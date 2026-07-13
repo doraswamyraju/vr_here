@@ -308,6 +308,15 @@ const BookkeepingView = ({ token }) => {
         alert('Invoice share link copied to clipboard!');
     };
 
+    const filteredTransactions = transactions.filter(t => {
+        if (filterType !== 'All' && t.transactionType !== filterType) return false;
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            return (t.partyName?.toLowerCase() || '').includes(query) || (t.docNumber?.toLowerCase() || '').includes(query);
+        }
+        return true;
+    });
+
     // Safe totals calculation (using optional chaining to prevent crash if ledger returns corrupted/legacy formats)
     const totalSales = transactions.filter(t => t?.transactionType === 'Sales').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
     const totalPurchases = transactions.filter(t => t?.transactionType === 'Purchase').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
