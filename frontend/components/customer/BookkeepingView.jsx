@@ -72,6 +72,10 @@ const BookkeepingView = ({ token }) => {
     const [companyCategory, setCompanyCategory] = useState('Consultancy');
     const [companyPincode, setCompanyPincode] = useState('');
 
+    const [bankName, setBankName] = useState('');
+    const [bankAccount, setBankAccount] = useState('');
+    const [bankIfsc, setBankIfsc] = useState('');
+
     const config = { headers: { Authorization: `Bearer ${token}` } };
 
     // Save parties
@@ -101,6 +105,11 @@ const BookkeepingView = ({ token }) => {
                 setCompanyType(c.businessType || 'Service');
                 setCompanyCategory(c.businessCategory || 'Consultancy');
                 setCompanyPincode(c.pincode || '');
+                if (c.bankDetails) {
+                    setBankName(c.bankDetails.bankName || '');
+                    setBankAccount(c.bankDetails.accountNumber || '');
+                    setBankIfsc(c.bankDetails.ifscCode || '');
+                }
             }
         } catch (error) {
             console.error('Error fetching bookkeeping data:', error);
@@ -143,7 +152,12 @@ const BookkeepingView = ({ token }) => {
                 email: companyEmail,
                 businessType: companyType,
                 businessCategory: companyCategory,
-                pincode: companyPincode
+                pincode: companyPincode,
+                bankDetails: {
+                    bankName,
+                    accountNumber: bankAccount,
+                    ifscCode: bankIfsc
+                }
             }, config);
             setCompany(data);
             setShowSettings(false);
@@ -490,6 +504,12 @@ const BookkeepingView = ({ token }) => {
                 setCompanyPincode={setCompanyPincode}
                 invoicePrefix={invoicePrefix}
                 setInvoicePrefix={setInvoicePrefix}
+                bankName={bankName}
+                setBankName={setBankName}
+                bankAccount={bankAccount}
+                setBankAccount={setBankAccount}
+                bankIfsc={bankIfsc}
+                setBankIfsc={setBankIfsc}
             />
         </div>
     );

@@ -13,7 +13,10 @@ const CompanySettingsModal = ({
     companyType, setCompanyType,
     companyCategory, setCompanyCategory,
     companyPincode, setCompanyPincode,
-    invoicePrefix, setInvoicePrefix
+    invoicePrefix, setInvoicePrefix,
+    bankName, setBankName,
+    bankAccount, setBankAccount,
+    bankIfsc, setBankIfsc
 }) => {
     const logoInputRef = useRef(null);
     const sigInputRef = useRef(null);
@@ -178,6 +181,34 @@ const CompanySettingsModal = ({
                                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none"
                                     rows="3"
                                     required 
+                                />
+                            </div>
+
+                            {/* Bank Details */}
+                            <div className="border-t border-slate-100 pt-4 space-y-3">
+                                <h4 className="font-bold text-slate-800 text-xs">Bank Details (For Invoicing)</h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Bank Name" 
+                                        value={bankName} 
+                                        onChange={e => setBankName(e.target.value)} 
+                                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 focus:outline-none"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Account Number" 
+                                        value={bankAccount} 
+                                        onChange={e => setBankAccount(e.target.value)} 
+                                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 focus:outline-none"
+                                    />
+                                </div>
+                                <input 
+                                    type="text" 
+                                    placeholder="IFSC Code" 
+                                    value={bankIfsc} 
+                                    onChange={e => setBankIfsc(e.target.value)} 
+                                    className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 focus:outline-none uppercase"
                                 />
                             </div>
 
