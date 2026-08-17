@@ -128,15 +128,45 @@ const clockIn = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
-    if (order.assignedFreelancer.toString() !== req.user._id.toString()) {
+    const normalizeId = (val) => (val?._id ? val._id.toString() : val ? val.toString() : '');
+    const userId = req.user._id.toString();
+
+    const isAssigned =
+        normalizeId(order.assignedFreelancer) === userId ||
+        normalizeId(order.assignedEmployee) === userId ||
+        normalizeId(order.assignedMaker) === userId ||
+        normalizeId(order.assignedChecker) === userId;
+
+    if (!isAssigned) {
         res.status(403);
         throw new Error('Not authorized to work on this order');
     }
 
     const user = await User.findById(req.user._id);
-    if (user.isClockedIn) {
-        res.status(400);
-        throw new Error('Already clocked in to another order');
+
+    // If already clocked in to THIS order, return success
+    if (user.isClockedIn && user.activeOrderId?.toString() === order._id.toString()) {
+        return res.json({ message: 'Clocked in successfully', user });
+    }
+
+    // If clocked in to a DIFFERENT order, gracefully clock out of that order first
+    if (user.isClockedIn && user.activeOrderId && user.lastClockInTime) {
+        try {
+            const prevOrder = await Order.findById(user.activeOrderId);
+            if (prevOrder) {
+                const clockInTime = new Date(user.lastClockInTime);
+                const clockOutTime = new Date();
+                const durationMs = clockOutTime - clockInTime;
+                const minutes = Math.max(1, Math.round(durationMs / 60000));
+                prevOrder.freelancerTimeLogs.push({
+                    freelancer: user._id,
+                    minutes
+                });
+                await prevOrder.save();
+            }
+        } catch (e) {
+            console.error('Error auto-clocking out previous order:', e);
+        }
     }
 
     user.isClockedIn = true;

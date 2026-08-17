@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Attendance from '../models/Attendance.js';
 import Order from '../models/Order.js';
+import User from '../models/User.js';
 
 const getDateKey = (date = new Date()) => date.toISOString().slice(0, 10);
 
@@ -67,8 +68,15 @@ const getMyAttendanceStatus = asyncHandler(async (req, res) => {
     const todayRecords = await Attendance.find({ employee: req.user._id, dateKey: todayKey });
     const todayWorkedSeconds = todayRecords.reduce((sum, item) => sum + Number(item.totalSeconds || 0), 0);
 
+    const user = await User.findById(req.user._id).select('isClockedIn lastClockInTime activeOrderId');
+
     res.json({
         openSession,
+        userClockIn: user ? {
+            isClockedIn: Boolean(user.isClockedIn),
+            lastClockInTime: user.lastClockInTime,
+            activeOrderId: user.activeOrderId
+        } : null,
         todayWorkedSeconds,
         todayRecordsCount: todayRecords.length
     });

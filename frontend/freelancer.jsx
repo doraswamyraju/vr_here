@@ -599,7 +599,14 @@ const FreelancerApp = () => {
     try {
       const { data } = await axios.get('/api/attendance/my-status', authConfig);
       const openSession = data?.openSession || null;
-      if (openSession?.clockInAt) {
+      const userClockIn = data?.userClockIn || null;
+
+      if (userClockIn?.isClockedIn && userClockIn?.lastClockInTime) {
+        setIsClockedIn(true);
+        setShiftStartedAt(userClockIn.lastClockInTime);
+        const elapsed = Math.floor((Date.now() - new Date(userClockIn.lastClockInTime).getTime()) / 1000);
+        setShiftElapsedSeconds(Math.max(0, elapsed));
+      } else if (openSession?.clockInAt) {
         setIsClockedIn(true);
         setShiftStartedAt(openSession.clockInAt);
         const elapsed = Math.floor((Date.now() - new Date(openSession.clockInAt).getTime()) / 1000);
