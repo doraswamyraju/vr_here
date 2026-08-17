@@ -269,9 +269,10 @@ const canAccessOrder = (user, order) => {
         return normalizeId(order.user) === user._id.toString();
     }
 
-    if (user.role === 'employee') {
+    if (user.role === 'employee' || user.role === 'freelancer') {
         const id = user._id.toString();
         if (normalizeId(order.assignedEmployee) === id) return true;
+        if (normalizeId(order.assignedFreelancer) === id) return true;
         if (normalizeId(order.assignedMaker) === id) return true;
         if (normalizeId(order.assignedChecker) === id) return true;
 
@@ -414,10 +415,11 @@ const getOrders = asyncHandler(async (req, res) => {
 
     if (req.user.role === 'admin') {
         orderQuery = Order.find({});
-    } else if (req.user.role === 'employee') {
+    } else if (req.user.role === 'employee' || req.user.role === 'freelancer') {
         orderQuery = Order.find({
             $or: [
                 { assignedEmployee: req.user._id },
+                { assignedFreelancer: req.user._id },
                 { assignedMaker: req.user._id },
                 { assignedChecker: req.user._id },
                 { 'tasks.assignedTo': req.user._id },
@@ -694,7 +696,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
                 requirement.lastSavedAt = new Date();
             }
         }
-    } else if (req.user.role === 'employee' || req.user.role === 'admin') {
+    } else if (req.user.role === 'employee' || req.user.role === 'admin' || req.user.role === 'freelancer') {
         if (req.body.isFinalCertificate === 'true' || req.body.isFinalCertificate === true) {
             order.finalCertificateUrl = documentUrl;
             order.status = 'Completed';
@@ -1022,7 +1024,7 @@ const addTaskTimeLog = asyncHandler(async (req, res) => {
         throw new Error('Minutes must be a positive number');
     }
 
-    if (req.user.role === 'employee') {
+    if (req.user.role === 'employee' || req.user.role === 'freelancer') {
         const taskOwners = [task.assignedTo, task.assignedMaker, task.assignedChecker]
             .filter(Boolean)
             .map((id) => id.toString());

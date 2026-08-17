@@ -70,7 +70,7 @@ const getAssessments = asyncHandler(async (req, res) => {
         query.orderId = null;
     }
 
-    if (req.user.role === 'admin' || req.user.role === 'employee') {
+    if (req.user.role === 'admin' || req.user.role === 'employee' || req.user.role === 'freelancer') {
         assessments = await IncomeTaxAssessment.find(query)
             .populate('user', 'name email')
             .sort({ createdAt: -1 });
