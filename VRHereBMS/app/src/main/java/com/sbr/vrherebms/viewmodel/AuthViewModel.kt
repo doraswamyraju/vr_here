@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sbr.vrherebms.data.local.SessionManager
+import com.sbr.vrherebms.data.model.GoogleAuthRequest
 import com.sbr.vrherebms.data.model.LoginRequest
 import com.sbr.vrherebms.data.model.RegisterPartnerRequest
 import com.sbr.vrherebms.data.model.RegisterRequest
@@ -48,6 +49,37 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         if (sessionManager.isLoggedIn()) {
             val role = sessionManager.getUserRole() ?: "client"
             authState = AuthState.Success(role)
+        }
+    }
+
+    fun googleLogin(idToken: String) {
+        authState = AuthState.Loading
+        viewModelScope.launch {
+            try {
+                val response = api.googleLogin(GoogleAuthRequest(idToken = idToken, credential = idToken))
+                if (response.isSuccessful && response.body() != null) {
+                    val authData = response.body()!!
+                    sessionManager.saveSession(
+                        token = authData.token,
+                        userId = authData.id,
+                        name = authData.name,
+                        email = authData.email,
+                        role = authData.role,
+                        isActive = authData.isActive
+                    )
+                    sessionManager.savePhone(authData.phone ?: "")
+                    authState = AuthState.Success(authData.role)
+                    _eventFlow.emit(UiEvent.ShowToast("Welcome, ${authData.name}!"))
+                } else {
+                    val errorMsg = response.errorBody()?.string() ?: "Google Sign-In failed"
+                    authState = AuthState.Error(errorMsg)
+                    _eventFlow.emit(UiEvent.ShowToast(errorMsg))
+                }
+            } catch (e: Exception) {
+                val errorMsg = e.localizedMessage ?: "Connection error"
+                authState = AuthState.Error(errorMsg)
+                _eventFlow.emit(UiEvent.ShowToast(errorMsg))
+            }
         }
     }
 

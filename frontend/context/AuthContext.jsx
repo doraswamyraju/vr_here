@@ -40,6 +40,14 @@ export const AuthProvider = ({ children }) => {
         return data; // Return user data for redirect logic
     };
 
+    const googleLogin = async (credentialOrIdToken) => {
+        const { data } = await axios.post('/api/auth/google', { credential: credentialOrIdToken, idToken: credentialOrIdToken });
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userInfo', JSON.stringify(data));
+        setUser(data);
+        return data;
+    };
+
     const register = async (name, email, phone, password, role) => {
         try {
             const config = { headers: { 'Content-Type': 'application/json' } };
@@ -61,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, googleLogin, register, logout }}>
             {children}
         </AuthContext.Provider>
     );

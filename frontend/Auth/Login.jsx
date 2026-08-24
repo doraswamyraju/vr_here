@@ -2,9 +2,12 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import ConsultationPaymentModal from '../components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from '../utils/razorpayCheckout';
 import { showPaymentSuccessPopup } from '../utils/paymentSuccessPopup';
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 const PACKAGES = [
   {
@@ -33,8 +36,25 @@ const LoginPage = () => {
         phone: ''
     });
 
-    const { login } = useContext(AuthContext);
+    const { login, googleLogin } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        setError('');
+        try {
+            const user = await googleLogin(credentialResponse.credential);
+            if (user.role === 'admin') navigate('/admin');
+            else if (user.role === 'employee') navigate('/employee');
+            else if (user.role === 'partner') navigate('/partner-dashboard');
+            else if (user.role === 'freelancer') navigate('/freelancer-dashboard');
+            else navigate('/dashboard');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Google Sign-In failed');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleConsultationBook = (e) => {
         e?.preventDefault();
@@ -187,6 +207,24 @@ const LoginPage = () => {
                             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <span className="flex items-center">Sign In <ArrowRight className="ml-2 w-5 h-5" /></span>}
                         </button>
                     </form>
+
+                    <div className="relative my-6 flex items-center justify-center">
+                        <div className="border-t border-slate-200 w-full" />
+                        <span className="bg-white px-3 text-xs text-slate-400 font-semibold uppercase tracking-wider absolute">or</span>
+                    </div>
+
+                    <GoogleOAuthProvider clientId={googleClientId}>
+                        <div className="flex justify-center">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={() => setError('Google Sign-In was unsuccessful')}
+                                useOneTap
+                                shape="rectangular"
+                                size="large"
+                                width="100%"
+                            />
+                        </div>
+                    </GoogleOAuthProvider>
 
                     <div className="mt-8 text-center text-slate-500">
                         Don't have an account? <button type="button" onClick={handleConsultationBook} className="text-red-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1">Sign Up</button>

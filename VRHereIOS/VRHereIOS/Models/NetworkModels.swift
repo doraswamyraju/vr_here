@@ -7,6 +7,11 @@ struct LoginRequest: Codable {
     let password: String
 }
 
+struct GoogleAuthRequest: Codable {
+    let idToken: String
+    let credential: String?
+}
+
 struct RegisterRequest: Codable {
     let name: String
     let email: String

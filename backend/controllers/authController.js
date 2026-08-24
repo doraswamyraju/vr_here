@@ -1,8 +1,11 @@
 import asyncHandler from 'express-async-handler';
 import { randomBytes, createHash } from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
+
+const googleClient = new OAuth2Client();
 
 const buildResetUrl = (token) => {
     const baseUrl = process.env.FRONTEND_URL || 'https://vrhere.in';
@@ -486,8 +489,98 @@ const deleteSelfAccount = asyncHandler(async (req, res) => {
     res.json({ success: true, message: 'Account deleted successfully' });
 });
 
+// @desc    Authenticate or register user with Google OAuth Token
+// @route   POST /api/auth/google
+// @access  Public
+const googleAuth = asyncHandler(async (req, res) => {
+    const { idToken, credential } = req.body;
+    const tokenToVerify = idToken || credential;
+
+    if (!tokenToVerify) {
+        res.status(400);
+        throw new Error('Google ID token is required');
+    }
+
+    let payload;
+
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: tokenToVerify,
+            audience: process.env.GOOGLE_CLIENT_ID ? [process.env.GOOGLE_CLIENT_ID] : undefined
+        });
+        payload = ticket.getPayload();
+    } catch (err) {
+        try {
+            const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokenToVerify)}`);
+            if (!response.ok) {
+                throw new Error('Invalid token response from Google API');
+            }
+            payload = await response.json();
+        } catch (fetchErr) {
+            res.status(401);
+            throw new Error('Invalid or expired Google token');
+        }
+    }
+
+    if (!payload || !payload.email) {
+        res.status(401);
+        throw new Error('Could not extract user details from Google token');
+    }
+
+    const { email, name, sub: googleId } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+        if (!user.isActive) {
+            res.status(403);
+            const message = user.role === 'partner' 
+                ? 'Your partner account is pending validation. Please wait for admin approval.' 
+                : 'User account is inactive. Contact admin.';
+            throw new Error(message);
+        }
+
+        if (!user.googleId) {
+            user.googleId = googleId;
+            user.authProvider = user.authProvider || 'google';
+            await user.save();
+        }
+    } else {
+        user = await User.create({
+            name: name || email.split('@')[0],
+            email,
+            googleId,
+            authProvider: 'google',
+            role: 'client',
+            isActive: true
+        });
+
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Welcome to VR HERE Business Solutions',
+                message: `<h1>Welcome ${user.name}!</h1><p>Thank you for signing up with Google at VR HERE.</p>`
+            });
+        } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError.message);
+        }
+    }
+
+    res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        isClockedIn: user.isClockedIn || false,
+        activeOrderId: user.activeOrderId || null,
+        token: generateToken(user._id)
+    });
+});
+
 export {
     authUser,
+    googleAuth,
     registerUser,
     registerPartner,
     forgotPassword,

@@ -76,9 +76,12 @@ dependencies {
     // Navigation
     implementation(libs.androidx.navigation.compose)
 
-    // Firebase Messaging
+    // Firebase Messaging & Google Auth
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

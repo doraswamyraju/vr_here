@@ -2,6 +2,9 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, User, Mail, Lock, Phone, ArrowRight, Briefcase } from 'lucide-react';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 const RegisterPage = () => {
     const [name, setName] = useState('');
@@ -12,8 +15,25 @@ const RegisterPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const { register } = useContext(AuthContext);
+    const { register, googleLogin } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        setError('');
+        try {
+            const user = await googleLogin(credentialResponse.credential);
+            if (user.role === 'admin') navigate('/admin');
+            else if (user.role === 'employee') navigate('/employee');
+            else if (user.role === 'partner') navigate('/partner-dashboard');
+            else if (user.role === 'freelancer') navigate('/freelancer-dashboard');
+            else navigate('/dashboard');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Google Sign-In failed');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -125,8 +145,6 @@ const RegisterPage = () => {
                             </div>
                         </div>
 
-
-
                         <button
                             type="submit"
                             disabled={loading}
@@ -135,6 +153,24 @@ const RegisterPage = () => {
                             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <span className="flex items-center">Create Account <ArrowRight className="ml-2 w-5 h-5" /></span>}
                         </button>
                     </form>
+
+                    <div className="relative my-6 flex items-center justify-center">
+                        <div className="border-t border-slate-200 w-full" />
+                        <span className="bg-white px-3 text-xs text-slate-400 font-semibold uppercase tracking-wider absolute">or</span>
+                    </div>
+
+                    <GoogleOAuthProvider clientId={googleClientId}>
+                        <div className="flex justify-center">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={() => setError('Google Sign-In was unsuccessful')}
+                                useOneTap
+                                shape="rectangular"
+                                size="large"
+                                width="100%"
+                            />
+                        </div>
+                    </GoogleOAuthProvider>
 
                     <div className="mt-8 text-center text-slate-500">
                         Already have an account? <Link to="/login" className="text-red-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1">Sign In</Link>

@@ -9,6 +9,11 @@ data class LoginRequest(
     val password: String
 )
 
+data class GoogleAuthRequest(
+    val idToken: String,
+    val credential: String? = null
+)
+
 data class RegisterRequest(
     val name: String,
     val email: String,

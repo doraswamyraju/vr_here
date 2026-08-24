@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import {
     authUser,
+    googleAuth,
     registerUser,
     registerPartner,
     forgotPassword,
@@ -22,6 +23,7 @@ import { protect, admin } from '../middleware/authMiddleware.js';
 router.post('/register', registerUser);
 router.post('/register-partner', registerPartner);
 router.post('/login', authUser);
+router.post('/google', googleAuth);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resetToken', resetPassword);
 router.route('/profile').get(protect, getUserProfile);

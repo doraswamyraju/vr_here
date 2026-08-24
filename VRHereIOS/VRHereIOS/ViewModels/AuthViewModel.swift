@@ -64,6 +64,35 @@ class AuthViewModel: ObservableObject {
         }
     }
     
+    func googleLogin(idToken: String) {
+        authState = .loading
+        Task {
+            do {
+                let authData = try await NetworkManager.shared.googleLogin(idToken: idToken)
+                SessionManager.shared.saveSession(
+                    token: authData.token,
+                    userId: authData.id,
+                    name: authData.name,
+                    email: authData.email,
+                    role: authData.role,
+                    isActive: authData.isActive
+                )
+                SessionManager.shared.savePhone(authData.phone ?? "")
+                
+                if let token = SessionManager.shared.getFcmToken() {
+                    _ = try? await NetworkManager.shared.updateFcmToken(token: token)
+                }
+                
+                authState = .success(role: authData.role)
+                toastMessage = "Welcome, \(authData.name)!"
+            } catch {
+                let errorMsg = error.localizedDescription
+                authState = .error(message: errorMsg)
+                toastMessage = errorMsg
+            }
+        }
+    }
+    
     func register() {
         guard !nameInput.isEmpty && !emailInput.isEmpty && !phoneInput.isEmpty && !passwordInput.isEmpty else {
             toastMessage = "Please fill in all details"

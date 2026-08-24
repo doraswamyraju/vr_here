@@ -112,6 +112,43 @@ struct LoginView: View {
                     return false
                 }())
                 
+                Spacer().frame(height: 20)
+                
+                // OR Divider
+                HStack {
+                    VStack { Divider() }
+                    Text("OR")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.textMuted)
+                        .padding(.horizontal, 8)
+                    VStack { Divider() }
+                }
+                
+                Spacer().frame(height: 16)
+                
+                // Google Sign In Button
+                Button(action: {
+                    // Triggers Google Sign In flow on iOS
+                }) {
+                    HStack(spacing: 8) {
+                        Text("G")
+                            .font(.system(size: 20, weight: .black))
+                            .foregroundColor(.primaryRed)
+                        Text("Continue with Google")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.textDark)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.textMuted.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(ScaleOnPressButtonStyle())
+                
                 Spacer()
                 
                 // 7. Sign Up Switcher
