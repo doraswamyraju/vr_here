@@ -41,9 +41,16 @@ export const AuthProvider = ({ children }) => {
     };
 
     const googleLogin = async (tokenData) => {
-        const payload = typeof tokenData === 'string' 
-            ? { credential: tokenData, idToken: tokenData }
-            : { accessToken: tokenData?.access_token, credential: tokenData?.credential, idToken: tokenData?.id_token };
+        let payload = {};
+        if (typeof tokenData === 'string') {
+            payload = { credential: tokenData, idToken: tokenData };
+        } else if (tokenData?.access_token) {
+            payload = { accessToken: tokenData.access_token };
+        } else if (tokenData?.credential) {
+            payload = { credential: tokenData.credential, idToken: tokenData.credential };
+        } else {
+            payload = { accessToken: tokenData?.id_token || tokenData?.access_token };
+        }
         const { data } = await axios.post('/api/auth/google', payload);
         localStorage.setItem('token', data.token);
         localStorage.setItem('userInfo', JSON.stringify(data));

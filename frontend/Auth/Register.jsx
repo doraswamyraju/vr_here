@@ -64,14 +64,14 @@ const RegisterPage = () => {
         setLoading(true);
         setError('');
         try {
-            const user = await googleLogin(credentialResponse.credential);
-            if (user.role === 'admin') navigate('/admin');
-            else if (user.role === 'employee') navigate('/employee');
-            else if (user.role === 'partner') navigate('/partner-dashboard');
-            else if (user.role === 'freelancer') navigate('/freelancer-dashboard');
-            else navigate('/dashboard');
+            const user = await googleLogin(credentialResponse);
+            if (user.role === 'admin') window.location.href = '/admin';
+            else if (user.role === 'employee') window.location.href = '/employee';
+            else if (user.role === 'partner') window.location.href = '/partner-dashboard';
+            else if (user.role === 'freelancer') window.location.href = '/freelancer-dashboard';
+            else window.location.href = '/customer-dashboard';
         } catch (err) {
-            setError(err.response?.data?.message || 'Google Sign-In failed');
+            setError(err.response?.data?.message || err.message || 'Google Sign-In failed');
         } finally {
             setLoading(false);
         }
