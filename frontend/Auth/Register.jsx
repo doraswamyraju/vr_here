@@ -66,6 +66,16 @@ const RegisterPage = () => {
     const { register, googleLogin } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    React.useEffect(() => {
+        if (window.location.hash && window.location.hash.includes('access_token=')) {
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = params.get('access_token');
+            if (accessToken) {
+                handleGoogleSuccess({ access_token: accessToken });
+            }
+        }
+    }, []);
+
     const handleGoogleSuccess = async (credentialResponse) => {
         console.log('Google Success Callback Payload:', credentialResponse);
         setLoading(true);
@@ -213,13 +223,11 @@ const RegisterPage = () => {
                         <span className="bg-white px-3 text-xs text-slate-400 font-semibold uppercase tracking-wider absolute">or</span>
                     </div>
 
-                    <GoogleOAuthProvider clientId={googleClientId}>
-                        <CustomGoogleButton
-                            onSuccess={handleGoogleSuccess}
-                            onError={() => setError('Google Sign-In was unsuccessful')}
-                            loading={loading}
-                        />
-                    </GoogleOAuthProvider>
+                    <CustomGoogleButton
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => setError('Google Sign-In was unsuccessful')}
+                        loading={loading}
+                    />
 
                     <div className="mt-8 text-center text-slate-500">
                         Already have an account? <Link to="/login" className="text-red-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1">Sign In</Link>
@@ -230,4 +238,10 @@ const RegisterPage = () => {
     );
 };
 
-export default RegisterPage;
+const RegisterPageWrapper = () => (
+    <GoogleOAuthProvider clientId={googleClientId}>
+        <RegisterPage />
+    </GoogleOAuthProvider>
+);
+
+export default RegisterPageWrapper;
