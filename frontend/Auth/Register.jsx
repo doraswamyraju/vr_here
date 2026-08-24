@@ -6,18 +6,39 @@ import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
 
-const triggerGoogleOAuth = () => {
-    const redirectUri = window.location.origin + '/register';
-    const scope = 'openid email profile';
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
-    window.location.href = googleAuthUrl;
+const triggerGoogleOAuth = (onSuccess) => {
+    const launchClient = () => {
+        if (window.google?.accounts?.oauth2) {
+            const tokenClient = window.google.accounts.oauth2.initTokenClient({
+                client_id: googleClientId,
+                scope: 'email profile openid',
+                callback: (response) => {
+                    if (response.access_token) {
+                        onSuccess({ access_token: response.access_token });
+                    }
+                },
+            });
+            tokenClient.requestAccessToken();
+        }
+    };
+
+    if (window.google?.accounts?.oauth2) {
+        launchClient();
+    } else {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => launchClient();
+        document.body.appendChild(script);
+    }
 };
 
-const CustomGoogleButton = ({ loading }) => {
+const CustomGoogleButton = ({ onSuccess, loading }) => {
     return (
         <button
             type="button"
-            onClick={triggerGoogleOAuth}
+            onClick={() => triggerGoogleOAuth(onSuccess)}
             disabled={loading}
             className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-3 group cursor-pointer"
         >
