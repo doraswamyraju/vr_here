@@ -4,7 +4,14 @@ import axios from 'axios';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        try {
+            const saved = localStorage.getItem('userInfo');
+            return saved ? JSON.parse(saved) : null;
+        } catch {
+            return null;
+        }
+    });
     const [loading, setLoading] = useState(true);
 
     const checkUserLoggedIn = async () => {
@@ -19,11 +26,15 @@ export const AuthProvider = ({ children }) => {
                 setUser(fullUser);
                 localStorage.setItem('userInfo', JSON.stringify(fullUser));
             } catch (error) {
-                console.error("Session expired or invalid token");
-                localStorage.removeItem('token');
-                localStorage.removeItem('userInfo');
-                setUser(null);
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    console.error("Session expired or invalid token");
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userInfo');
+                    setUser(null);
+                }
             }
+        } else {
+            setUser(null);
         }
         setLoading(false);
     };
