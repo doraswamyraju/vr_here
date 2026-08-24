@@ -7,7 +7,7 @@ import ConsultationPaymentModal from '../components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from '../utils/razorpayCheckout';
 import { showPaymentSuccessPopup } from '../utils/paymentSuccessPopup';
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
 
 const CustomGoogleButton = ({ onSuccess, onError, loading }) => {
     const loginWithGoogle = useGoogleLogin({

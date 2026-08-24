@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, User, Mail, Lock, Phone, ArrowRight, Briefcase } from 'lucide-react';
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
 
 const CustomGoogleButton = ({ onSuccess, onError, loading }) => {
     const loginWithGoogle = useGoogleLogin({
