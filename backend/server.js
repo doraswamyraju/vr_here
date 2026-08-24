@@ -33,8 +33,17 @@ app.use(
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://checkout.razorpay.com", "https://livechat.vrhere.in", "https://cdn.socket.io"],
-                styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
+                scriptSrc: [
+                    "'self'", 
+                    "'unsafe-inline'", 
+                    "https://cdn.tailwindcss.com", 
+                    "https://checkout.razorpay.com", 
+                    "https://livechat.vrhere.in", 
+                    "https://cdn.socket.io",
+                    "https://accounts.google.com",
+                    "https://ssl.gstatic.com"
+                ],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://accounts.google.com"],
                 imgSrc: ["'self'", "data:", "https://*"],
                 connectSrc: [
                     "'self'", 
@@ -44,9 +53,12 @@ app.use(
                     "http://localhost:5002", 
                     "http://147.95.107.21:5002", 
                     "https://livechat.vrhere.in", 
-                    "wss://livechat.vrhere.in"
+                    "wss://livechat.vrhere.in",
+                    "https://accounts.google.com",
+                    "https://oauth2.googleapis.com",
+                    "https://www.googleapis.com"
                 ],
-                frameSrc: ["'self'", "https://api.razorpay.com"],
+                frameSrc: ["'self'", "https://api.razorpay.com", "https://accounts.google.com"],
                 upgradeInsecureRequests: null, // Disable HTTPS upgrade for successful HTTP load
             },
         },
