@@ -9,39 +9,27 @@ import { showPaymentSuccessPopup } from '../utils/paymentSuccessPopup';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
 
-const triggerGoogleOAuth = (onSuccess) => {
-    const launchClient = () => {
-        if (window.google?.accounts?.oauth2) {
-            const tokenClient = window.google.accounts.oauth2.initTokenClient({
-                client_id: googleClientId,
-                scope: 'email profile openid',
-                callback: (response) => {
-                    if (response.access_token) {
-                        onSuccess({ access_token: response.access_token });
-                    }
-                },
-            });
-            tokenClient.requestAccessToken();
-        }
-    };
+const CustomGoogleButton = ({ onSuccess, onError, loading }) => {
+    const loginWithGoogle = useGoogleLogin({
+        onSuccess: (tokenResponse) => {
+            console.log('useGoogleLogin tokenResponse:', tokenResponse);
+            if (tokenResponse?.access_token) {
+                onSuccess({ access_token: tokenResponse.access_token });
+            } else {
+                onSuccess(tokenResponse);
+            }
+        },
+        onError: (errorResponse) => {
+            console.error('Google Sign-In Error:', errorResponse);
+            if (onError) onError(errorResponse);
+            alert('Google Sign-In failed: ' + (errorResponse?.error_description || errorResponse?.error || 'User cancelled or popup blocked'));
+        },
+    });
 
-    if (window.google?.accounts?.oauth2) {
-        launchClient();
-    } else {
-        const script = document.createElement('script');
-        script.src = 'https://accounts.google.com/gsi/client';
-        script.async = true;
-        script.defer = true;
-        script.onload = () => launchClient();
-        document.body.appendChild(script);
-    }
-};
-
-const CustomGoogleButton = ({ onSuccess, loading }) => {
     return (
         <button
             type="button"
-            onClick={() => triggerGoogleOAuth(onSuccess)}
+            onClick={() => loginWithGoogle()}
             disabled={loading}
             className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-3 group cursor-pointer"
         >
