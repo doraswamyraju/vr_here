@@ -40,8 +40,11 @@ export const AuthProvider = ({ children }) => {
         return data; // Return user data for redirect logic
     };
 
-    const googleLogin = async (credentialOrIdToken) => {
-        const { data } = await axios.post('/api/auth/google', { credential: credentialOrIdToken, idToken: credentialOrIdToken });
+    const googleLogin = async (tokenData) => {
+        const payload = typeof tokenData === 'string' 
+            ? { credential: tokenData, idToken: tokenData }
+            : { accessToken: tokenData?.access_token, credential: tokenData?.credential, idToken: tokenData?.id_token };
+        const { data } = await axios.post('/api/auth/google', payload);
         localStorage.setItem('token', data.token);
         localStorage.setItem('userInfo', JSON.stringify(data));
         setUser(data);

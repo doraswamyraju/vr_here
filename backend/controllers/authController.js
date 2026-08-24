@@ -493,32 +493,47 @@ const deleteSelfAccount = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/google
 // @access  Public
 const googleAuth = asyncHandler(async (req, res) => {
-    const { idToken, credential } = req.body;
-    const tokenToVerify = idToken || credential;
-
-    if (!tokenToVerify) {
-        res.status(400);
-        throw new Error('Google ID token is required');
-    }
+    const { idToken, credential, accessToken } = req.body;
 
     let payload;
 
-    try {
-        const ticket = await googleClient.verifyIdToken({
-            idToken: tokenToVerify,
-            audience: process.env.GOOGLE_CLIENT_ID ? [process.env.GOOGLE_CLIENT_ID] : undefined
-        });
-        payload = ticket.getPayload();
-    } catch (err) {
+    if (accessToken) {
         try {
-            const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokenToVerify)}`);
-            if (!response.ok) {
-                throw new Error('Invalid token response from Google API');
+            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            if (userInfoRes.ok) {
+                payload = await userInfoRes.json();
             }
-            payload = await response.json();
-        } catch (fetchErr) {
-            res.status(401);
-            throw new Error('Invalid or expired Google token');
+        } catch (e) {
+            console.error('AccessToken verify error:', e);
+        }
+    }
+
+    if (!payload) {
+        const tokenToVerify = idToken || credential;
+        if (!tokenToVerify) {
+            res.status(400);
+            throw new Error('Google token is required');
+        }
+
+        try {
+            const ticket = await googleClient.verifyIdToken({
+                idToken: tokenToVerify,
+                audience: process.env.GOOGLE_CLIENT_ID ? [process.env.GOOGLE_CLIENT_ID] : undefined
+            });
+            payload = ticket.getPayload();
+        } catch (err) {
+            try {
+                const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokenToVerify)}`);
+                if (!response.ok) {
+                    throw new Error('Invalid token response from Google API');
+                }
+                payload = await response.json();
+            } catch (fetchErr) {
+                res.status(401);
+                throw new Error('Invalid or expired Google token');
+            }
         }
     }
 
