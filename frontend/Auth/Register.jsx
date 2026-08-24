@@ -8,8 +8,14 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hi
 
 const CustomGoogleButton = ({ onSuccess, onError, loading }) => {
     const loginWithGoogle = useGoogleLogin({
-        onSuccess: (tokenResponse) => onSuccess(tokenResponse),
-        onError: (error) => onError(error)
+        onSuccess: (tokenResponse) => {
+            console.log('useGoogleLogin onSuccess:', tokenResponse);
+            onSuccess(tokenResponse);
+        },
+        onError: (error) => {
+            console.error('useGoogleLogin onError:', error);
+            onError(error);
+        }
     });
 
     return (
@@ -61,17 +67,23 @@ const RegisterPage = () => {
     const navigate = useNavigate();
 
     const handleGoogleSuccess = async (credentialResponse) => {
+        console.log('Google Success Callback Payload:', credentialResponse);
         setLoading(true);
         setError('');
         try {
             const user = await googleLogin(credentialResponse);
-            if (user.role === 'admin') window.location.href = '/admin';
-            else if (user.role === 'employee') window.location.href = '/employee';
-            else if (user.role === 'partner') window.location.href = '/partner-dashboard';
-            else if (user.role === 'freelancer') window.location.href = '/freelancer-dashboard';
-            else window.location.href = '/customer-dashboard';
+            console.log('Logged in user from backend:', user);
+            const targetUrl = user.role === 'admin' ? '/admin' 
+                : user.role === 'employee' ? '/employee' 
+                : user.role === 'partner' ? '/partner-dashboard' 
+                : user.role === 'freelancer' ? '/freelancer-dashboard' 
+                : '/customer-dashboard';
+            window.location.href = targetUrl;
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Google Sign-In failed');
+            console.error('Google Login Error:', err);
+            const msg = err.response?.data?.message || err.message || 'Google Sign-In failed';
+            setError(msg);
+            alert('Google Login Error: ' + msg);
         } finally {
             setLoading(false);
         }
