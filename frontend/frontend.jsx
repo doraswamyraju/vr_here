@@ -58,7 +58,7 @@ const App = () => {
   const location = useLocation();
 
   React.useEffect(() => {
-    const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard)/.test(location.pathname);
+    const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard)/.test(location.pathname);
     let styleEl = document.getElementById('hide-live-chat-style');
     
     if (isDashboardPath) {
@@ -70,7 +70,9 @@ const App = () => {
           div[class*="letstrack"],
           div[id*="letstrack"],
           #letstrack-widget,
-          .letstrack-chat-widget {
+          .letstrack-chat-widget,
+          div[style*="z-index: 2147483647"],
+          div[style*="z-index: 99999"] {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
