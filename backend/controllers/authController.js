@@ -319,13 +319,13 @@ const getUserProfile = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/fcm-token
 // @access  Private
 const updateFcmToken = asyncHandler(async (req, res) => {
-    const { fcmToken } = req.body;
+    const token = req.body.fcmToken || req.body.token;
     const user = await User.findById(req.user._id);
 
     if (user) {
-        user.fcmToken = fcmToken || null;
+        user.fcmToken = token || null;
         await user.save();
-        res.json({ success: true, message: 'FCM token updated successfully' });
+        res.json({ success: true, message: 'FCM token updated successfully', fcmToken: user.fcmToken });
     } else {
         res.status(404);
         throw new Error('User not found');

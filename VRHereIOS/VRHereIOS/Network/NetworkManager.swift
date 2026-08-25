@@ -180,7 +180,7 @@ class NetworkManager {
     }
     
     func updateFcmToken(token: String) async throws -> [String: AnyCodable] {
-        let payload = ["token": token]
+        let payload = ["fcmToken": token, "token": token]
         let data = try JSONSerialization.data(withJSONObject: payload)
         return try await performRequest(path: "api/auth/fcm-token", method: "PUT", body: data)
     }
