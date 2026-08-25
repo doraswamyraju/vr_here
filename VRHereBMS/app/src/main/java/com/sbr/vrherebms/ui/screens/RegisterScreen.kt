@@ -265,6 +265,77 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                // Divider
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE2E8F0))
+                    Text(
+                        text = "  OR  ",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE2E8F0))
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val webClientId = "167766774028-lrhfc69ubgv0po3kp9gup09cfvd82jlu.apps.googleusercontent.com"
+                val googleSignInLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                    contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+                ) { result ->
+                    val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                    try {
+                        val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+                        account?.idToken?.let { token ->
+                            viewModel.googleLogin(token)
+                        }
+                    } catch (e: Exception) {
+                        android.widget.Toast.makeText(context, "Google Sign-In: ${e.localizedMessage ?: "Failed"}", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                            com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                        )
+                            .requestIdToken(webClientId)
+                            .requestEmail()
+                            .build()
+                        val googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF0F172A)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "G ",
+                            color = Color(0xFFDC2626),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 20.sp
+                        )
+                        Text(
+                            text = "Sign up with Google",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Color(0xFF1E293B)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 TextButton(
                     onClick = onNavigateToLogin,
                     modifier = Modifier.padding(top = 8.dp)

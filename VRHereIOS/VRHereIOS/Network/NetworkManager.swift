@@ -99,8 +99,8 @@ class NetworkManager {
         return try await performRequest(path: "api/auth/login", method: "POST", body: data)
     }
     
-    func googleLogin(idToken: String) async throws -> AuthResponse {
-        let reqObj = GoogleAuthRequest(idToken: idToken, credential: idToken)
+    func googleLogin(idToken: String? = nil, code: String? = nil, redirectUri: String? = nil) async throws -> AuthResponse {
+        let reqObj = GoogleAuthRequest(idToken: idToken, credential: idToken, code: code, redirectUri: redirectUri)
         let data = try JSONEncoder().encode(reqObj)
         return try await performRequest(path: "api/auth/google", method: "POST", body: data)
     }

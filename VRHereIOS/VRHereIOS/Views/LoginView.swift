@@ -128,7 +128,7 @@ struct LoginView: View {
                 
                 // Google Sign In Button
                 Button(action: {
-                    // Triggers Google Sign In flow on iOS
+                    viewModel.signInWithGoogle()
                 }) {
                     HStack(spacing: 8) {
                         Text("G")

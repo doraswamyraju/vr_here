@@ -8,8 +8,17 @@ struct LoginRequest: Codable {
 }
 
 struct GoogleAuthRequest: Codable {
-    let idToken: String
+    let idToken: String?
     let credential: String?
+    let code: String?
+    let redirectUri: String?
+    
+    init(idToken: String? = nil, credential: String? = nil, code: String? = nil, redirectUri: String? = nil) {
+        self.idToken = idToken
+        self.credential = credential
+        self.code = code
+        self.redirectUri = redirectUri
+    }
 }
 
 struct RegisterRequest: Codable {

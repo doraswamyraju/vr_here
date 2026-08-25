@@ -103,6 +103,43 @@ struct RegisterView: View {
                         return false
                     }())
                     
+                    Spacer().frame(height: 20)
+                    
+                    // Divider
+                    HStack {
+                        VStack { Divider() }
+                        Text("OR")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.textMuted)
+                            .padding(.horizontal, 8)
+                        VStack { Divider() }
+                    }
+                    
+                    Spacer().frame(height: 16)
+                    
+                    // Google Sign Up Button
+                    Button(action: {
+                        viewModel.signInWithGoogle()
+                    }) {
+                        HStack(spacing: 8) {
+                            Text("G")
+                                .font(.system(size: 20, weight: .black))
+                                .foregroundColor(.primaryRed)
+                            Text("Sign up with Google")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.textDark)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.textMuted.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(ScaleOnPressButtonStyle())
+                    
                     Spacer().frame(height: 24)
                     
                     // 5. Back to Login switcher
