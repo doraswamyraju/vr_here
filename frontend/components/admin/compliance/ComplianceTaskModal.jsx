@@ -270,23 +270,42 @@ const ComplianceTaskModal = ({
               </select>
             </div>
 
-            {/* Assigned Employee */}
+            {/* Recurring Schedule */}
             <div>
               <label className="block text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
-                Assigned Employee
+                Repeat Schedule
               </label>
               <select
-                value={formData.assignedTo}
-                onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                value={formData.repeatFrequency || 'None'}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  repeatFrequency: e.target.value,
+                  isRecurring: e.target.value !== 'None',
+                  generateFullYear: e.target.value === 'Monthly' || e.target.value === 'Quarterly'
+                })}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:border-indigo-500 outline-none bg-white transition-all"
               >
-                <option value="">Unassigned</option>
-                {employees.map(emp => (
-                  <option key={emp._id} value={emp._id}>{emp.name} ({emp.email})</option>
-                ))}
+                <option value="None">One-Time Only</option>
+                <option value="Monthly">Monthly (e.g. 11th of Every Month)</option>
+                <option value="Quarterly">Quarterly (Every 3 Months)</option>
               </select>
             </div>
           </div>
+
+          {!taskToEdit && (formData.repeatFrequency === 'Monthly' || formData.repeatFrequency === 'Quarterly') && (
+            <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-100 flex items-start gap-2.5">
+              <input
+                type="checkbox"
+                id="generateFullYear"
+                checked={formData.generateFullYear}
+                onChange={(e) => setFormData({ ...formData, generateFullYear: e.target.checked })}
+                className="mt-0.5 w-4 h-4 text-purple-600 rounded focus:ring-purple-500 accent-purple-600 cursor-pointer"
+              />
+              <label htmlFor="generateFullYear" className="text-xs font-bold text-slate-700 cursor-pointer leading-tight">
+                Auto-Generate Recurring Schedule for <span className="text-purple-700">All 12 Months of FY {formData.periodYear}-{Number(formData.periodYear) + 1}</span>
+              </label>
+            </div>
+          )}
 
           {/* Notes */}
           <div>

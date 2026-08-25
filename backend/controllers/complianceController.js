@@ -18,33 +18,100 @@ const getComplianceRecords = asyncHandler(async (req, res) => {
     res.json(records);
 });
 
-// @desc    Create a compliance record & optional broadcast notification
+// Financial Year Month definitions: April (04) of Start Year to March (03) of Next Year
+const FY_MONTHS = [
+    { code: 'APR', monthIdx: 3, yearOffset: 0 },
+    { code: 'MAY', monthIdx: 4, yearOffset: 0 },
+    { code: 'JUN', monthIdx: 5, yearOffset: 0 },
+    { code: 'JUL', monthIdx: 6, yearOffset: 0 },
+    { code: 'AUG', monthIdx: 7, yearOffset: 0 },
+    { code: 'SEP', monthIdx: 8, yearOffset: 0 },
+    { code: 'OCT', monthIdx: 9, yearOffset: 0 },
+    { code: 'NOV', monthIdx: 10, yearOffset: 0 },
+    { code: 'DEC', monthIdx: 11, yearOffset: 0 },
+    { code: 'JAN', monthIdx: 0, yearOffset: 1 },
+    { code: 'FEB', monthIdx: 1, yearOffset: 1 },
+    { code: 'MAR', monthIdx: 2, yearOffset: 1 }
+];
+
+// @desc    Create a compliance record (or auto-generate recurring FY schedule) & optional broadcast notification
 // @route   POST /api/compliance
 // @access  Private (Admin or Authorized Employee)
 const createComplianceRecord = asyncHandler(async (req, res) => {
-    const { clientName, category, taskName, dueDate, periodMonth, periodYear, notes, status, assignedTo, sendBroadcast } = req.body;
+    const { clientName, category, taskName, dueDate, periodMonth, periodYear, notes, status, sendBroadcast, isRecurring, repeatFrequency, generateFullYear } = req.body;
     
     const isAllClients = !clientName || clientName.trim() === '' || clientName.toLowerCase() === 'all clients' || clientName.toLowerCase() === 'all active clients';
     const recordClientName = isAllClients ? 'All Active Clients' : clientName.trim();
 
-    const record = await Compliance.create({
-        clientName: recordClientName,
-        category,
-        taskName,
-        dueDate,
-        periodMonth,
-        periodYear,
-        notes: notes || '',
-        status: status || 'Pending',
-        assignedTo: assignedTo || null
-    });
+    const baseDueDate = new Date(dueDate);
+    const dayOfMonth = baseDueDate.getDate();
+    const startFYYear = Number(periodYear) || baseDueDate.getFullYear();
 
-    // If broadcast is requested or client is "All Active Clients", trigger In-App, Push & Email to all clients!
+    const recordsToInsert = [];
+
+    if (generateFullYear || (isRecurring && repeatFrequency === 'Monthly')) {
+        // Auto-generate recurring monthly entries for all 12 months of the Financial Year!
+        FY_MONTHS.forEach(m => {
+            const itemYear = startFYYear + m.yearOffset;
+            const itemDueDate = new Date(itemYear, m.monthIdx, Math.min(dayOfMonth, 28));
+
+            recordsToInsert.push({
+                clientName: recordClientName,
+                category,
+                taskName,
+                dueDate: itemDueDate,
+                periodMonth: m.code,
+                periodYear: String(itemYear),
+                notes: notes || '',
+                status: status || 'Pending'
+            });
+        });
+    } else if (isRecurring && repeatFrequency === 'Quarterly') {
+        // Auto-generate quarterly entries (JUN, SEP, DEC, MAR)
+        const quarterlyMonths = [
+            { code: 'JUN', monthIdx: 5, yearOffset: 0 },
+            { code: 'SEP', monthIdx: 8, yearOffset: 0 },
+            { code: 'DEC', monthIdx: 11, yearOffset: 0 },
+            { code: 'MAR', monthIdx: 2, yearOffset: 1 }
+        ];
+
+        quarterlyMonths.forEach(m => {
+            const itemYear = startFYYear + m.yearOffset;
+            const itemDueDate = new Date(itemYear, m.monthIdx, Math.min(dayOfMonth, 28));
+
+            recordsToInsert.push({
+                clientName: recordClientName,
+                category,
+                taskName,
+                dueDate: itemDueDate,
+                periodMonth: m.code,
+                periodYear: String(itemYear),
+                notes: notes || '',
+                status: status || 'Pending'
+            });
+        });
+    } else {
+        // Single One-Time Entry
+        recordsToInsert.push({
+            clientName: recordClientName,
+            category,
+            taskName,
+            dueDate: baseDueDate,
+            periodMonth: periodMonth || 'AUG',
+            periodYear: String(startFYYear),
+            notes: notes || '',
+            status: status || 'Pending'
+        });
+    }
+
+    const createdRecords = await Compliance.insertMany(recordsToInsert);
+
+    // If broadcast is requested, trigger In-App, Push & Email to all clients!
     if (sendBroadcast || isAllClients) {
         const clients = await User.find({ role: 'client', isActive: true });
-        const formattedDueDate = new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const formattedDueDate = baseDueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
         const notifTitle = `Statutory Compliance Alert: ${category} - ${taskName}`;
-        const notifMessage = `Important Compliance Alert for ${periodMonth} ${periodYear}: ${taskName} is due on ${formattedDueDate}. Please ensure all required documents and details are submitted on time.`;
+        const notifMessage = `Important Compliance Alert: ${taskName} (${category}) is due on ${formattedDueDate} (Recurring ${repeatFrequency || 'Monthly'}). Please ensure all required documents and details are submitted on time.`;
 
         // Async broadcast without delaying HTTP response
         clients.forEach(client => {
@@ -55,13 +122,13 @@ const createComplianceRecord = asyncHandler(async (req, res) => {
                 type: 'System',
                 emailOpts: {
                     send: true,
-                    subject: `[VR HERE] Statutory Deadline Alert: ${category} - ${taskName} (${formattedDueDate})`
+                    subject: `[VR HERE] Statutory Deadline Alert: ${category} - ${taskName}`
                 }
             }).catch(err => console.error(`Failed compliance alert to ${client.email}:`, err.message));
         });
     }
 
-    res.status(201).json(record);
+    res.status(201).json(createdRecords);
 });
 
 // @desc    Update compliance status & details
