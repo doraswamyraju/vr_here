@@ -9,6 +9,13 @@ extension Color {
     static let borderLight = Color(red: 241/255, green: 245/255, blue: 249/255) // #F1F5F9
     static let bgInput = Color(red: 238/255, green: 242/255, blue: 246/255)   // #EEF2F6
     static let darkSlate = Color(red: 15/255, green: 23/255, blue: 42/255)   // #0F172A
+    
+    static let slate900 = Color(red: 15/255, green: 23/255, blue: 42/255)
+    static let slate400 = Color(red: 148/255, green: 163/255, blue: 184/255)
+    static let emerald500 = Color(red: 16/255, green: 185/255, blue: 129/255)
+    static let emerald400 = Color(red: 52/255, green: 211/255, blue: 153/255)
+    static let indigo500 = Color(red: 99/255, green: 102/255, blue: 241/255)
+    static let indigo400 = Color(red: 129/255, green: 140/255, blue: 248/255)
 }
 
 // Scale-on-Press Button Style for micro-animations
