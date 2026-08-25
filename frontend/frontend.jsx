@@ -30,14 +30,23 @@ import FreelancerDashboardPage from './freelancer';
 import PrivacyPolicyPage from './PrivacyPolicy';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user, loading } = useContext(AuthContext);
+  const { user: contextUser, loading } = useContext(AuthContext);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  const user = contextUser || (() => {
+    try {
+      const saved = localStorage.getItem('userInfo');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  })();
 
-  if (!user) return <Navigate to="/login" />;
+  if (loading && !user) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+
+  if (!user) return <Navigate to="/login" replace />;
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
