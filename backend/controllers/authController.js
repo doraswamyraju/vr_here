@@ -538,29 +538,47 @@ const googleAuth = asyncHandler(async (req, res) => {
     // Handle OAuth Authorization Code exchange if provided
     if (code) {
         try {
-            const effectiveRedirectUri = req.body.redirectUri || `${(process.env.FRONTEND_URL || 'https://vrhere.in').replace(/\/$/, '')}/auth/google/callback`;
+            const effectiveRedirectUri = (req.body.redirectUri || `${(process.env.FRONTEND_URL || 'https://vrhere.in').replace(/\/$/, '')}/auth/google/callback`).split('?')[0].split('#')[0];
             const clientId = process.env.GOOGLE_CLIENT_ID;
             const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
-            const oauth2Client = new OAuth2Client(
-                clientId,
-                clientSecret,
-                effectiveRedirectUri
-            );
-            const { tokens } = await oauth2Client.getToken(code);
-            if (tokens.id_token) {
-                const ticket = await oauth2Client.verifyIdToken({
-                    idToken: tokens.id_token,
-                    audience: process.env.GOOGLE_CLIENT_ID ? [process.env.GOOGLE_CLIENT_ID] : undefined
-                });
-                payload = ticket.getPayload();
+            const postBody = new URLSearchParams({
+                code: String(code).trim(),
+                client_id: clientId,
+                client_secret: clientSecret,
+                redirect_uri: effectiveRedirectUri,
+                grant_type: 'authorization_code'
+            });
+
+            console.log('[Google Auth] Exchanging code with redirect_uri:', effectiveRedirectUri);
+
+            const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: postBody.toString()
+            });
+
+            const tokens = await tokenRes.json();
+
+            if (tokens.error) {
+                console.error('[Google Auth] Token exchange error from Google:', tokens.error, tokens.error_description);
+            } else if (tokens.id_token) {
+                try {
+                    const ticket = await googleClient.verifyIdToken({
+                        idToken: tokens.id_token,
+                        audience: clientId ? [clientId] : undefined
+                    });
+                    payload = ticket.getPayload();
+                } catch (verifyErr) {
+                    payload = await httpGetJson(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokens.id_token)}`);
+                }
             } else if (tokens.access_token) {
                 payload = await httpGetJson('https://www.googleapis.com/oauth2/v3/userinfo', {
                     Authorization: `Bearer ${tokens.access_token}`
                 });
             }
         } catch (codeErr) {
-            console.error('OAuth code exchange error:', codeErr.message);
+            console.error('OAuth code exchange error:', codeErr);
         }
     }
 
