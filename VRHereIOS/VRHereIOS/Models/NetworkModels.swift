@@ -165,6 +165,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
     let referralPartner: String?
     let partnerCommissionAmount: Double?
     let freelancerPayout: Double?
+    let broadcastStatus: String?
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
@@ -172,7 +173,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
         case razorpayOrderId, paymentStatus, status, assignedEmployee, clientDocuments
         case adminDocuments, finalCertificateUrl, tasks, invoices, customerRequirements
         case checklists, consultationAdjusted, linkedTodos, activityHistory, attendance, createdAt, updatedAt
-        case referralPartner, partnerCommissionAmount, freelancerPayout
+        case referralPartner, partnerCommissionAmount, freelancerPayout, broadcastStatus
     }
     
     init(from decoder: Decoder) throws {
@@ -206,6 +207,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
             self.referralPartner = nil
             self.partnerCommissionAmount = nil
             self.freelancerPayout = nil
+            self.broadcastStatus = nil
             return
         }
         
@@ -238,6 +240,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
         referralPartner = try container.decodeIfPresent(String.self, forKey: .referralPartner)
         partnerCommissionAmount = try container.decodeIfPresent(Double.self, forKey: .partnerCommissionAmount)
         freelancerPayout = try container.decodeIfPresent(Double.self, forKey: .freelancerPayout)
+        broadcastStatus = try container.decodeIfPresent(String.self, forKey: .broadcastStatus)
     }
 }
 
