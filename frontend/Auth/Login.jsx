@@ -2,12 +2,10 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import GoogleAuthButton, { getDashboardRouteForRole } from '../components/GoogleAuthButton';
 import ConsultationPaymentModal from '../components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from '../utils/razorpayCheckout';
 import { showPaymentSuccessPopup } from '../utils/paymentSuccessPopup';
-
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
 
 const PACKAGES = [
   {
@@ -36,32 +34,8 @@ const LoginPage = () => {
         phone: ''
     });
 
-    const { login, googleLogin } = useContext(AuthContext);
+    const { login } = useContext(AuthContext);
     const navigate = useNavigate();
-
-    const handleGoogleSuccess = async (credentialResponse) => {
-        console.log('Google credential response received:', credentialResponse);
-        setLoading(true);
-        setError('');
-        try {
-            const user = await googleLogin(credentialResponse);
-            console.log('Backend user:', user);
-            const targetUrl = user.role === 'admin' ? '/admin'
-                : user.role === 'employee' ? '/employee'
-                : user.role === 'partner' ? '/partner-dashboard'
-                : user.role === 'freelancer' ? '/freelancer-dashboard'
-                : '/customer-dashboard';
-            // Full page navigation ensures ProtectedRoute reads fresh auth state
-            window.location.href = targetUrl;
-        } catch (err) {
-            console.error('Google Login Error:', err);
-            const msg = err.response?.data?.message || err.message || 'Google Sign-In failed';
-            setError(msg);
-            alert('Google Login Error: ' + msg);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleConsultationBook = (e) => {
         e?.preventDefault();
@@ -105,17 +79,15 @@ const LoginPage = () => {
         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
     };
 
+    // Standard Email + Password Login Flow
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         try {
             const user = await login(email, password);
-            if (user.role === 'admin') navigate('/admin');
-            else if (user.role === 'employee') navigate('/employee');
-            else if (user.role === 'partner') navigate('/partner-dashboard');
-            else if (user.role === 'freelancer') navigate('/freelancer-dashboard');
-            else navigate('/dashboard');
+            const targetUrl = getDashboardRouteForRole(user.role);
+            navigate(targetUrl);
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
         } finally {
@@ -169,6 +141,7 @@ const LoginPage = () => {
                         </div>
                     )}
 
+                    {/* Standard Email & Password Login */}
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
@@ -220,22 +193,11 @@ const LoginPage = () => {
                         <span className="bg-white px-3 text-xs text-slate-400 font-semibold uppercase tracking-wider absolute">or</span>
                     </div>
 
-                    {/* Google Login - credential/id_token flow (most reliable) */}
-                    <div className="w-full flex justify-center">
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={(err) => {
-                                console.error('Google Login button error:', err);
-                                setError('Google Sign-In failed. Please try again.');
-                            }}
-                            theme="outline"
-                            size="large"
-                            text="continue_with"
-                            width="400"
-                            shape="rectangular"
-                            logo_alignment="center"
-                        />
-                    </div>
+                    {/* Standalone Google Auth Module */}
+                    <GoogleAuthButton
+                        onError={setError}
+                        text="continue_with"
+                    />
 
                     <div className="mt-8 text-center text-slate-500">
                         Don't have an account? <button type="button" onClick={handleConsultationBook} className="text-red-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1">Sign Up</button>
@@ -246,10 +208,4 @@ const LoginPage = () => {
     );
 };
 
-const LoginPageWrapper = () => (
-    <GoogleOAuthProvider clientId={googleClientId}>
-        <LoginPage />
-    </GoogleOAuthProvider>
-);
-
-export default LoginPageWrapper;
+export default LoginPage;

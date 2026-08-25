@@ -1,12 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Loader2, User, Mail, Lock, Phone, ArrowRight, Briefcase } from 'lucide-react';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
-
-
+import { Loader2, User, Mail, Lock, Phone, ArrowRight } from 'lucide-react';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 const RegisterPage = () => {
     const [name, setName] = useState('');
@@ -17,32 +13,8 @@ const RegisterPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const { register, googleLogin } = useContext(AuthContext);
+    const { register } = useContext(AuthContext);
     const navigate = useNavigate();
-
-    const handleGoogleSuccess = async (credentialResponse) => {
-        console.log('Google credential response received:', credentialResponse);
-        setLoading(true);
-        setError('');
-        try {
-            const user = await googleLogin(credentialResponse);
-            console.log('Backend user:', user);
-            const targetUrl = user.role === 'admin' ? '/admin'
-                : user.role === 'employee' ? '/employee'
-                : user.role === 'partner' ? '/partner-dashboard'
-                : user.role === 'freelancer' ? '/freelancer-dashboard'
-                : '/customer-dashboard';
-            // Full page navigation ensures ProtectedRoute reads fresh auth state
-            window.location.href = targetUrl;
-        } catch (err) {
-            console.error('Google Login Error:', err);
-            const msg = err.response?.data?.message || err.message || 'Google Sign-In failed';
-            setError(msg);
-            alert('Google Login Error: ' + msg);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -50,7 +22,7 @@ const RegisterPage = () => {
         setError('');
         try {
             await register(name, email, phone, password, role);
-            navigate('/dashboard');
+            navigate('/customer-dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
         } finally {
@@ -93,6 +65,7 @@ const RegisterPage = () => {
                         </div>
                     )}
 
+                    {/* Standard Registration Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
@@ -168,22 +141,11 @@ const RegisterPage = () => {
                         <span className="bg-white px-3 text-xs text-slate-400 font-semibold uppercase tracking-wider absolute">or</span>
                     </div>
 
-                    {/* Google Login - credential/id_token flow (most reliable) */}
-                    <div className="w-full flex justify-center">
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={(err) => {
-                                console.error('Google Login button error:', err);
-                                setError('Google Sign-In failed. Please try again.');
-                            }}
-                            theme="outline"
-                            size="large"
-                            text="continue_with"
-                            width="400"
-                            shape="rectangular"
-                            logo_alignment="center"
-                        />
-                    </div>
+                    {/* Standalone Google Auth Module */}
+                    <GoogleAuthButton
+                        onError={setError}
+                        text="signup_with"
+                    />
 
                     <div className="mt-8 text-center text-slate-500">
                         Already have an account? <Link to="/login" className="text-red-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1">Sign In</Link>
@@ -194,10 +156,4 @@ const RegisterPage = () => {
     );
 };
 
-const RegisterPageWrapper = () => (
-    <GoogleOAuthProvider clientId={googleClientId}>
-        <RegisterPage />
-    </GoogleOAuthProvider>
-);
-
-export default RegisterPageWrapper;
+export default RegisterPage;
