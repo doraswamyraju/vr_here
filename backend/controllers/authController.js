@@ -1,11 +1,33 @@
 import asyncHandler from 'express-async-handler';
 import { randomBytes, createHash } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import https from 'https';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
 
 const googleClient = new OAuth2Client();
+
+const httpGetJson = async (url, headers = {}) => {
+    if (typeof fetch === 'function') {
+        const res = await fetch(url, { headers });
+        if (!res.ok) return null;
+        return await res.json();
+    }
+    return new Promise((resolve) => {
+        const req = https.get(url, { headers }, (res) => {
+            if (res.statusCode < 200 || res.statusCode >= 300) {
+                return resolve(null);
+            }
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                try { resolve(JSON.parse(data)); } catch (e) { resolve(null); }
+            });
+        });
+        req.on('error', () => resolve(null));
+    });
+};
 
 const buildResetUrl = (token) => {
     const baseUrl = process.env.FRONTEND_URL || 'https://vrhere.in';
@@ -499,12 +521,9 @@ const googleAuth = asyncHandler(async (req, res) => {
 
     if (accessToken) {
         try {
-            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${accessToken}` }
+            payload = await httpGetJson('https://www.googleapis.com/oauth2/v3/userinfo', {
+                Authorization: `Bearer ${accessToken}`
             });
-            if (userInfoRes.ok) {
-                payload = await userInfoRes.json();
-            }
         } catch (e) {
             console.error('AccessToken verify error:', e);
         }
@@ -525,11 +544,10 @@ const googleAuth = asyncHandler(async (req, res) => {
             payload = ticket.getPayload();
         } catch (err) {
             try {
-                const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokenToVerify)}`);
-                if (!response.ok) {
+                payload = await httpGetJson(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokenToVerify)}`);
+                if (!payload) {
                     throw new Error('Invalid token response from Google API');
                 }
-                payload = await response.json();
             } catch (fetchErr) {
                 res.status(401);
                 throw new Error('Invalid or expired Google token');
