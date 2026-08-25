@@ -14,6 +14,8 @@ struct FreelancerDashboardView: View {
     @State private var toastMsg = ""
     @State private var isShowingNotifications = false
     
+    @State private var activeIncomingBroadcast: OrderResponse? = nil
+    
     var body: some View {
         ZStack {
             // Main Scaffold
@@ -62,7 +64,7 @@ struct FreelancerDashboardView: View {
                 // Dock Navigation Bar at Bottom
                 let dockItems = [
                     BMSDockItem(label: "Me", iconName: "square.grid.2x2", tabId: "Overview"),
-                    BMSDockItem(label: "Broadcasts", iconName: "bell", tabId: "Broadcasts"),
+                    BMSDockItem(label: "Broadcasts", iconName: "bell", tabId: "Broadcasts", badgeCount: viewModel.broadcasts.count),
                     BMSDockItem(label: "Queue", iconName: "briefcase", tabId: "Queue"),
                     BMSDockItem(label: "Ledger", iconName: "indianrupeesign", tabId: "Ledger")
                 ]
@@ -123,8 +125,25 @@ struct FreelancerDashboardView: View {
                 onClose: { isShowingNotifications = false }
             )
         }
+        .fullScreenCover(item: $activeIncomingBroadcast) { order in
+            IncomingWorkRequestSheet(
+                order: order,
+                onAccept: {
+                    viewModel.claimJob(orderId: order.id)
+                    activeIncomingBroadcast = nil
+                },
+                onDecline: {
+                    activeIncomingBroadcast = nil
+                }
+            )
+        }
         .onAppear {
             viewModel.syncFreelancerData()
+        }
+        .onChange(of: viewModel.broadcasts) { newBroadcasts in
+            if let firstUnclaimed = newBroadcasts.first {
+                self.activeIncomingBroadcast = firstUnclaimed
+            }
         }
         .onChange(of: viewModel.toastMessage) { msg in
             if let msg = msg {

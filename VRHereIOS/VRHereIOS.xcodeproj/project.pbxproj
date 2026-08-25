@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		000000000000000000000120 /* VRHereIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VRHereIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000120 /* VRHereIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = VRHereIOS.app; path = "VR Here BMS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -46,9 +46,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		000000000000000100000000 /* VRHereIOS */ = {
+		000000000000000100000000 /* VR Here BMS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "VRHereIOS" */;
+			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "VR Here BMS" */;
 			buildPhases = (
 				000000000000000120000000 /* Sources */,
 				000000000000000130000000 /* Frameworks */,
@@ -93,7 +93,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				000000000000000100000000 /* VRHereIOS */,
+				000000000000000100000000 /* VR Here BMS */,
 			);
 		};
 /* End PBXProject section */
@@ -235,7 +235,7 @@
 			};
 			name = Release;
 		};
-		000000000000000111000000 /* Debug configuration for PBXNativeTarget "VRHereIOS" */ = {
+		000000000000000111000000 /* Debug configuration for PBXNativeTarget "VR Here BMS" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -277,7 +277,7 @@
 			};
 			name = Debug;
 		};
-		000000000000000112000000 /* Release configuration for PBXNativeTarget "VRHereIOS" */ = {
+		000000000000000112000000 /* Release configuration for PBXNativeTarget "VR Here BMS" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -330,11 +330,11 @@
 			);
 			defaultConfigurationName = Release;
 		};
-		000000000000000110000000 /* Build configuration list for PBXNativeTarget "VRHereIOS" */ = {
+		000000000000000110000000 /* Build configuration list for PBXNativeTarget "VR Here BMS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				000000000000000111000000 /* Debug configuration for PBXNativeTarget "VRHereIOS" */,
-				000000000000000112000000 /* Release configuration for PBXNativeTarget "VRHereIOS" */,
+				000000000000000111000000 /* Debug configuration for PBXNativeTarget "VR Here BMS" */,
+				000000000000000112000000 /* Release configuration for PBXNativeTarget "VR Here BMS" */,
 			);
 			defaultConfigurationName = Release;
 		};

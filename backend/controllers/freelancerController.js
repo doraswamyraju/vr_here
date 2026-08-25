@@ -275,9 +275,9 @@ const adminBroadcastOrder = asyncHandler(async (req, res) => {
     order.broadcastStatus = 'Broadcasted';
     await order.save();
 
-    // Broadcast High-Priority Push Notification + Email + In-App to all active freelancers!
-    const freelancers = await User.find({ role: 'freelancer', isActive: true });
-    const notifTitle = `⚡ NEW WORK AVAILABLE: ${order.serviceName}`;
+    // Broadcast High-Priority Push Notification + Email + In-App to all active freelancers & staff!
+    const freelancers = await User.find({ isActive: true, role: { $in: ['freelancer', 'employee', 'admin', 'partner'] } });
+    const notifTitle = `⚡ NEW WORK BROADCAST: ${order.serviceName}`;
     const notifMessage = `New work available for payout Rs. ${(payoutAmount || 0).toLocaleString()}! First partner to claim gets assigned. Tap now!`;
 
     freelancers.forEach(freelancer => {
