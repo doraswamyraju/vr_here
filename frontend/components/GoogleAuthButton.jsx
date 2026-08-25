@@ -35,7 +35,7 @@ const GoogleAuthButtonInner = ({
     onSuccess,
     customRedirectUrl,
     text = 'continue_with',
-    width = '100%',
+    width = '380',
     theme = 'outline',
     size = 'large'
 }) => {
