@@ -80,7 +80,7 @@ const getBroadcastedOrders = asyncHandler(async (req, res) => {
     res.json(orders);
 });
 
-// @desc    Claim a broadcasted order (First-Come, First-Served)
+// @desc    Claim a broadcasted order (Atomic First-Come, First-Served)
 // @route   POST /api/freelancer/claim/:id
 // @access  Private (Freelancer)
 const claimOrder = asyncHandler(async (req, res) => {
@@ -89,27 +89,36 @@ const claimOrder = asyncHandler(async (req, res) => {
         throw new Error('Access denied');
     }
 
-    const order = await Order.findById(req.params.id);
+    // Atomic find & update: Only succeeds if broadcastStatus is still 'Broadcasted' and assignedFreelancer is null
+    const order = await Order.findOneAndUpdate(
+        {
+            _id: req.params.id,
+            broadcastStatus: 'Broadcasted',
+            assignedFreelancer: null
+        },
+        {
+            $set: {
+                assignedFreelancer: req.user._id,
+                assignedEmployee: req.user._id,
+                broadcastStatus: 'Claimed'
+            }
+        },
+        { new: true }
+    );
 
     if (!order) {
-        res.status(404);
-        throw new Error('Order not found');
-    }
-
-    if (order.broadcastStatus !== 'Broadcasted' || order.assignedFreelancer) {
         res.status(400);
-        throw new Error('Order has already been claimed or is not available');
+        throw new Error('Order has already been claimed by another partner or is no longer available.');
     }
 
-    order.assignedFreelancer = req.user._id;
-    order.broadcastStatus = 'Claimed';
-    
-    // Set as assigned Employee/Maker so it shows up in their workspace if checker expects that
-    order.assignedEmployee = req.user._id;
+    // Notify admins that this order was claimed
+    notifyAdmins({
+        title: 'Work Claimed by Freelancer',
+        message: `Freelancer ${req.user.name} successfully claimed work order #${order._id} (${order.serviceName}).`,
+        type: 'Order'
+    }).catch(err => console.error('Failed to notify admins of claimed order:', err.message));
 
-    await order.save();
-
-    res.json({ message: 'Order claimed successfully', order });
+    res.json({ message: 'Congratulations! You claimed this order first.', order });
 });
 
 // @desc    Clock-In to start work on an order
@@ -266,7 +275,25 @@ const adminBroadcastOrder = asyncHandler(async (req, res) => {
     order.broadcastStatus = 'Broadcasted';
     await order.save();
 
-    res.json({ message: 'Order broadcasted successfully', order });
+    // Broadcast High-Priority Push Notification + Email + In-App to all active freelancers!
+    const freelancers = await User.find({ role: 'freelancer', isActive: true });
+    const notifTitle = `⚡ NEW WORK AVAILABLE: ${order.serviceName}`;
+    const notifMessage = `New work available for payout Rs. ${(payoutAmount || 0).toLocaleString()}! First partner to claim gets assigned. Tap now!`;
+
+    freelancers.forEach(freelancer => {
+        triggerNotification({
+            userId: freelancer._id,
+            title: notifTitle,
+            message: notifMessage,
+            type: 'Order',
+            emailOpts: {
+                send: true,
+                subject: `[WORK BROADCAST] ${order.serviceName} - Rs. ${(payoutAmount || 0).toLocaleString()}`
+            }
+        }).catch(err => console.error(`Failed push notification to freelancer ${freelancer.email}:`, err.message));
+    });
+
+    res.json({ message: `Order broadcasted successfully to ${freelancers.length} freelancers.`, order });
 });
 
 // @desc    Admin / Checker approve order completion and finalize payout

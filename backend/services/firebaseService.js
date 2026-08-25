@@ -37,7 +37,7 @@ try {
  * @param {string} payload.body - Notification body.
  * @param {Object} [payload.data] - Optional key-value data payload.
  */
-export const sendPushNotification = async (fcmToken, { title, body, data = {} }) => {
+export const sendPushNotification = async (fcmToken, { title, body, data = {}, sound = 'default', priority = 'high' }) => {
     if (!fcmToken) return;
 
     if (!firebaseMessaging) {
@@ -53,13 +53,33 @@ export const sendPushNotification = async (fcmToken, { title, body, data = {} })
                 body,
             },
             data: {
-                click_action: 'FLUTTER_NOTIFICATION_CLICK', // standard fallback for background routing
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
                 ...data,
             },
             android: {
+                priority: priority === 'high' ? 'high' : 'normal',
                 notification: {
-                    sound: 'default',
-                    clickAction: 'MainActivity',
+                    sound: sound || 'default',
+                    channelId: 'high_importance_channel',
+                    priority: 'high',
+                    defaultSound: true,
+                    defaultVibrateTimings: true,
+                },
+            },
+            apns: {
+                headers: {
+                    'apns-priority': '10',
+                },
+                payload: {
+                    aps: {
+                        alert: {
+                            title,
+                            body,
+                        },
+                        sound: sound || 'default',
+                        badge: 1,
+                        contentAvailable: true,
+                    },
                 },
             },
         };
