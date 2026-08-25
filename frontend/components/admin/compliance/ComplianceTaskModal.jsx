@@ -96,7 +96,7 @@ const ComplianceTaskModal = ({
       onClose();
     } catch (err) {
       setError('Failed to delete record');
-    } fontally {
+    } finally {
       setLoading(false);
     }
   };
