@@ -287,8 +287,7 @@ const adminBroadcastOrder = asyncHandler(async (req, res) => {
             message: notifMessage,
             type: 'Order',
             emailOpts: {
-                send: true,
-                subject: `[WORK BROADCAST] ${order.serviceName} - Rs. ${(payoutAmount || 0).toLocaleString()}`
+                send: false
             }
         }).catch(err => console.error(`Failed push notification to freelancer ${freelancer.email}:`, err.message));
     });

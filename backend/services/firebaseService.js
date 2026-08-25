@@ -30,6 +30,40 @@ try {
     console.error('Failed to initialize Firebase Admin SDK. Push notifications will be disabled or simulated:', error.message);
 }
 
+const convertApnsToFcmToken = async (apnsToken) => {
+    try {
+        const app = admin.app();
+        const tokenObj = await app.options.credential.getAccessToken();
+        const accessToken = tokenObj.access_token;
+        
+        for (const sandbox of [true, false]) {
+            const res = await fetch('https://iid.googleapis.com/iid/v1:batchImport', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'access_token_auth': 'true'
+                },
+                body: JSON.stringify({
+                    application: 'com.sbr.vrherebms.ios',
+                    sandbox: sandbox,
+                    apns_tokens: [apnsToken]
+                })
+            });
+            const json = await res.json();
+            if (json.results && json.results[0] && json.results[0].registration_token) {
+                const newFcm = json.results[0].registration_token;
+                console.log(`Converted APNs token ${apnsToken} -> FCM token ${newFcm}`);
+                await User.updateMany({ fcmToken: apnsToken }, { fcmToken: newFcm }).catch(() => {});
+                return newFcm;
+            }
+        }
+    } catch (err) {
+        console.error('APNs to FCM conversion failed:', err.message);
+    }
+    return null;
+};
+
 /**
  * Sends a push notification to a user's FCM token.
  * @param {string} fcmToken - The FCM registration token of the device.
@@ -46,9 +80,18 @@ export const sendPushNotification = async (fcmToken, { title, body, data = {}, s
         return;
     }
 
+    let targetToken = fcmToken;
+    if (/^[0-9a-fA-F]{64}$/.test(fcmToken)) {
+        console.log(`Detected 64-char APNs device token [${fcmToken}]. Converting to FCM token...`);
+        const converted = await convertApnsToFcmToken(fcmToken);
+        if (converted) {
+            targetToken = converted;
+        }
+    }
+
     try {
         const message = {
-            token: fcmToken,
+            token: targetToken,
             notification: {
                 title,
                 body,
