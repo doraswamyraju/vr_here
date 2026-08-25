@@ -12,16 +12,38 @@ const FreelancersModule = ({ token, orders = [], employees = [] }) => {
     const [payouts, setPayouts] = useState([]);
     const [liveAttendance, setLiveAttendance] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeSubTab, setActiveSubTab] = useState('Registrations'); // Registrations | Payouts | LiveAttendance
+    const [activeSubTab, setActiveSubTab] = useState('WorkBroadcast'); // WorkBroadcast | Registrations | Payouts | LiveAttendance
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [processingPayout, setProcessingPayout] = useState(null);
+    const [broadcastPayouts, setBroadcastPayouts] = useState({});
+    const [broadcastingId, setBroadcastingId] = useState(null);
     const [payoutForm, setPayoutForm] = useState({
         method: 'NEFT',
         transactionRef: '',
         notes: ''
     });
+
+    const handleBroadcastWork = async (orderId) => {
+        const payoutAmount = Number(broadcastPayouts[orderId]) || 0;
+        if (payoutAmount <= 0) {
+            return setError('Please enter a valid Payout Amount before broadcasting.');
+        }
+
+        setBroadcastingId(orderId);
+        setError('');
+        try {
+            const { data } = await axios.put(`/api/freelancer/admin/broadcast/${orderId}`, { payoutAmount }, config);
+            setSuccessMsg(`⚡ ${data.message}`);
+            setTimeout(() => setSuccessMsg(''), 4000);
+            fetchData();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to broadcast work');
+        } finally {
+            setBroadcastingId(null);
+        }
+    };
 
     // Detail/Edit Modal States
     const [selectedFreelancer, setSelectedFreelancer] = useState(null);
@@ -609,13 +631,13 @@ const FreelancersModule = ({ token, orders = [], employees = [] }) => {
                         <RefreshCcw className="w-5 h-5" />
                     </button>
                     <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-2 font-bold text-xs">
-                        {['Registrations', 'Payouts', 'LiveAttendance'].map((tab) => (
+                        {['WorkBroadcast', 'Registrations', 'Payouts', 'LiveAttendance'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => { setActiveSubTab(tab); setSearchTerm(''); }}
                                 className={`px-4 py-2.5 rounded-xl transition-all ${activeSubTab === tab ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
                             >
-                                {tab === 'LiveAttendance' ? 'Live Clock-In' : tab}
+                                {tab === 'WorkBroadcast' ? '⚡ Work Broadcast' : tab === 'LiveAttendance' ? 'Live Clock-In' : tab}
                             </button>
                         ))}
                     </div>
@@ -643,6 +665,149 @@ const FreelancersModule = ({ token, orders = [], employees = [] }) => {
                 </div>
             ) : (
                 <>
+                    {/* Work Broadcast Pool */}
+                    {activeSubTab === 'WorkBroadcast' && (
+                        <div className="space-y-6">
+                            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-[32px] p-8 shadow-xl border border-slate-800">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div>
+                                        <span className="bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-500/30 flex items-center gap-1.5 w-fit">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Broadcast Dispatcher
+                                        </span>
+                                        <h2 className="text-2xl font-black text-white tracking-tight mt-3">Freelancer Work Pool & Push Alerts</h2>
+                                        <p className="text-slate-400 text-xs font-medium mt-1">Broadcast projects instantly to all active freelancers with high-priority push notifications and ringtone sound.</p>
+                                    </div>
+                                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registered Partners</p>
+                                            <p className="text-xl font-black text-white mt-0.5">{freelancers.filter(f => f.isActive).length} Active</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Unassigned Projects Waiting for Broadcast */}
+                            <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-6">
+                                <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                                    <div>
+                                        <h3 className="font-black text-slate-900 text-lg tracking-tight">Available Projects to Broadcast</h3>
+                                        <p className="text-xs text-slate-500 font-medium">Select payout amount and trigger real-time broadcast alert</p>
+                                    </div>
+                                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100">
+                                        {orders.filter(o => !o.assignedFreelancer && o.broadcastStatus !== 'Claimed').length} Available
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {orders.filter(o => !o.assignedFreelancer && o.broadcastStatus !== 'Claimed').map((order) => {
+                                        const isBroadcasted = order.broadcastStatus === 'Broadcasted';
+                                        return (
+                                            <div key={order._id} className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-indigo-300 hover:bg-indigo-50/20 transition-all flex flex-col justify-between space-y-4">
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-wider">
+                                                            {order.category || 'Service'}
+                                                        </span>
+                                                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${isBroadcasted ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-slate-200 text-slate-600'}`}>
+                                                            {order.broadcastStatus || 'Not Broadcasted'}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-black text-slate-900 text-sm">{order.serviceName}</h4>
+                                                    <p className="text-xs text-slate-500 font-medium mt-1">Client: {order.userName || 'Guest'}</p>
+                                                    <p className="text-xs font-bold text-slate-700 mt-2">Order Value: ₹{Number(order.price || 0).toLocaleString()}</p>
+                                                </div>
+
+                                                <div className="space-y-3 pt-3 border-t border-slate-200/60">
+                                                    <div>
+                                                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                                                            Freelancer Payout (₹)
+                                                        </label>
+                                                        <input 
+                                                            type="number"
+                                                            placeholder="e.g. 2500"
+                                                            value={broadcastPayouts[order._id] || order.freelancerPayout || ''}
+                                                            onChange={(e) => setBroadcastPayouts({ ...broadcastPayouts, [order._id]: e.target.value })}
+                                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
+                                                        />
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => handleBroadcastWork(order._id)}
+                                                        disabled={broadcastingId === order._id}
+                                                        className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 ${isBroadcasted ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200'}`}
+                                                    >
+                                                        {broadcastingId === order._id ? 'Broadcasting...' : (isBroadcasted ? '⚡ Re-Broadcast Work' : '⚡ Broadcast to Freelancers')}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {orders.filter(o => !o.assignedFreelancer && o.broadcastStatus !== 'Claimed').length === 0 && (
+                                        <div className="col-span-full py-12 text-center text-slate-400 italic font-medium">
+                                            All current orders have been claimed or assigned!
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Broadcasted & Claimed Orders Audit Grid */}
+                            <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-6">
+                                <h3 className="font-black text-slate-900 text-lg tracking-tight mb-4">Claimed & Active Freelancer Work Pool</h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-50">
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">Project Name</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">Payout (₹)</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">Claim Status</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">Assigned Partner</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 text-xs font-bold">
+                                            {orders.filter(o => o.broadcastStatus === 'Broadcasted' || o.broadcastStatus === 'Claimed' || o.assignedFreelancer).map(order => (
+                                                <tr key={order._id} className="hover:bg-slate-50/50">
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-slate-900 font-black">{order.serviceName}</p>
+                                                        <p className="text-[10px] text-slate-400 font-medium">Order ID: #{order._id.slice(-6)}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-emerald-600 font-black">
+                                                        ₹{Number(order.freelancerPayout || 0).toLocaleString()}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${order.broadcastStatus === 'Claimed' || order.assignedFreelancer ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                            {order.assignedFreelancer ? 'Claimed (First-Come)' : 'Broadcasted (Waiting)'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {order.assignedFreelancer ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-xs">
+                                                                    {(order.assignedFreelancer.name || 'F').charAt(0)}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-slate-900 font-black">{order.assignedFreelancer.name || 'Claimed Partner'}</p>
+                                                                    <p className="text-[10px] text-slate-400">{order.assignedFreelancer.phone || order.assignedFreelancer.email || ''}</p>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-slate-400 italic">Unclaimed</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {orders.filter(o => o.broadcastStatus === 'Broadcasted' || o.broadcastStatus === 'Claimed' || o.assignedFreelancer).length === 0 && (
+                                                <tr>
+                                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-400 italic">No broadcast history yet.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Registrations List */}
                     {activeSubTab === 'Registrations' && (
                         <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">

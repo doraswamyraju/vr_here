@@ -26,6 +26,12 @@ class AuthViewModel: ObservableObject {
         if SessionManager.shared.isLoggedIn() {
             let role = SessionManager.shared.getUserRole()
             authState = .success(role: role.isEmpty ? "client" : role)
+            
+            if let token = SessionManager.shared.getFcmToken() {
+                Task {
+                    _ = try? await NetworkManager.shared.updateFcmToken(token: token)
+                }
+            }
         }
     }
     
