@@ -18,9 +18,9 @@ const getComplianceRecords = asyncHandler(async (req, res) => {
 
 // @desc    Create a compliance record
 // @route   POST /api/compliance
-// @access  Private/Admin
+// @access  Private (Admin or Authorized Employee)
 const createComplianceRecord = asyncHandler(async (req, res) => {
-    const { clientName, category, taskName, dueDate, periodMonth, periodYear, notes } = req.body;
+    const { clientName, category, taskName, dueDate, periodMonth, periodYear, notes, status, assignedTo } = req.body;
     
     const record = await Compliance.create({
         clientName,
@@ -29,23 +29,35 @@ const createComplianceRecord = asyncHandler(async (req, res) => {
         dueDate,
         periodMonth,
         periodYear,
-        notes,
-        status: 'Pending'
+        notes: notes || '',
+        status: status || 'Pending',
+        assignedTo: assignedTo || null
     });
 
     res.status(201).json(record);
 });
 
-// @desc    Update compliance status
+// @desc    Update compliance status & details
 // @route   PUT /api/compliance/:id
-// @access  Private/Admin
+// @access  Private (Admin or Authorized Employee)
 const updateComplianceStatus = asyncHandler(async (req, res) => {
     const record = await Compliance.findById(req.params.id);
 
     if (record) {
-        record.status = req.body.status || record.status;
-        record.filedAt = req.body.status === 'Filed' ? new Date() : record.filedAt;
-        record.notes = req.body.notes || record.notes;
+        if (req.body.clientName) record.clientName = req.body.clientName;
+        if (req.body.category) record.category = req.body.category;
+        if (req.body.taskName) record.taskName = req.body.taskName;
+        if (req.body.dueDate) record.dueDate = req.body.dueDate;
+        if (req.body.periodMonth) record.periodMonth = req.body.periodMonth;
+        if (req.body.periodYear) record.periodYear = req.body.periodYear;
+        if (req.body.status) {
+            record.status = req.body.status;
+            if (req.body.status === 'Filed' && !record.filedAt) {
+                record.filedAt = new Date();
+            }
+        }
+        if (req.body.notes !== undefined) record.notes = req.body.notes;
+        if (req.body.assignedTo !== undefined) record.assignedTo = req.body.assignedTo;
         
         const updatedRecord = await record.save();
         res.json(updatedRecord);
@@ -55,9 +67,24 @@ const updateComplianceStatus = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Delete compliance record
+// @route   DELETE /api/compliance/:id
+// @access  Private (Admin or Authorized Employee)
+const deleteComplianceRecord = asyncHandler(async (req, res) => {
+    const record = await Compliance.findById(req.params.id);
+
+    if (record) {
+        await Compliance.deleteOne({ _id: req.params.id });
+        res.json({ message: 'Compliance record removed' });
+    } else {
+        res.status(404);
+        throw new Error('Record not found');
+    }
+});
+
 // @desc    Bulk generate compliance for a month
 // @route   POST /api/compliance/bulk-generate
-// @access  Private/Admin
+// @access  Private (Admin or Authorized Employee)
 const bulkGenerateCompliance = asyncHandler(async (req, res) => {
     const { clients, month, year, tasks } = req.body;
     
@@ -84,5 +111,6 @@ export {
     getComplianceRecords,
     createComplianceRecord,
     updateComplianceStatus,
+    deleteComplianceRecord,
     bulkGenerateCompliance
 };

@@ -78,6 +78,10 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: true
     },
+    canManageCompliance: {
+        type: Boolean,
+        default: false
+    },
     pendingProfileUpdate: {
         type: {
             name: String,

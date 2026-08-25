@@ -3,20 +3,22 @@ import {
     getComplianceRecords,
     createComplianceRecord,
     updateComplianceStatus,
+    deleteComplianceRecord,
     bulkGenerateCompliance
 } from '../controllers/complianceController.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect, canManageCompliance } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 router.route('/')
-    .get(protect, admin, getComplianceRecords)
-    .post(protect, admin, createComplianceRecord);
+    .get(protect, canManageCompliance, getComplianceRecords)
+    .post(protect, canManageCompliance, createComplianceRecord);
 
 router.route('/bulk-generate')
-    .post(protect, admin, bulkGenerateCompliance);
+    .post(protect, canManageCompliance, bulkGenerateCompliance);
 
 router.route('/:id')
-    .put(protect, admin, updateComplianceStatus);
+    .put(protect, canManageCompliance, updateComplianceStatus)
+    .delete(protect, canManageCompliance, deleteComplianceRecord);
 
 export default router;

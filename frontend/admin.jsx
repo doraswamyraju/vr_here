@@ -772,7 +772,7 @@ function AdminApp() {
       />
     );
     if (activeTab === 'Finance') return <FinanceModule token={userInfo?.token} />;
-    if (activeTab === 'Compliance') return <ComplianceModule token={userInfo?.token} />;
+    if (activeTab === 'Compliance') return <ComplianceModule token={userInfo?.token} employees={employees} users={users} />;
     if (activeTab === 'ITChecklist') return <IncomeTaxAssessmentModule token={userInfo?.token} />;
     if (activeTab === 'Performance') return <EmployeeAnalysisModule token={userInfo?.token} users={users} />;
     if (activeTab === 'HRMS') return <HRMSModule role={userInfo?.role} />;

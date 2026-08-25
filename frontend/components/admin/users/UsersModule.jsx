@@ -77,6 +77,11 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
     await loadSummary();
   };
 
+  const toggleComplianceAccess = async (user) => {
+    await axios.put(`/api/auth/users/${user._id}`, { canManageCompliance: !user.canManageCompliance }, config);
+    await onRefresh();
+  };
+
   const sendPasswordLink = async (user) => {
     await axios.post(`/api/auth/users/${user._id}/send-password-link`, {}, config);
     alert(`Password link sent to ${user.email}`);
@@ -146,6 +151,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
             onSaveEdit={saveEdit}
             onCancelEdit={() => setEditingUserId('')}
             onToggleActive={toggleActive}
+            onToggleComplianceAccess={toggleComplianceAccess}
             onSendPasswordLink={sendPasswordLink}
             onDeleteUser={deleteUser}
           />

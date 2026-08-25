@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pencil, Power, Send, Trash2 } from 'lucide-react';
+import { Pencil, Power, Send, Trash2, ShieldCheck } from 'lucide-react';
 
-const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit, onSaveEdit, onCancelEdit, onToggleActive, onSendPasswordLink, onDeleteUser }) => (
+const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit, onSaveEdit, onCancelEdit, onToggleActive, onToggleComplianceAccess, onSendPasswordLink, onDeleteUser }) => (
   <div className="rounded-xl border border-slate-200 bg-white overflow-x-auto">
     <table className="w-full text-sm min-w-[880px]">
       <thead className="bg-slate-100 text-slate-600 text-xs uppercase">
@@ -43,7 +43,16 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
                     <option value="admin">admin</option>
                     <option value="partner">partner</option>
                   </select>
-                ) : user.role}
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <span>{user.role}</span>
+                    {user.canManageCompliance && (
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase" title="Authorized Compliance Manager">
+                        Compliance
+                      </span>
+                    )}
+                  </div>
+                )}
               </td>
               <td className="px-4 py-3">
                 <span className={`px-2 py-1 rounded-full text-xs font-semibold ${user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
@@ -62,6 +71,15 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
                       <button onClick={() => onStartEdit(user)} className="px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs font-semibold inline-flex items-center gap-1">
                         <Pencil size={12} /> Edit
                       </button>
+                      {onToggleComplianceAccess && user.role === 'employee' && (
+                        <button 
+                          onClick={() => onToggleComplianceAccess(user)} 
+                          className={`px-2 py-1 rounded text-xs font-semibold inline-flex items-center gap-1 ${user.canManageCompliance ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                          title={user.canManageCompliance ? 'Revoke Compliance Authorization' : 'Grant Compliance Authorization'}
+                        >
+                          <ShieldCheck size={12} /> {user.canManageCompliance ? 'Compliance Authorized' : '+ Compliance'}
+                        </button>
+                      )}
                       <button onClick={() => onToggleActive(user)} className="px-2 py-1 rounded bg-amber-100 text-amber-700 text-xs font-semibold inline-flex items-center gap-1">
                         <Power size={12} /> {user.isActive ? 'Deactivate' : 'Activate'}
                       </button>

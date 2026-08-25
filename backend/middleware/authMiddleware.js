@@ -58,4 +58,13 @@ const admin = (req, res, next) => {
     }
 };
 
-export { protect, protectOptional, admin };
+const canManageCompliance = (req, res, next) => {
+    if (req.user && (req.user.role === 'admin' || req.user.canManageCompliance === true)) {
+        next();
+    } else {
+        res.status(403);
+        throw new Error('Not authorized to manage compliance records');
+    }
+};
+
+export { protect, protectOptional, admin, canManageCompliance };

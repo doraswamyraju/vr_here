@@ -6,12 +6,13 @@ import {
   ChevronLeft, ChevronRight, Download, RefreshCw,
   Building2, Briefcase, FileText, Activity
 } from 'lucide-react';
+import ComplianceTaskModal from './ComplianceTaskModal';
 
 const CATEGORIES = ['Dashboard', 'GST', 'MCA', 'DIN KYC', 'TDS/TCS', 'Income Tax', 'Adv Tax', 'ESI', 'PF', 'PT', 'Notices'];
 const MONTHS = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'];
 const FULL_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-const ComplianceModule = ({ token }) => {
+const ComplianceModule = ({ token, employees = [], users = [] }) => {
   const [view, setView] = useState('calendar'); // 'calendar' or 'matrix'
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [records, setRecords] = useState([]);
@@ -19,14 +20,15 @@ const ComplianceModule = ({ token }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
 
   const config = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      const year = currentYear;
-      // Map current month to financial period if needed, but let's keep it simple for now
       const { data } = await axios.get(`/api/compliance`, config);
       setRecords(data);
     } catch (err) {
@@ -49,13 +51,33 @@ const ComplianceModule = ({ token }) => {
     });
   }, [records, searchQuery, activeTab]);
 
-  const handleStatusUpdate = async (id, status) => {
-    try {
-      await axios.put(`/api/compliance/${id}`, { status }, config);
-      fetchRecords();
-    } catch (err) {
-      alert('Failed to update status');
-    }
+  const handleExportXLS = () => {
+    if (filteredRecords.length === 0) return alert('No records to export');
+    
+    const headers = ['Client Name', 'Category', 'Task Name', 'Due Date', 'Period Month', 'Period Year', 'Status', 'Notes'];
+    const csvRows = [headers.join(',')];
+
+    filteredRecords.forEach(r => {
+      const row = [
+        `"${r.clientName.replace(/"/g, '""')}"`,
+        `"${r.category}"`,
+        `"${r.taskName.replace(/"/g, '""')}"`,
+        `"${new Date(r.dueDate).toISOString().split('T')[0]}"`,
+        `"${r.periodMonth}"`,
+        `"${r.periodYear}"`,
+        `"${r.status}"`,
+        `"${(r.notes || '').replace(/"/g, '""')}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Compliance_Report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   // Calendar View Logic
@@ -84,17 +106,16 @@ const ComplianceModule = ({ token }) => {
   // Matrix View Logic
   const clients = useMemo(() => [...new Set(records.map(r => r.clientName))].sort(), [records]);
 
-  const getStatusForClientMonth = (client, month) => {
-    const record = records.find(r => r.clientName === client && r.periodMonth === month && (activeTab === 'Dashboard' || r.category === activeTab));
-    return record ? record.status : null;
+  const getRecordForClientMonth = (client, month) => {
+    return records.find(r => r.clientName === client && r.periodMonth === month && (activeTab === 'Dashboard' || r.category === activeTab));
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Filed': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-      case 'Late': return 'bg-amber-50 text-amber-600 border-amber-100';
-      case 'Missed': return 'bg-rose-50 text-rose-600 border-rose-100';
-      case 'Pending': return 'bg-blue-50 text-blue-600 border-blue-100';
+      case 'Filed': return 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100';
+      case 'Late': return 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100';
+      case 'Missed': return 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100';
+      case 'Pending': return 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100';
       default: return 'bg-slate-50 text-slate-400 border-slate-100';
     }
   };
@@ -154,10 +175,19 @@ const ComplianceModule = ({ token }) => {
           />
         </div>
         <div className="flex gap-2">
-          <button className="px-6 py-4 bg-white border border-slate-100 text-slate-700 rounded-2xl font-black text-sm shadow-sm hover:border-slate-200 transition-all flex items-center gap-2">
-            <Download size={18} /> Export XLS
+          <button 
+            onClick={handleExportXLS}
+            className="px-6 py-4 bg-white border border-slate-100 text-slate-700 rounded-2xl font-black text-sm shadow-sm hover:border-slate-200 transition-all flex items-center gap-2"
+          >
+            <Download size={18} /> Export CSV
           </button>
-          <button className="px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-2">
+          <button 
+            onClick={() => {
+              setTaskToEdit(null);
+              setIsModalOpen(true);
+            }}
+            className="px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-2"
+          >
             <Plus size={18} /> New Task
           </button>
         </div>
@@ -199,7 +229,14 @@ const ComplianceModule = ({ token }) => {
                   </div>
                   <div className="space-y-1.5">
                     {dayRecords.map(r => (
-                      <div key={r._id} className={`p-2 rounded-lg border text-[10px] font-bold ${getStatusColor(r.status)}`}>
+                      <div 
+                        key={r._id} 
+                        onClick={() => {
+                          setTaskToEdit(r);
+                          setIsModalOpen(true);
+                        }}
+                        className={`p-2 rounded-lg border text-[10px] font-bold cursor-pointer transition-all hover:scale-[1.02] ${getStatusColor(r.status)}`}
+                      >
                         <div className="flex items-center justify-between mb-0.5">
                            <span>{r.category}</span>
                            {r.status === 'Filed' && <CheckCircle size={10} />}
@@ -238,18 +275,38 @@ const ComplianceModule = ({ token }) => {
                       </div>
                     </td>
                     {MONTHS.map(m => {
-                      const status = getStatusForClientMonth(client, m);
+                      const record = getRecordForClientMonth(client, m);
+                      const status = record ? record.status : null;
                       return (
                         <td key={m} className="px-4 py-5 text-center">
-                          {status ? (
-                            <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider ${getStatusColor(status)}`}>
+                          {record ? (
+                            <button 
+                              onClick={() => {
+                                setTaskToEdit(record);
+                                setIsModalOpen(true);
+                              }}
+                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 ${getStatusColor(status)}`}
+                            >
                               {status === 'Filed' && <CheckCircle size={10} />}
                               {status === 'Missed' && <XCircle size={10} />}
                               {status === 'Late' && <AlertTriangle size={10} />}
                               {status}
-                            </span>
+                            </button>
                           ) : (
-                            <span className="text-slate-200">—</span>
+                            <button 
+                              onClick={() => {
+                                setTaskToEdit({
+                                  clientName: client,
+                                  periodMonth: m,
+                                  periodYear: String(currentYear)
+                                });
+                                setIsModalOpen(true);
+                              }}
+                              className="text-slate-300 hover:text-indigo-600 font-bold text-xs"
+                              title="Add compliance for this month"
+                            >
+                              +
+                            </button>
                           )}
                         </td>
                       );
@@ -264,6 +321,20 @@ const ComplianceModule = ({ token }) => {
           </div>
         </div>
       )}
+
+      {/* Compliance Task Modal */}
+      <ComplianceTaskModal 
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setTaskToEdit(null);
+        }}
+        onSuccess={fetchRecords}
+        token={token}
+        taskToEdit={taskToEdit}
+        employees={employees}
+        clients={users}
+      />
     </div>
   );
 };

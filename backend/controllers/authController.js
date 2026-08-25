@@ -405,7 +405,7 @@ const createUserByAdmin = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/users/:id
 // @access  Private/Admin
 const updateUserByAdmin = asyncHandler(async (req, res) => {
-    const { name, email, phone, role, isActive, commissionPercentage, panCard } = req.body;
+    const { name, email, phone, role, isActive, commissionPercentage, panCard, canManageCompliance } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -418,6 +418,7 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
     if (phone !== undefined) user.phone = phone;
     if (role !== undefined) user.role = role;
     if (isActive !== undefined) user.isActive = Boolean(isActive);
+    if (canManageCompliance !== undefined) user.canManageCompliance = Boolean(canManageCompliance);
     if (commissionPercentage !== undefined) user.commissionPercentage = Number(commissionPercentage);
     if (panCard !== undefined) user.panCard = panCard;
 
@@ -432,6 +433,7 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
             phone: user.phone,
             role: user.role,
             isActive: user.isActive,
+            canManageCompliance: user.canManageCompliance,
             commissionPercentage: user.commissionPercentage,
             panCard: user.panCard,
             createdAt: user.createdAt,
