@@ -6,7 +6,7 @@ import AuthenticationServices
 final class GoogleOAuthManager: NSObject, ObservableObject, ASWebAuthenticationPresentationContextProviding {
     static let shared = GoogleOAuthManager()
     
-    private let clientId = "167766774028-lrhfc69ubgv0po3kp9gup09cfvd82jlu.apps.googleusercontent.com"
+    private let clientId = "674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com"
     private let redirectUri = "https://vrhere.in/auth/google/callback"
     
     func startGoogleSignIn(completion: @escaping (Result<String, Error>) -> Void) {

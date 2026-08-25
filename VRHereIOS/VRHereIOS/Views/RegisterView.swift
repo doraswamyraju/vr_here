@@ -121,22 +121,37 @@ struct RegisterView: View {
                     Button(action: {
                         viewModel.signInWithGoogle()
                     }) {
-                        HStack(spacing: 8) {
-                            Text("G")
-                                .font(.system(size: 20, weight: .black))
-                                .foregroundColor(.primaryRed)
-                            Text("Sign up with Google")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.textDark)
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color(red: 0.918, green: 0.263, blue: 0.208),
+                                            Color(red: 0.984, green: 0.737, blue: 0.02),
+                                            Color(red: 0.204, green: 0.659, blue: 0.325),
+                                            Color(red: 0.259, green: 0.522, blue: 0.957)
+                                        ]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                            
+                            HStack(spacing: 8) {
+                                Text("G")
+                                    .font(.system(size: 22, weight: .black))
+                                    .foregroundColor(Color(red: 0.918, green: 0.263, blue: 0.208))
+                                Text("Sign up with Google")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(.textDark)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.white)
+                            .cornerRadius(14)
+                            .padding(2)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 54)
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.textMuted.opacity(0.3), lineWidth: 1)
-                        )
+                        .shadow(color: Color(red: 0.918, green: 0.263, blue: 0.208).opacity(0.35), radius: 8, x: 0, y: 4)
                     }
                     .buttonStyle(ScaleOnPressButtonStyle())
                     

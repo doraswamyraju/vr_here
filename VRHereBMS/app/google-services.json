@@ -12,7 +12,20 @@
           "package_name": "com.sbr.vrherebms"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "674627570227-tdaif2sht51ejtkisle8e4odjc9mfufp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sbr.vrherebms",
+            "certificate_hash": "6af0fae69617e8fc7b98102b9ccc6f6c28540b60"
+          }
+        },
+        {
+          "client_id": "674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD2hQjZbMOWHY15BRTsuawVnkKd2Pm4V5I"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "674627570227-0hds8k55egipj5g6tai0kqrvm8cse9v1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sbr.vrherebms.ios"
+              }
+            }
+          ]
         }
       }
     }

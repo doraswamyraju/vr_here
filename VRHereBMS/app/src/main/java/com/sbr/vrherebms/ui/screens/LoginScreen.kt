@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -278,7 +279,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val webClientId = "167766774028-lrhfc69ubgv0po3kp9gup09cfvd82jlu.apps.googleusercontent.com"
+            val webClientId = "674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com"
             val googleSignInLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
                 contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
             ) { result ->
@@ -293,40 +294,62 @@ fun LoginScreen(
                 }
             }
 
-            OutlinedButton(
-                onClick = {
-                    val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
-                        com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
-                    )
-                        .requestIdToken(webClientId)
-                        .requestEmail()
-                        .build()
-                    val googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
-                    googleSignInLauncher.launch(googleSignInClient.signInIntent)
-                },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = textDark),
-                border = androidx.compose.foundation.BorderStroke(1.dp, inputBackground)
+                    .height(54.dp)
+                    .shadow(
+                        elevation = 10.dp,
+                        shape = RoundedCornerShape(16.dp),
+                        spotColor = Color(0x66EA4335),
+                        ambientColor = Color(0x404285F4)
+                    )
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFFEA4335),
+                                Color(0xFFFBBC05),
+                                Color(0xFF34A853),
+                                Color(0xFF4285F4)
+                            )
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(2.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                Surface(
+                    onClick = {
+                        val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                            com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                        )
+                            .requestIdToken(webClientId)
+                            .requestEmail()
+                            .build()
+                        val googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color.White
                 ) {
-                    Text(
-                        text = "G ",
-                        color = primaryRed,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 20.sp
-                    )
-                    Text(
-                        text = "Continue with Google",
-                        color = textDark,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "G ",
+                            color = Color(0xFFEA4335),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 22.sp
+                        )
+                        Text(
+                            text = "Continue with Google",
+                            color = textDark,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    }
                 }
             }
 
