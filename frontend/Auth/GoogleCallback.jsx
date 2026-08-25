@@ -35,7 +35,8 @@ const GoogleCallback = () => {
                     user = await googleLogin({ credential, access_token: accessToken });
                 } else if (code) {
                     console.log('[GoogleCallback] Found authorization code in URL:', code);
-                    const { data } = await axios.post('/api/auth/google', { code });
+                    const redirectUri = `${window.location.origin}/auth/google/callback`;
+                    const { data } = await axios.post('/api/auth/google', { code, redirectUri });
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('userInfo', JSON.stringify(data));
                     user = data;

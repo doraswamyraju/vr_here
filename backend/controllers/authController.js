@@ -538,11 +538,14 @@ const googleAuth = asyncHandler(async (req, res) => {
     // Handle OAuth Authorization Code exchange if provided
     if (code) {
         try {
-            const redirectUri = `${(process.env.FRONTEND_URL || 'https://vrhere.in').replace(/\/$/, '')}/auth/google/callback`;
+            const effectiveRedirectUri = req.body.redirectUri || `${(process.env.FRONTEND_URL || 'https://vrhere.in').replace(/\/$/, '')}/auth/google/callback`;
+            const clientId = process.env.GOOGLE_CLIENT_ID;
+            const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
             const oauth2Client = new OAuth2Client(
-                process.env.GOOGLE_CLIENT_ID,
-                process.env.GOOGLE_CLIENT_SECRET,
-                redirectUri
+                clientId,
+                clientSecret,
+                effectiveRedirectUri
             );
             const { tokens } = await oauth2Client.getToken(code);
             if (tokens.id_token) {
