@@ -8,7 +8,8 @@ const attachUserFromToken = async (req) => {
         req.headers.authorization.startsWith('Bearer')
     ) {
         const token = req.headers.authorization.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const secret = process.env.JWT_SECRET || 'secret';
+        const decoded = jwt.verify(token, secret);
         req.user = await User.findById(decoded.id).select('-password');
         return token;
     }
