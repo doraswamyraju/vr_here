@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import dotenv from 'dotenv';
+import User from '../models/User.js';
 
 dotenv.config();
 
@@ -88,5 +89,9 @@ export const sendPushNotification = async (fcmToken, { title, body, data = {}, s
         console.log(`Push notification sent successfully to ${fcmToken}:`, response);
     } catch (error) {
         console.error(`Error sending push notification to ${fcmToken}:`, error.message);
+        if (error.message && (error.message.includes('NotRegistered') || error.code === 'messaging/registration-token-not-registered')) {
+            console.log(`Clearing stale FCM token ${fcmToken} from database...`);
+            await User.updateMany({ fcmToken }, { $unset: { fcmToken: 1 } }).catch(() => {});
+        }
     }
 };
