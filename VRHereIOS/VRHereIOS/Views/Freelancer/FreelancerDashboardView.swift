@@ -140,8 +140,8 @@ struct FreelancerDashboardView: View {
         .onAppear {
             viewModel.syncFreelancerData()
         }
-        .onChange(of: viewModel.broadcasts) { newBroadcasts in
-            if let firstUnclaimed = newBroadcasts.first {
+        .onChange(of: viewModel.broadcasts.count) { _ in
+            if let firstUnclaimed = viewModel.broadcasts.first {
                 self.activeIncomingBroadcast = firstUnclaimed
             }
         }

@@ -132,7 +132,10 @@ struct EmployeeResponse: Codable, Identifiable {
     }
 }
 
-struct OrderResponse: Codable, Identifiable {
+struct OrderResponse: Codable, Identifiable, Equatable {
+    static func == (lhs: OrderResponse, rhs: OrderResponse) -> Bool {
+        return lhs.idVal == rhs.idVal && lhs.status == rhs.status && lhs.broadcastStatus == rhs.broadcastStatus
+    }
     var id: String { idVal }
     let idVal: String
     let clientName: String
