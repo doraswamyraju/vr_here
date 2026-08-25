@@ -2,49 +2,12 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
-import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import ConsultationPaymentModal from '../components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from '../utils/razorpayCheckout';
 import { showPaymentSuccessPopup } from '../utils/paymentSuccessPopup';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
-
-const CustomGoogleButton = ({ onClick, loading }) => {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            disabled={loading}
-            className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-3 group cursor-pointer"
-        >
-            {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-red-600" />
-            ) : (
-                <>
-                    <svg className="w-5 h-5 transition-transform group-hover:scale-110 duration-200" viewBox="0 0 24 24">
-                        <path
-                            fill="#4285F4"
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                            fill="#34A853"
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                            fill="#FBBC05"
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                            fill="#EA4335"
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
-                    </svg>
-                    <span className="text-slate-800 font-semibold text-sm">Continue with Google</span>
-                </>
-            )}
-        </button>
-    );
-};
 
 const PACKAGES = [
   {
@@ -77,18 +40,19 @@ const LoginPage = () => {
     const navigate = useNavigate();
 
     const handleGoogleSuccess = async (credentialResponse) => {
-        console.log('Google Success Callback Payload:', credentialResponse);
+        console.log('Google credential response received:', credentialResponse);
         setLoading(true);
         setError('');
         try {
             const user = await googleLogin(credentialResponse);
-            console.log('Logged in user from backend:', user);
-            const targetUrl = user.role === 'admin' ? '/admin' 
-                : user.role === 'employee' ? '/employee' 
-                : user.role === 'partner' ? '/partner-dashboard' 
-                : user.role === 'freelancer' ? '/freelancer-dashboard' 
+            console.log('Backend user:', user);
+            const targetUrl = user.role === 'admin' ? '/admin'
+                : user.role === 'employee' ? '/employee'
+                : user.role === 'partner' ? '/partner-dashboard'
+                : user.role === 'freelancer' ? '/freelancer-dashboard'
                 : '/customer-dashboard';
-            navigate(targetUrl, { replace: true });
+            // Full page navigation ensures ProtectedRoute reads fresh auth state
+            window.location.href = targetUrl;
         } catch (err) {
             console.error('Google Login Error:', err);
             const msg = err.response?.data?.message || err.message || 'Google Sign-In failed';
@@ -98,14 +62,6 @@ const LoginPage = () => {
             setLoading(false);
         }
     };
-
-    const loginWithGoogle = useGoogleLogin({
-        onSuccess: (credentialResponse) => handleGoogleSuccess(credentialResponse),
-        onError: (err) => {
-            console.error('Google Sign-In Error:', err);
-            setError('Google Sign-In was cancelled or failed');
-        }
-    });
 
     const handleConsultationBook = (e) => {
         e?.preventDefault();
@@ -264,10 +220,22 @@ const LoginPage = () => {
                         <span className="bg-white px-3 text-xs text-slate-400 font-semibold uppercase tracking-wider absolute">or</span>
                     </div>
 
-                    <CustomGoogleButton
-                        onClick={() => loginWithGoogle()}
-                        loading={loading}
-                    />
+                    {/* Google Login - credential/id_token flow (most reliable) */}
+                    <div className="w-full flex justify-center">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={(err) => {
+                                console.error('Google Login button error:', err);
+                                setError('Google Sign-In failed. Please try again.');
+                            }}
+                            theme="outline"
+                            size="large"
+                            text="continue_with"
+                            width="400"
+                            shape="rectangular"
+                            logo_alignment="center"
+                        />
+                    </div>
 
                     <div className="mt-8 text-center text-slate-500">
                         Don't have an account? <button type="button" onClick={handleConsultationBook} className="text-red-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1">Sign Up</button>
