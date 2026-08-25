@@ -88,7 +88,7 @@ const LoginPage = () => {
                 : user.role === 'partner' ? '/partner-dashboard' 
                 : user.role === 'freelancer' ? '/freelancer-dashboard' 
                 : '/customer-dashboard';
-            window.location.href = targetUrl;
+            navigate(targetUrl, { replace: true });
         } catch (err) {
             console.error('Google Login Error:', err);
             const msg = err.response?.data?.message || err.message || 'Google Sign-In failed';

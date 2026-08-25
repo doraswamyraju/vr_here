@@ -9,14 +9,27 @@ import sendEmail from '../utils/sendEmail.js';
 const googleClient = new OAuth2Client();
 
 const httpGetJson = async (url, headers = {}) => {
+    const fullHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        ...headers
+    };
     if (typeof fetch === 'function') {
-        const res = await fetch(url, { headers });
-        if (!res.ok) return null;
-        return await res.json();
+        try {
+            const res = await fetch(url, { headers: fullHeaders });
+            if (!res.ok) {
+                console.error(`httpGetJson fetch failed for ${url} with status: ${res.status}`);
+                return null;
+            }
+            return await res.json();
+        } catch (e) {
+            console.error(`httpGetJson fetch error for ${url}:`, e.message);
+            return null;
+        }
     }
     return new Promise((resolve) => {
-        const req = https.get(url, { headers }, (res) => {
+        const req = https.get(url, { headers: fullHeaders }, (res) => {
             if (res.statusCode < 200 || res.statusCode >= 300) {
+                console.error(`httpGetJson https.get failed for ${url} with status: ${res.statusCode}`);
                 return resolve(null);
             }
             let data = '';
@@ -25,7 +38,10 @@ const httpGetJson = async (url, headers = {}) => {
                 try { resolve(JSON.parse(data)); } catch (e) { resolve(null); }
             });
         });
-        req.on('error', () => resolve(null));
+        req.on('error', (err) => {
+            console.error(`httpGetJson https error for ${url}:`, err.message);
+            resolve(null);
+        });
     });
 };
 
@@ -524,6 +540,9 @@ const googleAuth = asyncHandler(async (req, res) => {
             payload = await httpGetJson('https://www.googleapis.com/oauth2/v3/userinfo', {
                 Authorization: `Bearer ${accessToken}`
             });
+            if (!payload) {
+                payload = await httpGetJson(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`);
+            }
         } catch (e) {
             console.error('AccessToken verify error:', e);
         }
