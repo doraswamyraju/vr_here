@@ -1,5 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Compliance from '../models/Compliance.js';
+import User from '../models/User.js';
+import { triggerNotification } from '../services/notificationService.js';
 
 // @desc    Get all compliance records
 // @route   GET /api/compliance
@@ -16,14 +18,17 @@ const getComplianceRecords = asyncHandler(async (req, res) => {
     res.json(records);
 });
 
-// @desc    Create a compliance record
+// @desc    Create a compliance record & optional broadcast notification
 // @route   POST /api/compliance
 // @access  Private (Admin or Authorized Employee)
 const createComplianceRecord = asyncHandler(async (req, res) => {
-    const { clientName, category, taskName, dueDate, periodMonth, periodYear, notes, status, assignedTo } = req.body;
+    const { clientName, category, taskName, dueDate, periodMonth, periodYear, notes, status, assignedTo, sendBroadcast } = req.body;
     
+    const isAllClients = !clientName || clientName.trim() === '' || clientName.toLowerCase() === 'all clients' || clientName.toLowerCase() === 'all active clients';
+    const recordClientName = isAllClients ? 'All Active Clients' : clientName.trim();
+
     const record = await Compliance.create({
-        clientName,
+        clientName: recordClientName,
         category,
         taskName,
         dueDate,
@@ -33,6 +38,28 @@ const createComplianceRecord = asyncHandler(async (req, res) => {
         status: status || 'Pending',
         assignedTo: assignedTo || null
     });
+
+    // If broadcast is requested or client is "All Active Clients", trigger In-App, Push & Email to all clients!
+    if (sendBroadcast || isAllClients) {
+        const clients = await User.find({ role: 'client', isActive: true });
+        const formattedDueDate = new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const notifTitle = `Statutory Compliance Alert: ${category} - ${taskName}`;
+        const notifMessage = `Important Compliance Alert for ${periodMonth} ${periodYear}: ${taskName} is due on ${formattedDueDate}. Please ensure all required documents and details are submitted on time.`;
+
+        // Async broadcast without delaying HTTP response
+        clients.forEach(client => {
+            triggerNotification({
+                userId: client._id,
+                title: notifTitle,
+                message: notifMessage,
+                type: 'System',
+                emailOpts: {
+                    send: true,
+                    subject: `[VR HERE] Statutory Deadline Alert: ${category} - ${taskName} (${formattedDueDate})`
+                }
+            }).catch(err => console.error(`Failed compliance alert to ${client.email}:`, err.message));
+        });
+    }
 
     res.status(201).json(record);
 });

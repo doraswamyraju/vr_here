@@ -23,7 +23,8 @@ const ComplianceTaskModal = ({
     periodYear: String(new Date().getFullYear()),
     status: 'Pending',
     notes: '',
-    assignedTo: ''
+    assignedTo: '',
+    sendBroadcast: true
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,7 +40,8 @@ const ComplianceTaskModal = ({
         periodYear: taskToEdit.periodYear || String(new Date().getFullYear()),
         status: taskToEdit.status || 'Pending',
         notes: taskToEdit.notes || '',
-        assignedTo: taskToEdit.assignedTo?._id || taskToEdit.assignedTo || ''
+        assignedTo: taskToEdit.assignedTo?._id || taskToEdit.assignedTo || '',
+        sendBroadcast: false
       });
     } else {
       setFormData({
@@ -51,7 +53,8 @@ const ComplianceTaskModal = ({
         periodYear: String(new Date().getFullYear()),
         status: 'Pending',
         notes: '',
-        assignedTo: ''
+        assignedTo: '',
+        sendBroadcast: true
       });
     }
     setError('');
@@ -61,8 +64,8 @@ const ComplianceTaskModal = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.clientName.trim() || !formData.taskName.trim() || !formData.dueDate) {
-      return setError('Client Name, Task Name, and Statutory Due Date are required.');
+    if (!formData.taskName.trim() || !formData.dueDate) {
+      return setError('Task Name and Statutory Due Date are required.');
     }
 
     setLoading(true);
@@ -131,26 +134,44 @@ const ComplianceTaskModal = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Client Name Input / Selection */}
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-slate-600 mb-1">
-              Client / Company Name *
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-600">
+                Client / Company Name
+              </label>
+              <span className="text-[10px] text-indigo-600 font-bold">Optional (Leave blank for All Active Clients)</span>
+            </div>
             <input 
               type="text"
               list="client-suggestions"
               value={formData.clientName}
               onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-              placeholder="e.g. Rajugari Ventures Pvt Ltd"
+              placeholder="Leave blank for ALL clients (e.g. All Active Clients)"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:border-indigo-500 outline-none transition-all"
-              required
             />
             {clients.length > 0 && (
               <datalist id="client-suggestions">
+                <option value="All Active Clients" />
                 {clients.map((c, i) => (
                   <option key={i} value={typeof c === 'string' ? c : c.name || c.clientName} />
                 ))}
               </datalist>
             )}
           </div>
+
+          {!taskToEdit && (
+            <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-start gap-2.5">
+              <input
+                type="checkbox"
+                id="sendBroadcast"
+                checked={formData.sendBroadcast}
+                onChange={(e) => setFormData({ ...formData, sendBroadcast: e.target.checked })}
+                className="mt-0.5 w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+              />
+              <label htmlFor="sendBroadcast" className="text-xs font-bold text-slate-700 cursor-pointer leading-tight">
+                Broadcast Deadline Alert <span className="text-indigo-600">(In-App + FCM Push Notification + Email)</span> to all clients in this category.
+              </label>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Category */}
