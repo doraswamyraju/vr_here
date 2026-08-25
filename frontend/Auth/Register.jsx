@@ -143,8 +143,7 @@ const RegisterPage = () => {
 
                     {/* Standalone Google Auth Module */}
                     <GoogleAuthButton
-                        onError={setError}
-                        text="signup_with"
+                        text="Sign up with Google"
                     />
 
                     <div className="mt-8 text-center text-slate-500">

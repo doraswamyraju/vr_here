@@ -195,8 +195,7 @@ const LoginPage = () => {
 
                     {/* Standalone Google Auth Module */}
                     <GoogleAuthButton
-                        onError={setError}
-                        text="continue_with"
+                        text="Continue with Google"
                     />
 
                     <div className="mt-8 text-center text-slate-500">
