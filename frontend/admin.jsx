@@ -471,13 +471,16 @@ function AdminApp() {
            </Card>
 
            <Card className="p-6">
-              <h3 className="font-black text-slate-900 uppercase tracking-tight mb-4">Top Services</h3>
-              <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                 <h3 className="font-black text-slate-900 uppercase tracking-tight">Top Services</h3>
+                 <button onClick={() => setActiveTab('Services')} className="text-xs font-bold text-indigo-600 hover:underline">View Master</button>
+              </div>
+              <div className="space-y-3">
                  {Object.entries(orders.reduce((acc, o) => {
                    acc[o.serviceName] = (acc[o.serviceName] || 0) + 1;
                    return acc;
                  }, {})).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, count]) => (
-                   <div key={name} className="flex items-center justify-between group">
+                   <div key={name} onClick={() => setActiveTab('Services')} className="flex items-center justify-between p-2 rounded-xl border border-transparent hover:border-indigo-100 hover:bg-indigo-50/50 cursor-pointer transition-all group">
                       <span className="text-xs font-bold text-slate-600 truncate mr-2 group-hover:text-indigo-600 transition-colors">{name}</span>
                       <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">{count}</span>
                    </div>
@@ -491,7 +494,7 @@ function AdminApp() {
                  <h3 className="font-black text-slate-900 uppercase tracking-tight">New Users</h3>
                  <button onClick={() => setActiveTab('Users')} className="text-xs font-bold text-indigo-600 hover:underline">View All</button>
               </div>
-              <div className="flex -space-x-3 overflow-hidden mb-5">
+              <div className="flex -space-x-3 overflow-hidden mb-5 cursor-pointer" onClick={() => setActiveTab('Users')}>
                  {users.slice(0, 6).map(u => (
                    <div key={u._id} className="inline-block h-10 w-10 rounded-full ring-4 ring-white bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-xs font-black text-white shadow-sm" title={u.name}>
                       {u.name?.charAt(0) || 'U'}
@@ -503,7 +506,7 @@ function AdminApp() {
                    </div>
                  )}
               </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-indigo-50/40 hover:border-indigo-100 transition-all" onClick={() => setActiveTab('Users')}>
                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Community</p>
                  <p className="text-xl font-black text-slate-900">{users.length} <span className="text-[10px] text-emerald-600 ml-1 font-black">Members</span></p>
               </div>
@@ -514,9 +517,9 @@ function AdminApp() {
                  <h3 className="font-black text-slate-900 uppercase tracking-tight">Top Referrals</h3>
                  <button onClick={() => setActiveTab('Referrals')} className="text-xs font-bold text-indigo-600 hover:underline">Manage</button>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                  {topReferrals.map((ref, idx) => (
-                   <div key={idx} className="flex items-center justify-between">
+                   <div key={idx} onClick={() => setActiveTab('Referrals')} className="flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/40 cursor-pointer transition-all">
                       <div className="flex items-center gap-2">
                          <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-xs font-black">{ref.name.charAt(0)}</div>
                          <span className="text-xs font-bold text-slate-700">{ref.name}</span>
@@ -530,7 +533,7 @@ function AdminApp() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-           <Card className="p-6">
+           <Card className="p-6 cursor-pointer hover:border-indigo-200 transition-all" onClick={() => setActiveTab('Finance')}>
               <div className="flex items-center justify-between mb-6">
                  <div>
                     <h3 className="font-black text-slate-900 uppercase tracking-tight">Revenue Trend</h3>
@@ -543,7 +546,7 @@ function AdminApp() {
               <RevenueChart data={revenueData} />
            </Card>
 
-           <Card className="p-6">
+           <Card className="p-6 cursor-pointer hover:border-indigo-200 transition-all" onClick={() => setActiveTab('Services')}>
               <div className="flex items-center justify-between mb-6">
                  <div>
                     <h3 className="font-black text-slate-900 uppercase tracking-tight">Service Mix</h3>
@@ -593,16 +596,19 @@ function AdminApp() {
 
            <div className="space-y-6">
               <Card className="p-6">
-                 <h3 className="font-black text-slate-900 uppercase tracking-tight mb-4">Financial Health</h3>
+                 <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-black text-slate-900 uppercase tracking-tight">Financial Health</h3>
+                    <button onClick={() => setActiveTab('Finance')} className="text-xs font-bold text-indigo-600 hover:underline">Ledger</button>
+                 </div>
                  <div className="space-y-4">
-                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 cursor-pointer hover:bg-emerald-100/60 transition-colors" onClick={() => setActiveTab('Finance')}>
                        <div className="flex items-center justify-between mb-1">
                           <span className="text-[10px] font-black text-emerald-700 uppercase">Paid Inflow</span>
                           <CreditCard size={14} className="text-emerald-600" />
                        </div>
                        <p className="text-xl font-black text-emerald-900">Rs. {financialSummary.paid.toLocaleString()}</p>
                     </div>
-                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-100">
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 cursor-pointer hover:bg-rose-100/60 transition-colors" onClick={() => setActiveTab('Finance')}>
                        <div className="flex items-center justify-between mb-1">
                           <span className="text-[10px] font-black text-rose-700 uppercase">Outstanding</span>
                           <AlertCircle size={14} className="text-rose-600" />
@@ -621,7 +627,7 @@ function AdminApp() {
                  </div>
               </Card>
 
-              <Card className="p-6 bg-slate-900 text-white shadow-xl shadow-slate-200">
+              <Card className="p-6 bg-slate-900 text-white shadow-xl shadow-slate-200 cursor-pointer hover:scale-[1.01] transition-transform" onClick={() => setActiveTab('Performance')}>
                  <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
                        <Users size={20} className="text-cyan-400" />
@@ -646,7 +652,7 @@ function AdminApp() {
            </div>
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {recurring.filter(r => r.isActive).slice(0, 4).map(r => (
-                <div key={r._id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-slate-100">
+                <div key={r._id} onClick={() => setActiveTab('Recurring')} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 cursor-pointer transition-all">
                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex flex-col items-center justify-center text-indigo-600 border border-indigo-50">
                          <span className="text-[10px] font-black leading-none">{new Date(r.nextRunDate).toLocaleString('default', { month: 'short' })}</span>
@@ -667,6 +673,7 @@ function AdminApp() {
               )}
            </div>
         </Card>
+
       </div>
     );
   };

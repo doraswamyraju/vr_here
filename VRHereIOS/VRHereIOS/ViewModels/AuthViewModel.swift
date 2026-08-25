@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import AuthenticationServices
 
 enum AuthState: Equatable {
     case idle
@@ -67,9 +68,9 @@ class AuthViewModel: ObservableObject {
     func signInWithGoogle() {
         GoogleOAuthManager.shared.startGoogleSignIn { [weak self] result in
             guard let self = self else { return }
-            switch result in
-            case .success(let code):
-                self.googleLogin(code: code)
+            switch result {
+            case .success(let res):
+                self.googleLogin(idToken: res.idToken, code: res.code)
             case .failure(let error):
                 // User cancelled or network error
                 if (error as NSError).code != ASWebAuthenticationSessionError.canceledLogin.rawValue {

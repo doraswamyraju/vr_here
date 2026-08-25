@@ -13,6 +13,28 @@ struct AdminDashboardView: View {
     @State private var isShowingNotifications = false
     @StateObject private var hrmsViewModel = HrmsViewModel()
     
+    private var pendingOrdersCount: Int {
+        adminViewModel.orders.filter { $0.status.lowercased() == "pending" || $0.status.lowercased() == "processing" }.count
+    }
+    
+    private var unreadTicketsCount: Int {
+        adminViewModel.tickets.filter { $0.status.lowercased() != "resolved" && $0.status.lowercased() != "closed" }.count
+    }
+    
+    private var pendingLeavesCount: Int {
+        hrmsViewModel.adminLeaves.filter { $0.status.lowercased() == "pending" }.count
+    }
+    
+    private var adminDockItems: [BMSDockItem] {
+        [
+            BMSDockItem(label: "Overview", iconName: "chart.pie", tabId: "Overview"),
+            BMSDockItem(label: "Orders", iconName: "bag.badge.plus", tabId: "Orders", badgeCount: pendingOrdersCount),
+            BMSDockItem(label: "CRM", iconName: "ticket", tabId: "CRM", badgeCount: unreadTicketsCount),
+            BMSDockItem(label: "HRMS", iconName: "person.3", tabId: "HRMS", badgeCount: pendingLeavesCount),
+            BMSDockItem(label: "Users", iconName: "person.badge.shield.checkmark", tabId: "Users")
+        ]
+    }
+    
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -82,14 +104,7 @@ struct AdminDashboardView: View {
                     }
                     .ignoresSafeArea(edges: .bottom)
                     
-                    let dockItems = [
-                        BMSDockItem(label: "Overview", iconName: "chart.pie", tabId: "Overview"),
-                        BMSDockItem(label: "Orders", iconName: "bag.badge.plus", tabId: "Orders"),
-                        BMSDockItem(label: "CRM", iconName: "ticket", tabId: "CRM"),
-                        BMSDockItem(label: "HRMS", iconName: "person.3", tabId: "HRMS"),
-                        BMSDockItem(label: "Users", iconName: "person.badge.shield.checkmark", tabId: "Users")
-                    ]
-                    BMSAppFloatingDock(activeTab: $activeTab, dockItems: dockItems)
+                    BMSAppFloatingDock(activeTab: $activeTab, dockItems: adminDockItems)
                 }
             }
             .refreshable {

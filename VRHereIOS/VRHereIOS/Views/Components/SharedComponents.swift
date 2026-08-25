@@ -521,10 +521,109 @@ struct BMSSidebarItem: Identifiable {
 }
 
 struct BMSDockItem: Identifiable {
-    let id = UUID()
+    let id: UUID
     let label: String
     let iconName: String
     let tabId: String
+    var badgeCount: Int?
+    
+    init(id: UUID = UUID(), label: String, iconName: String, tabId: String, badgeCount: Int? = nil) {
+        self.id = id
+        self.label = label
+        self.iconName = iconName
+        self.tabId = tabId
+        self.badgeCount = badgeCount
+    }
+}
+
+struct BMSAppFloatingDock: View {
+    @Binding var activeTab: String
+    let dockItems: [BMSDockItem]
+    var onTabSelected: ((String) -> Void)? = nil
+    
+    @Namespace private var animationNamespace
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(dockItems) { item in
+                let isSelected = activeTab == item.tabId
+                
+                Button(action: {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                        activeTab = item.tabId
+                    }
+                    let generator = UIImpactFeedbackGenerator(style: .light)
+                    generator.impactOccurred()
+                    onTabSelected?(item.tabId)
+                }) {
+                    VStack(spacing: 3) {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: safeSystemIconName(baseName: item.iconName, isSelected: isSelected))
+                                .font(.system(size: 17, weight: isSelected ? .bold : .regular))
+                                .foregroundColor(isSelected ? .white : Color.white.opacity(0.55))
+                                .scaleEffect(isSelected ? 1.12 : 1.0)
+                            
+                            if let badge = item.badgeCount, badge > 0 {
+                                Text(badge > 99 ? "99+" : "\(badge)")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Color.red)
+                                    .clipShape(Capsule())
+                                    .offset(x: 10, y: -6)
+                            }
+                        }
+                        
+                        Text(item.label)
+                            .font(.system(size: 10, weight: isSelected ? .bold : .medium))
+                            .foregroundColor(isSelected ? .white : Color.white.opacity(0.6))
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 4)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        ZStack {
+                            if isSelected {
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.primaryRed, Color(red: 220/255, green: 38/255, blue: 38/255)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .matchedGeometryEffect(id: "activeTabPill", in: animationNamespace)
+                                    .shadow(color: Color.primaryRed.opacity(0.45), radius: 8, x: 0, y: 3)
+                            }
+                        }
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(Color(red: 15/255, green: 23/255, blue: 42/255).opacity(0.92))
+                
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [.white.opacity(0.25), .white.opacity(0.05), .white.opacity(0.12)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+        .shadow(color: Color.black.opacity(0.3), radius: 16, x: 0, y: 8)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+    }
 }
 
 // --- Standardized Navigation Views ---
@@ -713,8 +812,8 @@ struct BMSAppSidebar: View {
         .background(
             ZStack {
                 // Blur material layer
-                Rectangle()
-                    .fill(.ultraThinMaterial)
+                Color.clear
+                    .background(.ultraThinMaterial)
                 
                 // Color refraction tint layer (liquid-like soft gradients)
                 LinearGradient(colors: [Color.darkSlate.opacity(0.55), Color(red: 10/255, green: 15/255, blue: 30/255).opacity(0.75)], startPoint: .top, endPoint: .bottom)
@@ -736,47 +835,5 @@ struct BMSAppSidebar: View {
         )
         .shadow(color: Color.black.opacity(0.3), radius: 25, x: 10, y: 0)
         .edgesIgnoringSafeArea(.all)
-    }
-}
-
-struct BMSAppFloatingDock: View {
-    @Binding var activeTab: String
-    let dockItems: [BMSDockItem]
-    var onTabSelected: ((String) -> Void)? = nil
-    
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(dockItems) { item in
-                let isSelected = activeTab == item.tabId
-                
-                Button(action: {
-                    activeTab = item.tabId
-                    onTabSelected?(item.tabId)
-                }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: safeSystemIconName(baseName: item.iconName, isSelected: isSelected))
-                            .font(.system(size: 16))
-                            .foregroundColor(isSelected ? .white : .textMuted)
-                        
-                        Text(item.label)
-                            .font(.system(size: 9, weight: isSelected ? .black : .semibold))
-                            .foregroundColor(isSelected ? .white : .textMuted)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 10)
-        .background(Color.darkSlate)
-        .cornerRadius(24)
-        .overlay(
-            AnimatedGradientBorder()
-        )
-        .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
-        .padding(.horizontal, 16)
-        .padding(.bottom, 10)
     }
 }

@@ -539,8 +539,8 @@ const googleAuth = asyncHandler(async (req, res) => {
     if (code) {
         try {
             const effectiveRedirectUri = (req.body.redirectUri || `${(process.env.FRONTEND_URL || 'https://vrhere.in').replace(/\/$/, '')}/auth/google/callback`).split('?')[0].split('#')[0];
-            const clientId = process.env.GOOGLE_CLIENT_ID;
-            const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+            const clientId = process.env.GOOGLE_CLIENT_ID || '674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com';
+            const clientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
 
             const postBody = new URLSearchParams({
                 code: String(code).trim(),
