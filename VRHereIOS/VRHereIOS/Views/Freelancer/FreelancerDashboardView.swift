@@ -138,7 +138,10 @@ struct FreelancerDashboardView: View {
             )
         }
         .onAppear {
-            viewModel.syncFreelancerData()
+            viewModel.startAutoSync()
+        }
+        .onDisappear {
+            viewModel.stopAutoSync()
         }
         .onChange(of: viewModel.broadcasts.count) { _ in
             if let firstUnclaimed = viewModel.broadcasts.first {

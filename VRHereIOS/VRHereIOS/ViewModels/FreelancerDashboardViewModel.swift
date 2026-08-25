@@ -27,14 +27,31 @@ class FreelancerDashboardViewModel: ObservableObject {
     @Published var isSavingProfile = false
     @Published var toastMessage: String? = nil
     
+    private var pollTimer: Timer?
+    
+    func startAutoSync() {
+        syncFreelancerData()
+        pollTimer?.invalidate()
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                await self?.syncFreelancerDataAsync(silent: true)
+            }
+        }
+    }
+    
+    func stopAutoSync() {
+        pollTimer?.invalidate()
+        pollTimer = nil
+    }
+    
     func syncFreelancerData() {
         Task {
             await syncFreelancerDataAsync()
         }
     }
     
-    func syncFreelancerDataAsync() async {
-        isLoading = true
+    func syncFreelancerDataAsync(silent: Bool = false) async {
+        if !silent { isLoading = true }
         do {
             async let ordersCall = NetworkManager.shared.getFreelancerOrders()
             async let broadcastsCall = NetworkManager.shared.getFreelancerBroadcasts()
@@ -50,11 +67,10 @@ class FreelancerDashboardViewModel: ObservableObject {
             self.supportTickets = t
             self.notifications = n
             
-            isLoading = false
+            if !silent { isLoading = false }
         } catch {
             if !error.isCancellationError {
-                isLoading = false
-                toastMessage = "Sync error: \(error.localizedDescription)"
+                if !silent { isLoading = false }
             }
         }
     }

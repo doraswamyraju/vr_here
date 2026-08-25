@@ -125,8 +125,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
     
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        let tokenString = deviceToken.map { String(format: "%02.x", $0) }.joined()
-        print("Device Token: \(tokenString)")
+        let tokenString = deviceToken.map { String(format: "%02x", $0) }.joined()
+        print("Valid APNs Device Token: \(tokenString)")
         SessionManager.shared.saveFcmToken(tokenString)
         
         if SessionManager.shared.isLoggedIn() {
