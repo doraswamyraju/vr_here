@@ -6,58 +6,11 @@ import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
 
-const triggerGoogleOAuth = (onSuccess, onError) => {
-    const launchClient = () => {
-        if (window.google?.accounts?.oauth2) {
-            try {
-                const tokenClient = window.google.accounts.oauth2.initTokenClient({
-                    client_id: googleClientId,
-                    scope: 'email profile openid',
-                    callback: (response) => {
-                        console.log('Google OAuth Response:', response);
-                        if (response?.access_token) {
-                            onSuccess({ access_token: response.access_token });
-                        } else if (response?.error) {
-                            console.error('Google OAuth Error:', response);
-                            if (onError) onError(response);
-                            alert('Google Sign-In failed: ' + (response.error_description || response.error));
-                        }
-                    },
-                    error_callback: (err) => {
-                        console.error('Google OAuth Error Callback:', err);
-                        if (onError) onError(err);
-                    }
-                });
-                tokenClient.requestAccessToken();
-            } catch (err) {
-                console.error('Failed to initialize Google token client:', err);
-                if (onError) onError(err);
-            }
-        } else {
-            alert('Google Sign-In service is loading. Please try again in a few seconds.');
-        }
-    };
-
-    if (window.google?.accounts?.oauth2) {
-        launchClient();
-    } else {
-        const script = document.createElement('script');
-        script.src = 'https://accounts.google.com/gsi/client';
-        script.async = true;
-        script.defer = true;
-        script.onload = () => launchClient();
-        script.onerror = () => {
-            alert('Failed to load Google Sign-In service. Please check your internet connection.');
-        };
-        document.body.appendChild(script);
-    }
-};
-
-const CustomGoogleButton = ({ onSuccess, onError, loading }) => {
+const CustomGoogleButton = ({ onClick, loading }) => {
     return (
         <button
             type="button"
-            onClick={() => triggerGoogleOAuth(onSuccess, onError)}
+            onClick={onClick}
             disabled={loading}
             className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-3 group cursor-pointer"
         >
@@ -102,16 +55,6 @@ const RegisterPage = () => {
     const { register, googleLogin } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    React.useEffect(() => {
-        if (window.location.hash && window.location.hash.includes('access_token=')) {
-            const params = new URLSearchParams(window.location.hash.substring(1));
-            const accessToken = params.get('access_token');
-            if (accessToken) {
-                handleGoogleSuccess({ access_token: accessToken });
-            }
-        }
-    }, []);
-
     const handleGoogleSuccess = async (credentialResponse) => {
         console.log('Google Success Callback Payload:', credentialResponse);
         setLoading(true);
@@ -134,6 +77,14 @@ const RegisterPage = () => {
             setLoading(false);
         }
     };
+
+    const loginWithGoogle = useGoogleLogin({
+        onSuccess: (credentialResponse) => handleGoogleSuccess(credentialResponse),
+        onError: (err) => {
+            console.error('Google Sign-In Error:', err);
+            setError('Google Sign-In was cancelled or failed');
+        }
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -260,8 +211,7 @@ const RegisterPage = () => {
                     </div>
 
                     <CustomGoogleButton
-                        onSuccess={handleGoogleSuccess}
-                        onError={() => setError('Google Sign-In was unsuccessful')}
+                        onClick={() => loginWithGoogle()}
                         loading={loading}
                     />
 
