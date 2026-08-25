@@ -6,6 +6,7 @@ import { AuthContext } from './context/AuthContext';
 import HomePage from './HomePage';
 import LoginPage from './Auth/Login';
 import RegisterPage from './Auth/Register';
+import GoogleCallback from './Auth/GoogleCallback';
 import ForgotPassword from './Auth/ForgotPassword';
 import ResetPassword from './Auth/ResetPassword';
 import PrivateLimitedPage from './PrivateLimited';
@@ -91,6 +92,7 @@ const App = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/auth/google/callback" element={<GoogleCallback />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
       <Route path="/pvt-ltd-registration" element={<PrivateLimitedPage />} />

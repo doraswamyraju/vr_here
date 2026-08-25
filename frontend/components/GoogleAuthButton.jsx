@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID =
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-    '167766774028-hirpf3e2hkpf1ci1s6oq1koa5dr6p2gd.apps.googleusercontent.com';
+    '167766774028-lrhfc69ubgv0po3kp9gup09cfvd82jlu.apps.googleusercontent.com';
 
 /**
  * Role-to-Dashboard route mapper

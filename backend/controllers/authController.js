@@ -527,15 +527,41 @@ const deleteSelfAccount = asyncHandler(async (req, res) => {
     res.json({ success: true, message: 'Account deleted successfully' });
 });
 
-// @desc    Authenticate or register user with Google OAuth Token
+// @desc    Authenticate or register user with Google OAuth Token or Code
 // @route   POST /api/auth/google
 // @access  Public
 const googleAuth = asyncHandler(async (req, res) => {
-    const { idToken, credential, accessToken } = req.body;
+    const { idToken, credential, accessToken, code } = req.body;
 
     let payload;
 
-    if (accessToken) {
+    // Handle OAuth Authorization Code exchange if provided
+    if (code) {
+        try {
+            const redirectUri = `${(process.env.FRONTEND_URL || 'https://vrhere.in').replace(/\/$/, '')}/auth/google/callback`;
+            const oauth2Client = new OAuth2Client(
+                process.env.GOOGLE_CLIENT_ID,
+                process.env.GOOGLE_CLIENT_SECRET,
+                redirectUri
+            );
+            const { tokens } = await oauth2Client.getToken(code);
+            if (tokens.id_token) {
+                const ticket = await oauth2Client.verifyIdToken({
+                    idToken: tokens.id_token,
+                    audience: process.env.GOOGLE_CLIENT_ID ? [process.env.GOOGLE_CLIENT_ID] : undefined
+                });
+                payload = ticket.getPayload();
+            } else if (tokens.access_token) {
+                payload = await httpGetJson('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    Authorization: `Bearer ${tokens.access_token}`
+                });
+            }
+        } catch (codeErr) {
+            console.error('OAuth code exchange error:', codeErr.message);
+        }
+    }
+
+    if (!payload && accessToken) {
         try {
             payload = await httpGetJson('https://www.googleapis.com/oauth2/v3/userinfo', {
                 Authorization: `Bearer ${accessToken}`
@@ -552,7 +578,7 @@ const googleAuth = asyncHandler(async (req, res) => {
         const tokenToVerify = idToken || credential;
         if (!tokenToVerify) {
             res.status(400);
-            throw new Error('Google token is required');
+            throw new Error('Google token or authorization code is required');
         }
 
         try {
