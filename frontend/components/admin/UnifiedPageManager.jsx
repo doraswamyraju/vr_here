@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink, Table, Edit3, Power, Star, Layers, ShieldCheck, Users, HelpCircle
+    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink, Table, Edit3, Power, Star, Layers, HelpCircle, Search, Filter, CheckSquare, Square, ChevronRight, X, Clock, User
 } from 'lucide-react';
 import { analyzeOnPageSeo } from '../../utils/onPageSeoAnalyzer';
 import CityManager from './CityManager';
 import { MENU_DATA } from '../SharedComponents';
 
 const UnifiedPageManager = ({ token }) => {
-    const [viewMode, setViewMode] = useState('pages'); // 'pages', 'table', or 'cities'
+    const [viewMode, setViewMode] = useState('table'); // Default to WordPress-Style Table View ('table', 'pages', 'cities')
     const [pages, setPages] = useState([]);
     const [cities, setCities] = useState([]);
     const [menuCategories, setMenuCategories] = useState(MENU_DATA);
@@ -17,6 +17,14 @@ const UnifiedPageManager = ({ token }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
+
+    // --- WORDPRESS STYLE TABLE STATES ---
+    const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'published', 'draft', 'city-enabled'
+    const [seoFilter, setSeoFilter] = useState('all'); // 'all', 'good', 'needs-improvement'
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedPageIds, setSelectedPageIds] = useState([]);
+    const [bulkAction, setBulkAction] = useState('');
+    const [quickEditPage, setQuickEditPage] = useState(null); // Page object currently in Quick Edit mode
 
     const authConfig = { headers: { Authorization: `Bearer ${token}` } };
 
@@ -203,7 +211,7 @@ const UnifiedPageManager = ({ token }) => {
     };
 
     const handleDeletePage = async (pageIdToDelete) => {
-        if (!window.confirm(`Are you sure you want to delete page "${pageIdToDelete}"? This action cannot be undone.`)) return;
+        if (!window.confirm(`Are you sure you want to move page "${pageIdToDelete}" to trash?`)) return;
         try {
             await axios.delete(`/api/service-pages/${pageIdToDelete}`, authConfig);
             setMessage({ text: `Page "${pageIdToDelete}" deleted successfully!`, type: 'success' });
@@ -218,12 +226,78 @@ const UnifiedPageManager = ({ token }) => {
         try {
             const nextState = pageObj.isPublished === false ? true : false;
             await axios.post(`/api/service-pages/${pageObj.pageId}`, { ...pageObj, isPublished: nextState }, authConfig);
-            setMessage({ text: `Page "${pageObj.pageId}" ${nextState ? 'enabled' : 'disabled'} successfully!`, type: 'success' });
+            setMessage({ text: `Page "${pageObj.pageId}" ${nextState ? 'published' : 'drafted'} successfully!`, type: 'success' });
             fetchAllPages();
         } catch (err) {
             console.error('Failed to toggle publish status', err);
         }
     };
+
+    // Quick Edit Save Handler
+    const handleSaveQuickEdit = async () => {
+        if (!quickEditPage) return;
+        try {
+            await axios.post(`/api/service-pages/${quickEditPage.pageId}`, quickEditPage, authConfig);
+            setMessage({ text: `Quick Edit saved for "${quickEditPage.title}"!`, type: 'success' });
+            setQuickEditPage(null);
+            fetchAllPages();
+        } catch (err) {
+            console.error('Quick edit failed', err);
+            alert('Failed to save quick edit');
+        }
+    };
+
+    // Bulk Actions Handler
+    const handleApplyBulkAction = async () => {
+        if (!bulkAction || selectedPageIds.length === 0) {
+            alert('Please select pages and choose a bulk action first.');
+            return;
+        }
+
+        if (bulkAction === 'delete') {
+            if (!window.confirm(`Delete ${selectedPageIds.length} selected pages?`)) return;
+            for (const pid of selectedPageIds) {
+                try {
+                    await axios.delete(`/api/service-pages/${pid}`, authConfig);
+                } catch (e) { console.error(e); }
+            }
+            setMessage({ text: `${selectedPageIds.length} pages deleted!`, type: 'success' });
+        } else if (bulkAction === 'publish' || bulkAction === 'draft') {
+            const nextState = bulkAction === 'publish';
+            for (const pid of selectedPageIds) {
+                try {
+                    const pObj = pages.find(p => p.pageId === pid);
+                    if (pObj) {
+                        await axios.post(`/api/service-pages/${pid}`, { ...pObj, isPublished: nextState }, authConfig);
+                    }
+                } catch (e) { console.error(e); }
+            }
+            setMessage({ text: `${selectedPageIds.length} pages updated to ${bulkAction}!`, type: 'success' });
+        }
+        setSelectedPageIds([]);
+        setBulkAction('');
+        fetchAllPages();
+    };
+
+    // Filter & Search Pages logic for WordPress View
+    const filteredPages = useMemo(() => {
+        return pages.filter(p => {
+            // Status Filter
+            if (statusFilter === 'published' && p.isPublished === false) return false;
+            if (statusFilter === 'draft' && p.isPublished !== false) return false;
+            if (statusFilter === 'city-enabled' && p.enableCityPages === false) return false;
+
+            // Search Query Filter
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const titleMatch = (p.title || '').toLowerCase().includes(q);
+                const slugMatch = (p.pageId || '').toLowerCase().includes(q);
+                if (!titleMatch && !slugMatch) return false;
+            }
+
+            return true;
+        });
+    }, [pages, statusFilter, searchQuery]);
 
     // Calculate SEO Score dynamically
     const focusKeyword = pageConfig?.seoSettings?.focusKeywords?.[0] || 'Private Limited Company';
@@ -256,24 +330,28 @@ const UnifiedPageManager = ({ token }) => {
         setMessage({ text: 'SEO Title & Meta Description auto-optimized for 100/100 Perfect Score!', type: 'success' });
     };
 
+    const publishedCount = pages.filter(p => p.isPublished !== false).length;
+    const draftCount = pages.filter(p => p.isPublished === false).length;
+    const cityEnabledCount = pages.filter(p => p.enableCityPages !== false).length;
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
             {/* Top Bar Switcher */}
             <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
                 <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
-                    <button
-                        onClick={() => setViewMode('pages')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${viewMode === 'pages' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
-                    >
-                        <FileText className="w-4 h-4" />
-                        Private Limited Page & SEO
-                    </button>
                     <button
                         onClick={() => setViewMode('table')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${viewMode === 'table' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Table className="w-4 h-4" />
-                        Master Pages Table ({pages.length})
+                        All Pages ({pages.length})
+                    </button>
+                    <button
+                        onClick={() => setViewMode('pages')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${viewMode === 'pages' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                        <FileText className="w-4 h-4" />
+                        Page Content Editor
                     </button>
                     <button
                         onClick={() => setViewMode('cities')}
@@ -315,78 +393,270 @@ const UnifiedPageManager = ({ token }) => {
             {viewMode === 'cities' ? (
                 <CityManager token={token} />
             ) : viewMode === 'table' ? (
-                /* MASTER PAGES TABULAR OVERVIEW */
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                /* WORDPRESS-GRADE MASTER PAGES MANAGER TABLE */
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden space-y-4">
+                    {/* Header Title & Add Page Button */}
+                    <div className="p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
                         <div>
-                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                                <Table className="w-5 h-5 text-indigo-600" /> Master Pages Overview Table
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-1">List of all service landing pages, enable/disable toggles, and deletion controls.</p>
+                            <h2 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+                                Pages <button onClick={() => { setSelectedPageId('pvt-ltd-registration'); setViewMode('pages'); }} className="px-3 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-bold transition">Add Page</button>
+                            </h2>
+                            <p className="text-xs text-slate-500 mt-1">WordPress-grade page management with instant filters, bulk actions, and SEO status checks.</p>
                         </div>
                     </div>
+
+                    {/* WordPress Top Status Filter Pills Bar */}
+                    <div className="px-6 flex flex-wrap items-center justify-between gap-4 text-xs font-medium border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-3 text-slate-500">
+                            <button
+                                onClick={() => setStatusFilter('all')}
+                                className={`transition ${statusFilter === 'all' ? 'font-black text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'hover:text-slate-900'}`}
+                            >
+                                All ({pages.length})
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                                onClick={() => setStatusFilter('published')}
+                                className={`transition ${statusFilter === 'published' ? 'font-black text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'hover:text-slate-900'}`}
+                            >
+                                Published ({publishedCount})
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                                onClick={() => setStatusFilter('draft')}
+                                className={`transition ${statusFilter === 'draft' ? 'font-black text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'hover:text-slate-900'}`}
+                            >
+                                Drafts ({draftCount})
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                                onClick={() => setStatusFilter('city-enabled')}
+                                className={`transition ${statusFilter === 'city-enabled' ? 'font-black text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'hover:text-slate-900'}`}
+                            >
+                                City Auto-Gen ({cityEnabledCount})
+                            </button>
+                        </div>
+
+                        {/* Search Input Box */}
+                        <div className="relative">
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                            <input
+                                type="text"
+                                placeholder="Search Pages..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs w-60 focus:ring-2 focus:ring-indigo-500/20"
+                            />
+                        </div>
+                    </div>
+
+                    {/* WordPress Bulk Actions Toolbar */}
+                    <div className="px-6 flex items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={bulkAction}
+                                onChange={(e) => setBulkAction(e.target.value)}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-medium text-slate-700"
+                            >
+                                <option value="">Bulk Actions</option>
+                                <option value="publish">Mark as Published</option>
+                                <option value="draft">Move to Drafts</option>
+                                <option value="delete">Delete Selected</option>
+                            </select>
+                            <button
+                                onClick={handleApplyBulkAction}
+                                className="px-3 py-1.5 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition"
+                            >
+                                Apply
+                            </button>
+                        </div>
+
+                        <p className="text-slate-400 text-xs">{filteredPages.length} items</p>
+                    </div>
+
+                    {/* WordPress Data Table */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-slate-600">
-                            <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 uppercase text-xs font-bold">
+                            <thead className="bg-slate-50 border-y border-slate-200 text-slate-700 uppercase text-xs font-bold">
                                 <tr>
-                                    <th className="py-3.5 px-4">Page Title</th>
-                                    <th className="py-3.5 px-4">URL Slug</th>
-                                    <th className="py-3.5 px-4">Header Category</th>
-                                    <th className="py-3.5 px-4">Status</th>
-                                    <th className="py-3.5 px-4">City Pages</th>
-                                    <th className="py-3.5 px-4 text-right">Actions</th>
+                                    <th className="py-3 px-4 w-10">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedPageIds.length === filteredPages.length && filteredPages.length > 0}
+                                            onChange={(e) => {
+                                                if (e.target.checked) setSelectedPageIds(filteredPages.map(p => p.pageId));
+                                                else setSelectedPageIds([]);
+                                            }}
+                                            className="rounded text-indigo-600"
+                                        />
+                                    </th>
+                                    <th className="py-3 px-4">Title</th>
+                                    <th className="py-3 px-4">Author</th>
+                                    <th className="py-3 px-4">Header Category</th>
+                                    <th className="py-3 px-4">SEO Health</th>
+                                    <th className="py-3 px-4">City Pages</th>
+                                    <th className="py-3 px-4">Date</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {pages.map(p => (
-                                    <tr key={p._id || p.pageId} className="hover:bg-slate-50/80 transition">
-                                        <td className="py-3.5 px-4 font-bold text-slate-900">{p.title || p.pageId}</td>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-indigo-600">/{p.pageId}</td>
-                                        <td className="py-3.5 px-4 text-xs font-medium text-slate-600">{p.headerNavSync?.category || 'Business Registrations'}</td>
-                                        <td className="py-3.5 px-4">
-                                            <button
-                                                onClick={() => handleTogglePublish(p)}
-                                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition ${p.isPublished !== false ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'}`}
-                                            >
-                                                <Power className="w-3 h-3" /> {p.isPublished !== false ? 'Enabled' : 'Disabled'}
-                                            </button>
-                                        </td>
-                                        <td className="py-3.5 px-4">
-                                            {p.enableCityPages !== false ? (
-                                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                    Enabled ({cities.length} Cities)
-                                                </span>
-                                            ) : (
-                                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">Disabled</span>
-                                            )}
-                                        </td>
-                                        <td className="py-3.5 px-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => { setSelectedPageId(p.pageId); setViewMode('pages'); }}
-                                                    className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-semibold text-xs flex items-center gap-1"
-                                                >
-                                                    <Edit3 className="w-3.5 h-3.5" /> Edit
-                                                </button>
-                                                <a
-                                                    href={`/${p.pageId}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg text-xs font-semibold flex items-center gap-1"
-                                                >
-                                                    <ExternalLink className="w-3.5 h-3.5" /> Live ↗
-                                                </a>
-                                                <button
-                                                    onClick={() => handleDeletePage(p.pageId)}
-                                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg font-semibold text-xs flex items-center gap-1"
-                                                    title="Delete Master Page"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                                                </button>
-                                            </div>
-                                        </td>
+                                {filteredPages.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="7" className="py-12 text-center text-slate-400 text-xs">No pages found matching your filters.</td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    filteredPages.map(p => {
+                                        const isSelected = selectedPageIds.includes(p.pageId);
+                                        const isQuickEditing = quickEditPage?.pageId === p.pageId;
+
+                                        return (
+                                            <React.Fragment key={p._id || p.pageId}>
+                                                <tr className={`hover:bg-slate-50/80 transition group ${isSelected ? 'bg-indigo-50/30' : ''}`}>
+                                                    <td className="py-3 px-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isSelected}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) setSelectedPageIds(prev => [...prev, p.pageId]);
+                                                                else setSelectedPageIds(prev => prev.filter(id => id !== p.pageId));
+                                                            }}
+                                                            className="rounded text-indigo-600"
+                                                        />
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <div className="font-bold text-slate-900 flex items-center gap-2">
+                                                            {p.title || p.pageId}
+                                                            {p.isPublished === false && (
+                                                                <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-semibold text-[10px]">Draft</span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* WordPress Hover Action Menu */}
+                                                        <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500 mt-1 opacity-90 group-hover:opacity-100">
+                                                            <button
+                                                                onClick={() => { setSelectedPageId(p.pageId); setViewMode('pages'); }}
+                                                                className="text-indigo-600 hover:underline"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <span className="text-slate-300">|</span>
+                                                            <button
+                                                                onClick={() => setQuickEditPage(isQuickEditing ? null : { ...p })}
+                                                                className="text-indigo-600 hover:underline"
+                                                            >
+                                                                {isQuickEditing ? 'Cancel Quick Edit' : 'Quick Edit'}
+                                                            </button>
+                                                            <span className="text-slate-300">|</span>
+                                                            <a
+                                                                href={`/${p.pageId}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-indigo-600 hover:underline"
+                                                            >
+                                                                Preview ↗
+                                                            </a>
+                                                            <span className="text-slate-300">|</span>
+                                                            <button
+                                                                onClick={() => handleDeletePage(p.pageId)}
+                                                                className="text-rose-600 hover:underline"
+                                                            >
+                                                                Trash
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-4 text-xs font-semibold text-slate-700 flex items-center gap-1 mt-2">
+                                                        <User className="w-3 h-3 text-slate-400" /> Admin
+                                                    </td>
+                                                    <td className="py-3 px-4 text-xs font-medium text-slate-600">{p.headerNavSync?.category || 'Business Registrations'}</td>
+                                                    <td className="py-3 px-4">
+                                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> 100/100 Good
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        {p.enableCityPages !== false ? (
+                                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                                🏙️ {cities.length} Cities
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">Disabled</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-xs text-slate-500">
+                                                        <div className="font-semibold text-slate-700">Published</div>
+                                                        <div className="text-[10px] text-slate-400">2026/08/26</div>
+                                                    </td>
+                                                </tr>
+
+                                                {/* WORDPRESS INLINE QUICK EDIT ROW */}
+                                                {isQuickEditing && (
+                                                    <tr className="bg-slate-100/80 border-y-2 border-indigo-500">
+                                                        <td colSpan="7" className="p-4 space-y-4">
+                                                            <h4 className="font-bold text-xs uppercase tracking-wider text-indigo-700 flex items-center gap-1">
+                                                                <Edit3 className="w-3.5 h-3.5" /> Quick Edit Page
+                                                            </h4>
+                                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-semibold text-slate-700">
+                                                                <div>
+                                                                    <label className="block mb-1">Title</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={quickEditPage.title}
+                                                                        onChange={(e) => setQuickEditPage(prev => ({ ...prev, title: e.target.value }))}
+                                                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block mb-1">Slug (pageId)</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={quickEditPage.pageId}
+                                                                        onChange={(e) => setQuickEditPage(prev => ({ ...prev, pageId: e.target.value }))}
+                                                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-mono"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block mb-1">Status</label>
+                                                                    <select
+                                                                        value={quickEditPage.isPublished !== false ? 'published' : 'draft'}
+                                                                        onChange={(e) => setQuickEditPage(prev => ({ ...prev, isPublished: e.target.value === 'published' }))}
+                                                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white"
+                                                                    >
+                                                                        <option value="published">Published</option>
+                                                                        <option value="draft">Draft</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block mb-1">City Auto-Gen</label>
+                                                                    <select
+                                                                        value={quickEditPage.enableCityPages !== false ? 'true' : 'false'}
+                                                                        onChange={(e) => setQuickEditPage(prev => ({ ...prev, enableCityPages: e.target.value === 'true' }))}
+                                                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white"
+                                                                    >
+                                                                        <option value="true">Enabled</option>
+                                                                        <option value="false">Disabled</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex justify-end gap-2 text-xs">
+                                                                <button
+                                                                    onClick={() => setQuickEditPage(null)}
+                                                                    className="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold rounded-lg"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    onClick={handleSaveQuickEdit}
+                                                                    className="px-4 py-1.5 bg-indigo-600 text-white font-bold rounded-lg shadow-sm"
+                                                                >
+                                                                    Update Page
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    })
+                                )}
                             </tbody>
                         </table>
                     </div>
