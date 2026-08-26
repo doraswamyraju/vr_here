@@ -156,6 +156,8 @@ const DEFAULT_CONFIGS = {
 // @route   GET /api/service-pages
 // @access  Public
 const getAllServicePages = asyncHandler(async (req, res) => {
+    // Clean up redundant duplicate test pages if found
+    await ServicePageConfig.deleteMany({ pageId: { $in: ['custom-new', 'private-limited-registration'] } });
     const pages = await ServicePageConfig.find({});
     res.json(pages);
 });
@@ -253,22 +255,19 @@ const getServicePageById = asyncHandler(async (req, res) => {
 const updateServicePage = asyncHandler(async (req, res) => {
     const { pageId } = req.params;
     const updateData = req.body;
+    updateData.pageId = pageId;
 
-    let page = await ServicePageConfig.findOne({ pageId });
-
-    if (page) {
-        if (!updateData.gscTokens) {
-            delete updateData.gscTokens;
-        }
-        page = await ServicePageConfig.findOneAndUpdate(
-            { pageId },
-            { $set: updateData },
-            { new: true, runValidators: true }
-        );
-        updateData.pageId = pageId;
-        page = await ServicePageConfig.create(updateData);
-        res.status(201).json({ message: 'Service page created successfully', page });
+    if (!updateData.gscTokens) {
+        delete updateData.gscTokens;
     }
+
+    const page = await ServicePageConfig.findOneAndUpdate(
+        { pageId },
+        { $set: updateData },
+        { new: true, upsert: true, runValidators: true }
+    );
+
+    res.json({ message: 'Service page saved successfully', page });
 });
 
 // @desc    Delete a service page config
