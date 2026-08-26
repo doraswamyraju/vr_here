@@ -98,6 +98,7 @@ const App = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
       <Route path="/pvt-ltd-registration" element={<PrivateLimitedPage />} />
+      <Route path="/private-limited-registration" element={<PrivateLimitedPage />} />
       <Route path="/partnership-firm" element={<PartnershipFirmPage />} />
       <Route path="/gst-registration" element={<GSTRegistrationPage />} />
       <Route path="/income-tax-return" element={<IncomeTaxPage />} />
@@ -111,6 +112,7 @@ const App = () => {
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
       <Route path="/contact" element={<ContactUsPage />} />
+      <Route path="/:slug" element={<PrivateLimitedPage />} />
 
       {/* Protected Routes */}
       <Route

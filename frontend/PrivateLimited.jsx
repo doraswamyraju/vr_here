@@ -221,8 +221,25 @@ const PrivateLimitedPage = () => {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const configData = await fetchServicePageConfig('private-limited');
+        const rawPath = window.location.pathname.replace(/^\//, '') || 'private-limited';
+        const targetSlug = rawPath === 'private-limited-registration' ? 'pvt-ltd-registration' : rawPath;
+        const configData = await fetchServicePageConfig(targetSlug);
         setPageConfig(configData);
+
+        if (configData.seoSettings?.titleTag || configData.title) {
+          document.title = configData.seoSettings?.titleTag || configData.title;
+        }
+
+        if (configData.seoSettings?.metaDescription) {
+          let metaEl = document.querySelector('meta[name="description"]');
+          if (!metaEl) {
+            metaEl = document.createElement('meta');
+            metaEl.name = 'description';
+            document.head.appendChild(metaEl);
+          }
+          metaEl.content = configData.seoSettings.metaDescription;
+        }
+
         if (configData.trackingSettings) {
           injectTrackingScripts(
             configData.trackingSettings.googleAnalyticsId,
