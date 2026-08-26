@@ -2,7 +2,8 @@ import express from 'express';
 import {
     getAllServicePages,
     getServicePageById,
-    updateServicePage
+    updateServicePage,
+    deleteServicePage
 } from '../controllers/servicePageController.js';
 import {
     getGscAuthUrl,
@@ -33,7 +34,8 @@ router.route('/')
 router.route('/:pageId')
     .get(getServicePageById)
     .post(protect, adminOrStaff, updateServicePage)
-    .put(protect, adminOrStaff, updateServicePage);
+    .put(protect, adminOrStaff, updateServicePage)
+    .delete(protect, adminOrStaff, deleteServicePage);
 
 router.route('/:pageId/gsc/auth')
     .get(protect, adminOrStaff, getGscAuthUrl);

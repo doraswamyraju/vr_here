@@ -267,14 +267,25 @@ const updateServicePage = asyncHandler(async (req, res) => {
         );
         res.json({ message: 'Service page updated successfully', page });
     } else {
-        updateData.pageId = pageId;
-        page = await ServicePageConfig.create(updateData);
-        res.status(201).json({ message: 'Service page created successfully', page });
+// @desc    Delete a service page config
+// @route   DELETE /api/service-pages/:pageId
+// @access  Private (Admin & Employee)
+const deleteServicePage = asyncHandler(async (req, res) => {
+    const { pageId } = req.params;
+    const page = await ServicePageConfig.findOne({ pageId });
+
+    if (!page) {
+        res.status(404);
+        throw new Error('Service page not found');
     }
+
+    await page.deleteOne();
+    res.json({ message: 'Service page deleted successfully' });
 });
 
 export {
     getAllServicePages,
     getServicePageById,
-    updateServicePage
+    updateServicePage,
+    deleteServicePage
 };

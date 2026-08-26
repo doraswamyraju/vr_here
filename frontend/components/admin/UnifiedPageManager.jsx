@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink, Table, Edit3
+    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink, Table, Edit3, Power
 } from 'lucide-react';
 import { analyzeOnPageSeo } from '../../utils/onPageSeoAnalyzer';
 import CityManager from './CityManager';
@@ -61,6 +61,7 @@ const UnifiedPageManager = ({ token }) => {
                 pageId: data.pageId || pageId,
                 title: data.title || 'Private Limited Registration',
                 description: data.description || '',
+                isPublished: data.isPublished !== undefined ? data.isPublished : true,
                 hero: {
                     title: data.hero?.title || 'Register Your Private Limited Company Online in {city}',
                     subtitle: data.hero?.subtitle || 'Launch your startup legally with expert CA/CS guidance in {city}, {state}.',
@@ -71,9 +72,9 @@ const UnifiedPageManager = ({ token }) => {
                 faqs: Array.isArray(data.faqs) ? data.faqs : [],
                 steps: Array.isArray(data.steps) ? data.steps : [],
                 seoSettings: {
-                    titleTag: data.seoSettings?.titleTag || '',
-                    metaDescription: data.seoSettings?.metaDescription || '',
-                    focusKeywords: Array.isArray(data.seoSettings?.focusKeywords) ? data.seoSettings.focusKeywords : ['Private Limited Company']
+                    titleTag: data.seoSettings?.titleTag || 'Private Limited Company Registration Online in India | VR Here',
+                    metaDescription: data.seoSettings?.metaDescription || 'Register your Private Limited Company in India in 7 days. Get 100% online legal incorporation, MOA/AOA, PAN, TAN & CA/CS guidance.',
+                    focusKeywords: Array.isArray(data.seoSettings?.focusKeywords) && data.seoSettings.focusKeywords.length > 0 ? data.seoSettings.focusKeywords : ['Private Limited Company']
                 },
                 enableCityPages: data.enableCityPages !== undefined ? data.enableCityPages : true,
                 headerNavSync: {
@@ -155,8 +156,31 @@ const UnifiedPageManager = ({ token }) => {
         }
     };
 
+    const handleDeletePage = async (pageIdToDelete) => {
+        if (!window.confirm(`Are you sure you want to delete page "${pageIdToDelete}"? This action cannot be undone.`)) return;
+        try {
+            await axios.delete(`/api/service-pages/${pageIdToDelete}`, authConfig);
+            setMessage({ text: `Page "${pageIdToDelete}" deleted successfully!`, type: 'success' });
+            fetchAllPages();
+        } catch (err) {
+            console.error('Failed to delete page', err);
+            setMessage({ text: err.response?.data?.message || 'Error deleting page.', type: 'error' });
+        }
+    };
+
+    const handleTogglePublish = async (pageObj) => {
+        try {
+            const nextState = pageObj.isPublished === false ? true : false;
+            await axios.post(`/api/service-pages/${pageObj.pageId}`, { ...pageObj, isPublished: nextState }, authConfig);
+            setMessage({ text: `Page "${pageObj.pageId}" ${nextState ? 'enabled' : 'disabled'} successfully!`, type: 'success' });
+            fetchAllPages();
+        } catch (err) {
+            console.error('Failed to toggle publish status', err);
+        }
+    };
+
     // Calculate SEO Score dynamically
-    const focusKeyword = pageConfig?.seoSettings?.focusKeywords?.[0] || '';
+    const focusKeyword = pageConfig?.seoSettings?.focusKeywords?.[0] || 'Private Limited Company';
     const fullTextContent = `${pageConfig?.hero?.title || ''} ${pageConfig?.hero?.subtitle || ''} ${(pageConfig?.packages || []).map(p => p.description + ' ' + (p.features || []).join(' ')).join(' ')} ${(pageConfig?.faqs || []).map(f => f.q + ' ' + f.a).join(' ')}`;
 
     const seoAnalysis = analyzeOnPageSeo({
@@ -169,9 +193,9 @@ const UnifiedPageManager = ({ token }) => {
 
     // Auto-Optimize SEO Titles & Meta Descriptions for 100% Score
     const handleAutoOptimizeSeo = () => {
-        const kw = (focusKeyword || 'Private Limited Company').trim();
-        const autoTitle = `${kw} Registration Online in India | VR Here`;
-        const autoMeta = `Get fast ${kw} registration in India. 100% online legal process with expert CA/CS guidance, MOA/AOA, PAN, TAN & Udyam certification.`;
+        const kw = 'Private Limited Company';
+        const autoTitle = `Private Limited Company Registration Online in India | VR Here`;
+        const autoMeta = `Register your Private Limited Company in India in 7 days. Get 100% online legal incorporation, MOA/AOA, PAN, TAN & CA/CS guidance.`;
 
         setPageConfig(prev => ({
             ...prev,
@@ -183,7 +207,7 @@ const UnifiedPageManager = ({ token }) => {
             }
         }));
 
-        setMessage({ text: 'SEO Title & Meta Description auto-optimized for 100% keyword score!', type: 'success' });
+        setMessage({ text: 'SEO Title & Meta Description auto-optimized for 100/100 Perfect Score!', type: 'success' });
     };
 
     return (
@@ -252,7 +276,7 @@ const UnifiedPageManager = ({ token }) => {
                             <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
                                 <Table className="w-5 h-5 text-indigo-600" /> Master Pages Overview Table
                             </h3>
-                            <p className="text-xs text-slate-500 mt-1">List of all service landing pages, SEO scores, and city auto-generation status.</p>
+                            <p className="text-xs text-slate-500 mt-1">List of all service landing pages, enable/disable toggles, and deletion controls.</p>
                         </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -262,7 +286,7 @@ const UnifiedPageManager = ({ token }) => {
                                     <th className="py-3.5 px-4">Page Title</th>
                                     <th className="py-3.5 px-4">URL Slug</th>
                                     <th className="py-3.5 px-4">Header Category</th>
-                                    <th className="py-3.5 px-4">SEO Score</th>
+                                    <th className="py-3.5 px-4">Status</th>
                                     <th className="py-3.5 px-4">City Pages</th>
                                     <th className="py-3.5 px-4 text-right">Actions</th>
                                 </tr>
@@ -274,9 +298,12 @@ const UnifiedPageManager = ({ token }) => {
                                         <td className="py-3.5 px-4 font-mono text-xs text-indigo-600">/{p.pageId}</td>
                                         <td className="py-3.5 px-4 text-xs font-medium text-slate-600">{p.headerNavSync?.category || 'Business Registrations'}</td>
                                         <td className="py-3.5 px-4">
-                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                Active
-                                            </span>
+                                            <button
+                                                onClick={() => handleTogglePublish(p)}
+                                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition ${p.isPublished !== false ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'}`}
+                                            >
+                                                <Power className="w-3 h-3" /> {p.isPublished !== false ? 'Enabled' : 'Disabled'}
+                                            </button>
                                         </td>
                                         <td className="py-3.5 px-4">
                                             {p.enableCityPages !== false ? (
@@ -303,6 +330,13 @@ const UnifiedPageManager = ({ token }) => {
                                                 >
                                                     <ExternalLink className="w-3.5 h-3.5" /> Live ↗
                                                 </a>
+                                                <button
+                                                    onClick={() => handleDeletePage(p.pageId)}
+                                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg font-semibold text-xs flex items-center gap-1"
+                                                    title="Delete Master Page"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
