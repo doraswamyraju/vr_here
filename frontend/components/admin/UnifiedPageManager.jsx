@@ -73,8 +73,18 @@ const UnifiedPageManager = ({ token }) => {
                     badgeText: data.hero?.badgeText || "India's #1 Secure Registration Platform",
                     consultationPrice: data.hero?.consultationPrice || 499
                 },
-                packages: Array.isArray(data.packages) ? data.packages : [],
-                faqs: Array.isArray(data.faqs) ? data.faqs : [],
+                packages: (Array.isArray(data.packages) && data.packages.length > 0) ? data.packages : [
+                    { id: 'consultation', name: 'Expert Consultation', price: 499, description: 'Start here if you are unsure. Fee fully adjusted against registration.', features: ['30 Mins CA/CS Call', 'Business Structure Advice', 'Name Availability Check', 'Capital Structure Guidance', 'Compliance Roadmap'], buttonText: 'Book Consultation', isAdjustable: true },
+                    { id: 'basic', name: 'Basic', price: 5499, description: 'Essential registration for verified startups in {city}.', features: ['Name Approval (RUN)', 'Certificate of Incorporation', 'PAN & TAN', 'MOA & AOA', '2 DIN & 2 DSC', 'PF & ESI Registration', 'MSME Registration', '1 Month Accounts Support'], buttonText: 'Select Basic' },
+                    { id: 'advance', name: 'Advance', price: 11399, isPopular: true, description: 'Complete compliance & web presence in {city}.', features: ['Everything in Basic', 'GST Registration', 'Import Export Code (IEC)', 'ISO Certification', 'GST Returns (2 Months)', 'Auditor Appointment', 'Business Commencement', 'Professional Website', '1 Yr Domain & Hosting'], buttonText: 'Select Advance' },
+                    { id: 'expert', name: 'Expert', price: 17699, description: 'Comprehensive package with IT filing in {city}.', features: ['Everything in Advance', 'Individual IT Filing', 'Google Analytics', 'Web Mails', 'Basic On-page SEO', 'Website Support (1 Yr)', 'Dedicated Relationship Mgr'], buttonText: 'Select Expert' }
+                ],
+                faqs: (Array.isArray(data.faqs) && data.faqs.length > 0) ? data.faqs : [
+                    { q: 'How much time does it take to register a Private Limited Company in {city}?', a: 'On average, the entire process takes about 5 to 7 working days, subject to government processing times in {state}. This includes obtaining DSC, DIN, name approval, and the final Certificate of Incorporation (COI).' },
+                    { q: 'Is the ₹499 consultation fee really refundable?', a: 'Yes, 100%! When you book a CA/CS consultation for ₹499, the full amount is converted into a coupon credit. Once you proceed to purchase any of our packages (Basic, Advance, or Expert), the ₹499 is automatically deducted from your final package price.' },
+                    { q: 'What are the minimum requirements to register a Pvt Ltd company in {city}?', a: 'You need a minimum of 2 directors (who can also be the shareholders), at least one of whom must be an Indian resident, and a registered address in India.' },
+                    { q: 'Do I need a commercial office address in {city}?', a: 'No. The MCA allows you to register your company using a residential address. You only need to provide a recent utility bill and a No Objection Certificate (NOC) from the owner.' }
+                ],
                 steps: Array.isArray(data.steps) ? data.steps : [],
                 seoSettings: {
                     titleTag: data.seoSettings?.titleTag || '',

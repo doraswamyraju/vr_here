@@ -292,11 +292,11 @@ const PrivateLimitedPage = () => {
     { value: '100%', label: 'Online Process' }
   ];
 
-  const activeLogos = pageConfig?.logos || LOGOS;
-  const activePackages = pageConfig?.packages || PACKAGES;
-  const activeReviews = pageConfig?.reviews || REVIEWS;
-  const activeSteps = pageConfig?.steps || STEPS;
-  const activeFaqs = pageConfig?.faqs || FAQS;
+  const activeLogos = (pageConfig?.logos && pageConfig.logos.length > 0) ? pageConfig.logos : LOGOS;
+  const activePackages = (pageConfig?.packages && pageConfig.packages.length > 0) ? pageConfig.packages : PACKAGES;
+  const activeReviews = (pageConfig?.reviews && pageConfig.reviews.length > 0) ? pageConfig.reviews : REVIEWS;
+  const activeSteps = (pageConfig?.steps && pageConfig.steps.length > 0) ? pageConfig.steps : STEPS;
+  const activeFaqs = (pageConfig?.faqs && pageConfig.faqs.length > 0) ? pageConfig.faqs : FAQS;
 
   const [formData, setFormData] = useState({
     name: '',

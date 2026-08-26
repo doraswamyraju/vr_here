@@ -201,6 +201,20 @@ const getServicePageById = asyncHandler(async (req, res) => {
     }
 
     let pageObj = page.toObject ? page.toObject() : page;
+    const defaultPvtLtd = defaultConfigs['private-limited'];
+
+    if (!pageObj.packages || pageObj.packages.length === 0) {
+        pageObj.packages = defaultPvtLtd.packages;
+    }
+    if (!pageObj.reviews || pageObj.reviews.length === 0) {
+        pageObj.reviews = defaultPvtLtd.reviews;
+    }
+    if (!pageObj.steps || pageObj.steps.length === 0) {
+        pageObj.steps = defaultPvtLtd.steps;
+    }
+    if (!pageObj.faqs || pageObj.faqs.length === 0) {
+        pageObj.faqs = defaultPvtLtd.faqs;
+    }
 
     if (citySlug) {
         const cityData = await City.findOne({ slug: citySlug.toLowerCase(), isActive: true });
