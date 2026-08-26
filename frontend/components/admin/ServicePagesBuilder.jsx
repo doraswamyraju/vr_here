@@ -729,7 +729,7 @@ const ServicePagesBuilder = ({ token }) => {
                                     <div className="space-y-6 animate-in fade-in duration-300">
                                         <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                                             <div>
-                                                <h3 className="font-bold text-slate-800 text-sm">Yoast/RankMath-Style SEO & Tracking Configuration</h3>
+                                                <h3 className="font-bold text-slate-800 text-sm">On-Page SEO & Tracking Configuration</h3>
                                                 <p className="text-slate-500 text-[11px]">Manage search visibility variables, tag setups (GA4 / Pixel), and direct Answer Citation structures.</p>
                                             </div>
                                             <div className="flex items-center gap-2">

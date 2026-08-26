@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
     FileText, Plus, Trash2, Save, RefreshCw, CheckCircle2, AlertTriangle, Info, Globe, Eye, MapPin, Search, Layers, Loader2, Sparkles
 } from 'lucide-react';
-import { analyzeYoastSeo } from '../../utils/yoastSeoAnalyzer';
+import { analyzeOnPageSeo } from '../../utils/onPageSeoAnalyzer';
 import CityManager from './CityManager';
 
 const UnifiedPageManager = ({ token }) => {
@@ -94,7 +94,7 @@ const UnifiedPageManager = ({ token }) => {
     const focusKeyword = pageConfig?.seoSettings?.focusKeywords?.[0] || '';
     const fullTextContent = `${pageConfig?.hero?.title || ''} ${pageConfig?.hero?.subtitle || ''} ${(pageConfig?.packages || []).map(p => p.description + ' ' + (p.features || []).join(' ')).join(' ')} ${(pageConfig?.faqs || []).map(f => f.q + ' ' + f.a).join(' ')}`;
 
-    const seoAnalysis = analyzeYoastSeo({
+    const seoAnalysis = analyzeOnPageSeo({
         focusKeyword,
         titleTag: pageConfig?.seoSettings?.titleTag || pageConfig?.title || '',
         metaDescription: pageConfig?.seoSettings?.metaDescription || pageConfig?.description || '',
@@ -377,7 +377,7 @@ const UnifiedPageManager = ({ token }) => {
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                 <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
-                                    <Globe className="w-4 h-4 text-emerald-600" /> Yoast SEO Health
+                                    <Globe className="w-4 h-4 text-emerald-600" /> SEO Health
                                 </h3>
                                 <div className={`px-3 py-1 rounded-full text-xs font-bold ${seoAnalysis.score >= 80 ? 'bg-emerald-100 text-emerald-800' : seoAnalysis.score >= 50 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
                                     Score: {seoAnalysis.score}/100
