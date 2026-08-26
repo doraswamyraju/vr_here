@@ -34,11 +34,24 @@ const UnifiedPageManager = ({ token }) => {
     const fetchHeaderConfig = async () => {
         try {
             const { data } = await axios.get('/api/services/header-config');
-            if (Array.isArray(data?.services) && data.services.length > 0) {
-                setMenuCategories(data.services);
-            }
+            let liveServices = Array.isArray(data?.services) && data.services.length > 0 ? data.services : [];
+            
+            const combinedMap = new Map();
+            [...MENU_DATA, ...liveServices].forEach(item => {
+                if (item.title) {
+                    const existing = combinedMap.get(item.title) || { ...item, columns: [] };
+                    const colMap = new Map();
+                    (existing.columns || []).forEach(c => colMap.set(typeof c === 'string' ? c : c.title, c));
+                    (item.columns || []).forEach(c => colMap.set(typeof c === 'string' ? c : c.title, c));
+                    existing.columns = Array.from(colMap.values());
+                    combinedMap.set(item.title, existing);
+                }
+            });
+            
+            setMenuCategories(Array.from(combinedMap.values()));
         } catch (err) {
             console.error('Failed to fetch header menu config', err);
+            setMenuCategories(MENU_DATA);
         }
     };
 

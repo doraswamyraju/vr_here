@@ -265,8 +265,12 @@ const updateServicePage = asyncHandler(async (req, res) => {
             { $set: updateData },
             { new: true, runValidators: true }
         );
-        res.json({ message: 'Service page updated successfully', page });
-    } else {
+        updateData.pageId = pageId;
+        page = await ServicePageConfig.create(updateData);
+        res.status(201).json({ message: 'Service page created successfully', page });
+    }
+});
+
 // @desc    Delete a service page config
 // @route   DELETE /api/service-pages/:pageId
 // @access  Private (Admin & Employee)
