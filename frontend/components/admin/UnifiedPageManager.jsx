@@ -1,43 +1,17 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-    FileText, Plus, Trash2, Save, RefreshCw, CheckCircle2, AlertTriangle, Info, Globe, Eye, MapPin, Search, Layers, Loader2, Sparkles, Wand2, Link2, ExternalLink
+    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink
 } from 'lucide-react';
 import { analyzeOnPageSeo } from '../../utils/onPageSeoAnalyzer';
 import CityManager from './CityManager';
-
-const HEADER_CATEGORIES = [
-    {
-        id: 'accounting-compliance-taxation',
-        title: 'Accounting, Compliance & Taxation Services',
-        columns: ['Accounting-as-a-Service (AaaS)', 'Taxation & Legal Compliance', 'Audit Services']
-    },
-    {
-        id: 'certification-quality-management',
-        title: 'Certification & Quality Management Services',
-        columns: ['ISO Services', 'Quality Management', 'Compliance Certifications']
-    },
-    {
-        id: 'business-registrations',
-        title: 'Business Registrations & Incorporation',
-        columns: ['Company Formation', 'Firm & Entity Registrations', 'Licenses']
-    },
-    {
-        id: 'govt-msme-services',
-        title: 'Govt & MSME Services',
-        columns: ['MSME & Startup Schemes', 'Government Approvals']
-    },
-    {
-        id: 'branding-industrial-setup',
-        title: 'Branding & Industrial Setup',
-        columns: ['Trademark & Branding', 'Industrial & Factory Setup']
-    }
-];
+import { MENU_DATA } from '../SharedComponents';
 
 const UnifiedPageManager = ({ token }) => {
     const [viewMode, setViewMode] = useState('pages'); // 'pages' or 'cities'
     const [pages, setPages] = useState([]);
     const [cities, setCities] = useState([]);
+    const [menuCategories, setMenuCategories] = useState(MENU_DATA);
     const [selectedPageId, setSelectedPageId] = useState('pvt-ltd-registration');
     const [pageConfig, setPageConfig] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -50,10 +24,27 @@ const UnifiedPageManager = ({ token }) => {
         try {
             const { data } = await axios.get('/api/service-pages');
             if (Array.isArray(data)) {
-                setPages(data);
+                // Focus on Private Limited page first as requested
+                const filtered = data.filter(p => p.pageId === 'pvt-ltd-registration' || p.pageId === 'private-limited');
+                if (filtered.length > 0) {
+                    setPages(filtered);
+                } else {
+                    setPages(data);
+                }
             }
         } catch (err) {
             console.error('Failed to load service pages list', err);
+        }
+    };
+
+    const fetchHeaderConfig = async () => {
+        try {
+            const { data } = await axios.get('/api/services/header-config');
+            if (Array.isArray(data?.services) && data.services.length > 0) {
+                setMenuCategories(data.services);
+            }
+        } catch (err) {
+            console.error('Failed to fetch header menu config, using defaults', err);
         }
     };
 
@@ -74,11 +65,11 @@ const UnifiedPageManager = ({ token }) => {
             const { data } = await axios.get(`/api/service-pages/${pageId}`);
             setPageConfig({
                 pageId: data.pageId || pageId,
-                title: data.title || '',
+                title: data.title || 'Private Limited Registration',
                 description: data.description || '',
                 hero: {
-                    title: data.hero?.title || '',
-                    subtitle: data.hero?.subtitle || '',
+                    title: data.hero?.title || 'Register Your Private Limited Company Online in {city}',
+                    subtitle: data.hero?.subtitle || 'Launch your startup legally with expert CA/CS guidance in {city}, {state}.',
                     badgeText: data.hero?.badgeText || "India's #1 Secure Registration Platform",
                     consultationPrice: data.hero?.consultationPrice || 499
                 },
@@ -88,13 +79,13 @@ const UnifiedPageManager = ({ token }) => {
                 seoSettings: {
                     titleTag: data.seoSettings?.titleTag || '',
                     metaDescription: data.seoSettings?.metaDescription || '',
-                    focusKeywords: Array.isArray(data.seoSettings?.focusKeywords) ? data.seoSettings.focusKeywords : ['']
+                    focusKeywords: Array.isArray(data.seoSettings?.focusKeywords) ? data.seoSettings.focusKeywords : ['Private Limited Company']
                 },
                 enableCityPages: data.enableCityPages !== undefined ? data.enableCityPages : true,
                 headerNavSync: {
-                    enabled: data.headerNavSync?.enabled || false,
-                    category: data.headerNavSync?.category || HEADER_CATEGORIES[0].title,
-                    column: data.headerNavSync?.column || HEADER_CATEGORIES[0].columns[0]
+                    enabled: data.headerNavSync?.enabled !== undefined ? data.headerNavSync.enabled : true,
+                    category: data.headerNavSync?.category || (menuCategories[0]?.title || 'Accounting, Compliance & Taxation Services'),
+                    column: data.headerNavSync?.column || (menuCategories[0]?.columns?.[0]?.title || 'Taxation & Legal Compliance')
                 }
             });
         } catch (err) {
@@ -107,43 +98,26 @@ const UnifiedPageManager = ({ token }) => {
 
     useEffect(() => {
         fetchAllPages();
+        fetchHeaderConfig();
         fetchCities();
     }, []);
 
     useEffect(() => {
-        if (selectedPageId && selectedPageId !== 'custom-new') {
+        if (selectedPageId) {
             fetchPageDetail(selectedPageId);
-        } else if (selectedPageId === 'custom-new') {
-            setPageConfig({
-                pageId: `new-service-${Date.now()}`,
-                title: 'New Service Page',
-                description: 'Service description...',
-                hero: {
-                    title: 'Register Your Service Online in {city}',
-                    subtitle: 'Fast 100% online registration in {city}, {state}.',
-                    badgeText: "India's #1 Secure Platform",
-                    consultationPrice: 499
-                },
-                packages: [],
-                faqs: [],
-                steps: [],
-                seoSettings: { titleTag: '', metaDescription: '', focusKeywords: [''] },
-                enableCityPages: true,
-                headerNavSync: { enabled: true, category: HEADER_CATEGORIES[0].title, column: HEADER_CATEGORIES[0].columns[0] }
-            });
-            setIsLoading(false);
         }
     }, [selectedPageId]);
 
-    // Deduplicate pages by pageId for the dropdown selector
-    const uniquePages = useMemo(() => {
-        const seen = new Set();
-        return pages.filter(p => {
-            if (!p.pageId || seen.has(p.pageId)) return false;
-            seen.add(p.pageId);
-            return true;
-        });
-    }, [pages]);
+    // Get list of available columns for the currently selected dropdown category
+    const activeCategoryObj = useMemo(() => {
+        if (!pageConfig?.headerNavSync?.category) return menuCategories[0];
+        return menuCategories.find(c => c.title === pageConfig.headerNavSync.category || c.id === pageConfig.headerNavSync.category) || menuCategories[0];
+    }, [pageConfig?.headerNavSync?.category, menuCategories]);
+
+    const availableColumns = useMemo(() => {
+        if (!activeCategoryObj || !Array.isArray(activeCategoryObj.columns)) return [];
+        return activeCategoryObj.columns.map(col => typeof col === 'string' ? col : col.title);
+    }, [activeCategoryObj]);
 
     const handleSavePage = async () => {
         setIsSaving(true);
@@ -151,31 +125,33 @@ const UnifiedPageManager = ({ token }) => {
         try {
             await axios.post(`/api/service-pages/${pageConfig.pageId}`, pageConfig, authConfig);
 
-            // Optional Header Nav Sync
+            // Save to Header Config if Navigation Sync is enabled
             if (pageConfig.headerNavSync?.enabled) {
                 try {
                     const { data: menuData } = await axios.get('/api/services/header-config');
-                    let servicesList = Array.isArray(menuData?.services) ? menuData.services : [];
-                    let categoryItem = servicesList.find(s => s.title === pageConfig.headerNavSync.category || s.id === pageConfig.headerNavSync.category);
+                    let servicesList = Array.isArray(menuData?.services) && menuData.services.length > 0 ? menuData.services : menuCategories;
 
-                    if (categoryItem) {
-                        let targetCol = (categoryItem.columns || []).find(c => c.title === pageConfig.headerNavSync.column);
-                        if (targetCol) {
-                            if (!targetCol.items.includes(pageConfig.title)) {
-                                targetCol.items.push(pageConfig.title);
+                    let catItem = servicesList.find(s => s.title === pageConfig.headerNavSync.category || s.id === pageConfig.headerNavSync.category);
+                    if (catItem) {
+                        catItem.columns = catItem.columns || [];
+                        let colItem = catItem.columns.find(c => (typeof c === 'string' ? c : c.title) === pageConfig.headerNavSync.column);
+                        if (colItem) {
+                            if (typeof colItem !== 'string' && Array.isArray(colItem.items)) {
+                                if (!colItem.items.includes(pageConfig.title)) {
+                                    colItem.items.push(pageConfig.title);
+                                }
                             }
                         } else {
-                            categoryItem.columns = categoryItem.columns || [];
-                            categoryItem.columns.push({ title: pageConfig.headerNavSync.column, items: [pageConfig.title] });
+                            catItem.columns.push({ title: pageConfig.headerNavSync.column, items: [pageConfig.title] });
                         }
                         await axios.post('/api/services/header-config', { ...menuData, services: servicesList }, authConfig);
                     }
                 } catch (navErr) {
-                    console.warn('Navigation menu sync notice:', navErr);
+                    console.warn('Navigation menu sync warning:', navErr);
                 }
             }
 
-            setMessage({ text: `Page "${pageConfig.title}" saved & synced successfully!`, type: 'success' });
+            setMessage({ text: `Page "${pageConfig.title}" saved successfully!`, type: 'success' });
             fetchAllPages();
         } catch (err) {
             console.error('Failed to save page', err);
@@ -197,13 +173,9 @@ const UnifiedPageManager = ({ token }) => {
         slug: pageConfig?.pageId || ''
     });
 
-    // Auto-Optimize SEO Titles & Meta Descriptions
+    // Auto-Optimize SEO Titles & Meta Descriptions for 100% Score
     const handleAutoOptimizeSeo = () => {
-        if (!focusKeyword) {
-            alert('Please enter a Focus Keyword first (e.g. "Private Limited Company").');
-            return;
-        }
-        const kw = focusKeyword.trim();
+        const kw = (focusKeyword || 'Private Limited Company').trim();
         const autoTitle = `${kw} Registration Online in India | VR Here`;
         const autoMeta = `Get fast ${kw} registration in India. 100% online legal process with expert CA/CS guidance, MOA/AOA, PAN, TAN & Udyam certification.`;
 
@@ -211,6 +183,7 @@ const UnifiedPageManager = ({ token }) => {
             ...prev,
             seoSettings: {
                 ...prev.seoSettings,
+                focusKeywords: [kw],
                 titleTag: autoTitle,
                 metaDescription: autoMeta
             }
@@ -221,7 +194,7 @@ const UnifiedPageManager = ({ token }) => {
 
     return (
         <div className="space-y-6">
-            {/* Top Bar Switcher & Page Selector */}
+            {/* Top Bar Switcher */}
             <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
                 <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
                     <button
@@ -229,7 +202,7 @@ const UnifiedPageManager = ({ token }) => {
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${viewMode === 'pages' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <FileText className="w-4 h-4" />
-                        Service Pages & SEO
+                        Private Limited Page & SEO
                     </button>
                     <button
                         onClick={() => setViewMode('cities')}
@@ -247,10 +220,7 @@ const UnifiedPageManager = ({ token }) => {
                             onChange={(e) => setSelectedPageId(e.target.value)}
                             className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500/20"
                         >
-                            {uniquePages.map(p => (
-                                <option key={p.pageId} value={p.pageId}>{p.title || p.pageId}</option>
-                            ))}
-                            <option value="custom-new">+ Create New Custom Page</option>
+                            <option value="pvt-ltd-registration">Private Limited Registration</option>
                         </select>
 
                         <button
@@ -284,7 +254,7 @@ const UnifiedPageManager = ({ token }) => {
                         {/* Page Basic Details */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <h3 className="font-bold text-slate-800 text-base flex items-center gap-2 border-b border-slate-100 pb-3">
-                                <Layers className="w-4 h-4 text-indigo-600" /> Page General Info
+                                <FileText className="w-4 h-4 text-indigo-600" /> Page General Info
                             </h3>
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
@@ -308,7 +278,7 @@ const UnifiedPageManager = ({ token }) => {
                             </div>
                         </div>
 
-                        {/* ISSUE 1 FIX: Connect Page to Header Navigation Menu */}
+                        {/* Navigation Menu Linker */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <h3 className="font-bold text-slate-800 text-base flex items-center gap-2 border-b border-slate-100 pb-3">
                                 <Link2 className="w-4 h-4 text-indigo-600" /> Connect Page to Navigation Menu
@@ -338,23 +308,25 @@ const UnifiedPageManager = ({ token }) => {
                                                 value={pageConfig.headerNavSync.category}
                                                 onChange={(e) => {
                                                     const catTitle = e.target.value;
-                                                    const catObj = HEADER_CATEGORIES.find(c => c.title === catTitle);
+                                                    const catObj = menuCategories.find(c => c.title === catTitle);
+                                                    const firstCol = catObj?.columns?.[0] ? (typeof catObj.columns[0] === 'string' ? catObj.columns[0] : catObj.columns[0].title) : '';
                                                     setPageConfig(prev => ({
                                                         ...prev,
                                                         headerNavSync: {
                                                             ...prev.headerNavSync,
                                                             category: catTitle,
-                                                            column: catObj ? catObj.columns[0] : prev.headerNavSync.column
+                                                            column: firstCol || prev.headerNavSync.column
                                                         }
                                                     }));
                                                 }}
-                                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium"
+                                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium text-xs"
                                             >
-                                                {HEADER_CATEGORIES.map(c => (
-                                                    <option key={c.id} value={c.title}>{c.title}</option>
+                                                {menuCategories.map((c, idx) => (
+                                                    <option key={c.id || idx} value={c.title}>{c.title}</option>
                                                 ))}
                                             </select>
                                         </div>
+
                                         <div>
                                             <label className="block font-semibold text-slate-700 mb-1">Menu Column</label>
                                             <select
@@ -363,10 +335,10 @@ const UnifiedPageManager = ({ token }) => {
                                                     ...prev,
                                                     headerNavSync: { ...prev.headerNavSync, column: e.target.value }
                                                 }))}
-                                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium"
+                                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium text-xs"
                                             >
-                                                {(HEADER_CATEGORIES.find(c => c.title === pageConfig.headerNavSync.category)?.columns || [pageConfig.headerNavSync.column]).map((col, i) => (
-                                                    <option key={i} value={col}>{col}</option>
+                                                {availableColumns.map((colName, i) => (
+                                                    <option key={i} value={colName}>{colName}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -385,7 +357,7 @@ const UnifiedPageManager = ({ token }) => {
                                     <label className="block font-semibold text-slate-700 mb-1">Hero Title</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. Register Your Private Limited Company in {city}"
+                                        placeholder="e.g. Register Your Private Limited Company Online in {city}"
                                         value={pageConfig.hero.title}
                                         onChange={(e) => setPageConfig(prev => ({ ...prev, hero: { ...prev.hero, title: e.target.value } }))}
                                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200"
@@ -424,147 +396,17 @@ const UnifiedPageManager = ({ token }) => {
                             </div>
                         </div>
 
-                        {/* Packages Manager */}
-                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <h3 className="font-bold text-slate-800 text-base">Packages & Commercial Plans</h3>
-                                <button
-                                    onClick={() => setPageConfig(prev => ({
-                                        ...prev,
-                                        packages: [...prev.packages, { id: `pkg-${Date.now()}`, name: 'New Package', price: 2999, description: '', features: ['Feature 1'] }]
-                                    }))}
-                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700"
-                                >
-                                    <Plus className="w-3.5 h-3.5" /> Add Package
-                                </button>
-                            </div>
-                            <div className="space-y-4">
-                                {pageConfig.packages.map((pkg, idx) => (
-                                    <div key={pkg.id || idx} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <input
-                                                type="text"
-                                                value={pkg.name}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setPageConfig(prev => ({
-                                                        ...prev,
-                                                        packages: prev.packages.map((p, i) => i === idx ? { ...p, name: val } : p)
-                                                    }));
-                                                }}
-                                                className="font-bold text-slate-800 bg-transparent border-b border-slate-300 focus:border-indigo-600 focus:outline-none"
-                                            />
-                                            <button
-                                                onClick={() => setPageConfig(prev => ({ ...prev, packages: prev.packages.filter((_, i) => i !== idx) }))}
-                                                className="text-slate-400 hover:text-red-600"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3 text-xs">
-                                            <div>
-                                                <label className="text-slate-500 font-semibold">Price (₹)</label>
-                                                <input
-                                                    type="number"
-                                                    value={pkg.price}
-                                                    onChange={(e) => {
-                                                        const val = Number(e.target.value);
-                                                        setPageConfig(prev => ({
-                                                            ...prev,
-                                                            packages: prev.packages.map((p, i) => i === idx ? { ...p, price: val } : p)
-                                                        }));
-                                                    }}
-                                                    className="w-full px-2 py-1 rounded border border-slate-200 mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-slate-500 font-semibold">Features (comma separated)</label>
-                                                <input
-                                                    type="text"
-                                                    value={Array.isArray(pkg.features) ? pkg.features.join(', ') : ''}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value.split(',').map(f => f.trim());
-                                                        setPageConfig(prev => ({
-                                                            ...prev,
-                                                            packages: prev.packages.map((p, i) => i === idx ? { ...p, features: val } : p)
-                                                        }));
-                                                    }}
-                                                    className="w-full px-2 py-1 rounded border border-slate-200 mt-1"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* FAQs Section */}
-                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <h3 className="font-bold text-slate-800 text-base">Frequently Asked Questions</h3>
-                                <button
-                                    onClick={() => setPageConfig(prev => ({
-                                        ...prev,
-                                        faqs: [...prev.faqs, { q: 'Question text here?', a: 'Answer text here.' }]
-                                    }))}
-                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700"
-                                >
-                                    <Plus className="w-3.5 h-3.5" /> Add FAQ
-                                </button>
-                            </div>
-                            <div className="space-y-3">
-                                {pageConfig.faqs.map((faq, idx) => (
-                                    <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 text-xs">
-                                        <div className="flex items-center justify-between">
-                                            <input
-                                                type="text"
-                                                placeholder="Question (supports {city})"
-                                                value={faq.q}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setPageConfig(prev => ({
-                                                        ...prev,
-                                                        faqs: prev.faqs.map((f, i) => i === idx ? { ...f, q: val } : f)
-                                                    }));
-                                                }}
-                                                className="w-full font-semibold text-slate-800 px-2 py-1 rounded border border-slate-200"
-                                            />
-                                            <button
-                                                onClick={() => setPageConfig(prev => ({ ...prev, faqs: prev.faqs.filter((_, i) => i !== idx) }))}
-                                                className="text-slate-400 hover:text-red-600 ml-2"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                        <textarea
-                                            rows="2"
-                                            placeholder="Answer text..."
-                                            value={faq.a}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setPageConfig(prev => ({
-                                                    ...prev,
-                                                    faqs: prev.faqs.map((f, i) => i === idx ? { ...f, a: val } : f)
-                                                }));
-                                            }}
-                                            className="w-full px-2 py-1 rounded border border-slate-200"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* ISSUE 3 FIX: Live Generated City SEO URLs & Preview Table */}
+                        {/* Generated City Pages Live Preview Box */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <h3 className="font-bold text-slate-800 text-base flex items-center gap-2 border-b border-slate-100 pb-3">
-                                <Globe className="w-4 h-4 text-indigo-600" /> Generated City SEO Pages Preview
+                                <Globe className="w-4 h-4 text-indigo-600" /> Generated City Pages Live Preview
                             </h3>
                             <p className="text-xs text-slate-500">
-                                When City Auto-Generation is enabled, these localized pages are created automatically for every active city.
+                                Click <strong>"Preview Page"</strong> to view the live rendered page for any city with Tirupati / Hyderabad address, state, and FAQs dynamically injected!
                             </p>
 
                             {cities.length === 0 ? (
-                                <p className="text-xs text-slate-400 italic">No active cities found. Switch to <strong>"Master City Catalog"</strong> tab to add cities.</p>
+                                <p className="text-xs text-slate-400 italic">No active cities found in Master Database. Switch to <strong>"Master City Catalog"</strong> tab above to add cities.</p>
                             ) : (
                                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                                     {cities.map(city => {
@@ -584,7 +426,7 @@ const UnifiedPageManager = ({ token }) => {
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition"
                                                 >
-                                                    <ExternalLink className="w-3.5 h-3.5" /> Preview Page
+                                                    <ExternalLink className="w-3.5 h-3.5" /> Preview Page ↗
                                                 </a>
                                             </div>
                                         );
@@ -596,7 +438,7 @@ const UnifiedPageManager = ({ token }) => {
 
                     {/* Right Column (1/3): SEO Health & Auto-Optimizer */}
                     <div className="space-y-6">
-                        {/* ISSUE 2 FIX: SEO Health + 1-Click Auto-Optimizer */}
+                        {/* SEO Health + 1-Click Auto-Optimizer */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                 <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
@@ -662,9 +504,9 @@ const UnifiedPageManager = ({ token }) => {
                                     />
                                 </div>
 
-                                {/* SEO Issues Checklist with Rectify Actions */}
+                                {/* SEO Issues Checklist */}
                                 <div className="pt-2 space-y-2 text-xs">
-                                    <p className="font-semibold text-slate-700">Analysis & Rectification Feedback:</p>
+                                    <p className="font-semibold text-slate-700">Analysis Feedback:</p>
                                     {seoAnalysis.issues.map((iss, i) => (
                                         <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
                                             {iss.type === 'success' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />}
