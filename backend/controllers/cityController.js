@@ -61,11 +61,13 @@ const createCity = asyncHandler(async (req, res) => {
 });
 
 // @desc    Update a city
-// @route   PUT /api/cities/:id
+// @route   PUT /api/cities/:identifier
 // @access  Private (Admin / Employee)
 const updateCity = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const city = await City.findById(id);
+    const targetId = req.params.identifier || req.params.id;
+    const city = await City.findOne({
+        $or: [{ slug: targetId }, { _id: targetId.match(/^[0-9a-fA-F]{24}$/) ? targetId : null }]
+    });
 
     if (!city) {
         res.status(404);
@@ -77,7 +79,7 @@ const updateCity = asyncHandler(async (req, res) => {
     }
 
     const updatedCity = await City.findByIdAndUpdate(
-        id,
+        city._id,
         { $set: req.body },
         { new: true, runValidators: true }
     );
@@ -86,11 +88,13 @@ const updateCity = asyncHandler(async (req, res) => {
 });
 
 // @desc    Delete a city
-// @route   DELETE /api/cities/:id
+// @route   DELETE /api/cities/:identifier
 // @access  Private (Admin / Employee)
 const deleteCity = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const city = await City.findById(id);
+    const targetId = req.params.identifier || req.params.id;
+    const city = await City.findOne({
+        $or: [{ slug: targetId }, { _id: targetId.match(/^[0-9a-fA-F]{24}$/) ? targetId : null }]
+    });
 
     if (!city) {
         res.status(404);

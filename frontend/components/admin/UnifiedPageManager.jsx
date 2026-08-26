@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink
+    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink, Table, Edit3
 } from 'lucide-react';
 import { analyzeOnPageSeo } from '../../utils/onPageSeoAnalyzer';
 import CityManager from './CityManager';
 import { MENU_DATA } from '../SharedComponents';
 
 const UnifiedPageManager = ({ token }) => {
-    const [viewMode, setViewMode] = useState('pages'); // 'pages' or 'cities'
+    const [viewMode, setViewMode] = useState('pages'); // 'pages', 'table', or 'cities'
     const [pages, setPages] = useState([]);
     const [cities, setCities] = useState([]);
     const [menuCategories, setMenuCategories] = useState(MENU_DATA);
@@ -24,13 +24,7 @@ const UnifiedPageManager = ({ token }) => {
         try {
             const { data } = await axios.get('/api/service-pages');
             if (Array.isArray(data)) {
-                // Focus on Private Limited page first as requested
-                const filtered = data.filter(p => p.pageId === 'pvt-ltd-registration' || p.pageId === 'private-limited');
-                if (filtered.length > 0) {
-                    setPages(filtered);
-                } else {
-                    setPages(data);
-                }
+                setPages(data);
             }
         } catch (err) {
             console.error('Failed to load service pages list', err);
@@ -44,7 +38,7 @@ const UnifiedPageManager = ({ token }) => {
                 setMenuCategories(data.services);
             }
         } catch (err) {
-            console.error('Failed to fetch header menu config, using defaults', err);
+            console.error('Failed to fetch header menu config', err);
         }
     };
 
@@ -73,18 +67,8 @@ const UnifiedPageManager = ({ token }) => {
                     badgeText: data.hero?.badgeText || "India's #1 Secure Registration Platform",
                     consultationPrice: data.hero?.consultationPrice || 499
                 },
-                packages: (Array.isArray(data.packages) && data.packages.length > 0) ? data.packages : [
-                    { id: 'consultation', name: 'Expert Consultation', price: 499, description: 'Start here if you are unsure. Fee fully adjusted against registration.', features: ['30 Mins CA/CS Call', 'Business Structure Advice', 'Name Availability Check', 'Capital Structure Guidance', 'Compliance Roadmap'], buttonText: 'Book Consultation', isAdjustable: true },
-                    { id: 'basic', name: 'Basic', price: 5499, description: 'Essential registration for verified startups in {city}.', features: ['Name Approval (RUN)', 'Certificate of Incorporation', 'PAN & TAN', 'MOA & AOA', '2 DIN & 2 DSC', 'PF & ESI Registration', 'MSME Registration', '1 Month Accounts Support'], buttonText: 'Select Basic' },
-                    { id: 'advance', name: 'Advance', price: 11399, isPopular: true, description: 'Complete compliance & web presence in {city}.', features: ['Everything in Basic', 'GST Registration', 'Import Export Code (IEC)', 'ISO Certification', 'GST Returns (2 Months)', 'Auditor Appointment', 'Business Commencement', 'Professional Website', '1 Yr Domain & Hosting'], buttonText: 'Select Advance' },
-                    { id: 'expert', name: 'Expert', price: 17699, description: 'Comprehensive package with IT filing in {city}.', features: ['Everything in Advance', 'Individual IT Filing', 'Google Analytics', 'Web Mails', 'Basic On-page SEO', 'Website Support (1 Yr)', 'Dedicated Relationship Mgr'], buttonText: 'Select Expert' }
-                ],
-                faqs: (Array.isArray(data.faqs) && data.faqs.length > 0) ? data.faqs : [
-                    { q: 'How much time does it take to register a Private Limited Company in {city}?', a: 'On average, the entire process takes about 5 to 7 working days, subject to government processing times in {state}. This includes obtaining DSC, DIN, name approval, and the final Certificate of Incorporation (COI).' },
-                    { q: 'Is the ₹499 consultation fee really refundable?', a: 'Yes, 100%! When you book a CA/CS consultation for ₹499, the full amount is converted into a coupon credit. Once you proceed to purchase any of our packages (Basic, Advance, or Expert), the ₹499 is automatically deducted from your final package price.' },
-                    { q: 'What are the minimum requirements to register a Pvt Ltd company in {city}?', a: 'You need a minimum of 2 directors (who can also be the shareholders), at least one of whom must be an Indian resident, and a registered address in India.' },
-                    { q: 'Do I need a commercial office address in {city}?', a: 'No. The MCA allows you to register your company using a residential address. You only need to provide a recent utility bill and a No Objection Certificate (NOC) from the owner.' }
-                ],
+                packages: Array.isArray(data.packages) ? data.packages : [],
+                faqs: Array.isArray(data.faqs) ? data.faqs : [],
                 steps: Array.isArray(data.steps) ? data.steps : [],
                 seoSettings: {
                     titleTag: data.seoSettings?.titleTag || '',
@@ -215,6 +199,13 @@ const UnifiedPageManager = ({ token }) => {
                         Private Limited Page & SEO
                     </button>
                     <button
+                        onClick={() => setViewMode('table')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${viewMode === 'table' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                        <Table className="w-4 h-4" />
+                        Master Pages Table ({pages.length})
+                    </button>
+                    <button
                         onClick={() => setViewMode('cities')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${viewMode === 'cities' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
@@ -253,6 +244,73 @@ const UnifiedPageManager = ({ token }) => {
 
             {viewMode === 'cities' ? (
                 <CityManager token={token} />
+            ) : viewMode === 'table' ? (
+                /* MASTER PAGES TABULAR OVERVIEW */
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <Table className="w-5 h-5 text-indigo-600" /> Master Pages Overview Table
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-1">List of all service landing pages, SEO scores, and city auto-generation status.</p>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-slate-600">
+                            <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 uppercase text-xs font-bold">
+                                <tr>
+                                    <th className="py-3.5 px-4">Page Title</th>
+                                    <th className="py-3.5 px-4">URL Slug</th>
+                                    <th className="py-3.5 px-4">Header Category</th>
+                                    <th className="py-3.5 px-4">SEO Score</th>
+                                    <th className="py-3.5 px-4">City Pages</th>
+                                    <th className="py-3.5 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {pages.map(p => (
+                                    <tr key={p._id || p.pageId} className="hover:bg-slate-50/80 transition">
+                                        <td className="py-3.5 px-4 font-bold text-slate-900">{p.title || p.pageId}</td>
+                                        <td className="py-3.5 px-4 font-mono text-xs text-indigo-600">/{p.pageId}</td>
+                                        <td className="py-3.5 px-4 text-xs font-medium text-slate-600">{p.headerNavSync?.category || 'Business Registrations'}</td>
+                                        <td className="py-3.5 px-4">
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                Active
+                                            </span>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            {p.enableCityPages !== false ? (
+                                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                    Enabled ({cities.length} Cities)
+                                                </span>
+                                            ) : (
+                                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">Disabled</span>
+                                            )}
+                                        </td>
+                                        <td className="py-3.5 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => { setSelectedPageId(p.pageId); setViewMode('pages'); }}
+                                                    className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-semibold text-xs flex items-center gap-1"
+                                                >
+                                                    <Edit3 className="w-3.5 h-3.5" /> Edit
+                                                </button>
+                                                <a
+                                                    href={`/${p.pageId}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg text-xs font-semibold flex items-center gap-1"
+                                                >
+                                                    <ExternalLink className="w-3.5 h-3.5" /> Live ↗
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             ) : isLoading || !pageConfig ? (
                 <div className="flex justify-center items-center py-20 bg-white rounded-2xl border border-slate-200">
                     <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
