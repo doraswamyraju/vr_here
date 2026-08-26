@@ -27,7 +27,21 @@ const getAllServicePages = asyncHandler(async (req, res) => {
 // @access  Public
 const getServicePageById = asyncHandler(async (req, res) => {
     const { pageId } = req.params;
-    let page = await ServicePageConfig.findOne({ pageId });
+    const queryCity = req.query.city;
+
+    let baseSlug = pageId;
+    let citySlug = queryCity || null;
+
+    if (!citySlug && pageId.includes('-in-')) {
+        const parts = pageId.split('-in-');
+        baseSlug = parts[0];
+        citySlug = parts.slice(1).join('-in-');
+    }
+
+    let page = await ServicePageConfig.findOne({ pageId: baseSlug });
+    if (!page) {
+        page = await ServicePageConfig.findOne({ pageId });
+    }
 
     if (!page) {
         // Fallback default configurations for the main pages if they are requested but not in DB yet
