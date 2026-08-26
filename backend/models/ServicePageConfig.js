@@ -75,7 +75,20 @@ const servicePageConfigSchema = new mongoose.Schema(
             accessToken: { type: String, default: '' },
             refreshToken: { type: String, default: '' },
             expiryDate: { type: Date, default: null }
-        }
+        },
+        enableCityPages: { type: Boolean, default: false },
+        citySlugList: [{ type: String }],
+        headerNavSync: {
+            enabled: { type: Boolean, default: false },
+            category: { type: String, default: '' },
+            column: { type: String, default: '' }
+        },
+        yoastSeo: {
+            focusKeyword: { type: String, default: '' },
+            score: { type: Number, default: 0 },
+            issues: { type: Array, default: [] }
+        },
+        isPublished: { type: Boolean, default: true }
     },
     { timestamps: true }
 );

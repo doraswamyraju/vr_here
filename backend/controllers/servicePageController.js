@@ -1,5 +1,18 @@
 import asyncHandler from 'express-async-handler';
 import ServicePageConfig from '../models/ServicePageConfig.js';
+import City from '../models/City.js';
+
+// Helper to replace {city}, {state}, {landmark}, {pincode} tokens in page object
+const replaceCityTokens = (obj, cityData) => {
+    if (!obj || !cityData) return obj;
+    let str = JSON.stringify(obj);
+    str = str.replace(/\{city\}/gi, cityData.name || '');
+    str = str.replace(/\{state\}/gi, cityData.state || '');
+    str = str.replace(/\{landmark\}/gi, cityData.landmark || cityData.name);
+    str = str.replace(/\{pincode\}/gi, cityData.pincode || '');
+    str = str.replace(/\{district\}/gi, cityData.district || cityData.name);
+    return JSON.parse(str);
+};
 
 // @desc    Get all service page configs
 // @route   GET /api/service-pages
@@ -9,7 +22,7 @@ const getAllServicePages = asyncHandler(async (req, res) => {
     res.json(pages);
 });
 
-// @desc    Get service page config by ID
+// @desc    Get service page config by ID (supports base slugs and -in-:city slugs)
 // @route   GET /api/service-pages/:pageId
 // @access  Public
 const getServicePageById = asyncHandler(async (req, res) => {
@@ -173,7 +186,50 @@ const getServicePageById = asyncHandler(async (req, res) => {
         }
     }
 
-    res.json(page);
+    let pageObj = page.toObject ? page.toObject() : page;
+
+    if (citySlug) {
+        const cityData = await City.findOne({ slug: citySlug.toLowerCase(), isActive: true });
+        if (cityData) {
+            pageObj = replaceCityTokens(pageObj, cityData);
+            pageObj.isCityVariant = true;
+            pageObj.city = cityData.name;
+            pageObj.state = cityData.state;
+            pageObj.canonicalUrl = `https://vrhere.in/${baseSlug}-in-${cityData.slug}`;
+
+            // Generate Schema.org JSON-LD structured data for Google SEO
+            pageObj.schemaJsonLd = {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "LocalBusiness",
+                        "name": `VR Here Business Management Solutions - ${cityData.name}`,
+                        "description": pageObj.seoSettings?.metaDescription || pageObj.description,
+                        "address": {
+                            "@type": "PostalAddress",
+                            "streetAddress": cityData.landmark || "VR Here Branch Office",
+                            "addressLocality": cityData.name,
+                            "addressRegion": cityData.state,
+                            "postalCode": cityData.pincode,
+                            "addressCountry": "IN"
+                        },
+                        "url": pageObj.canonicalUrl
+                    },
+                    {
+                        "@type": "Service",
+                        "name": pageObj.title,
+                        "provider": {
+                            "@type": "LocalBusiness",
+                            "name": `VR Here ${cityData.name}`
+                        },
+                        "areaServed": cityData.name
+                    }
+                ]
+            };
+        }
+    }
+
+    res.json(pageObj);
 });
 
 // @desc    Create or update service page config

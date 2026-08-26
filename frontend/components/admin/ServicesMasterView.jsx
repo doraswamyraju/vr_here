@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Plus, Trash2, Save, Upload, Loader2 } from 'lucide-react';
 import { MENU_DATA } from '../SharedComponents';
 import ServicePagesBuilder from './ServicePagesBuilder';
+import UnifiedPageManager from './UnifiedPageManager';
 
 const toEditableSeed = () =>
     MENU_DATA.map((service) => ({
@@ -172,7 +173,7 @@ const ServicesMasterView = ({ token }) => {
             </div>
 
             {activeSubTab === 'pages' ? (
-                <ServicePagesBuilder token={token} />
+                <UnifiedPageManager token={token} />
             ) : (
                 <>
                     <div className="mb-6 flex items-center justify-between">
