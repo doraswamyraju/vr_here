@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Search,
   Filter,
+  Users as UsersIcon,
   User,
   Smartphone,
   Globe,
