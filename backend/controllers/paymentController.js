@@ -3,6 +3,7 @@ import Razorpay from 'razorpay';
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
+import Lead from '../models/Lead.js';
 import generateToken from '../utils/generateToken.js';
 import sendEmail from '../utils/sendEmail.js';
 import { triggerNotification, notifyAdmins } from '../services/notificationService.js';
@@ -335,6 +336,27 @@ export const verifyPayment = async (req, res) => {
             serviceName,
             packageName
         });
+
+        // Automatically convert any active telemetry leads for this customer/service into CONVERTED status
+        try {
+            const leadMatchQuery = {
+                status: { $in: ['NEW', 'CONTACTED', 'IN_PROGRESS'] },
+                $or: []
+            };
+            if (customerUser?._id) leadMatchQuery.$or.push({ customerId: customerUser._id });
+            if (resolvedEmail) leadMatchQuery.$or.push({ email: resolvedEmail.toLowerCase().trim() });
+            if (resolvedPhone) leadMatchQuery.$or.push({ phone: resolvedPhone.trim() });
+
+            if (leadMatchQuery.$or.length > 0) {
+                await Lead.updateMany(leadMatchQuery, {
+                    status: 'CONVERTED',
+                    orderId: createdOrder._id,
+                    lastActivityAt: new Date()
+                });
+            }
+        } catch (leadConvErr) {
+            console.error('Lead conversion update error:', leadConvErr.message);
+        }
 
         const emailStatus = await sendPostPaymentEmail({
             user: customerUser,
