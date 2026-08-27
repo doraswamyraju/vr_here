@@ -20,12 +20,34 @@ struct CustomerHomeTab: View {
         return "Good Evening"
     }
     
+    // Display name formatted cleanly
+    private var cleanDisplayName: String {
+        let trimmed = userName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "Entrepreneur" }
+        let components = trimmed.components(separatedBy: " ")
+        if let first = components.first, !first.isEmpty {
+            return first
+        }
+        return trimmed
+    }
+    
     private var activeOrders: [Order] {
         viewModel.orders.filter { $0.status.lowercased() != "completed" }
     }
     
     private var completedOrdersCount: Int {
         viewModel.orders.filter { $0.status.lowercased() == "completed" }.count
+    }
+    
+    private var pendingRequirements: [CustomerRequirement] {
+        viewModel.orders.flatMap { $0.customerRequirements }.filter { $0.status.lowercased() != "verified" }
+    }
+    
+    private var hasPendingDocuments: Bool {
+        !pendingRequirements.isEmpty || activeOrders.contains(where: {
+            let s = $0.status.lowercased()
+            return s.contains("pending") || s.contains("document") || s.contains("awaiting")
+        })
     }
     
     private var complianceScore: Int {
@@ -38,14 +60,14 @@ struct CustomerHomeTab: View {
     
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 18) {
                 
                 // ==========================================
-                // 1. EXECUTIVE HEADER & USER PROFILE
+                // 1. EXECUTIVE USER GREETING & QUICK ACCESS
                 // ==========================================
-                VStack(spacing: 14) {
-                    HStack(alignment: .center) {
-                        // User Avatar with Gradient Ring
+                VStack(spacing: 12) {
+                    HStack(alignment: .center, spacing: 12) {
+                        // User Avatar with Gradient Ring & Initials
                         ZStack {
                             Circle()
                                 .fill(
@@ -55,67 +77,51 @@ struct CustomerHomeTab: View {
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .frame(width: 48, height: 48)
+                                .frame(width: 44, height: 44)
                             
-                            Text(String(userName.prefix(1)).uppercased())
-                                .font(.system(size: 20, weight: .black))
+                            Text(String(cleanDisplayName.prefix(1)).uppercased())
+                                .font(.system(size: 18, weight: .black))
                                 .foregroundColor(.white)
                         }
-                        .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.3), radius: 8, y: 3)
+                        .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.25), radius: 6, y: 2)
                         
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("\(greetingTimeText), \(userName)")
-                                .font(.system(size: 18, weight: .black))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(greetingTimeText), \(cleanDisplayName)")
+                                .font(.system(size: 17, weight: .black))
                                 .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                                 .lineLimit(1)
                             
-                            HStack(spacing: 6) {
+                            HStack(spacing: 5) {
                                 Circle()
                                     .fill(Color(red: 16/255, green: 185/255, blue: 129/255))
                                     .frame(width: 6, height: 6)
                                 Text("Verified Enterprise Member")
-                                    .font(.system(size: 10.5, weight: .bold))
+                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
                             }
                         }
                         
                         Spacer()
                         
-                        // Header Actions (Notifications & Refresh)
-                        HStack(spacing: 8) {
-                            let unreadCount = viewModel.notifications.filter { !$0.isRead }.count
-                            
-                            Button(action: { showNotifications = true }) {
-                                ZStack(alignment: .topTrailing) {
-                                    Image(systemName: unreadCount > 0 ? "bell.badge.fill" : "bell.fill")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(Color(red: 30/255, green: 41/255, blue: 59/255))
-                                        .frame(width: 40, height: 40)
-                                        .background(Color.white)
-                                        .cornerRadius(12)
-                                        .shadow(color: Color.black.opacity(0.04), radius: 4, y: 2)
-                                    
-                                    if unreadCount > 0 {
-                                        Circle()
-                                            .fill(Color.red)
-                                            .frame(width: 8, height: 8)
-                                            .padding(.trailing, 8)
-                                            .padding(.top, 8)
-                                    }
-                                }
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            
-                            Button(action: { viewModel.refreshAllData(silent: false) }) {
+                        // 1-Tap Refresh Button
+                        Button(action: {
+                            let impact = UIImpactFeedbackGenerator(style: .light)
+                            impact.impactOccurred()
+                            viewModel.refreshAllData(silent: false)
+                        }) {
+                            HStack(spacing: 4) {
                                 Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                    .frame(width: 40, height: 40)
-                                    .background(Color(red: 238/255, green: 242/255, blue: 255/255))
-                                    .cornerRadius(12)
+                                    .font(.system(size: 11, weight: .bold))
+                                Text("Sync")
+                                    .font(.system(size: 10, weight: .bold))
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color(red: 238/255, green: 242/255, blue: 255/255))
+                            .cornerRadius(12)
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     
                     // Quick Action Micro Pills
@@ -138,7 +144,7 @@ struct CustomerHomeTab: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 10)
+                .padding(.top, 4)
                 
                 // ==========================================
                 // 2. CREATIVE GLOWING SEARCH CAPSULE
@@ -204,7 +210,7 @@ struct CustomerHomeTab: View {
                     )
                     .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.08), radius: 8, x: 0, y: 3)
                     
-                    // Search Autocomplete Suggestions List
+                    // Autocomplete Suggestions
                     if !searchQuery.isEmpty {
                         VStack(alignment: .leading, spacing: 0) {
                             let matches = ServiceCatalog.shared.items.values.filter {
@@ -212,7 +218,7 @@ struct CustomerHomeTab: View {
                             }
                             
                             if matches.isEmpty {
-                                Text("No services matched. Switching to catalog...")
+                                Text("No services matched. Tap below to see all 106 services.")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
                                     .padding(12)
@@ -256,24 +262,116 @@ struct CustomerHomeTab: View {
                 .padding(.horizontal, 20)
                 
                 // ==========================================
-                // 3. STATUTORY HEALTH & COMPLIANCE PULSE WIDGET
+                // 3. HIGH-ATTENTION ACTION ITEMS BANNER (PROMOTED TO TOP)
+                // ==========================================
+                if hasPendingDocuments {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                            Text("ACTION REQUIRED")
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                                .tracking(0.6)
+                            Spacer()
+                        }
+                        
+                        let firstOrderWithPending = activeOrders.first(where: {
+                            $0.status.lowercased().contains("pending") || $0.status.lowercased().contains("document")
+                        }) ?? activeOrders.first
+                        
+                        let orderIdToOpen = firstOrderWithPending?.id ?? ""
+                        let orderTitle = firstOrderWithPending?.serviceName ?? "Active Service"
+                        
+                        Button(action: {
+                            let impact = UIImpactFeedbackGenerator(style: .medium)
+                            impact.impactOccurred()
+                            if !orderIdToOpen.isEmpty {
+                                onOpenProject(orderIdToOpen)
+                            } else {
+                                onSelectTab("Orders")
+                            }
+                        }) {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.15))
+                                        .frame(width: 44, height: 44)
+                                    Image(systemName: "doc.badge.plus")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Upload Pending Documents for \(orderTitle)")
+                                        .font(.system(size: 13, weight: .black))
+                                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                        .lineLimit(1)
+                                    Text("KYC/Identity verification is required to submit government filing.")
+                                        .font(.system(size: 10.5, weight: .medium))
+                                        .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                                        .lineLimit(1)
+                                }
+                                
+                                Spacer()
+                                
+                                HStack(spacing: 4) {
+                                    Text("Upload")
+                                        .font(.system(size: 11, weight: .black))
+                                    Image(systemName: "arrow.right")
+                                        .font(.system(size: 10, weight: .bold))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color(red: 239/255, green: 68/255, blue: 68/255), Color(red: 220/255, green: 38/255, blue: 38/255)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .cornerRadius(10)
+                                .shadow(color: Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.35), radius: 4, y: 2)
+                            }
+                            .padding(12)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color(red: 254/255, green: 242/255, blue: 242/255), Color.white],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .cornerRadius(16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color(red: 252/255, green: 165/255, blue: 165/255), lineWidth: 1.2)
+                            )
+                            .shadow(color: Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.08), radius: 6, y: 2)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .padding(.horizontal, 20)
+                }
+                
+                // ==========================================
+                // 4. STATUTORY HEALTH & COMPLIANCE PULSE
                 // ==========================================
                 VStack(spacing: 0) {
                     ZStack {
-                        // Sleek Dark Executive Gradient
                         LinearGradient(
                             colors: [Color(red: 15/255, green: 23/255, blue: 42/255), Color(red: 30/255, green: 41/255, blue: 59/255)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                         
-                        VStack(spacing: 16) {
-                            // Top Row: Compliance Ring + Title
+                        VStack(spacing: 14) {
                             HStack(alignment: .center, spacing: 14) {
                                 ZStack {
                                     Circle()
                                         .stroke(Color.white.opacity(0.12), lineWidth: 5)
-                                        .frame(width: 54, height: 54)
+                                        .frame(width: 50, height: 50)
                                     
                                     Circle()
                                         .trim(from: 0.0, to: CGFloat(complianceScore) / 100.0)
@@ -286,22 +384,22 @@ struct CustomerHomeTab: View {
                                             style: StrokeStyle(lineWidth: 5, lineCap: .round)
                                         )
                                         .rotationEffect(.degrees(-90))
-                                        .frame(width: 54, height: 54)
+                                        .frame(width: 50, height: 50)
                                     
                                     Text("\(complianceScore)%")
-                                        .font(.system(size: 13, weight: .black))
+                                        .font(.system(size: 12.5, weight: .black))
                                         .foregroundColor(.white)
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 3) {
                                     HStack(spacing: 6) {
-                                        Text("STATUTORY HEALTH")
-                                            .font(.system(size: 9.5, weight: .black))
+                                        Text("STATUTORY COMPLIANCE")
+                                            .font(.system(size: 9, weight: .black))
                                             .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
                                             .tracking(0.8)
                                         
                                         Text("ACTIVE")
-                                            .font(.system(size: 8, weight: .black))
+                                            .font(.system(size: 7.5, weight: .black))
                                             .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
                                             .padding(.horizontal, 5)
                                             .padding(.vertical, 2)
@@ -309,12 +407,12 @@ struct CustomerHomeTab: View {
                                             .cornerRadius(4)
                                     }
                                     
-                                    Text("All ROC & Tax Filings Up-to-Date")
-                                        .font(.system(size: 13.5, weight: .bold))
+                                    Text("Corporate & Tax Portfolio In Good Standing")
+                                        .font(.system(size: 13, weight: .bold))
                                         .foregroundColor(.white)
                                     
-                                    Text("Next statutory cycle: GSTR-3B & TDS due in 4 days")
-                                        .font(.system(size: 10.5, weight: .medium))
+                                    Text("Next deadline: GSTR-3B & TDS cycle in 4 days")
+                                        .font(.system(size: 10, weight: .medium))
                                         .foregroundColor(Color(red: 203/255, green: 213/255, blue: 225/255))
                                 }
                                 
@@ -324,45 +422,56 @@ struct CustomerHomeTab: View {
                             Divider()
                                 .background(Color.white.opacity(0.12))
                             
-                            // Bottom Stats Strip
                             HStack(spacing: 0) {
-                                HealthStatItem(title: "Active Orders", value: "\(activeOrders.count)", icon: "hourglass.badge.plus", color: Color(red: 99/255, green: 102/255, blue: 241/255))
+                                HealthStatItem(title: "Active Filings", value: "\(activeOrders.count)", icon: "hourglass.badge.plus", color: Color(red: 99/255, green: 102/255, blue: 241/255))
                                 
                                 Rectangle()
                                     .fill(Color.white.opacity(0.12))
-                                    .frame(width: 1, height: 28)
+                                    .frame(width: 1, height: 26)
                                 
                                 HealthStatItem(title: "Completed", value: "\(completedOrdersCount)", icon: "checkmark.seal.fill", color: Color(red: 16/255, green: 185/255, blue: 129/255))
                                 
                                 Rectangle()
                                     .fill(Color.white.opacity(0.12))
-                                    .frame(width: 1, height: 28)
+                                    .frame(width: 1, height: 26)
                                 
-                                HealthStatItem(title: "Assigned CA", value: "Available", icon: "person.badge.shield.checkmark.fill", color: Color(red: 245/255, green: 158/255, blue: 11/255))
+                                HealthStatItem(title: "Assigned CA", value: "Verified Desk", icon: "person.badge.shield.checkmark.fill", color: Color(red: 245/255, green: 158/255, blue: 11/255))
                             }
                         }
-                        .padding(18)
+                        .padding(16)
                     }
-                    .cornerRadius(22)
-                    .shadow(color: Color(red: 15/255, green: 23/255, blue: 42/255).opacity(0.18), radius: 12, y: 5)
+                    .cornerRadius(20)
+                    .shadow(color: Color(red: 15/255, green: 23/255, blue: 42/255).opacity(0.12), radius: 10, y: 4)
                 }
                 .padding(.horizontal, 20)
                 
                 // ==========================================
-                // 4. LIVE MILESTONE PIPELINE (ACTIVE ORDERS)
+                // 5. HIGH-IMPACT ACTIVE PROJECT HERO TRACKER
                 // ==========================================
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text("Active Projects & Filings")
-                            .font(.system(size: 15, weight: .black))
-                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                        Spacer()
-                        if !activeOrders.isEmpty {
-                            Button(action: { onSelectTab("Orders") }) {
-                                Text("View All (\(activeOrders.count))")
-                                    .font(.system(size: 11.5, weight: .bold))
-                                    .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                        HStack(spacing: 6) {
+                            Text("Active Projects & Filings")
+                                .font(.system(size: 15, weight: .black))
+                                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            
+                            if !activeOrders.isEmpty {
+                                Text("\(activeOrders.count)")
+                                    .font(.system(size: 10, weight: .black))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 2)
+                                    .background(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                    .cornerRadius(10)
                             }
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: { onSelectTab("Orders") }) {
+                            Text("All Orders →")
+                                .font(.system(size: 11.5, weight: .bold))
+                                .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                         }
                     }
                     .padding(.horizontal, 20)
@@ -374,18 +483,18 @@ struct CustomerHomeTab: View {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 14)
                                         .fill(Color(red: 238/255, green: 242/255, blue: 255/255))
-                                        .frame(width: 48, height: 48)
+                                        .frame(width: 46, height: 46)
                                     Image(systemName: "plus.app.fill")
-                                        .font(.system(size: 24))
+                                        .font(.system(size: 22))
                                         .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                                 }
                                 
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text("No Active Filings in Progress")
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Launch Your Next Business Entity")
                                         .font(.system(size: 13.5, weight: .bold))
                                         .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                    Text("Incorporate a company, file GST, or register your brand today.")
-                                        .font(.system(size: 11))
+                                    Text("Incorporate Private Limited, Register GST, or Trademark in 1-Click.")
+                                        .font(.system(size: 10.5))
                                         .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
                                         .lineLimit(1)
                                 }
@@ -408,176 +517,137 @@ struct CustomerHomeTab: View {
                         .buttonStyle(PlainButtonStyle())
                         .padding(.horizontal, 20)
                     } else {
-                        // Horizontal Card Stepper
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 14) {
-                                ForEach(activeOrders) { order in
-                                    Button(action: { onOpenProject(order.id) }) {
-                                        VStack(alignment: .leading, spacing: 12) {
-                                            HStack(alignment: .top) {
-                                                VStack(alignment: .leading, spacing: 2) {
-                                                    Text(order.serviceName)
-                                                        .font(.system(size: 13.5, weight: .black))
-                                                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                                        .lineLimit(1)
-                                                    Text(order.packageName)
-                                                        .font(.system(size: 11, weight: .semibold))
-                                                        .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                                                }
-                                                Spacer()
-                                                
-                                                Text(order.status)
-                                                    .font(.system(size: 8.5, weight: .black))
-                                                    .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
-                                                    .padding(.horizontal, 7)
-                                                    .padding(.vertical, 3)
-                                                    .background(Color(red: 238/255, green: 242/255, blue: 255/255))
-                                                    .cornerRadius(6)
-                                            }
-                                            
-                                            let completedTasks = order.tasks.filter { $0.status == "Completed" }.count
-                                            let totalTasks = max(1, order.tasks.count)
-                                            let progress = Double(completedTasks) / Double(totalTasks)
-                                            
-                                            VStack(alignment: .leading, spacing: 6) {
-                                                HStack {
-                                                    Text("Milestone: \(completedTasks)/\(totalTasks) Completed")
-                                                        .font(.system(size: 10, weight: .bold))
-                                                        .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                                                    Spacer()
-                                                    Text("\(Int(progress * 100))%")
-                                                        .font(.system(size: 10, weight: .black))
-                                                        .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                                }
-                                                
-                                                ZStack(alignment: .leading) {
-                                                    RoundedRectangle(cornerRadius: 4)
-                                                        .fill(Color(red: 241/255, green: 245/255, blue: 249/255))
-                                                        .frame(height: 6)
-                                                    RoundedRectangle(cornerRadius: 4)
-                                                        .fill(
-                                                            LinearGradient(
-                                                                colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 168/255, green: 85/255, blue: 247/255)],
-                                                                startPoint: .leading,
-                                                                endPoint: .trailing
-                                                            )
-                                                        )
-                                                        .frame(width: max(10, 220 * CGFloat(progress)), height: 6)
-                                                }
-                                            }
-                                        }
-                                        .frame(width: 230)
-                                        .padding(14)
-                                        .background(Color.white)
-                                        .cornerRadius(18)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 18)
-                                                .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
-                                        )
-                                        .shadow(color: Color.black.opacity(0.02), radius: 4, y: 2)
+                        // High-Impact Highlighted Tracker Cards
+                        VStack(spacing: 12) {
+                            ForEach(activeOrders) { order in
+                                HighlightedOrderTrackerCard(
+                                    order: order,
+                                    onTap: { onOpenProject(order.id) },
+                                    onChatCA: {
+                                        onSelectTab("Support")
                                     }
-                                    .buttonStyle(PlainButtonStyle())
-                                }
+                                )
                             }
-                            .padding(.horizontal, 20)
                         }
+                        .padding(.horizontal, 20)
                     }
                 }
                 
                 // ==========================================
-                // 5. 8-PILLARS QUICK SERVICE MATRIX
+                // 6. CREATIVE 8-PILLARS CORE SERVICES MATRIX
                 // ==========================================
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text("Core Legal & Business Services")
-                            .font(.system(size: 15, weight: .black))
-                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Core Legal & Business Services")
+                                .font(.system(size: 15, weight: .black))
+                                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            Text("Verified government registration & compliance packages")
+                                .font(.system(size: 10.5, weight: .medium))
+                                .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                        }
                         Spacer()
                         Button(action: { onSelectTab("Services") }) {
                             Text("See All 106 →")
-                                .font(.system(size: 11.5, weight: .bold))
+                                .font(.system(size: 11.5, weight: .black))
                                 .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                         }
                     }
                     .padding(.horizontal, 20)
                     
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                        ServiceMatrixCard(
+                        CreativeServiceCard(
                             title: "Incorporate Company",
                             subtitle: "Pvt Ltd, LLP, OPC",
-                            price: "From ₹4,899",
-                            icon: "building.2.fill",
-                            color: Color(red: 99/255, green: 102/255, blue: 241/255)
+                            tag: "MCA Verified",
+                            price: "₹4,899",
+                            icon: "building.2.crop.circle.fill",
+                            themeColor: Color(red: 99/255, green: 102/255, blue: 241/255),
+                            bgGradient: [Color(red: 238/255, green: 242/255, blue: 255/255), Color.white]
                         ) {
                             onOpenLiveService("Private Limited Company", "https://vrhere.in/pvt-ltd-registration")
                         }
                         
-                        ServiceMatrixCard(
+                        CreativeServiceCard(
                             title: "GST & Tax Filing",
                             subtitle: "GSTR-1, 3B & ITR",
-                            price: "From ₹499/mo",
+                            tag: "Zero Penalty",
+                            price: "₹499/mo",
                             icon: "percent",
-                            color: Color(red: 16/255, green: 185/255, blue: 129/255)
+                            themeColor: Color(red: 16/255, green: 185/255, blue: 129/255),
+                            bgGradient: [Color(red: 236/255, green: 253/255, blue: 245/255), Color.white]
                         ) {
                             onOpenLiveService("GST Registration", "https://vrhere.in/gst-registration")
                         }
                         
-                        ServiceMatrixCard(
-                            title: "Trademark & IP",
-                            subtitle: "Brand TM in 24 Hrs",
-                            price: "From ₹1,999",
-                            icon: "shield.righthalf.filled",
-                            color: Color(red: 236/255, green: 72/255, blue: 153/255)
+                        CreativeServiceCard(
+                            title: "Trademark & Brand",
+                            subtitle: "Instant ™ in 24 Hrs",
+                            tag: "IP India",
+                            price: "₹1,999",
+                            icon: "shield.lefthalf.filled",
+                            themeColor: Color(red: 236/255, green: 72/255, blue: 153/255),
+                            bgGradient: [Color(red: 253/255, green: 242/255, blue: 248/255), Color.white]
                         ) {
                             onOpenLiveService("Trademark Registration", "https://vrhere.in/trademark-registration")
                         }
                         
-                        ServiceMatrixCard(
+                        CreativeServiceCard(
                             title: "ISO Certification",
                             subtitle: "9001, 14001, 27001",
-                            price: "From ₹3,499",
+                            tag: "IAF Global",
+                            price: "₹3,499",
                             icon: "rosette",
-                            color: Color(red: 245/255, green: 158/255, blue: 11/255)
+                            themeColor: Color(red: 245/255, green: 158/255, blue: 11/255),
+                            bgGradient: [Color(red: 254/255, green: 243/255, blue: 199/255).opacity(0.6), Color.white]
                         ) {
                             onOpenLiveService("ISO 9001 Certification", "https://vrhere.in/iso-9001-certification")
                         }
                         
-                        ServiceMatrixCard(
+                        CreativeServiceCard(
                             title: "FSSAI & Licenses",
                             subtitle: "Food, IEC, Trade, PT",
-                            price: "From ₹1,499",
+                            tag: "FoSCoS Govt",
+                            price: "₹1,499",
                             icon: "fork.knife",
-                            color: Color(red: 14/255, green: 165/255, blue: 233/255)
+                            themeColor: Color(red: 14/255, green: 165/255, blue: 233/255),
+                            bgGradient: [Color(red: 240/255, green: 249/255, blue: 255/255), Color.white]
                         ) {
                             onOpenLiveService("FSSAI License", "https://vrhere.in/fssai-license")
                         }
                         
-                        ServiceMatrixCard(
+                        CreativeServiceCard(
                             title: "CMA & Bank Loans",
                             subtitle: "DPR, CC/OD, PMEGP",
-                            price: "From ₹4,999",
+                            tag: "Bank Ready",
+                            price: "₹4,999",
                             icon: "chart.line.uptrend.xyaxis",
-                            color: Color(red: 168/255, green: 85/255, blue: 247/255)
+                            themeColor: Color(red: 168/255, green: 85/255, blue: 247/255),
+                            bgGradient: [Color(red: 250/255, green: 245/255, blue: 255/255), Color.white]
                         ) {
                             onOpenLiveService("CMA Data Preparation", "https://vrhere.in/cma-data-preparation")
                         }
                         
-                        ServiceMatrixCard(
+                        CreativeServiceCard(
                             title: "Annual ROC Filings",
                             subtitle: "DIR-3 KYC, AOC-4",
-                            price: "From ₹499",
+                            tag: "MCA V3",
+                            price: "₹499",
                             icon: "doc.badge.gearshape.fill",
-                            color: Color(red: 100/255, green: 116/255, blue: 139/255)
+                            themeColor: Color(red: 100/255, green: 116/255, blue: 139/255),
+                            bgGradient: [Color(red: 241/255, green: 245/255, blue: 249/255), Color.white]
                         ) {
                             onOpenLiveService("ROC Annual Filings", "https://vrhere.in/roc-annual-filings")
                         }
                         
-                        ServiceMatrixCard(
+                        CreativeServiceCard(
                             title: "₹499 CA/CS Advice",
-                            subtitle: "Adjusted against fee",
-                            price: "Instant Booking",
+                            subtitle: "Fee credited on order",
+                            tag: "Live CA Call",
+                            price: "₹499",
                             icon: "phone.badge.checkmark.fill",
-                            color: Color(red: 239/255, green: 68/255, blue: 68/255)
+                            themeColor: Color(red: 239/255, green: 68/255, blue: 68/255),
+                            bgGradient: [Color(red: 254/255, green: 242/255, blue: 242/255), Color.white]
                         ) {
                             onOpenLiveService("Private Limited Consultation", "https://vrhere.in/pvt-ltd-registration")
                         }
@@ -586,7 +656,7 @@ struct CustomerHomeTab: View {
                 }
                 
                 // ==========================================
-                // 6. PROMOTIONAL CAROUSEL & GOVT SCHEMES
+                // 7. PROMOTIONAL CAROUSEL & GOVT SCHEMES
                 // ==========================================
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Featured Schemes & Incentives")
@@ -634,86 +704,7 @@ struct CustomerHomeTab: View {
                 }
                 
                 // ==========================================
-                // 7. ATTENTION NEEDED (ACTIONABLE TASKS)
-                // ==========================================
-                let pendingReqs = viewModel.orders.flatMap { $0.customerRequirements }.filter { $0.status.lowercased() != "verified" }
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Action Items & Checklist")
-                        .font(.system(size: 15, weight: .black))
-                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                        .padding(.horizontal, 20)
-                    
-                    if pendingReqs.isEmpty {
-                        HStack(spacing: 12) {
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 22))
-                                .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("All Action Items Complete")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                Text("No pending document uploads or pending invoice payments.")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                            }
-                            Spacer()
-                        }
-                        .padding(14)
-                        .background(Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.08))
-                        .cornerRadius(16)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.2), lineWidth: 1)
-                        )
-                        .padding(.horizontal, 20)
-                    } else {
-                        VStack(spacing: 10) {
-                            ForEach(Array(pendingReqs.prefix(2))) { req in
-                                Button(action: { onSelectTab("Orders") }) {
-                                    HStack(spacing: 12) {
-                                        Image(systemName: "exclamationmark.circle.fill")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(Color(red: 245/255, green: 158/255, blue: 11/255))
-                                        
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(req.title)
-                                                .font(.system(size: 13, weight: .bold))
-                                                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                            Text(req.description)
-                                                .font(.system(size: 11))
-                                                .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                                                .lineLimit(1)
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        Text("Upload")
-                                            .font(.system(size: 10.5, weight: .black))
-                                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                            .padding(.horizontal, 10)
-                                            .padding(.vertical, 5)
-                                            .background(Color(red: 238/255, green: 242/255, blue: 255/255))
-                                            .cornerRadius(8)
-                                    }
-                                    .padding(14)
-                                    .background(Color.white)
-                                    .cornerRadius(16)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(Color(red: 245/255, green: 158/255, blue: 11/255).opacity(0.3), lineWidth: 1)
-                                    )
-                                    .shadow(color: Color.black.opacity(0.02), radius: 4, y: 2)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                }
-                
-                // ==========================================
-                // 8. REGULATORY & COMPLIANCE FEED
+                // 8. STATUTORY & COMPLIANCE FEED
                 // ==========================================
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Statutory & Compliance News")
@@ -749,97 +740,6 @@ struct CustomerHomeTab: View {
             }
         }
         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
-        .sheet(isPresented: $showNotifications) {
-            NavigationView {
-                ScrollView {
-                    VStack(spacing: 12) {
-                        if viewModel.notifications.isEmpty {
-                            VStack(spacing: 8) {
-                                Text("No notifications available.")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                                    .padding(.top, 40)
-                            }
-                            .frame(maxWidth: .infinity)
-                        } else {
-                            ForEach(viewModel.notifications) { notification in
-                                Button(action: {
-                                    if !notification.isRead {
-                                        viewModel.markNotificationAsRead(id: notification.id)
-                                    }
-                                }) {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        HStack {
-                                            HStack(spacing: 6) {
-                                                Text("VR")
-                                                    .font(.system(size: 8, weight: .black))
-                                                    .foregroundColor(.white)
-                                                    .padding(4)
-                                                    .background(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                                    .cornerRadius(4)
-                                                Text("VR HERE")
-                                                    .font(.system(size: 10, weight: .black))
-                                                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                                    .tracking(0.3)
-                                                if !notification.isRead {
-                                                    Circle()
-                                                        .fill(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                                        .frame(width: 6, height: 6)
-                                                }
-                                            }
-                                            
-                                            Spacer()
-                                            
-                                            Text(notification.type.uppercased())
-                                                .font(.system(size: 8, weight: .black))
-                                                .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                                .padding(.horizontal, 6)
-                                                .padding(.vertical, 3)
-                                                .background(Color(red: 238/255, green: 242/255, blue: 255/255))
-                                                .cornerRadius(4)
-                                        }
-                                        
-                                        Text(notification.title)
-                                            .font(.system(size: 13, weight: .black))
-                                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                            .multilineTextAlignment(.leading)
-                                        
-                                        Text(notification.message)
-                                            .font(.system(size: 11))
-                                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                                            .lineSpacing(3)
-                                            .multilineTextAlignment(.leading)
-                                    }
-                                    .padding(14)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(notification.isRead ? Color(red: 248/255, green: 250/255, blue: 252/255) : Color.white)
-                                    .cornerRadius(16)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(notification.isRead ? Color(red: 226/255, green: 232/255, blue: 240/255) : Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.25), lineWidth: 1)
-                                    )
-                                    .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                    }
-                    .padding(20)
-                }
-                .background(Color(red: 248/255, green: 250/255, blue: 252/255).ignoresSafeArea())
-                .navigationTitle("Notifications")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Close") {
-                            showNotifications = false
-                        }
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -894,23 +794,176 @@ struct HealthStatItem: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(color)
                 Text(title)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 9.5, weight: .semibold))
                     .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
             }
             Text(value)
-                .font(.system(size: 13, weight: .black))
+                .font(.system(size: 12.5, weight: .black))
                 .foregroundColor(.white)
         }
         .frame(maxWidth: .infinity)
     }
 }
 
-struct ServiceMatrixCard: View {
+// Highly Prominent, Elevated Active Order Tracker Card
+struct HighlightedOrderTrackerCard: View {
+    let order: Order
+    let onTap: () -> Void
+    let onChatCA: () -> Void
+    
+    private var isPendingAction: Bool {
+        let s = order.status.lowercased()
+        return s.contains("pending") || s.contains("document") || s.contains("awaiting")
+    }
+    
+    private var statusBadgeColor: Color {
+        if isPendingAction { return Color(red: 239/255, green: 68/255, blue: 68/255) }
+        return Color(red: 79/255, green: 70/255, blue: 229/255)
+    }
+    
+    private var statusBadgeBg: Color {
+        if isPendingAction { return Color(red: 254/255, green: 242/255, blue: 242/255) }
+        return Color(red: 238/255, green: 242/255, blue: 255/255)
+    }
+    
+    var body: some View {
+        Button(action: {
+            let impact = UIImpactFeedbackGenerator(style: .medium)
+            impact.impactOccurred()
+            onTap()
+        }) {
+            VStack(alignment: .leading, spacing: 14) {
+                // Top Row: Service Name & Status Badge
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(isPendingAction ? Color(red: 239/255, green: 68/255, blue: 68/255) : Color(red: 16/255, green: 185/255, blue: 129/255))
+                                .frame(width: 7, height: 7)
+                            Text("ORDER ID: \(order.id.prefix(8).uppercased())")
+                                .font(.system(size: 9.5, weight: .black))
+                                .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                                .tracking(0.5)
+                        }
+                        
+                        Text(order.serviceName)
+                            .font(.system(size: 15, weight: .black))
+                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                    
+                    Text(order.status)
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(statusBadgeColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(statusBadgeBg)
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(statusBadgeColor.opacity(0.2), lineWidth: 1)
+                        )
+                }
+                
+                // 4-Stage Segmented Visual Stepper
+                let completedTasks = order.tasks.filter { $0.status == "Completed" }.count
+                let totalTasks = max(1, order.tasks.count)
+                let progress = Double(completedTasks) / Double(totalTasks)
+                let progressPct = Int(progress * 100)
+                
+                VStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        ForEach(0..<4) { index in
+                            let isCompleted = progress >= (Double(index + 1) / 4.0)
+                            let isCurrent = !isCompleted && (progress >= (Double(index) / 4.0) || index == 0)
+                            
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(
+                                    isCompleted
+                                        ? Color(red: 16/255, green: 185/255, blue: 129/255)
+                                        : (isCurrent
+                                           ? (isPendingAction ? Color(red: 239/255, green: 68/255, blue: 68/255) : Color(red: 99/255, green: 102/255, blue: 241/255))
+                                           : Color(red: 226/255, green: 232/255, blue: 240/255))
+                                )
+                                .frame(height: 5)
+                        }
+                    }
+                    
+                    HStack {
+                        Text("Stage: \(completedTasks)/\(totalTasks) Milestones Completed")
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                        Spacer()
+                        Text("\(progressPct)%")
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundColor(isPendingAction ? Color(red: 239/255, green: 68/255, blue: 68/255) : Color(red: 99/255, green: 102/255, blue: 241/255))
+                    }
+                }
+                
+                Divider()
+                    .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                
+                // Bottom Action Buttons Strip
+                HStack(spacing: 10) {
+                    Button(action: onChatCA) {
+                        HStack(spacing: 5) {
+                            Image(systemName: "bubble.left.fill")
+                                .font(.system(size: 10, weight: .bold))
+                            Text("Chat with CA")
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                        .cornerRadius(10)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 4) {
+                        Text(isPendingAction ? "Upload Docs Now" : "Track Milestones")
+                            .font(.system(size: 11, weight: .black))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(
+                        isPendingAction
+                            ? LinearGradient(colors: [Color(red: 239/255, green: 68/255, blue: 68/255), Color(red: 220/255, green: 38/255, blue: 38/255)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                            : LinearGradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                    .cornerRadius(10)
+                    .shadow(color: (isPendingAction ? Color(red: 239/255, green: 68/255, blue: 68/255) : Color(red: 99/255, green: 102/255, blue: 241/255)).opacity(0.3), radius: 5, y: 2)
+                }
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isPendingAction ? Color(red: 252/255, green: 165/255, blue: 165/255) : Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: isPendingAction ? 1.5 : 1)
+            )
+            .shadow(color: isPendingAction ? Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.08) : Color.black.opacity(0.03), radius: 8, y: 3)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// Creative Modern Service Card
+struct CreativeServiceCard: View {
     let title: String
     let subtitle: String
+    let tag: String
     let price: String
     let icon: String
-    let color: Color
+    let themeColor: Color
+    let bgGradient: [Color]
     let action: () -> Void
     
     var body: some View {
@@ -920,24 +973,32 @@ struct ServiceMatrixCard: View {
             action()
         }) {
             VStack(alignment: .leading, spacing: 10) {
-                HStack {
+                // Top Row: Icon + Tag Pill
+                HStack(alignment: .center) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(color.opacity(0.12))
+                        Circle()
+                            .fill(themeColor.opacity(0.14))
                             .frame(width: 38, height: 38)
                         Image(systemName: icon)
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(color)
+                            .foregroundColor(themeColor)
                     }
+                    
                     Spacer()
-                    Image(systemName: "arrow.up.forward")
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                    
+                    Text(tag)
+                        .font(.system(size: 8.5, weight: .black))
+                        .foregroundColor(themeColor)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2.5)
+                        .background(themeColor.opacity(0.1))
+                        .cornerRadius(6)
                 }
                 
+                // Title & Subtitle
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 12.5, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .lineLimit(1)
                     Text(subtitle)
@@ -946,20 +1007,37 @@ struct ServiceMatrixCard: View {
                         .lineLimit(1)
                 }
                 
-                Text(price)
-                    .font(.system(size: 10.5, weight: .black))
-                    .foregroundColor(color)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(color.opacity(0.08))
-                    .cornerRadius(6)
+                // Bottom Row: Price Chip + Circle Arrow
+                HStack {
+                    Text("From \(price)")
+                        .font(.system(size: 10.5, weight: .black))
+                        .foregroundColor(themeColor)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(themeColor.opacity(0.08))
+                        .cornerRadius(6)
+                    
+                    Spacer()
+                    
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 22, height: 22)
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, y: 1)
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 9, weight: .black))
+                            .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                    }
+                }
             }
             .padding(12)
-            .background(Color.white)
-            .cornerRadius(16)
+            .background(
+                LinearGradient(colors: bgGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+            )
+            .cornerRadius(18)
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(themeColor.opacity(0.18), lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.02), radius: 4, y: 2)
         }
