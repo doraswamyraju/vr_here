@@ -7,11 +7,26 @@ import { ALL_SERVICE_CONFIGS, privateLimitedConfig } from '../data/serviceConfig
 const replaceCityTokens = (obj, cityData) => {
     if (!obj || !cityData) return obj;
     let str = JSON.stringify(obj);
-    str = str.replace(/\{city\}/gi, cityData.name || '');
-    str = str.replace(/\{state\}/gi, cityData.state || '');
-    str = str.replace(/\{landmark\}/gi, cityData.landmark || cityData.name);
+    str = str.replace(/\{city\}/gi, cityData.name || 'Online');
+    str = str.replace(/\{state\}/gi, cityData.state || 'India');
+    str = str.replace(/\{landmark\}/gi, cityData.landmark || cityData.name || '');
     str = str.replace(/\{pincode\}/gi, cityData.pincode || '');
-    str = str.replace(/\{district\}/gi, cityData.district || cityData.name);
+    str = str.replace(/\{district\}/gi, cityData.district || cityData.name || '');
+    return JSON.parse(str);
+};
+
+// Helper to clean {city} and {state} tokens when viewing primary generic page
+const sanitizeCityTokens = (obj) => {
+    if (!obj) return obj;
+    let str = JSON.stringify(obj);
+    str = str.replace(/in\s*\{city\},\s*\{state\}/gi, 'across India');
+    str = str.replace(/in\s*\{city\}/gi, 'Online in India');
+    str = str.replace(/\{city\},\s*\{state\}/gi, 'India');
+    str = str.replace(/\{city\}/gi, 'Online');
+    str = str.replace(/\{state\}/gi, 'India');
+    str = str.replace(/\{landmark\}/gi, '');
+    str = str.replace(/\{pincode\}/gi, '');
+    str = str.replace(/\{district\}/gi, '');
     return JSON.parse(str);
 };
 
@@ -33,7 +48,8 @@ const getAllServicePages = asyncHandler(async (req, res) => {
     }
 
     const pages = await ServicePageConfig.find({});
-    res.json(pages);
+    const sanitizedPages = pages.map(p => sanitizeCityTokens(p.toObject ? p.toObject() : p));
+    res.json(sanitizedPages);
 });
 
 // @desc    Get service page config by ID (supports base slugs and -in-:city slugs)
@@ -129,7 +145,11 @@ const getServicePageById = asyncHandler(async (req, res) => {
                     }
                 ]
             };
+        } else {
+            pageObj = sanitizeCityTokens(pageObj);
         }
+    } else {
+        pageObj = sanitizeCityTokens(pageObj);
     }
 
     res.json(pageObj);
