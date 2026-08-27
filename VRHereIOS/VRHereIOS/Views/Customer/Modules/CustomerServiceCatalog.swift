@@ -10,6 +10,49 @@ struct ServicePackage: Codable, Identifiable {
     let description: String
     let features: [String]
     let creativeButtonText: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, _id, name, price, isAdjustable, isPopular, description, features, creativeButtonText, buttonText
+    }
+
+    init(id: String, name: String, price: Double, isAdjustable: Bool = false, isPopular: Bool = false, description: String, features: [String], creativeButtonText: String = "Get Started") {
+        self.id = id
+        self.name = name
+        self.price = price
+        self.isAdjustable = isAdjustable
+        self.isPopular = isPopular
+        self.description = description
+        self.features = features
+        self.creativeButtonText = creativeButtonText
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = (try? container.decodeIfPresent(String.self, forKey: .id))
+            ?? (try? container.decodeIfPresent(String.self, forKey: ._id))
+            ?? UUID().uuidString
+        self.name = (try? container.decodeIfPresent(String.self, forKey: .name)) ?? "Standard Package"
+        self.price = (try? container.decodeIfPresent(Double.self, forKey: .price)) ?? 0.0
+        self.isAdjustable = (try? container.decodeIfPresent(Bool.self, forKey: .isAdjustable)) ?? false
+        self.isPopular = (try? container.decodeIfPresent(Bool.self, forKey: .isPopular)) ?? false
+        self.description = (try? container.decodeIfPresent(String.self, forKey: .description)) ?? ""
+        self.features = (try? container.decodeIfPresent([String].self, forKey: .features)) ?? []
+        self.creativeButtonText = (try? container.decodeIfPresent(String.self, forKey: .creativeButtonText))
+            ?? (try? container.decodeIfPresent(String.self, forKey: .buttonText))
+            ?? "Get Started"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(price, forKey: .price)
+        try container.encode(isAdjustable, forKey: .isAdjustable)
+        try container.encode(isPopular, forKey: .isPopular)
+        try container.encode(description, forKey: .description)
+        try container.encode(features, forKey: .features)
+        try container.encode(creativeButtonText, forKey: .creativeButtonText)
+    }
 }
 
 struct ServiceDetail: Codable, Identifiable {

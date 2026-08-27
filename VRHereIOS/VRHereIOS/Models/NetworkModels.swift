@@ -136,6 +136,8 @@ struct EmployeeResponse: Codable, Identifiable {
     }
 }
 
+typealias Order = OrderResponse
+
 struct OrderResponse: Codable, Identifiable, Equatable {
     static func == (lhs: OrderResponse, rhs: OrderResponse) -> Bool {
         return lhs.idVal == rhs.idVal && lhs.status == rhs.status && lhs.broadcastStatus == rhs.broadcastStatus

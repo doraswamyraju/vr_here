@@ -528,7 +528,9 @@ struct AnyCodable: Codable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        if let string = try? container.decode(String.self) {
+        if container.decodeNil() {
+            value = NSNull()
+        } else if let string = try? container.decode(String.self) {
             value = string
         } else if let int = try? container.decode(Int.self) {
             value = int
@@ -541,7 +543,7 @@ struct AnyCodable: Codable {
         } else if let dictionary = try? container.decode([String: AnyCodable].self) {
             value = dictionary.mapValues { $0.value }
         } else {
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unable to decode AnyCodable")
+            value = NSNull()
         }
     }
     
