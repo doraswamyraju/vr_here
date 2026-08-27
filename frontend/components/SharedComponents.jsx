@@ -105,7 +105,8 @@ export const MENU_DATA = [
             {
                 title: 'Company / Business Entity Registrations',
                 items: [
-                    'Private Limited / Public Limited Company',
+                    'Private Limited Company',
+                    'Public Limited Company',
                     'LLP Registration',
                     'Partnership Firm Registration',
                     'Proprietorship Setup',

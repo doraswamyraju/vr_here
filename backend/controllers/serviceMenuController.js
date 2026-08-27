@@ -85,6 +85,29 @@ const getOrCreateConfig = async () => {
         needsSave = true;
     }
 
+    // Auto-migrate "Private Limited / Public Limited Company" into two dedicated items
+    if (config.services && Array.isArray(config.services)) {
+        for (const s of config.services) {
+            if (s.columns && Array.isArray(s.columns)) {
+                for (const col of s.columns) {
+                    if (col.items && col.items.some(it => it.includes('Private Limited / Public Limited'))) {
+                        const newItems = [];
+                        for (const it of col.items) {
+                            if (it.includes('Private Limited / Public Limited')) {
+                                newItems.push('Private Limited Company');
+                                newItems.push('Public Limited Company');
+                            } else {
+                                newItems.push(it);
+                            }
+                        }
+                        col.items = newItems;
+                        needsSave = true;
+                    }
+                }
+            }
+        }
+    }
+
     if (needsSave) {
         await config.save();
     }
