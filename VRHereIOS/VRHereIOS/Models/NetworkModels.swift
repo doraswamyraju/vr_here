@@ -57,18 +57,20 @@ struct UserProfile: Codable, Identifiable {
     let idVal: String
     let name: String
     let email: String
+    let phone: String?
     let role: String
     let isActive: Bool
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
-        case name, email, role, isActive
+        case name, email, phone, role, isActive
     }
     
-    init(idVal: String = "", name: String = "", email: String = "", role: String = "", isActive: Bool = false) {
+    init(idVal: String = "", name: String = "", email: String = "", phone: String? = nil, role: String = "", isActive: Bool = false) {
         self.idVal = idVal
         self.name = name
         self.email = email
+        self.phone = phone
         self.role = role
         self.isActive = isActive
     }
@@ -79,6 +81,7 @@ struct UserProfile: Codable, Identifiable {
             self.idVal = idString
             self.name = ""
             self.email = ""
+            self.phone = nil
             self.role = ""
             self.isActive = false
             return
@@ -88,6 +91,7 @@ struct UserProfile: Codable, Identifiable {
         idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? ""
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
         email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
+        phone = try container.decodeIfPresent(String.self, forKey: .phone)
         role = try container.decodeIfPresent(String.self, forKey: .role) ?? ""
         isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? false
     }

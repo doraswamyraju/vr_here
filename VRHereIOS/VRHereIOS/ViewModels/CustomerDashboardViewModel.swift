@@ -91,7 +91,19 @@ class CustomerDashboardViewModel: ObservableObject {
             }
             notifications = newNotifications
         } catch {
-            print("Notifications sync failed: \(error)")
+            if !error.isCancellationError {
+                print("Notifications sync failed: \(error)")
+            }
+        }
+        
+        // 5. Sync User Profile (phone, name, email)
+        do {
+            let profile = try await NetworkManager.shared.getProfile()
+            if let p = profile.phone, !p.isEmpty {
+                SessionManager.shared.savePhone(p)
+            }
+        } catch {
+            // Non-blocking
         }
         
         if hasErrors {

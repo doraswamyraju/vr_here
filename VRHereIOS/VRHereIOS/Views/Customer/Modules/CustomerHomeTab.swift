@@ -67,14 +67,27 @@ struct CustomerHomeTab: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 
-                // 2. Active Search Bar
+                // 2. Creative Glowing Search Capsule
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.textMuted)
-                        TextField("Search services (e.g. GST, Company...)", text: $searchQuery)
-                            .font(.system(size: 14))
-                            .foregroundColor(.textDark)
+                    HStack(spacing: 10) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 34, height: 34)
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        
+                        TextField("Search legal, tax, ISO, licensing services...", text: $searchQuery)
+                            .font(.system(size: 13.5, weight: .semibold))
+                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         
                         if !searchQuery.isEmpty {
                             Button(action: {
@@ -82,19 +95,39 @@ struct CustomerHomeTab: View {
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             }) {
                                 Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.textMuted)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
                             }
+                        } else {
+                            HStack(spacing: 3) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 10, weight: .bold))
+                                Text("Discover")
+                                    .font(.system(size: 9.5, weight: .black))
+                            }
+                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color(red: 238/255, green: 242/255, blue: 255/255))
+                            .cornerRadius(8)
                         }
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
                     .background(Color.white)
-                    .cornerRadius(14)
-                    .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+                    .cornerRadius(16)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.borderLight, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.4), Color(red: 14/255, green: 165/255, blue: 233/255).opacity(0.3)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
                     )
+                    .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.08), radius: 8, x: 0, y: 3)
                     
                     // Search Autocomplete Suggestions List
                     if !searchQuery.isEmpty {

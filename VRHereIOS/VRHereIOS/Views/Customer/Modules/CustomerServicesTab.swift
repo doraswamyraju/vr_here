@@ -381,32 +381,63 @@ struct CustomerServicesTab: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
                 
-                // Search Input Field
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                // Creative Glowing Search Capsule
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                     
                     TextField("Search Company, GST, ISO, Licenses...", text: $searchQuery)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                     
                     if !searchQuery.isEmpty {
                         Button(action: { searchQuery = "" }) {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 14))
+                                .font(.system(size: 16))
                                 .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
                         }
+                    } else {
+                        HStack(spacing: 3) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 10, weight: .bold))
+                            Text("Fast Find")
+                                .font(.system(size: 9.5, weight: .black))
+                        }
+                        .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color(red: 238/255, green: 242/255, blue: 255/255))
+                        .cornerRadius(8)
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
                 .background(Color.white)
-                .cornerRadius(12)
+                .cornerRadius(16)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.4), Color(red: 14/255, green: 165/255, blue: 233/255).opacity(0.3)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
                 )
+                .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.08), radius: 8, x: 0, y: 3)
                 .padding(.horizontal, 16)
                 
                 // 2. Horizontal Category Filter Chips Bar

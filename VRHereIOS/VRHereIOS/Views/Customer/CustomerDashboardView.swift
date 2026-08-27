@@ -139,15 +139,34 @@ struct CustomerDashboardView: View {
                                 }
                                 .buttonStyle(ScaleOnPressButtonStyle())
                                 
-                                // Support Ticket
-                                Button(action: { activeTab = "Support" }) {
-                                    Image(systemName: "headphones")
+                                // Direct Phone Call Advisory
+                                Button(action: {
+                                    if let url = URL(string: "tel:918008530606") {
+                                        #if os(iOS)
+                                        if UIApplication.shared.canOpenURL(url) {
+                                            UIApplication.shared.open(url)
+                                        } else {
+                                            toastMsg = "Dialer not available."
+                                            showingToast = true
+                                        }
+                                        #elseif os(macOS)
+                                        openURL(url)
+                                        #endif
+                                    }
+                                }) {
+                                    Image(systemName: "phone.fill")
                                         .font(.title2)
                                         .foregroundColor(.white)
                                         .frame(width: 52, height: 52)
-                                        .background(Color.blue)
+                                        .background(
+                                            LinearGradient(
+                                                colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
                                         .cornerRadius(26)
-                                        .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                                        .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.4), radius: 6, x: 0, y: 3)
                                 }
                                 .buttonStyle(ScaleOnPressButtonStyle())
                             }

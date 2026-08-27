@@ -10,6 +10,10 @@ struct CustomerServiceDetailScreen: View {
     @State private var isLoading: Bool = true
     @State private var selectedPackage: ServicePackage? = nil
     @State private var expandedFaqId: String? = nil
+    @State private var showPackagePicker: Bool = false
+    @State private var showPhonePrompt: Bool = false
+    @State private var inputPhone: String = ""
+    @State private var pendingPackageForCheckout: ServicePackage? = nil
     
     // Logged in user info from SessionManager
     private var clientName: String {
@@ -23,8 +27,7 @@ struct CustomerServiceDetailScreen: View {
     }
     
     private var clientPhone: String {
-        let phone = SessionManager.shared.getPhone()
-        return phone.isEmpty ? "9999999999" : phone
+        return SessionManager.shared.getPhone()
     }
     
     // Resolve fallback service from catalog if API is loading/offline
@@ -122,9 +125,10 @@ struct CustomerServiceDetailScreen: View {
                     
                     Spacer()
                     
-                    Button(action: onNeedAdviceClick) {
-                        Image(systemName: "phone.bubble.left.fill")
-                            .font(.system(size: 16))
+                    // Direct Call Header Action
+                    Button(action: dialHelpline) {
+                        Image(systemName: "phone.fill")
+                            .font(.system(size: 15))
                             .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                     }
                 }
@@ -171,7 +175,7 @@ struct CustomerServiceDetailScreen: View {
                             
                             // Expert Consultation Quick Pill
                             Button(action: {
-                                triggerDirectCheckout(pkg: ServicePackage(
+                                let consultPkg = ServicePackage(
                                     id: "consultation",
                                     name: "Expert Advisory Consultation",
                                     price: 499.0,
@@ -179,7 +183,9 @@ struct CustomerServiceDetailScreen: View {
                                     description: "30-min CA/CS call. 100% credited against your final registration.",
                                     features: ["Direct CA/CS Call", "Structure Selection Advice", "Name Check Guidance"],
                                     creativeButtonText: "Book Consultation"
-                                ))
+                                )
+                                selectedPackage = consultPkg
+                                triggerDirectCheckout(pkg: consultPkg)
                             }) {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
@@ -345,9 +351,22 @@ struct CustomerServiceDetailScreen: View {
                                         .stroke(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255) : Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: isSelected ? 2 : 1)
                                 )
                                 .onTapGesture {
-                                    selectedPackage = pkg
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                        selectedPackage = pkg
+                                    }
                                     let impact = UIImpactFeedbackGenerator(style: .light)
                                     impact.impactOccurred()
+                                    
+                                    // Send Category B intent telemetry
+                                    Task {
+                                        await NetworkManager.shared.sendLeadTelemetry(
+                                            serviceId: serviceKey,
+                                            serviceName: serviceTitle,
+                                            packageName: pkg.name,
+                                            price: pkg.price,
+                                            category: "PACKAGE_CLICK"
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -448,38 +467,54 @@ struct CustomerServiceDetailScreen: View {
                 }
             }
             
-            // 7. Sticky Floating Conversion Dock / Bottom Conversion Bar
+            // 7. Dynamic Sticky Floating Conversion Dock with Interactive Package Picker
             VStack(spacing: 0) {
                 Divider()
                     .background(Color(red: 226/255, green: 232/255, blue: 240/255))
                 
-                HStack(alignment: .center, spacing: 12) {
-                    // Left: Selected Package & Price
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(activePackage.name)
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                            .lineLimit(1)
-                        
-                        HStack(alignment: .firstTextBaseline, spacing: 3) {
-                            Text("₹\(Int(activePackage.price))")
-                                .font(.system(size: 18, weight: .black))
-                                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                            Text(activePackage.isAdjustable ? "(100% credit)" : "+ taxes")
-                                .font(.system(size: 9.5, weight: .bold))
-                                .foregroundColor(activePackage.isAdjustable ? Color.blue : Color.gray)
+                HStack(alignment: .center, spacing: 10) {
+                    // Left: Interactive Package Selector Dropdown Button
+                    Button(action: {
+                        showPackagePicker = true
+                    }) {
+                        HStack(spacing: 4) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                HStack(spacing: 4) {
+                                    Text(activePackage.name)
+                                        .font(.system(size: 11.5, weight: .bold))
+                                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                        .lineLimit(1)
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.system(size: 8, weight: .black))
+                                        .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                }
+                                
+                                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                                    Text("₹\(Int(activePackage.price))")
+                                        .font(.system(size: 18, weight: .black))
+                                        .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                    Text(activePackage.isAdjustable ? "(100% credit)" : "+ taxes")
+                                        .font(.system(size: 9.5, weight: .bold))
+                                        .foregroundColor(activePackage.isAdjustable ? Color.blue : Color.gray)
+                                }
+                            }
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                        .cornerRadius(10)
                     }
+                    .buttonStyle(PlainButtonStyle())
                     
                     Spacer()
                     
-                    // Quick WhatsApp Advisory Button
-                    Button(action: onNeedAdviceClick) {
-                        Image(systemName: "message.fill")
+                    // Direct Phone Call Button (Replaces Ticket Icon)
+                    Button(action: dialHelpline) {
+                        Image(systemName: "phone.fill")
                             .font(.system(size: 14))
-                            .foregroundColor(Color.green)
+                            .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
                             .frame(width: 42, height: 42)
-                            .background(Color.green.opacity(0.12))
+                            .background(Color(red: 238/255, green: 242/255, blue: 255/255))
                             .cornerRadius(12)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -489,13 +524,13 @@ struct CustomerServiceDetailScreen: View {
                         triggerDirectCheckout(pkg: activePackage)
                     }) {
                         HStack(spacing: 6) {
-                            Text("PAY NOW")
+                            Text("PAY ₹\(Int(activePackage.price))")
                                 .font(.system(size: 12, weight: .black))
                             Image(systemName: "arrow.right")
                                 .font(.system(size: 11, weight: .bold))
                         }
                         .foregroundColor(.white)
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, 16)
                         .frame(height: 44)
                         .background(
                             LinearGradient(
@@ -517,6 +552,90 @@ struct CustomerServiceDetailScreen: View {
         }
         .task {
             await loadServiceDataAndTrackTelemetry()
+        }
+        // Interactive Package Selector Action Sheet
+        .confirmationDialog("Select Registration Plan", isPresented: $showPackagePicker, titleVisibility: .visible) {
+            ForEach(servicePackages) { pkg in
+                Button("\(pkg.name) - ₹\(Int(pkg.price))\(pkg.isPopular ? " ⭐" : "")") {
+                    withAnimation {
+                        selectedPackage = pkg
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        // One-time Phone Number Input Sheet if missing from profile
+        .sheet(isPresented: $showPhonePrompt) {
+            ZStack {
+                Color(red: 248/255, green: 250/255, blue: 252/255).ignoresSafeArea()
+                
+                VStack(spacing: 20) {
+                    Capsule()
+                        .fill(Color(red: 203/255, green: 213/255, blue: 225/255))
+                        .frame(width: 40, height: 5)
+                        .padding(.top, 12)
+                    
+                    VStack(spacing: 6) {
+                        Text("Enter Mobile Number")
+                            .font(.system(size: 18, weight: .black))
+                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                        Text("Required by payment gateway for instant transaction SMS & OTP.")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 20)
+                    }
+                    
+                    HStack(spacing: 10) {
+                        Text("🇮🇳 +91")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 12)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1))
+                        
+                        TextField("10-digit mobile number", text: $inputPhone)
+                            .font(.system(size: 15, weight: .bold))
+                            .keyboardType(.numberPad)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1))
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    Button(action: {
+                        let clean = inputPhone.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: " ", with: "")
+                        if clean.count >= 10 {
+                            SessionManager.shared.savePhone(clean)
+                            showPhonePrompt = false
+                            if let pkg = pendingPackageForCheckout {
+                                onCheckoutClick(serviceTitle, pkg, clientName, clientEmail, clean)
+                            }
+                        }
+                    }) {
+                        Text("CONTINUE TO SECURE PAYMENT")
+                            .font(.system(size: 12.5, weight: .black))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(
+                                inputPhone.count >= 10
+                                    ? LinearGradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)], startPoint: .leading, endPoint: .trailing)
+                                    : LinearGradient(colors: [Color.gray, Color.gray], startPoint: .leading, endPoint: .trailing)
+                            )
+                            .cornerRadius(14)
+                    }
+                    .disabled(inputPhone.count < 10)
+                    .padding(.horizontal, 20)
+                    
+                    Spacer()
+                }
+            }
+            .presentationDetents([.height(280)])
         }
     }
     
@@ -558,7 +677,25 @@ struct CustomerServiceDetailScreen: View {
             )
         }
         
-        // Directly trigger Razorpay payment with logged in user profile (No middleman contact popup!)
-        onCheckoutClick(serviceTitle, pkg, clientName, clientEmail, clientPhone)
+        let phone = clientPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        if phone.isEmpty || phone == "9999999999" {
+            pendingPackageForCheckout = pkg
+            inputPhone = ""
+            showPhonePrompt = true
+            return
+        }
+        
+        // Directly trigger Razorpay payment with verified phone and credentials!
+        onCheckoutClick(serviceTitle, pkg, clientName, clientEmail, phone)
+    }
+    
+    private func dialHelpline() {
+        if let url = URL(string: "tel:918008530606") {
+            #if os(iOS)
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+            #endif
+        }
     }
 }
