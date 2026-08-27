@@ -15,17 +15,17 @@ import { fetchServicePageConfig, updateServicePageConfig } from './modules/servi
 import InlineEditOverlay from './modules/service-editor/v1.1/components/InlineEditOverlay';
 import SeoAeoDashboard from './modules/seo-aeo-analyzer/v1.1/components/SeoAeoDashboard';
 import { injectTrackingScripts } from './modules/seo-aeo-analyzer/v1.1/components/TrackingSettings';
-import { partnershipConfig } from '../backend/data/serviceConfigs/partnership.js';
+import { onePersonCompanyConfig } from '../backend/data/serviceConfigs/onePersonCompany.js';
 
-const PAGE_ID = 'partnership-firm-registration';
+const PAGE_ID = 'one-person-company';
 
-const PartnershipFirmPage = () => {
+const OnePersonCompanyPage = () => {
   const navigate = useNavigate();
 
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
   const isAuthorized = userInfo && (userInfo.role === 'admin' || userInfo.role === 'employee');
 
-  const [pageConfig, setPageConfig] = useState(partnershipConfig);
+  const [pageConfig, setPageConfig] = useState(onePersonCompanyConfig);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -99,7 +99,7 @@ const PartnershipFirmPage = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const mainEl = document.getElementById('partnership-container');
+      const mainEl = document.getElementById('opc-container');
       if (mainEl) {
         setPageHtmlContent(mainEl.innerHTML);
       }
@@ -120,15 +120,15 @@ const PartnershipFirmPage = () => {
     };
   }, [isServicesHovered]);
 
-  const activeHero = pageConfig?.hero || partnershipConfig.hero;
-  const activeStats = pageConfig?.stats || partnershipConfig.stats;
-  const activeLogos = pageConfig?.logos || partnershipConfig.logos;
-  const activePackages = pageConfig?.packages || partnershipConfig.packages;
-  const activeReviews = pageConfig?.reviews || partnershipConfig.reviews;
-  const activeSteps = pageConfig?.steps || partnershipConfig.steps;
-  const activeFaqs = pageConfig?.faqs || partnershipConfig.faqs;
-  const activeGuide = pageConfig?.guide || partnershipConfig.guide;
-  const activePopularSearches = pageConfig?.popularSearches || partnershipConfig.popularSearches;
+  const activeHero = pageConfig?.hero || onePersonCompanyConfig.hero;
+  const activeStats = pageConfig?.stats || onePersonCompanyConfig.stats;
+  const activeLogos = pageConfig?.logos || onePersonCompanyConfig.logos;
+  const activePackages = pageConfig?.packages || onePersonCompanyConfig.packages;
+  const activeReviews = pageConfig?.reviews || onePersonCompanyConfig.reviews;
+  const activeSteps = pageConfig?.steps || onePersonCompanyConfig.steps;
+  const activeFaqs = pageConfig?.faqs || onePersonCompanyConfig.faqs;
+  const activeGuide = pageConfig?.guide || onePersonCompanyConfig.guide;
+  const activePopularSearches = pageConfig?.popularSearches || onePersonCompanyConfig.popularSearches;
 
   const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
 
@@ -151,7 +151,7 @@ const PartnershipFirmPage = () => {
     setFormData(submittedFormData);
 
     launchRazorpayCheckout({
-      serviceName: 'Partnership Firm Registration',
+      serviceName: 'One Person Company (OPC) Registration',
       selectedPlan,
       formData: submittedFormData,
       token: currentMember?.token,
@@ -159,7 +159,7 @@ const PartnershipFirmPage = () => {
         setIsModalOpen(false);
         showPaymentSuccessPopup({
           planName: selectedPlan.name,
-          serviceName: 'Partnership Firm Registration',
+          serviceName: 'One Person Company (OPC) Registration',
           amount: selectedPlan.price,
           paymentId: paymentData.razorpay_payment_id || paymentData.paymentId,
           customerName: submittedFormData.name,
@@ -169,7 +169,7 @@ const PartnershipFirmPage = () => {
             navigate('/customer-dashboard', {
               state: {
                 activeTab: 'service-progress',
-                serviceName: 'Partnership Firm Registration',
+                serviceName: 'One Person Company (OPC) Registration',
                 paymentId: paymentData.razorpay_payment_id || paymentData.paymentId
               }
             });
@@ -183,7 +183,7 @@ const PartnershipFirmPage = () => {
   };
 
   return (
-    <div id="partnership-container" className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans selection:bg-rose-500 selection:text-white">
+    <div id="opc-container" className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans selection:bg-rose-500 selection:text-white">
       {/* 1. Header */}
       <SharedHeader
         isScrolled={isScrolled}
@@ -218,13 +218,13 @@ const PartnershipFirmPage = () => {
               <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-black uppercase tracking-wider">
                   <Award className="w-3.5 h-3.5 text-rose-400" />
-                  <span>{activeHero.badgeText || 'Indian Partnership Act 1932'}</span>
+                  <span>{activeHero.badgeText || 'Solo Founder Limited Liability'}</span>
                 </div>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
-                  {activeHero.title || 'Register Partnership Firm Online in {city}'}
+                  {activeHero.title || 'Register One Person Company (OPC) Online in {city}'}
                 </h1>
                 <p className="text-base sm:text-lg text-slate-300 font-medium max-w-2xl mx-auto lg:mx-0">
-                  {activeHero.subtitle || 'Fast and legally sound partnership firm setup with customized partnership deed drafting in {city}, {state}.'}
+                  {activeHero.subtitle || 'Full control for solo founders with corporate status, limited liability, and zero partner dependency in {city}, {state}.'}
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
@@ -232,7 +232,7 @@ const PartnershipFirmPage = () => {
                     onClick={handleConsultationBook}
                     className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-sm shadow-lg shadow-rose-600/30 transition transform hover:-translate-y-0.5"
                   >
-                    <span>Book Legal Call @ ₹{activeHero.consultationPrice || 499}</span>
+                    <span>Book CA/CS Call @ ₹{activeHero.consultationPrice || 499}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                   <a
@@ -253,8 +253,8 @@ const PartnershipFirmPage = () => {
               <div className="lg:col-span-5">
                 <div className="bg-slate-800/80 backdrop-blur-md rounded-3xl p-6 lg:p-8 border border-slate-700/60 shadow-2xl space-y-6">
                   <div className="border-b border-slate-700 pb-4">
-                    <h3 className="text-lg font-black text-white">Partnership Highlights</h3>
-                    <p className="text-xs text-slate-400">Quick statutory deed execution & notary</p>
+                    <h3 className="text-lg font-black text-white">OPC Key Highlights</h3>
+                    <p className="text-xs text-slate-400">100% solo equity with full corporate protection</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     {activeStats.map((stat, i) => (
@@ -274,7 +274,7 @@ const PartnershipFirmPage = () => {
         <section className="bg-slate-900 border-y border-slate-800 py-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-center text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">
-              Integrated with Leading Banking & Tax Systems
+              Integrated with Top Cloud & Startup Ecosystems
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-8">
               {activeLogos.map((logo, i) => {
@@ -298,10 +298,10 @@ const PartnershipFirmPage = () => {
                 Transparent Pricing
               </div>
               <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-                Partnership Firm Registration Packages
+                One Person Company Formation Packages
               </h2>
               <p className="text-sm text-slate-600">
-                Choose the best package for drafting, stamp duty execution, and ROF filing.
+                Choose the best package for solo founder incorporation and Nominee Director filing.
               </p>
             </div>
 
@@ -327,7 +327,7 @@ const PartnershipFirmPage = () => {
                         <span className="text-3xl font-black text-slate-900">₹{Number(pkg.price).toLocaleString('en-IN')}</span>
                       </div>
                       <div className="text-[10px] font-bold text-slate-400 mt-0.5">
-                        {pkg.isAdjustable ? '(Fully Adjustable against Package)' : '+ Stamp Duty at Actuals'}
+                        {pkg.isAdjustable ? '(Fully Adjustable against Package)' : '+ Govt Fees & Stamp Duty'}
                       </div>
                     </div>
 
@@ -363,10 +363,10 @@ const PartnershipFirmPage = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
               <div className="inline-block text-rose-600 text-xs font-black uppercase tracking-widest">
-                Swift Execution
+                Fast Incorporation
               </div>
               <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-                Execution & ROF Filing Process
+                OPC Incorporation Process
               </h2>
             </div>
 
@@ -390,10 +390,10 @@ const PartnershipFirmPage = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
               <div className="inline-block text-rose-600 text-xs font-black uppercase tracking-widest">
-                Client Testimonials
+                Solo Founders
               </div>
               <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-                Partnership Feedback
+                Founder Reviews
               </h2>
             </div>
 
@@ -429,7 +429,7 @@ const PartnershipFirmPage = () => {
                   <h3 className="text-base font-extrabold text-slate-900">
                     {isCollapsibleOpen ? 'Hide Detailed Legal Guide, FAQs & Search Tags' : 'Show Detailed Legal Guide, FAQs & Search Tags'}
                   </h3>
-                  <p className="text-xs text-slate-500">In-depth Partnership Act guide, deed clauses, document checklist & FAQs</p>
+                  <p className="text-xs text-slate-500">In-depth OPC guide, Form INC-3 Nominee rules, document checklist & FAQs</p>
                 </div>
               </div>
               <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isCollapsibleOpen ? 'rotate-90' : ''}`} />
@@ -508,7 +508,7 @@ const PartnershipFirmPage = () => {
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleFormSubmit}
           plan={selectedPlan}
-          serviceName="Partnership Firm Registration"
+          serviceName="One Person Company (OPC) Registration"
         />
       )}
 
@@ -538,4 +538,4 @@ const PartnershipFirmPage = () => {
   );
 };
 
-export default PartnershipFirmPage;
+export default OnePersonCompanyPage;

@@ -9,11 +9,17 @@ import {
 /* --- MENU DATA WITH LINKS --- */
 export const getServiceLink = (serviceName) => {
     const normalized = String(serviceName || '').toLowerCase();
+    if (normalized.includes('public limited')) return '/public-limited-company';
     if (normalized.includes('private limited')) return '/pvt-ltd-registration';
+    if (normalized.includes('llp')) return '/llp-registration';
+    if (normalized.includes('partnership')) return '/partnership-firm-registration';
+    if (normalized.includes('proprietorship')) return '/proprietorship-setup';
+    if (normalized.includes('section 8') || normalized.includes('ngo')) return '/section-8-company';
+    if (normalized.includes('one person company') || normalized.includes('opc')) return '/one-person-company';
+    if (normalized.includes('society') || normalized.includes('trust')) return '/society-trust-registration';
     if (normalized.includes('gst registration') || normalized.includes('gst return')) return '/gst-registration';
     if (normalized.includes('income tax')) return '/income-tax-return';
     if (normalized.includes('compliance scheme 2026') || normalized.includes('ccfs')) return '/compliance-scheme-2026';
-    if (normalized.includes('partnership')) return '/partnership-firm';
     if (normalized.includes('accounting')) return '/accounting-services';
     return `/contact?service=${encodeURIComponent(serviceName)}`;
 };
@@ -754,11 +760,13 @@ export const SharedFooter = () => (
                         <h3 className="text-red-500 font-bold text-sm uppercase tracking-wider mb-6">Start a Business</h3>
                         <ul className="space-y-3 text-sm">
                             <li><a href="/pvt-ltd-registration" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Private Limited Company</a></li>
-                            <li><a href="/contact?service=LLP" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Limited Liability Partnership</a></li>
-                            <li><a href="/contact?service=OPC" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">One Person Company</a></li>
-                            <li><a href="/contact?service=Section8" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Section 8 Company</a></li>
-                            <li><a href="/partnership-firm" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Partnership Firm</a></li>
-                            <li><a href="/contact?service=Proprietorship" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Proprietorship</a></li>
+                            <li><a href="/public-limited-company" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Public Limited Company</a></li>
+                            <li><a href="/llp-registration" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Limited Liability Partnership (LLP)</a></li>
+                            <li><a href="/partnership-firm-registration" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Partnership Firm</a></li>
+                            <li><a href="/proprietorship-setup" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Sole Proprietorship</a></li>
+                            <li><a href="/section-8-company" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Section 8 Company (NGO)</a></li>
+                            <li><a href="/one-person-company" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">One Person Company (OPC)</a></li>
+                            <li><a href="/society-trust-registration" className="hover:text-white transition-colors block py-1 transform hover:translate-x-1 duration-200">Society & Trust Registration</a></li>
                         </ul>
                     </div>
                     <div>

@@ -10,7 +10,13 @@ import GoogleCallback from './Auth/GoogleCallback';
 import ForgotPassword from './Auth/ForgotPassword';
 import ResetPassword from './Auth/ResetPassword';
 import PrivateLimitedPage from './PrivateLimited';
+import PublicLimitedPage from './PublicLimited';
+import LLPRegistrationPage from './LLPRegistration';
 import PartnershipFirmPage from './PartnershipFirm';
+import ProprietorshipSetupPage from './ProprietorshipSetup';
+import Section8CompanyPage from './Section8Company';
+import OnePersonCompanyPage from './OnePersonCompany';
+import SocietyTrustRegistrationPage from './SocietyTrustRegistration';
 import GSTRegistrationPage from './GSTRegistration';
 import IncomeTaxPage from './IncomeTax';
 import IncomeTaxAssessment from './IncomeTaxAssessment';
@@ -99,7 +105,19 @@ const App = () => {
       <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
       <Route path="/pvt-ltd-registration" element={<PrivateLimitedPage />} />
       <Route path="/private-limited-registration" element={<PrivateLimitedPage />} />
+      <Route path="/public-limited-company" element={<PublicLimitedPage />} />
+      <Route path="/llp-registration" element={<LLPRegistrationPage />} />
       <Route path="/partnership-firm" element={<PartnershipFirmPage />} />
+      <Route path="/partnership-firm-registration" element={<PartnershipFirmPage />} />
+      <Route path="/proprietorship-setup" element={<ProprietorshipSetupPage />} />
+      <Route path="/sole-proprietorship" element={<ProprietorshipSetupPage />} />
+      <Route path="/section-8-company" element={<Section8CompanyPage />} />
+      <Route path="/section-8-company-registration" element={<Section8CompanyPage />} />
+      <Route path="/one-person-company" element={<OnePersonCompanyPage />} />
+      <Route path="/opc-registration" element={<OnePersonCompanyPage />} />
+      <Route path="/society-trust-registration" element={<SocietyTrustRegistrationPage />} />
+      <Route path="/trust-registration" element={<SocietyTrustRegistrationPage />} />
+      <Route path="/society-registration" element={<SocietyTrustRegistrationPage />} />
       <Route path="/gst-registration" element={<GSTRegistrationPage />} />
       <Route path="/income-tax-return" element={<IncomeTaxPage />} />
       <Route path="/income-tax-assessment" element={<IncomeTaxAssessment />} />

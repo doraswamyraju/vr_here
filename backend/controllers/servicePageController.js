@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import ServicePageConfig from '../models/ServicePageConfig.js';
 import City from '../models/City.js';
+import { ALL_SERVICE_CONFIGS, privateLimitedConfig } from '../data/serviceConfigs/index.js';
 
 // Helper to replace {city}, {state}, {landmark}, {pincode} tokens in page object
 const replaceCityTokens = (obj, cityData) => {
@@ -14,207 +15,23 @@ const replaceCityTokens = (obj, cityData) => {
     return JSON.parse(str);
 };
 
-const DEFAULT_CONFIGS = {
-    'private-limited': {
-        pageId: 'private-limited',
-        title: 'Private Limited Registration',
-        description: 'Launch your startup with the most credible legal structure. Get Certificate of Incorporation, MOA, AOA, PAN & TAN in 7 days.',
-        iconKey: 'Apartment',
-        hero: {
-            title: 'Register Your Private Limited Company Online in {city}',
-            subtitle: 'Launch your startup legally with expert CA/CS guidance in {city}, {state}.',
-            badgeText: "India's #1 Secure Registration Platform",
-            consultationPrice: 499
-        },
-        stats: [
-            { value: '7 Days', label: 'Avg. Turnaround' },
-            { value: '5000+', label: 'Happy Founders' },
-            { value: '4.9/5', label: 'Google Rating' },
-            { value: '100%', label: 'Online Process' }
-        ],
-        logos: [
-            { name: 'Stripe for Startups', iconKey: 'SuiteIcon', colorClass: 'text-indigo-600' },
-            { name: 'Razorpay Partner', iconKey: 'Zap', colorClass: 'text-blue-500' },
-            { name: 'Google Cloud Program', iconKey: 'Globe', colorClass: 'text-red-500' },
-            { name: 'AWS Activate', iconKey: 'Factory', colorClass: 'text-orange-500' },
-            { name: 'Microsoft Founders Hub', iconKey: 'Building2', colorClass: 'text-blue-600' },
-            { name: 'Shopify Partners', iconKey: 'ShieldCheck', colorClass: 'text-emerald-500' },
-            { name: 'HubSpot Ecosystem', iconKey: 'Award', colorClass: 'text-orange-600' }
-        ],
-        packages: [
-            {
-                id: 'consultation',
-                name: 'Expert Consultation',
-                price: 499,
-                description: 'Start here if you are unsure. Fee fully adjusted against registration.',
-                features: ['30 Mins CA/CS Call', 'Business Structure Advice', 'Name Availability Check', 'Capital Structure Guidance', 'Compliance Roadmap'],
-                buttonText: 'Book Consultation',
-                isAdjustable: true
-            },
-            {
-                id: 'basic',
-                name: 'Basic',
-                price: 5499,
-                description: 'Essential registration for verified startups.',
-                features: ['Name Approval (RUN)', 'Certificate of Incorporation', 'PAN & TAN', 'MOA & AOA', '2 DIN & 2 DSC', 'PF & ESI Registration', 'MSME Registration', '1 Month Accounts Support'],
-                buttonText: 'Select Basic'
-            },
-            {
-                id: 'advance',
-                name: 'Advance',
-                price: 11399,
-                description: 'Complete compliance & web presence.',
-                features: ['Everything in Basic', 'GST Registration', 'Import Export Code (IEC)', 'ISO Certification', 'GST Returns (2 Months)', 'Auditor Appointment', 'Business Commencement', 'Professional Website', '1 Yr Domain & Hosting'],
-                buttonText: 'Select Advance',
-                isPopular: true
-            },
-            {
-                id: 'expert',
-                name: 'Expert',
-                price: 17699,
-                description: 'Comprehensive package with IT filing.',
-                features: ['Everything in Advance', 'Individual IT Filing', 'Google Analytics', 'Web Mails', 'Basic On-page SEO', 'Website Support (1 Yr)', 'Dedicated Relationship Mgr'],
-                buttonText: 'Select Expert'
-            }
-        ],
-        reviews: [
-            {
-                name: 'Vikram Malhotra',
-                company: 'Trident Tech Solutions Pvt Ltd',
-                avatar: 'VM',
-                rating: 5,
-                date: '14 May 2026',
-                text: 'The Pvt Ltd registration was amazingly fast! We paid the consultation fee of 499, and it was fully adjusted in our final payment. We got our COI, PAN, and TAN in exactly 6 days without any follow-ups.',
-                verified: true
-            },
-            {
-                name: 'Ananya Iyer',
-                company: 'Aura CleanTech Pvt Ltd',
-                avatar: 'AI',
-                rating: 5,
-                date: '28 April 2026',
-                text: 'Excellent service. The dashboard was super simple to upload documents, and their CA walked us through the name approval rules which saved us from rejection. Highly recommended for first-time founders!',
-                verified: true
-            },
-            {
-                name: 'Ritesh Deshmukh',
-                company: 'Pixel Labs Pvt Ltd',
-                avatar: 'RD',
-                rating: 5,
-                date: '03 May 2026',
-                text: 'Top-notch professionalism. I got my company incorporated, PF/ESI registration, and even a premium business website set up through their Advance Package. Everything was delivered transparently.',
-                verified: true
-            }
-        ],
-        steps: [
-            {
-                number: '01',
-                title: '1-Tap Expert Consultation',
-                desc: 'Book a consultation for just ₹499. Our CAs and CS specialists analyze your business idea, recommend the ideal package, and check name availability.',
-                badge: 'Takes 15 Mins'
-            },
-            {
-                number: '02',
-                title: 'Secure Document Vault Upload',
-                desc: 'Upload basic KYC details (Aadhaar, PAN, and address proof) to our secure vault. Your information is protected by industry-leading security.',
-                badge: 'Takes 10 Mins'
-            },
-            {
-                number: '03',
-                title: 'Government Filing & Incorporation',
-                desc: 'We file the RUN name approval, SPICe+ incorporation forms, PAN/TAN, and MSME registrations. You receive the Certificate of Incorporation by email!',
-                badge: 'Delivered in 7 Days'
-            }
-        ],
-        faqs: [
-            {
-                q: 'How much time does it take to register a Private Limited Company?',
-                a: 'On average, the entire process takes about 5 to 7 working days, subject to state-wise government processing times. This includes obtaining DSC, DIN, name approval, and the final Certificate of Incorporation (COI).'
-            },
-            {
-                q: 'Is the ₹499 consultation fee really refundable?',
-                a: 'Yes, 100%! When you book a CA/CS consultation for ₹499, the full amount is converted into a coupon credit. Once you proceed to purchase any of our packages (Basic, Advance, or Expert), the ₹499 is automatically deducted from your final package price.'
-            },
-            {
-                q: 'What are the minimum requirements to register a Pvt Ltd company?',
-                a: 'You need a minimum of 2 directors (who can also be the shareholders), at least one of whom must be an Indian resident, and a registered address in India (which can be a residential or rented address).'
-            },
-            {
-                q: 'Do I need a commercial office address to register my business?',
-                a: 'No. The MCA allows you to register your company using a residential address. You only need to provide a recent utility bill (electricity/gas bill) and a No Objection Certificate (NOC) from the owner.'
-            }
-        ],
-        guide: {
-            title: 'Guide to Company Registration',
-            overview: 'Incorporating a Private Limited Company in India is the most widely recognized and preferred corporate structure for startups, offering credibility, structured governance, and investor-friendly access.',
-            sections: [
-                {
-                    heading: 'What is Private Limited Company Registration?',
-                    content: 'It is the legal process of incorporating a business entity under the Companies Act, 2013, governed by the Ministry of Corporate Affairs (MCA). A private limited company restricts share transfers and limits members to 200. It becomes a separate legal entity distinct from directors and shareholders, allowing the company to own assets, enter contracts, and sue or be sued in its own name.',
-                    bullets: []
-                },
-                {
-                    heading: 'Forms of Private Limited Company',
-                    content: '',
-                    bullets: [
-                        '1. Company Limited by Shares: The most common form where shareholder liability is strictly limited to the face value of unpaid shares. Personal assets are 100% protected.',
-                        '2. Company Limited by Guarantee: Liability of members is limited to the amount they agree to contribute in case of winding up (common for NGOs / Section 8).',
-                        '3. Unlimited Private Company: Rare form where members have unlimited personal liability, offering capital distribution flexibility.'
-                    ]
-                },
-                {
-                    heading: 'Private Limited Minimum Requirements',
-                    content: '',
-                    bullets: [
-                        'Minimum 2 Directors & maximum 15 directors.',
-                        'Minimum 2 Shareholders & maximum 200 shareholders.',
-                        'At least 1 Indian Resident Director.',
-                        'Proposed directors must obtain DIN & DSC.',
-                        'No minimum paid-up capital requirement.'
-                    ]
-                },
-                {
-                    heading: 'Incorporation Step-by-Step Process',
-                    content: '',
-                    bullets: [
-                        'Step 1: Obtain DSC: Proposed directors apply for Digital Signature Certificate from a government certified agency.',
-                        'Step 2: Reserve Unique Name (RUN): Reserving the company name through the MCA RUN portal.',
-                        'Step 3: SPICe+ Form: Filing the integrated electronic form covering PAN, TAN, GSTIN, EPFO, ESIC, and Profession Tax.',
-                        'Step 4: MoA & AoA: Drafting Memorandum of Association and Articles of Association to establish rules and objectives.',
-                        'Step 5: COI Issuance: ROC issues the official Certificate of Incorporation.'
-                    ]
-                }
-            ],
-            checklistTitle: 'Checklist of Documents Needed',
-            checklist: [
-                'PAN & Aadhaar of all Directors',
-                'Passport Size Photograph of Directors',
-                'Electricity/Water Bill (Registered Address)',
-                'NOC from property owner',
-                'Bank Statement / Utility Bill of Proposed Directors'
-            ]
-        },
-        popularSearches: [
-            'Register Company Online', 'Private Limited Company Registration', 'Pvt Ltd Registration Fees',
-            'Company Incorporation India', 'How to register startup', 'CA Consultation Online',
-            'Pvt Ltd vs LLP', 'Name Approval RUN Process', 'Director Identification Number (DIN)',
-            'Digital Signature Certificate', 'MSME Certificate Online', 'Startup India Registration',
-            'GST Registration CA Services', 'Cheapest Company Registration'
-        ],
-        seoSettings: {
-            titleTag: 'Register Private Limited Company Online in India | VR Here',
-            metaDescription: 'Launch your startup legally with Pvt Ltd company registration in 7 Days. Get expert CA/CS guidance, MOA/AOA, DIN, DSC, PAN, TAN & Udyam certification.',
-            focusKeywords: ['Private Limited Company', 'Company Registration', 'Pvt Ltd Online']
-        }
-    }
-};
-
 // @desc    Get all service page configs
 // @route   GET /api/service-pages
 // @access  Public
 const getAllServicePages = asyncHandler(async (req, res) => {
     // Clean up redundant duplicate test pages if found
     await ServicePageConfig.deleteMany({ pageId: { $in: ['custom-new', 'private-limited-registration'] } });
+    
+    // Seed default configs if missing
+    for (const [key, config] of Object.entries(ALL_SERVICE_CONFIGS)) {
+        if (!key.includes('-in-')) {
+            const exists = await ServicePageConfig.findOne({ pageId: config.pageId });
+            if (!exists) {
+                await ServicePageConfig.create(config);
+            }
+        }
+    }
+
     const pages = await ServicePageConfig.find({});
     res.json(pages);
 });
@@ -240,38 +57,38 @@ const getServicePageById = asyncHandler(async (req, res) => {
         page = await ServicePageConfig.findOne({ pageId });
     }
 
+    const seedConfig = ALL_SERVICE_CONFIGS[baseSlug] || ALL_SERVICE_CONFIGS[pageId] || privateLimitedConfig;
+
     if (!page) {
-        const seedKey = DEFAULT_CONFIGS[pageId] ? pageId : 'private-limited';
-        const seedConfig = { ...DEFAULT_CONFIGS[seedKey], pageId: baseSlug || pageId };
-        page = await ServicePageConfig.create(seedConfig);
+        page = await ServicePageConfig.create({ ...seedConfig, pageId: baseSlug || pageId });
     }
 
     let pageObj = page.toObject ? page.toObject() : page;
-    const defaultPvtLtd = DEFAULT_CONFIGS['private-limited'];
 
+    // Apply defaults for any missing fields
     if (!pageObj.stats || pageObj.stats.length === 0) {
-        pageObj.stats = defaultPvtLtd.stats;
+        pageObj.stats = seedConfig.stats;
     }
     if (!pageObj.logos || pageObj.logos.length === 0) {
-        pageObj.logos = defaultPvtLtd.logos;
+        pageObj.logos = seedConfig.logos;
     }
     if (!pageObj.packages || pageObj.packages.length === 0) {
-        pageObj.packages = defaultPvtLtd.packages;
+        pageObj.packages = seedConfig.packages;
     }
     if (!pageObj.reviews || pageObj.reviews.length === 0) {
-        pageObj.reviews = defaultPvtLtd.reviews;
+        pageObj.reviews = seedConfig.reviews;
     }
     if (!pageObj.steps || pageObj.steps.length === 0) {
-        pageObj.steps = defaultPvtLtd.steps;
+        pageObj.steps = seedConfig.steps;
     }
     if (!pageObj.faqs || pageObj.faqs.length === 0) {
-        pageObj.faqs = defaultPvtLtd.faqs;
+        pageObj.faqs = seedConfig.faqs;
     }
     if (!pageObj.guide || !pageObj.guide.sections || pageObj.guide.sections.length === 0) {
-        pageObj.guide = defaultPvtLtd.guide;
+        pageObj.guide = seedConfig.guide;
     }
     if (!pageObj.popularSearches || pageObj.popularSearches.length === 0) {
-        pageObj.popularSearches = defaultPvtLtd.popularSearches;
+        pageObj.popularSearches = seedConfig.popularSearches;
     }
 
     if (citySlug) {

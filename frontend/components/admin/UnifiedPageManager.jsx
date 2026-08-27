@@ -439,6 +439,13 @@ const UnifiedPageManager = ({ token }) => {
                             className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500/20"
                         >
                             <option value="pvt-ltd-registration">Private Limited Registration</option>
+                            <option value="public-limited-company">Public Limited Company</option>
+                            <option value="llp-registration">LLP Registration</option>
+                            <option value="partnership-firm-registration">Partnership Firm Registration</option>
+                            <option value="proprietorship-setup">Proprietorship Setup</option>
+                            <option value="section-8-company">Section 8 Company (NGO)</option>
+                            <option value="one-person-company">One Person Company (OPC)</option>
+                            <option value="society-trust-registration">Society & Trust Registration</option>
                         </select>
 
                         <button

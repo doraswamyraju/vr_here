@@ -274,8 +274,14 @@ const ServicesMasterView = ({ token }) => {
                                                 >
                                                     <option value="">-- Service Page --</option>
                                                     <option value="/pvt-ltd-registration">Private Limited Registration</option>
+                                                    <option value="/public-limited-company">Public Limited Company</option>
+                                                    <option value="/llp-registration">LLP Registration</option>
+                                                    <option value="/partnership-firm-registration">Partnership Firm Registration</option>
+                                                    <option value="/proprietorship-setup">Proprietorship Setup</option>
+                                                    <option value="/section-8-company">Section 8 Company (NGO)</option>
+                                                    <option value="/one-person-company">One Person Company (OPC)</option>
+                                                    <option value="/society-trust-registration">Society & Trust Registration</option>
                                                     <option value="/gst-registration">GST Registration</option>
-                                                    <option value="/partnership-firm">Partnership Firm Registration</option>
                                                     <option value="/income-tax-return">Income Tax Return Filing</option>
                                                     <option value="/accounting-services">Accounting Services</option>
                                                     <option value="/compliance-scheme-2026">Companies Compliance Scheme 2026</option>
