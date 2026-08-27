@@ -20,6 +20,8 @@ const UnifiedPageManager = ({ token }) => {
     const [message, setMessage] = useState({ text: '', type: '' });
     const [activeGuideTab, setActiveGuideTab] = useState('guide'); // 'guide', 'faqs', 'searches'
     const [newSearchKeyword, setNewSearchKeyword] = useState('');
+    const [showCityModal, setShowCityModal] = useState(false);
+    const [citySearch, setCitySearch] = useState('');
 
     // --- WORDPRESS STYLE TABLE STATES ---
     const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'published', 'draft', 'city-enabled'
@@ -1949,9 +1951,15 @@ const UnifiedPageManager = ({ token }) => {
 
                         {/* City Auto-Generation Control */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-                            <h3 className="font-bold text-slate-800 text-base flex items-center gap-2 border-b border-slate-100 pb-3">
-                                <MapPin className="w-4 h-4 text-indigo-600" /> City Auto-Generation
-                            </h3>
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 text-indigo-600" /> City Auto-Generation
+                                </h3>
+                                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    {cities.length} Master Cities
+                                </span>
+                            </div>
+                            
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
@@ -1965,8 +1973,124 @@ const UnifiedPageManager = ({ token }) => {
                                 </label>
                             </div>
                             <p className="text-xs text-slate-500">
-                                When enabled, visiting <code>vrhere.in/{pageConfig.pageId}-in-tirupati</code> will automatically render localized content with Tirupati address, state, and FAQs.
+                                When enabled, visiting <code>vrhere.in/{pageConfig.pageId}-in-[city]</code> will automatically render localized content with local office address, state laws, and FAQs.
                             </p>
+
+                            {/* Explicit City Generation & Management Action Button */}
+                            <button
+                                type="button"
+                                onClick={() => setShowCityModal(true)}
+                                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-xs rounded-xl shadow-sm transition transform active:scale-98 cursor-pointer"
+                            >
+                                <Sparkles className="w-4 h-4 text-amber-300" />
+                                Create & Preview City-Specific Pages ({cities.length} Cities)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* City Landing Pages Management & Preview Modal */}
+            {showCityModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Modal Header */}
+                        <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <MapPin className="w-5 h-5 text-indigo-400" />
+                                    <h3 className="font-bold text-lg text-white">City Landing Pages Generator</h3>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-1">
+                                    Service: <span className="text-indigo-300 font-semibold">{pageConfig.title}</span> ({pageConfig.pageId})
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowCityModal(false)}
+                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 hover:text-white transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Search & Actions Bar */}
+                        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
+                            <div className="relative flex-1">
+                                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                                <input
+                                    type="text"
+                                    placeholder="Filter by city name or state (e.g. Tirupati, Bangalore)..."
+                                    value={citySearch}
+                                    onChange={(e) => setCitySearch(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 text-xs bg-white rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                            <span className="text-xs font-bold text-slate-600 whitespace-nowrap">
+                                {cities.filter(c => !citySearch || c.name.toLowerCase().includes(citySearch.toLowerCase()) || c.state.toLowerCase().includes(citySearch.toLowerCase())).length} Active URLs
+                            </span>
+                        </div>
+
+                        {/* City List */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                            {cities
+                                .filter(c => !citySearch || c.name.toLowerCase().includes(citySearch.toLowerCase()) || c.state.toLowerCase().includes(citySearch.toLowerCase()))
+                                .map(city => {
+                                    const cityUrl = `/${pageConfig.pageId}-in-${city.slug}`;
+                                    return (
+                                        <div
+                                            key={city._id || city.slug}
+                                            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-indigo-300 transition flex items-center justify-between gap-4"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-slate-900 text-sm">{city.name}</span>
+                                                    <span className="text-xs text-slate-500 font-medium">({city.state})</span>
+                                                    {city.popular && (
+                                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                                                            POPULAR
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="font-mono text-xs text-indigo-600 mt-1 truncate">
+                                                    vrhere.in{cityUrl}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(`https://vrhere.in${cityUrl}`);
+                                                        alert(`Copied URL: https://vrhere.in${cityUrl}`);
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                                                >
+                                                    Copy Link
+                                                </button>
+                                                <a
+                                                    href={cityUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-lg transition"
+                                                >
+                                                    <ExternalLink className="w-3.5 h-3.5" /> Preview Page ↗
+                                                </a>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                            <span className="text-xs text-slate-500">
+                                Powered by Dynamic Programmatic SEO Engine
+                            </span>
+                            <button
+                                onClick={() => setShowCityModal(false)}
+                                className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition"
+                            >
+                                Done
+                            </button>
                         </div>
                     </div>
                 </div>
