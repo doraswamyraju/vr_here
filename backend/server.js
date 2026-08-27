@@ -90,6 +90,7 @@ import webmailRoutes from './routes/webmailRoutes.js';
 import hrmsRoutes from './routes/hrmsRoutes.js';
 import servicePageRoutes from './routes/servicePageRoutes.js';
 import cityRoutes from './routes/cityRoutes.js';
+import freelancerRoutes from './routes/freelancerRoutes.js';
 import incomeTaxAssessmentRoutes from './routes/incomeTaxAssessmentRoutes.js';
 import accountingRoutes from './routes/accountingRoutes.js';
 import leadRoutes from './routes/leadRoutes.js';
