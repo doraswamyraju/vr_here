@@ -10,11 +10,22 @@ struct CustomerServiceDetailScreen: View {
     @State private var isLoading: Bool = true
     @State private var selectedPackage: ServicePackage? = nil
     @State private var expandedFaqId: String? = nil
-    @State private var clientName = SessionManager.shared.getUserName()
-    @State private var clientEmail = SessionManager.shared.getUserEmail()
-    @State private var clientPhone = SessionManager.shared.getPhone()
-    @State private var termsAccepted = true
-    @State private var isPrefillOpen = false
+    
+    // Logged in user info from SessionManager
+    private var clientName: String {
+        let name = SessionManager.shared.getUserName()
+        return name.isEmpty ? "VR Here Client" : name
+    }
+    
+    private var clientEmail: String {
+        let email = SessionManager.shared.getUserEmail()
+        return email.isEmpty ? "client@vrhere.in" : email
+    }
+    
+    private var clientPhone: String {
+        let phone = SessionManager.shared.getPhone()
+        return phone.isEmpty ? "9999999999" : phone
+    }
     
     // Resolve fallback service from catalog if API is loading/offline
     private var fallbackService: ServiceDetail? {
@@ -34,6 +45,21 @@ struct CustomerServiceDetailScreen: View {
             return dynamicPkgs
         }
         return fallbackService?.packages ?? []
+    }
+    
+    private var activePackage: ServicePackage {
+        if let selected = selectedPackage {
+            return selected
+        }
+        return servicePackages.first(where: { $0.isPopular }) ?? servicePackages.first ?? ServicePackage(
+            id: "consultation",
+            name: "Expert Advisory",
+            price: 499.0,
+            isAdjustable: true,
+            description: "30-min CA/CS Call",
+            features: ["Legal Guidance"],
+            creativeButtonText: "Book Now"
+        )
     }
     
     private var statsList: [ServiceStatModel] {
@@ -69,12 +95,12 @@ struct CustomerServiceDetailScreen: View {
     }
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color(red: 248/255, green: 250/255, blue: 252/255)
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Navigation Bar
+                // Top Navigation Bar
                 HStack {
                     Button(action: onBackClick) {
                         HStack(spacing: 6) {
@@ -108,10 +134,10 @@ struct CustomerServiceDetailScreen: View {
                 .shadow(color: Color.black.opacity(0.03), radius: 3, y: 2)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 18) {
                         
-                        // 1. Hero Card
-                        VStack(alignment: .leading, spacing: 14) {
+                        // 1. Hero Banner
+                        VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 HStack(spacing: 5) {
                                     Circle()
@@ -134,18 +160,26 @@ struct CustomerServiceDetailScreen: View {
                             }
                             
                             Text(dynamicPage?.hero?.title ?? serviceTitle)
-                                .font(.system(size: 24, weight: .black))
+                                .font(.system(size: 22, weight: .black))
                                 .foregroundColor(.white)
                                 .lineSpacing(2)
                             
                             Text(dynamicPage?.hero?.subtitle ?? serviceDescription)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.system(size: 12.5, weight: .medium))
                                 .foregroundColor(Color(red: 224/255, green: 231/255, blue: 255/255))
                                 .lineSpacing(3)
                             
                             // Expert Consultation Quick Pill
                             Button(action: {
-                                triggerConsultation()
+                                triggerDirectCheckout(pkg: ServicePackage(
+                                    id: "consultation",
+                                    name: "Expert Advisory Consultation",
+                                    price: 499.0,
+                                    isAdjustable: true,
+                                    description: "30-min CA/CS call. 100% credited against your final registration.",
+                                    features: ["Direct CA/CS Call", "Structure Selection Advice", "Name Check Guidance"],
+                                    creativeButtonText: "Book Consultation"
+                                ))
                             }) {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
@@ -167,7 +201,7 @@ struct CustomerServiceDetailScreen: View {
                             }
                             .buttonStyle(PlainButtonStyle())
                         }
-                        .padding(20)
+                        .padding(18)
                         .background(
                             LinearGradient(
                                 colors: [Color(red: 15/255, green: 23/255, blue: 42/255), Color(red: 49/255, green: 46/255, blue: 129/255), Color(red: 30/255, green: 27/255, blue: 75/255)],
@@ -175,27 +209,27 @@ struct CustomerServiceDetailScreen: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .cornerRadius(24)
+                        .cornerRadius(22)
                         .padding(.horizontal, 16)
-                        .padding(.top, 12)
+                        .padding(.top, 10)
                         
                         // 2. Key Metrics Bar
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                             ForEach(statsList) { stat in
-                                VStack(alignment: .leading, spacing: 3) {
+                                VStack(alignment: .leading, spacing: 2) {
                                     Text(stat.value ?? "")
-                                        .font(.system(size: 17, weight: .black))
+                                        .font(.system(size: 16, weight: .black))
                                         .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                                     Text(stat.label ?? "")
-                                        .font(.system(size: 11, weight: .bold))
+                                        .font(.system(size: 10.5, weight: .bold))
                                         .foregroundColor(.textMuted)
                                 }
-                                .padding(12)
+                                .padding(10)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(Color.white)
-                                .cornerRadius(14)
+                                .cornerRadius(12)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
+                                    RoundedRectangle(cornerRadius: 12)
                                         .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
                                 )
                             }
@@ -203,36 +237,36 @@ struct CustomerServiceDetailScreen: View {
                         .padding(.horizontal, 16)
                         
                         // 3. Pricing Packages Header
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("CHOOSE YOUR PLAN")
-                                .font(.system(size: 11, weight: .black))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("SELECT REGISTRATION PLAN")
+                                .font(.system(size: 10.5, weight: .black))
                                 .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                                 .tracking(1.0)
-                            Text("Transparent Pricing & Deliverables")
-                                .font(.system(size: 18, weight: .black))
+                            Text("Tap any package for instant checkout")
+                                .font(.system(size: 16, weight: .black))
                                 .foregroundColor(.textDark)
                         }
                         .padding(.horizontal, 16)
                         
                         // 4. Packages List
-                        VStack(spacing: 16) {
+                        VStack(spacing: 14) {
                             ForEach(servicePackages) { pkg in
-                                let isSelected = selectedPackage?.id == pkg.id
+                                let isSelected = activePackage.id == pkg.id
                                 
-                                VStack(alignment: .leading, spacing: 14) {
+                                VStack(alignment: .leading, spacing: 12) {
                                     HStack {
                                         Text(pkg.name)
-                                            .font(.system(size: 17, weight: .bold))
+                                            .font(.system(size: 16, weight: .bold))
                                             .foregroundColor(.textDark)
                                         
                                         Spacer()
                                         
                                         if pkg.isPopular {
                                             Text("MOST POPULAR")
-                                                .font(.system(size: 9, weight: .black))
+                                                .font(.system(size: 8.5, weight: .black))
                                                 .foregroundColor(.white)
                                                 .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
+                                                .padding(.vertical, 3)
                                                 .background(
                                                     LinearGradient(
                                                         colors: [Color(red: 244/255, green: 63/255, blue: 94/255), Color(red: 234/255, green: 88/255, blue: 12/255)],
@@ -246,16 +280,16 @@ struct CustomerServiceDetailScreen: View {
                                     
                                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                                         Text("₹\(Int(pkg.price))")
-                                            .font(.system(size: 26, weight: .black))
+                                            .font(.system(size: 24, weight: .black))
                                             .foregroundColor(.textDark)
                                         Text(pkg.isAdjustable ? "(Consultation fee credited)" : "+ Govt Fees & Taxes")
-                                            .font(.system(size: 11, weight: .bold))
+                                            .font(.system(size: 10.5, weight: .bold))
                                             .foregroundColor(pkg.isAdjustable ? Color.blue : .textMuted)
                                     }
                                     
                                     if !pkg.description.isEmpty {
                                         Text(pkg.description)
-                                            .font(.system(size: 12, weight: .medium))
+                                            .font(.system(size: 11.5, weight: .medium))
                                             .foregroundColor(.textMuted)
                                             .lineSpacing(2)
                                     }
@@ -264,34 +298,35 @@ struct CustomerServiceDetailScreen: View {
                                         .background(Color(red: 241/255, green: 245/255, blue: 249/255))
                                     
                                     // Features checklist
-                                    VStack(alignment: .leading, spacing: 8) {
+                                    VStack(alignment: .leading, spacing: 7) {
                                         ForEach(pkg.features, id: \.self) { feat in
                                             HStack(alignment: .top, spacing: 8) {
                                                 Image(systemName: "checkmark.circle.fill")
                                                     .foregroundColor(Color.green)
-                                                    .font(.system(size: 13))
+                                                    .font(.system(size: 12))
                                                     .padding(.top, 1)
                                                 Text(feat)
-                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .font(.system(size: 11.5, weight: .semibold))
                                                     .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
                                                     .fixedSize(horizontal: false, vertical: true)
                                             }
                                         }
                                     }
                                     
-                                    // Action Button
+                                    // Action Button - Direct Razorpay Trigger
                                     Button(action: {
-                                        selectPackageAndOpenCheckout(pkg)
+                                        selectedPackage = pkg
+                                        triggerDirectCheckout(pkg: pkg)
                                     }) {
                                         HStack {
-                                            Text(pkg.creativeButtonText.isEmpty ? "SELECT & PROCEED" : pkg.creativeButtonText.uppercased())
-                                                .font(.system(size: 12, weight: .black))
-                                            Image(systemName: "arrow.right")
+                                            Text("PROCEED WITH \(pkg.name.uppercased())")
+                                                .font(.system(size: 11.5, weight: .black))
+                                            Image(systemName: "creditcard.fill")
                                                 .font(.system(size: 11, weight: .bold))
                                         }
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
-                                        .frame(height: 46)
+                                        .frame(height: 44)
                                         .background(
                                             isSelected
                                                 ? LinearGradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)], startPoint: .leading, endPoint: .trailing)
@@ -302,53 +337,55 @@ struct CustomerServiceDetailScreen: View {
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                 }
-                                .padding(18)
+                                .padding(16)
                                 .background(Color.white)
-                                .cornerRadius(20)
+                                .cornerRadius(18)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 20)
+                                    RoundedRectangle(cornerRadius: 18)
                                         .stroke(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255) : Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: isSelected ? 2 : 1)
                                 )
                                 .onTapGesture {
-                                    selectPackageAndOpenCheckout(pkg)
+                                    selectedPackage = pkg
+                                    let impact = UIImpactFeedbackGenerator(style: .light)
+                                    impact.impactOccurred()
                                 }
                             }
                         }
                         .padding(.horizontal, 16)
                         
                         // 5. How It Works Steps
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("STEP-BY-STEP PROCESS")
-                                .font(.system(size: 11, weight: .black))
+                                .font(.system(size: 10.5, weight: .black))
                                 .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                                 .tracking(1.0)
                             
-                            VStack(spacing: 10) {
+                            VStack(spacing: 8) {
                                 ForEach(stepsList) { step in
-                                    HStack(alignment: .top, spacing: 12) {
+                                    HStack(alignment: .top, spacing: 10) {
                                         Text(step.number ?? "•")
-                                            .font(.system(size: 14, weight: .black))
+                                            .font(.system(size: 13, weight: .black))
                                             .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                            .frame(width: 32, height: 32)
+                                            .frame(width: 28, height: 28)
                                             .background(Color(red: 238/255, green: 242/255, blue: 255/255))
-                                            .cornerRadius(10)
+                                            .cornerRadius(8)
                                         
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(step.title ?? "")
-                                                .font(.system(size: 13, weight: .bold))
+                                                .font(.system(size: 12.5, weight: .bold))
                                                 .foregroundColor(.textDark)
                                             Text(step.desc ?? "")
-                                                .font(.system(size: 11, weight: .medium))
+                                                .font(.system(size: 10.5, weight: .medium))
                                                 .foregroundColor(.textMuted)
                                                 .lineSpacing(2)
                                         }
                                         Spacer()
                                     }
-                                    .padding(12)
+                                    .padding(10)
                                     .background(Color.white)
-                                    .cornerRadius(14)
+                                    .cornerRadius(12)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
+                                        RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color(red: 241/255, green: 245/255, blue: 249/255), lineWidth: 1)
                                     )
                                 }
@@ -357,17 +394,17 @@ struct CustomerServiceDetailScreen: View {
                         .padding(.horizontal, 16)
                         
                         // 6. FAQs Accordion
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("FREQUENTLY ASKED QUESTIONS")
-                                .font(.system(size: 11, weight: .black))
+                                .font(.system(size: 10.5, weight: .black))
                                 .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                                 .tracking(1.0)
                             
-                            VStack(spacing: 10) {
+                            VStack(spacing: 8) {
                                 ForEach(faqsList) { faq in
                                     let isExpanded = expandedFaqId == faq.id
                                     
-                                    VStack(alignment: .leading, spacing: 8) {
+                                    VStack(alignment: .leading, spacing: 6) {
                                         Button(action: {
                                             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                                                 expandedFaqId = isExpanded ? nil : faq.id
@@ -375,12 +412,12 @@ struct CustomerServiceDetailScreen: View {
                                         }) {
                                             HStack {
                                                 Text(faq.q ?? "")
-                                                    .font(.system(size: 13, weight: .bold))
+                                                    .font(.system(size: 12.5, weight: .bold))
                                                     .foregroundColor(.textDark)
                                                     .multilineTextAlignment(.leading)
                                                 Spacer()
                                                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                                                    .font(.system(size: 12, weight: .bold))
+                                                    .font(.system(size: 11, weight: .bold))
                                                     .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
                                             }
                                         }
@@ -388,17 +425,17 @@ struct CustomerServiceDetailScreen: View {
                                         
                                         if isExpanded {
                                             Text(faq.a ?? "")
-                                                .font(.system(size: 12, weight: .medium))
+                                                .font(.system(size: 11.5, weight: .medium))
                                                 .foregroundColor(.textMuted)
                                                 .lineSpacing(3)
                                                 .padding(.top, 4)
                                         }
                                     }
-                                    .padding(14)
+                                    .padding(12)
                                     .background(Color.white)
-                                    .cornerRadius(14)
+                                    .cornerRadius(12)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
+                                        RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color(red: 241/255, green: 245/255, blue: 249/255), lineWidth: 1)
                                     )
                                 }
@@ -406,74 +443,77 @@ struct CustomerServiceDetailScreen: View {
                         }
                         .padding(.horizontal, 16)
                         
-                        Spacer().frame(height: 60)
+                        Spacer().frame(height: 90) // clearance for sticky conversion bottom dock
                     }
                 }
             }
             
-            // Prefill Checkout Sheet
-            if isPrefillOpen, let pkg = selectedPackage {
-                ZStack {
-                    Color.black.opacity(0.5)
-                        .ignoresSafeArea()
-                        .onTapGesture { isPrefillOpen = false }
-                    
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Confirm Booking")
-                                    .font(.system(size: 18, weight: .black))
-                                    .foregroundColor(.textDark)
-                                Text(pkg.name)
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                            }
-                            Spacer()
-                            Button(action: { isPrefillOpen = false }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 22))
-                                    .foregroundColor(Color(red: 203/255, green: 213/255, blue: 225/255))
-                            }
-                        }
+            // 7. Sticky Floating Conversion Dock / Bottom Conversion Bar
+            VStack(spacing: 0) {
+                Divider()
+                    .background(Color(red: 226/255, green: 232/255, blue: 240/255))
+                
+                HStack(alignment: .center, spacing: 12) {
+                    // Left: Selected Package & Price
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(activePackage.name)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                            .lineLimit(1)
                         
-                        CustomInputField(label: "Contact Name", placeholder: "Your Full Name", iconName: "person", text: $clientName)
-                        CustomInputField(label: "Contact Email", placeholder: "Your Email Address", iconName: "envelope", text: $clientEmail)
-                        CustomInputField(label: "Contact Phone", placeholder: "10-Digit Mobile Number", iconName: "phone", text: $clientPhone)
-                        
-                        Toggle(isOn: $termsAccepted) {
-                            Text("I accept terms & understand advisory credits.")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(.textMuted)
+                        HStack(alignment: .firstTextBaseline, spacing: 3) {
+                            Text("₹\(Int(activePackage.price))")
+                                .font(.system(size: 18, weight: .black))
+                                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            Text(activePackage.isAdjustable ? "(100% credit)" : "+ taxes")
+                                .font(.system(size: 9.5, weight: .bold))
+                                .foregroundColor(activePackage.isAdjustable ? Color.blue : Color.gray)
                         }
-                        
-                        Button(action: {
-                            isPrefillOpen = false
-                            onCheckoutClick(serviceTitle, pkg, clientName, clientEmail, clientPhone)
-                        }) {
-                            Text("PROCEED TO PAY ₹\(Int(pkg.price))")
-                                .font(.system(size: 13, weight: .black))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 50)
-                                .background(
-                                    termsAccepted
-                                        ? LinearGradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)], startPoint: .leading, endPoint: .trailing)
-                                        : LinearGradient(colors: [Color.gray, Color.gray], startPoint: .leading, endPoint: .trailing)
-                                )
-                                .cornerRadius(14)
-                                .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.3), radius: 8, y: 4)
-                        }
-                        .disabled(!termsAccepted)
-                        .buttonStyle(ScaleOnPressButtonStyle())
                     }
-                    .padding(22)
-                    .background(Color.white)
-                    .cornerRadius(24)
-                    .padding(20)
-                    .shadow(radius: 20)
+                    
+                    Spacer()
+                    
+                    // Quick WhatsApp Advisory Button
+                    Button(action: onNeedAdviceClick) {
+                        Image(systemName: "message.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color.green)
+                            .frame(width: 42, height: 42)
+                            .background(Color.green.opacity(0.12))
+                            .cornerRadius(12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // Primary Direct Razorpay Payment CTA
+                    Button(action: {
+                        triggerDirectCheckout(pkg: activePackage)
+                    }) {
+                        HStack(spacing: 6) {
+                            Text("PAY NOW")
+                                .font(.system(size: 12, weight: .black))
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .frame(height: 44)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(12)
+                        .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.35), radius: 6, y: 3)
+                    }
+                    .buttonStyle(ScaleOnPressButtonStyle())
                 }
-                .transition(.opacity)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.white)
             }
+            .shadow(color: Color.black.opacity(0.06), radius: 10, y: -4)
         }
         .task {
             await loadServiceDataAndTrackTelemetry()
@@ -503,9 +543,9 @@ struct CustomerServiceDetailScreen: View {
         )
     }
     
-    private func selectPackageAndOpenCheckout(_ pkg: ServicePackage) {
-        selectedPackage = pkg
-        isPrefillOpen = true
+    private func triggerDirectCheckout(pkg: ServicePackage) {
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
         
         // Emit Category B Telemetry Lead (PACKAGE_CLICK / High Intent Hot Lead)
         Task {
@@ -517,18 +557,8 @@ struct CustomerServiceDetailScreen: View {
                 category: "PACKAGE_CLICK"
             )
         }
-    }
-    
-    private func triggerConsultation() {
-        let consultPkg = ServicePackage(
-            id: "consultation",
-            name: "Expert Advisory Consultation",
-            price: 499.0,
-            isAdjustable: true,
-            description: "30-min CA/CS call. 100% credited against your final registration.",
-            features: ["Direct CA/CS Call", "Structure Selection Advice", "Name Check Guidance"],
-            creativeButtonText: "Book Consultation"
-        )
-        selectPackageAndOpenCheckout(consultPkg)
+        
+        // Directly trigger Razorpay payment with logged in user profile (No middleman contact popup!)
+        onCheckoutClick(serviceTitle, pkg, clientName, clientEmail, clientPhone)
     }
 }

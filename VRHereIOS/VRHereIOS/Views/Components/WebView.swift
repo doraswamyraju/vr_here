@@ -238,33 +238,66 @@ struct CustomerPaymentWebView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header bar
-            HStack {
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.title3)
-                        .foregroundColor(.textDark)
-                        .padding(8)
+        ZStack(alignment: .bottom) {
+            // Dimmed backdrop
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onClose()
                 }
-                Spacer()
-                Text("Secure Checkout")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.textDark)
-                Spacer()
-                Spacer().frame(width: 40) // Balance title
+            
+            // Bottom Sheet Container
+            VStack(spacing: 0) {
+                // Sheet Drag Grabber Handle
+                Capsule()
+                    .fill(Color(red: 203/255, green: 213/255, blue: 225/255))
+                    .frame(width: 40, height: 5)
+                    .padding(.top, 10)
+                    .padding(.bottom, 6)
+                
+                // Header bar
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text("SECURE CHECKOUT")
+                                .font(.system(size: 9.5, weight: .black))
+                                .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                .tracking(0.5)
+                            
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 5, height: 5)
+                        }
+                        Text("\(serviceName) • ₹\(amount)")
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                    
+                    Button(action: onClose) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                
+                Divider()
+                    .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                
+                // Embedded Razorpay Payment Webview
+                SwiftUIWebView(urlString: "", htmlContent: htmlContent, messageHandler: handlerHelper, handlerName: "iOSInterface")
+                    .edgesIgnoringSafeArea(.bottom)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .frame(maxHeight: UIScreen.main.bounds.height * 0.88)
             .background(Color.white)
-            
-            Divider()
-                .background(Color.borderLight)
-            
-            SwiftUIWebView(urlString: "", htmlContent: htmlContent, messageHandler: handlerHelper, handlerName: "iOSInterface")
-                .edgesIgnoringSafeArea(.bottom)
+            .cornerRadius(28)
+            .shadow(color: Color.black.opacity(0.2), radius: 24, y: -6)
         }
-        .background(Color.white)
+        .edgesIgnoringSafeArea(.bottom)
     }
 }
 
