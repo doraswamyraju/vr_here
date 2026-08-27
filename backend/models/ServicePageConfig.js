@@ -44,6 +44,20 @@ const faqSchema = new mongoose.Schema({
     a: { type: String, required: true }
 }, { _id: false });
 
+const guideSectionSchema = new mongoose.Schema({
+    heading: { type: String, default: '' },
+    content: { type: String, default: '' },
+    bullets: [{ type: String }]
+}, { _id: false });
+
+const guideSchema = new mongoose.Schema({
+    title: { type: String, default: 'Guide to Company Registration' },
+    overview: { type: String, default: '' },
+    sections: { type: [guideSectionSchema], default: [] },
+    checklistTitle: { type: String, default: 'Checklist of Documents Needed' },
+    checklist: [{ type: String }]
+}, { _id: false });
+
 const servicePageConfigSchema = new mongoose.Schema(
     {
         pageId: { type: String, required: true, unique: true, index: true },
@@ -62,6 +76,8 @@ const servicePageConfigSchema = new mongoose.Schema(
         reviews: { type: [reviewSchema], default: [] },
         steps: { type: [stepSchema], default: [] },
         faqs: { type: [faqSchema], default: [] },
+        guide: { type: guideSchema, default: () => ({}) },
+        popularSearches: [{ type: String }],
         seoSettings: {
             titleTag: { type: String, default: '' },
             metaDescription: { type: String, default: '' },

@@ -144,6 +144,63 @@ const DEFAULT_CONFIGS = {
                 a: 'No. The MCA allows you to register your company using a residential address. You only need to provide a recent utility bill (electricity/gas bill) and a No Objection Certificate (NOC) from the owner.'
             }
         ],
+        guide: {
+            title: 'Guide to Company Registration',
+            overview: 'Incorporating a Private Limited Company in India is the most widely recognized and preferred corporate structure for startups, offering credibility, structured governance, and investor-friendly access.',
+            sections: [
+                {
+                    heading: 'What is Private Limited Company Registration?',
+                    content: 'It is the legal process of incorporating a business entity under the Companies Act, 2013, governed by the Ministry of Corporate Affairs (MCA). A private limited company restricts share transfers and limits members to 200. It becomes a separate legal entity distinct from directors and shareholders, allowing the company to own assets, enter contracts, and sue or be sued in its own name.',
+                    bullets: []
+                },
+                {
+                    heading: 'Forms of Private Limited Company',
+                    content: '',
+                    bullets: [
+                        '1. Company Limited by Shares: The most common form where shareholder liability is strictly limited to the face value of unpaid shares. Personal assets are 100% protected.',
+                        '2. Company Limited by Guarantee: Liability of members is limited to the amount they agree to contribute in case of winding up (common for NGOs / Section 8).',
+                        '3. Unlimited Private Company: Rare form where members have unlimited personal liability, offering capital distribution flexibility.'
+                    ]
+                },
+                {
+                    heading: 'Private Limited Minimum Requirements',
+                    content: '',
+                    bullets: [
+                        'Minimum 2 Directors & maximum 15 directors.',
+                        'Minimum 2 Shareholders & maximum 200 shareholders.',
+                        'At least 1 Indian Resident Director.',
+                        'Proposed directors must obtain DIN & DSC.',
+                        'No minimum paid-up capital requirement.'
+                    ]
+                },
+                {
+                    heading: 'Incorporation Step-by-Step Process',
+                    content: '',
+                    bullets: [
+                        'Step 1: Obtain DSC: Proposed directors apply for Digital Signature Certificate from a government certified agency.',
+                        'Step 2: Reserve Unique Name (RUN): Reserving the company name through the MCA RUN portal.',
+                        'Step 3: SPICe+ Form: Filing the integrated electronic form covering PAN, TAN, GSTIN, EPFO, ESIC, and Profession Tax.',
+                        'Step 4: MoA & AoA: Drafting Memorandum of Association and Articles of Association to establish rules and objectives.',
+                        'Step 5: COI Issuance: ROC issues the official Certificate of Incorporation.'
+                    ]
+                }
+            ],
+            checklistTitle: 'Checklist of Documents Needed',
+            checklist: [
+                'PAN & Aadhaar of all Directors',
+                'Passport Size Photograph of Directors',
+                'Electricity/Water Bill (Registered Address)',
+                'NOC from property owner',
+                'Bank Statement / Utility Bill of Proposed Directors'
+            ]
+        },
+        popularSearches: [
+            'Register Company Online', 'Private Limited Company Registration', 'Pvt Ltd Registration Fees',
+            'Company Incorporation India', 'How to register startup', 'CA Consultation Online',
+            'Pvt Ltd vs LLP', 'Name Approval RUN Process', 'Director Identification Number (DIN)',
+            'Digital Signature Certificate', 'MSME Certificate Online', 'Startup India Registration',
+            'GST Registration CA Services', 'Cheapest Company Registration'
+        ],
         seoSettings: {
             titleTag: 'Register Private Limited Company Online in India | VR Here',
             metaDescription: 'Launch your startup legally with Pvt Ltd company registration in 7 Days. Get expert CA/CS guidance, MOA/AOA, DIN, DSC, PAN, TAN & Udyam certification.',
@@ -192,6 +249,12 @@ const getServicePageById = asyncHandler(async (req, res) => {
     let pageObj = page.toObject ? page.toObject() : page;
     const defaultPvtLtd = DEFAULT_CONFIGS['private-limited'];
 
+    if (!pageObj.stats || pageObj.stats.length === 0) {
+        pageObj.stats = defaultPvtLtd.stats;
+    }
+    if (!pageObj.logos || pageObj.logos.length === 0) {
+        pageObj.logos = defaultPvtLtd.logos;
+    }
     if (!pageObj.packages || pageObj.packages.length === 0) {
         pageObj.packages = defaultPvtLtd.packages;
     }
@@ -203,6 +266,12 @@ const getServicePageById = asyncHandler(async (req, res) => {
     }
     if (!pageObj.faqs || pageObj.faqs.length === 0) {
         pageObj.faqs = defaultPvtLtd.faqs;
+    }
+    if (!pageObj.guide || !pageObj.guide.sections || pageObj.guide.sections.length === 0) {
+        pageObj.guide = defaultPvtLtd.guide;
+    }
+    if (!pageObj.popularSearches || pageObj.popularSearches.length === 0) {
+        pageObj.popularSearches = defaultPvtLtd.popularSearches;
     }
 
     if (citySlug) {

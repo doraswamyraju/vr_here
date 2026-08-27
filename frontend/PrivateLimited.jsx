@@ -142,6 +142,65 @@ const FAQS = [
   }
 ];
 
+const DEFAULT_GUIDE = {
+  title: "Guide to Company Registration",
+  overview: "Incorporating a Private Limited Company in India is the most widely recognized and preferred corporate structure for startups, offering credibility, structured governance, and investor-friendly access.",
+  sections: [
+    {
+      heading: "What is Private Limited Company Registration?",
+      content: "It is the legal process of incorporating a business entity under the Companies Act, 2013, governed by the Ministry of Corporate Affairs (MCA). A private limited company restricts share transfers and limits members to 200. It becomes a separate legal entity distinct from directors and shareholders, allowing the company to own assets, enter contracts, and sue or be sued in its own name.",
+      bullets: []
+    },
+    {
+      heading: "Forms of Private Limited Company",
+      content: "",
+      bullets: [
+        "1. Company Limited by Shares: The most common form where shareholder liability is strictly limited to the face value of unpaid shares. Personal assets are 100% protected.",
+        "2. Company Limited by Guarantee: Liability of members is limited to the amount they agree to contribute in case of winding up (common for NGOs / Section 8).",
+        "3. Unlimited Private Company: Rare form where members have unlimited personal liability, offering capital distribution flexibility."
+      ]
+    },
+    {
+      heading: "Private Limited Minimum Requirements",
+      content: "",
+      bullets: [
+        "Minimum 2 Directors & maximum 15 directors.",
+        "Minimum 2 Shareholders & maximum 200 shareholders.",
+        "At least 1 Indian Resident Director.",
+        "Proposed directors must obtain DIN & DSC.",
+        "No minimum paid-up capital requirement."
+      ]
+    },
+    {
+      heading: "Incorporation Step-by-Step Process",
+      content: "",
+      bullets: [
+        "Step 1: Obtain DSC: Proposed directors apply for Digital Signature Certificate from a government certified agency.",
+        "Step 2: Reserve Unique Name (RUN): Reserving the company name through the MCA RUN portal.",
+        "Step 3: SPICe+ Form: Filing the integrated electronic form covering PAN, TAN, GSTIN, EPFO, ESIC, and Profession Tax.",
+        "Step 4: MoA & AoA: Drafting Memorandum of Association and Articles of Association to establish rules and objectives.",
+        "Step 5: COI Issuance: ROC issues the official Certificate of Incorporation."
+      ]
+    }
+  ],
+  checklistTitle: "Checklist of Documents Needed",
+  checklist: [
+    "PAN & Aadhaar of all Directors",
+    "Passport Size Photograph of Directors",
+    "Electricity/Water Bill (Registered Address)",
+    "NOC from property owner",
+    "Bank Statement / Utility Bill of Proposed Directors"
+  ]
+};
+
+const DEFAULT_POPULAR_SEARCHES = [
+  'Register Company Online', 'Private Limited Company Registration', 'Pvt Ltd Registration Fees', 
+  'Company Incorporation India', 'How to register startup', 'CA Consultation Online', 
+  'Pvt Ltd vs LLP', 'Name Approval RUN Process', 'Director Identification Number (DIN)', 
+  'Digital Signature Certificate', 'MSME Certificate Online', 'Startup India Registration',
+  'GST Registration CA Services', 'Cheapest Company Registration'
+];
+
 const RELATED_SERVICES = [
   {
     title: "Limited Liability Partnership (LLP)",
@@ -297,6 +356,8 @@ const PrivateLimitedPage = () => {
   const activeReviews = (pageConfig?.reviews && pageConfig.reviews.length > 0) ? pageConfig.reviews : REVIEWS;
   const activeSteps = (pageConfig?.steps && pageConfig.steps.length > 0) ? pageConfig.steps : STEPS;
   const activeFaqs = (pageConfig?.faqs && pageConfig.faqs.length > 0) ? pageConfig.faqs : FAQS;
+  const activeGuide = (pageConfig?.guide && pageConfig.guide.sections && pageConfig.guide.sections.length > 0) ? pageConfig.guide : DEFAULT_GUIDE;
+  const activePopularSearches = (pageConfig?.popularSearches && pageConfig.popularSearches.length > 0) ? pageConfig.popularSearches : DEFAULT_POPULAR_SEARCHES;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -712,61 +773,46 @@ const PrivateLimitedPage = () => {
               <div className="mt-12 text-left bg-slate-50 p-8 md:p-12 rounded-3xl border border-slate-200 animate-in fade-in slide-in-from-top-4 duration-300 grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Column A: Detailed SEO Text */}
                 <div className="lg:col-span-1 space-y-6 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-300">
-                  <h3 className="text-xl font-black text-slate-900 border-b-2 border-red-500 pb-2">Guide to Company Registration</h3>
+                  <h3 className="text-xl font-black text-slate-900 border-b-2 border-red-500 pb-2">{activeGuide.title || 'Guide to Company Registration'}</h3>
                   
                   <div className="space-y-4">
-                    <p className="text-xs text-slate-600 leading-relaxed font-semibold">
-                      Incorporating a <strong>Private Limited Company</strong> in India is the most widely recognized and preferred corporate structure for startups, offering credibility, structured governance, and investor-friendly access.
-                    </p>
-
-                    <div>
-                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">What is Private Limited Company Registration?</h4>
-                      <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-                        It is the legal process of incorporating a business entity under the <strong>Companies Act, 2013</strong>, governed by the Ministry of Corporate Affairs (MCA). A private limited company restricts share transfers and limits members to 200. It becomes a separate legal entity distinct from directors and shareholders, allowing the company to own assets, enter contracts, and sue or be sued in its own name.
+                    {activeGuide.overview && (
+                      <p className="text-xs text-slate-600 leading-relaxed font-semibold">
+                        {activeGuide.overview}
                       </p>
-                    </div>
+                    )}
 
-                    <div>
-                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">Forms of Private Limited Company</h4>
-                      <ul className="text-[11px] text-slate-500 space-y-2 font-medium">
-                        <li><strong>1. Company Limited by Shares:</strong> The most common form where shareholder liability is strictly limited to the face value of unpaid shares. Personal assets are 100% protected.</li>
-                        <li><strong>2. Company Limited by Guarantee:</strong> Liability of members is limited to the amount they agree to contribute in case of winding up (common for NGOs / Section 8).</li>
-                        <li><strong>3. Unlimited Private Company:</strong> Rare form where members have unlimited personal liability, offering capital distribution flexibility.</li>
-                      </ul>
-                    </div>
+                    {activeGuide.sections && activeGuide.sections.map((sec, sIdx) => (
+                      <div key={sIdx}>
+                        {sec.heading && <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">{sec.heading}</h4>}
+                        {sec.content && (
+                          <p className="text-[11px] text-slate-500 leading-relaxed font-medium mb-2">
+                            {sec.content}
+                          </p>
+                        )}
+                        {sec.bullets && sec.bullets.length > 0 && (
+                          <ul className="text-[11px] text-slate-500 space-y-1.5 font-medium list-disc pl-4">
+                            {sec.bullets.map((b, bIdx) => (
+                              <li key={bIdx}>{b}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
 
-                    <div>
-                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">Private Limited Minimum Requirements</h4>
-                      <ul className="text-[11px] text-slate-500 space-y-1 font-medium list-disc pl-4">
-                        <li>Minimum 2 Directors & maximum 15 directors.</li>
-                        <li>Minimum 2 Shareholders & maximum 200 shareholders.</li>
-                        <li>At least 1 Indian Resident Director.</li>
-                        <li>Proposed directors must obtain DIN & DSC.</li>
-                        <li>No minimum paid-up capital requirement.</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-1.5">Incorporation Step-by-Step Process</h4>
-                      <ol className="text-[11px] text-slate-500 space-y-2 font-medium">
-                        <li><strong>Step 1: Obtain DSC:</strong> Proposed directors apply for Digital Signature Certificate from a government certified agency.</li>
-                        <li><strong>Step 2: Reserve Unique Name (RUN):</strong> Reserving the company name through the MCA RUN portal.</li>
-                        <li><strong>Step 3: SPICe+ Form:</strong> Filing the integrated electronic form covering PAN, TAN, GSTIN, EPFO, ESIC, and Profession Tax.</li>
-                        <li><strong>Step 4: MoA & AoA:</strong> Drafting Memorandum of Association and Articles of Association to establish rules and objectives.</li>
-                        <li><strong>Step 5: COI Issuance:</strong> ROC issues the official Certificate of Incorporation.</li>
-                      </ol>
-                    </div>
-
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-inner">
-                      <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-2">Checklist of Documents Needed</h4>
-                      <ul className="text-[10px] text-slate-600 space-y-1.5 font-bold">
-                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> PAN & Aadhaar of all Directors</li>
-                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Passport Size Photograph of Directors</li>
-                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Electricity/Water Bill (Registered Address)</li>
-                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> NOC from property owner</li>
-                        <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Bank Statement / Utility Bill of Proposed Directors</li>
-                      </ul>
-                    </div>
+                    {activeGuide.checklist && activeGuide.checklist.length > 0 && (
+                      <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-inner">
+                        <h4 className="text-xs font-black uppercase text-slate-950 tracking-wide mb-2">{activeGuide.checklistTitle || 'Checklist of Documents Needed'}</h4>
+                        <ul className="text-[10px] text-slate-600 space-y-1.5 font-bold">
+                          {activeGuide.checklist.map((item, cIdx) => (
+                            <li key={cIdx} className="flex items-center gap-1.5">
+                              <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -798,13 +844,7 @@ const PrivateLimitedPage = () => {
                   <h3 className="text-xl font-black text-slate-900 border-b-2 border-indigo-500 pb-2">Popular Searches</h3>
                   <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">SEO Keywords & Search Phrases</p>
                   <div className="flex flex-wrap gap-2">
-                    {[
-                      'Register Company Online', 'Private Limited Company Registration', 'Pvt Ltd Registration Fees', 
-                      'Company Incorporation India', 'How to register startup', 'CA Consultation Online', 
-                      'Pvt Ltd vs LLP', 'Name Approval RUN Process', 'Director Identification Number (DIN)', 
-                      'Digital Signature Certificate', 'MSME Certificate Online', 'Startup India Registration',
-                      'GST Registration CA Services', 'Cheapest Company Registration'
-                    ].map((tag, idx) => (
+                    {activePopularSearches.map((tag, idx) => (
                       <span key={idx} className="px-3 py-1.5 bg-white hover:bg-red-50 hover:text-red-700 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 cursor-default transition">
                         #{tag}
                       </span>

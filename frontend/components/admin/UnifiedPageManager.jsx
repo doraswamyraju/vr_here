@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink, Table, Edit3, Power, Star, Layers, HelpCircle, Search, Filter, CheckSquare, Square, ChevronRight, X, Clock, User
+    FileText, Plus, Trash2, Save, CheckCircle2, AlertTriangle, Info, Globe, MapPin, Loader2, Sparkles, Wand2, Link2, ExternalLink, Table, Edit3, Power, Star, Layers, HelpCircle, Search, Filter, CheckSquare, Square, ChevronRight, X, Clock, User, Award, Zap, Building2, ShieldCheck, RefreshCw, BookOpen, Tag, Check, Briefcase, Factory, Eye, LayoutGrid, Paintbrush
 } from 'lucide-react';
+import * as Lucide from 'lucide-react';
 import { analyzeOnPageSeo } from '../../utils/onPageSeoAnalyzer';
 import CityManager from './CityManager';
 import { MENU_DATA } from '../SharedComponents';
@@ -17,6 +18,8 @@ const UnifiedPageManager = ({ token }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
+    const [activeGuideTab, setActiveGuideTab] = useState('guide'); // 'guide', 'faqs', 'searches'
+    const [newSearchKeyword, setNewSearchKeyword] = useState('');
 
     // --- WORDPRESS STYLE TABLE STATES ---
     const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'published', 'draft', 'city-enabled'
@@ -43,7 +46,7 @@ const UnifiedPageManager = ({ token }) => {
         try {
             const { data } = await axios.get('/api/services/header-config');
             let liveServices = Array.isArray(data?.services) && data.services.length > 0 ? data.services : [];
-            
+
             const combinedMap = new Map();
             [...MENU_DATA, ...liveServices].forEach(item => {
                 if (item.title) {
@@ -55,7 +58,7 @@ const UnifiedPageManager = ({ token }) => {
                     combinedMap.set(item.title, existing);
                 }
             });
-            
+
             setMenuCategories(Array.from(combinedMap.values()));
         } catch (err) {
             console.error('Failed to fetch header menu config', err);
@@ -95,6 +98,15 @@ const UnifiedPageManager = ({ token }) => {
                     { value: '4.9/5', label: 'Google Rating' },
                     { value: '100%', label: 'Online Process' }
                 ],
+                logos: Array.isArray(data.logos) && data.logos.length > 0 ? data.logos : [
+                    { name: 'Stripe for Startups', iconKey: 'Briefcase', colorClass: 'text-indigo-600' },
+                    { name: 'Razorpay Partner', iconKey: 'Zap', colorClass: 'text-blue-500' },
+                    { name: 'Google Cloud Program', iconKey: 'Globe', colorClass: 'text-red-500' },
+                    { name: 'AWS Activate', iconKey: 'Factory', colorClass: 'text-orange-500' },
+                    { name: 'Microsoft Founders Hub', iconKey: 'Building2', colorClass: 'text-blue-600' },
+                    { name: 'Shopify Partners', iconKey: 'ShieldCheck', colorClass: 'text-emerald-500' },
+                    { name: 'HubSpot Ecosystem', iconKey: 'Award', colorClass: 'text-orange-600' }
+                ],
                 packages: Array.isArray(data.packages) && data.packages.length > 0 ? data.packages : [
                     { id: 'consultation', name: 'Expert Consultation', price: 499, description: 'Start here if you are unsure. Fee fully adjusted against registration.', features: ['30 Mins CA/CS Call', 'Business Structure Advice', 'Name Availability Check', 'Capital Structure Guidance', 'Compliance Roadmap'], buttonText: 'Book Consultation', isAdjustable: true },
                     { id: 'basic', name: 'Basic', price: 5499, description: 'Essential registration for verified startups in {city}.', features: ['Name Approval (RUN)', 'Certificate of Incorporation', 'PAN & TAN', 'MOA & AOA', '2 DIN & 2 DSC', 'PF & ESI Registration', 'MSME Registration', '1 Month Accounts Support'], buttonText: 'Select Basic' },
@@ -113,6 +125,63 @@ const UnifiedPageManager = ({ token }) => {
                 faqs: Array.isArray(data.faqs) && data.faqs.length > 0 ? data.faqs : [
                     { q: 'How much time does it take to register a Private Limited Company in {city}?', a: 'On average, the entire process takes about 5 to 7 working days, subject to government processing times in {state}.' },
                     { q: 'Is the ₹499 consultation fee really refundable?', a: 'Yes, 100%! When you book a CA/CS consultation for ₹499, the full amount is converted into a coupon credit.' }
+                ],
+                guide: data.guide && Array.isArray(data.guide.sections) && data.guide.sections.length > 0 ? data.guide : {
+                    title: 'Guide to Company Registration',
+                    overview: 'Incorporating a Private Limited Company in India is the most widely recognized and preferred corporate structure for startups, offering credibility, structured governance, and investor-friendly access.',
+                    sections: [
+                        {
+                            heading: 'What is Private Limited Company Registration?',
+                            content: 'It is the legal process of incorporating a business entity under the Companies Act, 2013, governed by the Ministry of Corporate Affairs (MCA). A private limited company restricts share transfers and limits members to 200. It becomes a separate legal entity distinct from directors and shareholders, allowing the company to own assets, enter contracts, and sue or be sued in its own name.',
+                            bullets: []
+                        },
+                        {
+                            heading: 'Forms of Private Limited Company',
+                            content: '',
+                            bullets: [
+                                '1. Company Limited by Shares: The most common form where shareholder liability is strictly limited to the face value of unpaid shares. Personal assets are 100% protected.',
+                                '2. Company Limited by Guarantee: Liability of members is limited to the amount they agree to contribute in case of winding up (common for NGOs / Section 8).',
+                                '3. Unlimited Private Company: Rare form where members have unlimited personal liability, offering capital distribution flexibility.'
+                            ]
+                        },
+                        {
+                            heading: 'Private Limited Minimum Requirements',
+                            content: '',
+                            bullets: [
+                                'Minimum 2 Directors & maximum 15 directors.',
+                                'Minimum 2 Shareholders & maximum 200 shareholders.',
+                                'At least 1 Indian Resident Director.',
+                                'Proposed directors must obtain DIN & DSC.',
+                                'No minimum paid-up capital requirement.'
+                            ]
+                        },
+                        {
+                            heading: 'Incorporation Step-by-Step Process',
+                            content: '',
+                            bullets: [
+                                'Step 1: Obtain DSC: Proposed directors apply for Digital Signature Certificate from a government certified agency.',
+                                'Step 2: Reserve Unique Name (RUN): Reserving the company name through the MCA RUN portal.',
+                                'Step 3: SPICe+ Form: Filing the integrated electronic form covering PAN, TAN, GSTIN, EPFO, ESIC, and Profession Tax.',
+                                'Step 4: MoA & AoA: Drafting Memorandum of Association and Articles of Association to establish rules and objectives.',
+                                'Step 5: COI Issuance: ROC issues the official Certificate of Incorporation.'
+                            ]
+                        }
+                    ],
+                    checklistTitle: 'Checklist of Documents Needed',
+                    checklist: [
+                        'PAN & Aadhaar of all Directors',
+                        'Passport Size Photograph of Directors',
+                        'Electricity/Water Bill (Registered Address)',
+                        'NOC from property owner',
+                        'Bank Statement / Utility Bill of Proposed Directors'
+                    ]
+                },
+                popularSearches: Array.isArray(data.popularSearches) && data.popularSearches.length > 0 ? data.popularSearches : [
+                    'Register Company Online', 'Private Limited Company Registration', 'Pvt Ltd Registration Fees',
+                    'Company Incorporation India', 'How to register startup', 'CA Consultation Online',
+                    'Pvt Ltd vs LLP', 'Name Approval RUN Process', 'Director Identification Number (DIN)',
+                    'Digital Signature Certificate', 'MSME Certificate Online', 'Startup India Registration',
+                    'GST Registration CA Services', 'Cheapest Company Registration'
                 ],
                 seoSettings: {
                     titleTag: data.seoSettings?.titleTag || 'Private Limited Company Registration Online in India | VR Here',
@@ -838,29 +907,266 @@ const UnifiedPageManager = ({ token }) => {
                             </div>
                         </div>
 
-                        {/* 4. Commercial Packages Section */}
+                        {/* 4. Key Metrics & Feature Highlights (e.g. 7 Days Avg. Turnaround) */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
-                                    <Layers className="w-4 h-4 text-indigo-600" /> Commercial Packages & Pricing Plans
-                                </h3>
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-rose-500" /> Key Feature Highlights & Metrics (Avg. Turnaround, Ratings)
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Edit stats displayed in the trust marquee below the hero section.</p>
+                                </div>
                                 <button
                                     onClick={() => setPageConfig(prev => ({
                                         ...prev,
-                                        packages: [...prev.packages, { id: `pkg-${Date.now()}`, name: 'New Custom Package', price: 2999, description: 'Package description in {city}', features: ['Feature 1', 'Feature 2'] }]
+                                        stats: [...(prev.stats || []), { value: '99%', label: 'New Metric' }]
                                     }))}
-                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700"
+                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg"
                                 >
-                                    <Plus className="w-3.5 h-3.5" /> Add Package
+                                    <Plus className="w-3.5 h-3.5" /> Add Stat Metric
                                 </button>
                             </div>
-                            <div className="space-y-4">
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                {(pageConfig.stats || []).map((stat, idx) => (
+                                    <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2 relative group">
+                                        <button
+                                            onClick={() => setPageConfig(prev => ({ ...prev, stats: prev.stats.filter((_, i) => i !== idx) }))}
+                                            className="absolute top-2 right-2 text-slate-400 hover:text-rose-600 opacity-70 group-hover:opacity-100 transition"
+                                            title="Delete stat"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-slate-400">Value / Number</label>
+                                            <input
+                                                type="text"
+                                                value={stat.value}
+                                                placeholder="e.g. 7 Days"
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        stats: prev.stats.map((s, i) => i === idx ? { ...s, value: val } : s)
+                                                    }));
+                                                }}
+                                                className="w-full font-black text-slate-900 px-2 py-1 rounded border border-slate-200 text-sm bg-white"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-slate-400">Metric Label</label>
+                                            <input
+                                                type="text"
+                                                value={stat.label}
+                                                placeholder="e.g. Avg. Turnaround"
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        stats: prev.stats.map((s, i) => i === idx ? { ...s, label: val } : s)
+                                                    }));
+                                                }}
+                                                className="w-full font-bold text-rose-600 uppercase text-[11px] px-2 py-1 rounded border border-slate-200 bg-white"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Live Dark Theme Preview */}
+                            <div className="bg-slate-900 p-4 rounded-xl text-center border border-slate-800">
+                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Live Frontend Stats Bar Preview</div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 divide-x divide-slate-800">
+                                    {(pageConfig.stats || []).map((stat, idx) => (
+                                        <div key={idx} className="p-1">
+                                            <div className="text-xl md:text-2xl font-black text-white">{stat.value || '-'}</div>
+                                            <div className="text-rose-500 text-[10px] uppercase font-black tracking-wider mt-0.5">{stat.label || '-'}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 5. Client Logos & Marquee Brands */}
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                                        <Paintbrush className="w-4 h-4 text-indigo-600" /> Client Trust Logos & Partner Marquee
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Logos shown in the animated infinite marquee on the page.</p>
+                                </div>
+                                <button
+                                    onClick={() => setPageConfig(prev => ({
+                                        ...prev,
+                                        logos: [...(prev.logos || []), { name: 'New Partner', iconKey: 'Globe', colorClass: 'text-indigo-600' }]
+                                    }))}
+                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg"
+                                >
+                                    <Plus className="w-3.5 h-3.5" /> Add Logo Brand
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {(pageConfig.logos || []).map((logo, idx) => {
+                                    const IconComponent = Lucide[logo.iconKey] || (logo.iconKey === 'SuiteIcon' ? Lucide.Briefcase : Lucide.Globe);
+                                    return (
+                                        <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 relative group">
+                                            <button
+                                                onClick={() => setPageConfig(prev => ({ ...prev, logos: prev.logos.filter((_, i) => i !== idx) }))}
+                                                className="absolute top-2 right-2 text-slate-400 hover:text-rose-600 transition"
+                                                title="Delete logo"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                    <IconComponent className={`w-5 h-5 ${logo.colorClass || 'text-white'}`} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="text-[10px] font-bold uppercase text-slate-400">Brand Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={logo.name}
+                                                        placeholder="e.g. Stripe for Startups"
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setPageConfig(prev => ({
+                                                                ...prev,
+                                                                logos: prev.logos.map((l, i) => i === idx ? { ...l, name: val } : l)
+                                                            }));
+                                                        }}
+                                                        className="w-full font-bold text-slate-900 px-2 py-1 rounded border border-slate-200 text-xs bg-white"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase text-slate-400">Lucide Icon Key</label>
+                                                    <input
+                                                        type="text"
+                                                        value={logo.iconKey}
+                                                        placeholder="e.g. Zap, Globe, Briefcase"
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setPageConfig(prev => ({
+                                                                ...prev,
+                                                                logos: prev.logos.map((l, i) => i === idx ? { ...l, iconKey: val } : l)
+                                                            }));
+                                                        }}
+                                                        className="w-full font-mono text-[11px] px-2 py-1 rounded border border-slate-200 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase text-slate-400">Color Class</label>
+                                                    <select
+                                                        value={logo.colorClass || 'text-indigo-600'}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setPageConfig(prev => ({
+                                                                ...prev,
+                                                                logos: prev.logos.map((l, i) => i === idx ? { ...l, colorClass: val } : l)
+                                                            }));
+                                                        }}
+                                                        className="w-full text-[11px] px-2 py-1 rounded border border-slate-200 bg-white font-medium"
+                                                    >
+                                                        <option value="text-indigo-600">Indigo (text-indigo-600)</option>
+                                                        <option value="text-blue-500">Blue (text-blue-500)</option>
+                                                        <option value="text-red-500">Red (text-red-500)</option>
+                                                        <option value="text-orange-500">Orange (text-orange-500)</option>
+                                                        <option value="text-emerald-500">Emerald (text-emerald-500)</option>
+                                                        <option value="text-amber-500">Amber (text-amber-500)</option>
+                                                        <option value="text-slate-300">White/Slate (text-slate-300)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Live Marquee Preview */}
+                            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                                <div className="text-[10px] font-black uppercase tracking-widest text-rose-400 text-center mb-3">Live Marquee Badges Preview</div>
+                                <div className="flex flex-wrap gap-2.5 justify-center">
+                                    {(pageConfig.logos || []).map((logo, idx) => {
+                                        const IconComponent = Lucide[logo.iconKey] || (logo.iconKey === 'SuiteIcon' ? Lucide.Briefcase : Lucide.Globe);
+                                        return (
+                                            <div key={idx} className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 rounded-lg border border-slate-700/50">
+                                                <IconComponent className={`w-4 h-4 ${logo.colorClass || 'text-slate-400'}`} />
+                                                <span className="text-xs font-bold text-slate-300">{logo.name}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 6. Commercial Packages Section (LOOK-ALIKE VISUAL CARDS) */}
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                                        <Layers className="w-4 h-4 text-indigo-600" /> Commercial Packages & Pricing Plans (Visual Card Editor)
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Visually styled exactly like the live cards on the landing page.</p>
+                                </div>
+                                <button
+                                    onClick={() => setPageConfig(prev => ({
+                                        ...prev,
+                                        packages: [...prev.packages, { id: `pkg-${Date.now()}`, name: 'New Custom Package', price: 6499, description: 'Complete registration in {city}.', features: ['Name Approval (RUN)', 'Certificate of Incorporation', 'PAN & TAN'], buttonText: 'Select Plan', isPopular: false, isAdjustable: false }]
+                                    }))}
+                                    className="text-xs flex items-center gap-1 font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg shadow-sm"
+                                >
+                                    <Plus className="w-3.5 h-3.5" /> Add Package Plan
+                                </button>
+                            </div>
+
+                            {/* Cards Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {pageConfig.packages.map((pkg, idx) => (
-                                    <div key={pkg.id || idx} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-                                        <div className="flex items-center justify-between">
+                                    <div
+                                        key={pkg.id || idx}
+                                        className={`bg-white rounded-2xl p-5 border transition-all relative flex flex-col justify-between shadow-sm ${pkg.isPopular ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200'
+                                            }`}
+                                    >
+                                        {/* Top Ribbon & Controls */}
+                                        <div className="flex items-center justify-between mb-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const nextPop = !pkg.isPopular;
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        packages: prev.packages.map((p, i) => i === idx ? { ...p, isPopular: nextPop } : p)
+                                                    }));
+                                                }}
+                                                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-md transition ${pkg.isPopular
+                                                        ? 'bg-rose-600 text-white shadow-sm'
+                                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                                    }`}
+                                            >
+                                                {pkg.isPopular ? '★ RECOMMENDED (Active)' : '☆ Set as Recommended'}
+                                            </button>
+
+                                            <button
+                                                onClick={() => setPageConfig(prev => ({ ...prev, packages: prev.packages.filter((_, i) => i !== idx) }))}
+                                                className="text-slate-400 hover:text-rose-600 p-1"
+                                                title="Delete package"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        {/* Package Title */}
+                                        <div className="mb-3">
+                                            <label className="text-[10px] font-black uppercase text-slate-400">Package Name</label>
                                             <input
                                                 type="text"
                                                 value={pkg.name}
+                                                placeholder="e.g. Expert Consultation / Basic / Advance"
                                                 onChange={(e) => {
                                                     const val = e.target.value;
                                                     setPageConfig(prev => ({
@@ -868,44 +1174,154 @@ const UnifiedPageManager = ({ token }) => {
                                                         packages: prev.packages.map((p, i) => i === idx ? { ...p, name: val } : p)
                                                     }));
                                                 }}
-                                                className="font-bold text-slate-800 bg-transparent border-b border-slate-300 focus:border-indigo-600 focus:outline-none text-sm"
+                                                className="w-full font-black text-slate-900 text-lg px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50/50 focus:bg-white"
                                             />
-                                            <button
-                                                onClick={() => setPageConfig(prev => ({ ...prev, packages: prev.packages.filter((_, i) => i !== idx) }))}
-                                                className="text-slate-400 hover:text-red-600"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3 text-xs">
-                                            <div>
-                                                <label className="text-slate-500 font-semibold">Price (₹)</label>
+
+                                        {/* Price Row & Adjustable Toggle */}
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-3 space-y-2">
+                                            <div className="grid grid-cols-2 gap-3 items-center">
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase text-slate-500">Price (INR ₹)</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-2.5 top-1.5 font-bold text-slate-400">₹</span>
+                                                        <input
+                                                            type="number"
+                                                            value={pkg.price}
+                                                            onChange={(e) => {
+                                                                const val = Number(e.target.value);
+                                                                setPageConfig(prev => ({
+                                                                    ...prev,
+                                                                    packages: prev.packages.map((p, i) => i === idx ? { ...p, price: val } : p)
+                                                                }));
+                                                            }}
+                                                            className="w-full pl-6 pr-2 py-1 font-black text-slate-900 text-base rounded border border-slate-200 bg-white"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase text-slate-500">Card Price Display</label>
+                                                    <div className="font-black text-base text-slate-900">
+                                                        ₹{Number(pkg.price).toLocaleString('en-IN')}
+                                                        <span className="text-[9px] font-bold text-slate-400 block">
+                                                            {pkg.isAdjustable ? '(Fully Adjustable)' : '+ Govt Fees & GST'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Adjustable Checkbox */}
+                                            <div className="flex items-center gap-2 pt-1 border-t border-slate-200">
                                                 <input
-                                                    type="number"
-                                                    value={pkg.price}
+                                                    type="checkbox"
+                                                    id={`adj-check-${idx}`}
+                                                    checked={pkg.isAdjustable || false}
                                                     onChange={(e) => {
-                                                        const val = Number(e.target.value);
+                                                        const checked = e.target.checked;
                                                         setPageConfig(prev => ({
                                                             ...prev,
-                                                            packages: prev.packages.map((p, i) => i === idx ? { ...p, price: val } : p)
+                                                            packages: prev.packages.map((p, i) => i === idx ? { ...p, isAdjustable: checked } : p)
                                                         }));
                                                     }}
-                                                    className="w-full px-2 py-1.5 rounded border border-slate-200 mt-1"
+                                                    className="rounded text-emerald-600 w-4 h-4"
                                                 />
+                                                <label htmlFor={`adj-check-${idx}`} className="text-xs font-bold text-emerald-700 flex items-center gap-1 cursor-pointer">
+                                                    <RefreshCw className="w-3 h-3" /> Fee Adjustable in Final Package
+                                                </label>
                                             </div>
-                                            <div>
-                                                <label className="text-slate-500 font-semibold">Features (comma separated)</label>
+                                        </div>
+
+                                        {/* Description */}
+                                        <div className="mb-3">
+                                            <label className="text-[10px] font-bold uppercase text-slate-400">Subtitle / Description</label>
+                                            <textarea
+                                                rows="2"
+                                                value={pkg.description || ''}
+                                                placeholder="e.g. Essential registration for verified startups in {city}."
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        packages: prev.packages.map((p, i) => i === idx ? { ...p, description: val } : p)
+                                                    }));
+                                                }}
+                                                className="w-full text-xs text-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white"
+                                            />
+                                        </div>
+
+                                        {/* Feature Lines Editor with Green Checkmarks */}
+                                        <div className="space-y-2 mb-4 flex-1">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-black uppercase text-slate-400">Included Features Checklist</label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setPageConfig(prev => ({
+                                                            ...prev,
+                                                            packages: prev.packages.map((p, i) => i === idx ? { ...p, features: [...(p.features || []), 'New Included Service'] } : p)
+                                                        }));
+                                                    }}
+                                                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5"
+                                                >
+                                                    <Plus className="w-3 h-3" /> Add Feature Line
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                                                {(pkg.features || []).map((feat, fIdx) => (
+                                                    <div key={fIdx} className="flex items-center gap-2">
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                                        <input
+                                                            type="text"
+                                                            value={feat}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setPageConfig(prev => ({
+                                                                    ...prev,
+                                                                    packages: prev.packages.map((p, i) => i === idx ? {
+                                                                        ...p,
+                                                                        features: p.features.map((f, fi) => fi === fIdx ? val : f)
+                                                                    } : p)
+                                                                }));
+                                                            }}
+                                                            className="w-full text-xs px-2 py-1 rounded border border-slate-200 bg-white font-medium text-slate-800"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setPageConfig(prev => ({
+                                                                    ...prev,
+                                                                    packages: prev.packages.map((p, i) => i === idx ? {
+                                                                        ...p,
+                                                                        features: p.features.filter((_, fi) => fi !== fIdx)
+                                                                    } : p)
+                                                                }));
+                                                            }}
+                                                            className="text-slate-400 hover:text-rose-500"
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Action Button Text */}
+                                        <div className="pt-2 border-t border-slate-100">
+                                            <label className="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Button Label</label>
+                                            <div className="flex items-center gap-2">
                                                 <input
                                                     type="text"
-                                                    value={Array.isArray(pkg.features) ? pkg.features.join(', ') : ''}
+                                                    value={pkg.buttonText || 'Select Plan'}
+                                                    placeholder="e.g. Book Consultation / Select Basic"
                                                     onChange={(e) => {
-                                                        const val = e.target.value.split(',').map(f => f.trim());
+                                                        const val = e.target.value;
                                                         setPageConfig(prev => ({
                                                             ...prev,
-                                                            packages: prev.packages.map((p, i) => i === idx ? { ...p, features: val } : p)
+                                                            packages: prev.packages.map((p, i) => i === idx ? { ...p, buttonText: val } : p)
                                                         }));
                                                     }}
-                                                    className="w-full px-2 py-1.5 rounded border border-slate-200 mt-1"
+                                                    className="w-full text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-center"
                                                 />
                                             </div>
                                         </div>
@@ -914,7 +1330,7 @@ const UnifiedPageManager = ({ token }) => {
                             </div>
                         </div>
 
-                        {/* 5. Founder Testimonials & Reviews */}
+                        {/* 7. Founder Testimonials & Reviews */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                 <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
@@ -925,7 +1341,7 @@ const UnifiedPageManager = ({ token }) => {
                                         ...prev,
                                         reviews: [...prev.reviews, { name: 'New Founder', company: 'Company Pvt Ltd', avatar: 'NF', rating: 5, date: '2026', text: 'Great experience!', verified: true }]
                                     }))}
-                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700"
+                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg"
                                 >
                                     <Plus className="w-3.5 h-3.5" /> Add Testimonial
                                 </button>
@@ -972,7 +1388,7 @@ const UnifiedPageManager = ({ token }) => {
                             </div>
                         </div>
 
-                        {/* 6. Step-by-Step Completion Steps */}
+                        {/* 8. Step-by-Step Completion Steps */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                 <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
@@ -983,7 +1399,7 @@ const UnifiedPageManager = ({ token }) => {
                                         ...prev,
                                         steps: [...prev.steps, { number: `0${prev.steps.length + 1}`, title: 'New Step', desc: 'Step description', badge: 'Takes 1 Day' }]
                                     }))}
-                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700"
+                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg"
                                 >
                                     <Plus className="w-3.5 h-3.5" /> Add Step
                                 </button>
@@ -1030,62 +1446,374 @@ const UnifiedPageManager = ({ token }) => {
                             </div>
                         </div>
 
-                        {/* 7. Detailed In-Depth Guide & FAQs */}
-                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        {/* 9. Collapsible Detailed Guide, FAQs & Popular Searches (ALL 3 BLOCKS) */}
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
+                            <div className="border-b border-slate-100 pb-3">
                                 <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
-                                    <HelpCircle className="w-4 h-4 text-blue-600" /> Collapsible Detailed Guide & FAQs
+                                    <HelpCircle className="w-4 h-4 text-blue-600" /> Collapsible Detailed Guide, FAQs & Popular Searches (3 Blocks)
                                 </h3>
-                                <button
-                                    onClick={() => setPageConfig(prev => ({
-                                        ...prev,
-                                        faqs: [...prev.faqs, { q: 'Question text here in {city}?', a: 'Answer details...' }]
-                                    }))}
-                                    className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700"
-                                >
-                                    <Plus className="w-3.5 h-3.5" /> Add FAQ
-                                </button>
+                                <p className="text-xs text-slate-500 mt-0.5">Manage all 3 columns shown when users click "Show Detailed Guide & FAQs" on the page.</p>
+
+                                {/* 3 Block Tab Switcher */}
+                                <div className="flex border border-slate-200 rounded-xl p-1 bg-slate-50/80 mt-4 max-w-lg">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveGuideTab('guide')}
+                                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${activeGuideTab === 'guide' ? 'bg-white text-slate-900 shadow-xs border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                    >
+                                        <BookOpen className="w-3.5 h-3.5 text-rose-500" />
+                                        <span>1. Detailed Guide</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveGuideTab('faqs')}
+                                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${activeGuideTab === 'faqs' ? 'bg-white text-slate-900 shadow-xs border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                    >
+                                        <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
+                                        <span>2. FAQs ({pageConfig.faqs?.length || 0})</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveGuideTab('searches')}
+                                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${activeGuideTab === 'searches' ? 'bg-white text-slate-900 shadow-xs border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                    >
+                                        <Tag className="w-3.5 h-3.5 text-indigo-500" />
+                                        <span>3. Popular Searches ({pageConfig.popularSearches?.length || 0})</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div className="space-y-3">
-                                {pageConfig.faqs.map((faq, idx) => (
-                                    <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 text-xs">
-                                        <div className="flex items-center justify-between">
-                                            <input
-                                                type="text"
-                                                placeholder="Question (supports {city})"
-                                                value={faq.q}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setPageConfig(prev => ({
-                                                        ...prev,
-                                                        faqs: prev.faqs.map((f, i) => i === idx ? { ...f, q: val } : f)
-                                                    }));
-                                                }}
-                                                className="w-full font-semibold text-slate-800 px-2 py-1 rounded border border-slate-200"
-                                            />
-                                            <button
-                                                onClick={() => setPageConfig(prev => ({ ...prev, faqs: prev.faqs.filter((_, i) => i !== idx) }))}
-                                                className="text-slate-400 hover:text-red-600 ml-2"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                        <textarea
-                                            rows="2"
-                                            placeholder="Answer text..."
-                                            value={faq.a}
+
+                            {/* BLOCK 1: DETAILED GUIDE & OVERVIEW */}
+                            {activeGuideTab === 'guide' && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Guide Main Heading</label>
+                                        <input
+                                            type="text"
+                                            value={pageConfig.guide?.title || 'Guide to Company Registration'}
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 setPageConfig(prev => ({
                                                     ...prev,
-                                                    faqs: prev.faqs.map((f, i) => i === idx ? { ...f, a: val } : f)
+                                                    guide: { ...prev.guide, title: val }
                                                 }));
                                             }}
-                                            className="w-full px-2 py-1 rounded border border-slate-200"
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-900 text-sm"
                                         />
                                     </div>
-                                ))}
-                            </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Introduction / Overview Paragraph</label>
+                                        <textarea
+                                            rows="3"
+                                            value={pageConfig.guide?.overview || ''}
+                                            placeholder="Introduction description paragraph..."
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setPageConfig(prev => ({
+                                                    ...prev,
+                                                    guide: { ...prev.guide, overview: val }
+                                                }));
+                                            }}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700"
+                                        />
+                                    </div>
+
+                                    {/* Guide Subsections */}
+                                    <div className="space-y-3 pt-2">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">Guide Subsections & Bullet Points</h4>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        guide: {
+                                                            ...prev.guide,
+                                                            sections: [
+                                                                ...(prev.guide?.sections || []),
+                                                                { heading: 'New Section Title', content: 'Section explanation text...', bullets: [] }
+                                                            ]
+                                                        }
+                                                    }));
+                                                }}
+                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" /> Add Guide Subsection
+                                            </button>
+                                        </div>
+
+                                        {(pageConfig.guide?.sections || []).map((sec, sIdx) => (
+                                            <div key={sIdx} className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setPageConfig(prev => ({
+                                                            ...prev,
+                                                            guide: {
+                                                                ...prev.guide,
+                                                                sections: prev.guide.sections.filter((_, i) => i !== sIdx)
+                                                            }
+                                                        }));
+                                                    }}
+                                                    className="absolute top-3 right-3 text-slate-400 hover:text-rose-600"
+                                                    title="Delete section"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase text-slate-400">Subsection Heading</label>
+                                                    <input
+                                                        type="text"
+                                                        value={sec.heading}
+                                                        placeholder="e.g. Forms of Private Limited Company"
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setPageConfig(prev => ({
+                                                                ...prev,
+                                                                guide: {
+                                                                    ...prev.guide,
+                                                                    sections: prev.guide.sections.map((s, i) => i === sIdx ? { ...s, heading: val } : s)
+                                                                }
+                                                            }));
+                                                        }}
+                                                        className="w-full text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase text-slate-400">Content / Explanation (Optional if using bullets)</label>
+                                                    <textarea
+                                                        rows="2"
+                                                        value={sec.content || ''}
+                                                        placeholder="Explanation text..."
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setPageConfig(prev => ({
+                                                                ...prev,
+                                                                guide: {
+                                                                    ...prev.guide,
+                                                                    sections: prev.guide.sections.map((s, i) => i === sIdx ? { ...s, content: val } : s)
+                                                                }
+                                                            }));
+                                                        }}
+                                                        className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white"
+                                                    />
+                                                </div>
+
+                                                {/* Bullet Points */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase text-slate-400">Bullet Points (One per line)</label>
+                                                    <textarea
+                                                        rows="3"
+                                                        value={(sec.bullets || []).join('\n')}
+                                                        placeholder="Bullet 1&#10;Bullet 2&#10;Bullet 3"
+                                                        onChange={(e) => {
+                                                            const lines = e.target.value.split('\n');
+                                                            setPageConfig(prev => ({
+                                                                ...prev,
+                                                                guide: {
+                                                                    ...prev.guide,
+                                                                    sections: prev.guide.sections.map((s, i) => i === sIdx ? { ...s, bullets: lines } : s)
+                                                                }
+                                                            }));
+                                                        }}
+                                                        className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-mono"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Document Checklist */}
+                                    <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                                        <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider">Document Checklist Box</h4>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-slate-400">Checklist Title</label>
+                                            <input
+                                                type="text"
+                                                value={pageConfig.guide?.checklistTitle || 'Checklist of Documents Needed'}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        guide: { ...prev.guide, checklistTitle: val }
+                                                    }));
+                                                }}
+                                                className="w-full text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-200"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-slate-400">Checklist Items (One per line)</label>
+                                            <textarea
+                                                rows="4"
+                                                value={(pageConfig.guide?.checklist || []).join('\n')}
+                                                placeholder="PAN & Aadhaar of all Directors&#10;Passport Size Photograph&#10;Electricity/Water Bill"
+                                                onChange={(e) => {
+                                                    const lines = e.target.value.split('\n');
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        guide: { ...prev.guide, checklist: lines }
+                                                    }));
+                                                }}
+                                                className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* BLOCK 2: FREQUENTLY ASKED QUESTIONS */}
+                            {activeGuideTab === 'faqs' && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-slate-500 font-medium">FAQ Q&A Accordion Items (Supports {"{city}"} placeholder)</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPageConfig(prev => ({
+                                                ...prev,
+                                                faqs: [...prev.faqs, { q: 'Question text here in {city}?', a: 'Answer details...' }]
+                                            }))}
+                                            className="text-xs flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" /> Add FAQ
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {pageConfig.faqs.map((faq, idx) => (
+                                            <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 text-xs">
+                                                <div className="flex items-center justify-between">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Question (supports {city})"
+                                                        value={faq.q}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setPageConfig(prev => ({
+                                                                ...prev,
+                                                                faqs: prev.faqs.map((f, i) => i === idx ? { ...f, q: val } : f)
+                                                            }));
+                                                        }}
+                                                        className="w-full font-semibold text-slate-800 px-2 py-1 rounded border border-slate-200"
+                                                    />
+                                                    <button
+                                                        onClick={() => setPageConfig(prev => ({ ...prev, faqs: prev.faqs.filter((_, i) => i !== idx) }))}
+                                                        className="text-slate-400 hover:text-red-600 ml-2"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                <textarea
+                                                    rows="2"
+                                                    placeholder="Answer text..."
+                                                    value={faq.a}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setPageConfig(prev => ({
+                                                            ...prev,
+                                                            faqs: prev.faqs.map((f, i) => i === idx ? { ...f, a: val } : f)
+                                                        }));
+                                                    }}
+                                                    className="w-full px-2 py-1 rounded border border-slate-200"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* BLOCK 3: POPULAR SEARCHES & SEO KEYWORDS */}
+                            {activeGuideTab === 'searches' && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-slate-500 font-medium">Keywords rendered in the #Popular Searches tag cloud</span>
+                                    </div>
+
+                                    {/* Add Single Keyword */}
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newSearchKeyword}
+                                            placeholder="Enter new keyword (e.g. Pvt Ltd Registration Fees)"
+                                            onChange={(e) => setNewSearchKeyword(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && newSearchKeyword.trim()) {
+                                                    e.preventDefault();
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        popularSearches: [...(prev.popularSearches || []), newSearchKeyword.trim()]
+                                                    }));
+                                                    setNewSearchKeyword('');
+                                                }
+                                            }}
+                                            className="flex-1 text-xs px-3 py-2 rounded-xl border border-slate-200"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (newSearchKeyword.trim()) {
+                                                    setPageConfig(prev => ({
+                                                        ...prev,
+                                                        popularSearches: [...(prev.popularSearches || []), newSearchKeyword.trim()]
+                                                    }));
+                                                    setNewSearchKeyword('');
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold"
+                                        >
+                                            Add Tag
+                                        </button>
+                                    </div>
+
+                                    {/* Tag Pills Cloud */}
+                                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                                        <div className="flex flex-wrap gap-2">
+                                            {(pageConfig.popularSearches || []).map((tag, idx) => (
+                                                <span
+                                                    key={idx}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 shadow-xs"
+                                                >
+                                                    <span>#{tag}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setPageConfig(prev => ({
+                                                                ...prev,
+                                                                popularSearches: prev.popularSearches.filter((_, i) => i !== idx)
+                                                            }));
+                                                        }}
+                                                        className="text-slate-400 hover:text-rose-600"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Comma-separated Quick Mass Editor */}
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Quick Mass Edit (Comma Separated)</label>
+                                        <textarea
+                                            rows="3"
+                                            value={(pageConfig.popularSearches || []).join(', ')}
+                                            onChange={(e) => {
+                                                const tags = e.target.value.split(',').map(t => t.trim()).filter(Boolean);
+                                                setPageConfig(prev => ({
+                                                    ...prev,
+                                                    popularSearches: tags
+                                                }));
+                                            }}
+                                            className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* 8. Generated City Pages Live Preview Box */}
