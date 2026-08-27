@@ -102,14 +102,37 @@ fun CustomerServicesTab(
             "TReDS Registration" to "https://vrhere.in/treds-registration",
             "RERA Registration" to "https://vrhere.in/rera-registration",
             "DPR Preparation" to "https://vrhere.in/dpr-cma-preparation",
-            "CMA Data Preparation" to "https://vrhere.in/dpr-cma-preparation",
-            "PMEGP Loan Support" to "https://vrhere.in/msme-subsidies-loans",
-            "CGTMSE Loan Support" to "https://vrhere.in/msme-subsidies-loans",
-            "Mudra Loans" to "https://vrhere.in/msme-subsidies-loans",
+            "CMA Data Preparation" to "https://vrhere.in/cma-data-preparation",
+            "Bank Loans - Term Loan + Working Capital" to "https://vrhere.in/bank-loans-support",
+            "CGTMSE Loan Support" to "https://vrhere.in/cgtmse-loan-support",
+            "PMEGP Loan Support" to "https://vrhere.in/pmegp-loan-support",
+            "Mudra Loans" to "https://vrhere.in/mudra-loans-support",
+            "Stand-Up India Loan Assistance" to "https://vrhere.in/standup-india-loans",
+            "CLCSS / ZED Scheme Support" to "https://vrhere.in/zed-scheme-support",
+            "PMFME (Food Processing Units)" to "https://vrhere.in/pmfme-subsidy-scheme",
+            "NSIC Schemes" to "https://vrhere.in/nsic-schemes-registration",
+            "NABARD Schemes" to "https://vrhere.in/nabard-subsidy-schemes",
+            "Cold Chain & Food Processing Subsidy" to "https://vrhere.in/cold-chain-subsidy",
+            "AP/TS State Industrial Subsidy Schemes" to "https://vrhere.in/msme-subsidies-loans",
 
             // Branding & Setup
+            "Business Plan Preparation" to "https://vrhere.in/business-plan-preparation",
+            "Pitch Decks for Funding" to "https://vrhere.in/pitch-deck-preparation",
+            "Website & Branding Consulting" to "https://vrhere.in/website-branding-consulting",
+            "Vendor Empanelment Documentation" to "https://vrhere.in/vendor-empanelment-docs",
+            "HR Policy Documentation" to "https://vrhere.in/hr-policy-documentation",
+            "SOP Creation" to "https://vrhere.in/sop-creation-services",
+            "Loan File Documentation & Follow-up" to "https://vrhere.in/loan-file-documentation",
+            "Insurance Services (Business, Fire, Marine)" to "https://vrhere.in/commercial-business-insurance",
+            "Digital Marketing Support" to "https://vrhere.in/digital-marketing-support",
+            "PAN / TAN Applications" to "https://vrhere.in/pan-tan-applications",
             "Trademark Registration" to "https://vrhere.in/trademark-registration",
-            "Machinery Sourcing" to "https://vrhere.in/machinery-sourcing"
+            "Wealth Portfolio Management" to "https://vrhere.in/wealth-portfolio-management",
+            "Machinery Sourcing" to "https://vrhere.in/machinery-sourcing",
+            "Vendor Identification & Supplier Verification" to "https://vrhere.in/vendor-verification-services",
+            "Turnkey Machinery Setup Assistance" to "https://vrhere.in/turnkey-plant-engineering",
+            "Technology Upgradation Consulting" to "https://vrhere.in/technology-upgradation-consulting",
+            "Industry Selection & Feasibility Analysis" to "https://vrhere.in/industrial-feasibility-analysis"
         )
     }
 
