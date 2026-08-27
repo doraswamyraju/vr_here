@@ -21,6 +21,7 @@ import { useNotifications, NotificationsFeed, InAppBanner } from './modules/noti
 import HRMSModule from './modules/hrms/v1.1/index.jsx';
 import ServicesMasterView from './components/admin/ServicesMasterView';
 import AdminBookkeepingView from './components/admin/AdminBookkeepingView';
+import LeadsManagerView from './components/admin/LeadsManagerView';
 
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
 
@@ -402,6 +403,8 @@ const EmployeeApp = () => {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardOverviewModule userInfo={userInfo} orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} isClockedIn={isClockedIn} onTodoStatusChange={handleTodoStatusChange} />;
+      case 'leads':
+        return <LeadsManagerView userInfo={userInfo} role="employee" />;
       case 'queue':
         return <WorkQueueModule orders={orders} todos={todos} onOpenOrder={openOrderInProcessing} onTodoStatusChange={handleTodoStatusChange} isClockedIn={isClockedIn} />;
       case 'processing':

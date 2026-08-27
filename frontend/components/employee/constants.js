@@ -13,7 +13,8 @@ import {
   DollarSign,
   Users,
   Layers,
-  BookOpen
+  BookOpen,
+  Flame
 } from 'lucide-react';
 
 export const ORDER_STATUSES = [
@@ -26,6 +27,7 @@ export const ORDER_STATUSES = [
 
 export const EMPLOYEE_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'leads', label: 'My Leads CRM', icon: Flame },
   { id: 'queue', label: 'Work Queue', icon: Briefcase },
   { id: 'processing', label: 'Order Processing', icon: FolderKanban },
   { id: 'tasks', label: 'Task Management', icon: CheckSquare },
