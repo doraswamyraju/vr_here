@@ -6,6 +6,7 @@ import { proprietorshipConfig } from './proprietorship.js';
 import { section8Config } from './section8.js';
 import { onePersonCompanyConfig } from './onePersonCompany.js';
 import { societyTrustConfig } from './societyTrust.js';
+import { EXTENDED_SERVICE_CONFIGS } from './extendedConfigs.js';
 
 export const ALL_SERVICE_CONFIGS = {
     'private-limited': privateLimitedConfig,
@@ -22,7 +23,8 @@ export const ALL_SERVICE_CONFIGS = {
     'opc-registration': onePersonCompanyConfig,
     'society-trust-registration': societyTrustConfig,
     'trust-registration': societyTrustConfig,
-    'society-registration': societyTrustConfig
+    'society-registration': societyTrustConfig,
+    ...EXTENDED_SERVICE_CONFIGS
 };
 
 export {
@@ -33,5 +35,6 @@ export {
     proprietorshipConfig,
     section8Config,
     onePersonCompanyConfig,
-    societyTrustConfig
+    societyTrustConfig,
+    EXTENDED_SERVICE_CONFIGS
 };
