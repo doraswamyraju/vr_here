@@ -103,10 +103,10 @@ struct CustomerServiceDetailScreen: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Top Navigation Bar
+                // Top Navigation Bar with WhatsApp Action on Top-Right
                 HStack {
                     Button(action: onBackClick) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 5) {
                             Image(systemName: "chevron.backward")
                             Text("Catalog")
                         }
@@ -121,19 +121,35 @@ struct CustomerServiceDetailScreen: View {
                         .foregroundColor(.textDark)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(maxWidth: 200)
+                        .frame(maxWidth: 180)
                     
                     Spacer()
                     
-                    // Direct Call Header Action
-                    Button(action: dialHelpline) {
-                        Image(systemName: "phone.fill")
-                            .font(.system(size: 15))
-                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                    // Top-Right WhatsApp Action Button
+                    Button(action: onNeedAdviceClick) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "message.fill")
+                                .font(.system(size: 13))
+                            Text("WhatsApp")
+                                .font(.system(size: 11, weight: .black))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(red: 34/255, green: 197/255, blue: 94/255), Color(red: 22/255, green: 163/255, blue: 74/255)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(12)
+                        .shadow(color: Color.green.opacity(0.35), radius: 4, y: 2)
                     }
+                    .buttonStyle(ScaleOnPressButtonStyle())
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.vertical, 10)
                 .background(Color.white)
                 .shadow(color: Color.black.opacity(0.03), radius: 3, y: 2)
                 
@@ -254,7 +270,7 @@ struct CustomerServiceDetailScreen: View {
                         }
                         .padding(.horizontal, 16)
                         
-                        // 4. Packages List
+                        // 4. Packages List with Scroll & Tap Position Tracking
                         VStack(spacing: 14) {
                             ForEach(servicePackages) { pkg in
                                 let isSelected = activePackage.id == pkg.id
@@ -349,6 +365,14 @@ struct CustomerServiceDetailScreen: View {
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 18)
                                         .stroke(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255) : Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: isSelected ? 2 : 1)
+                                )
+                                .background(
+                                    GeometryReader { geo in
+                                        Color.clear.preference(
+                                            key: PackageScrollKey.self,
+                                            value: [PackagePositionData(id: pkg.id, midY: geo.frame(in: .named("serviceScrollSpace")).midY)]
+                                        )
+                                    }
                                 )
                                 .onTapGesture {
                                     withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
@@ -465,9 +489,21 @@ struct CustomerServiceDetailScreen: View {
                         Spacer().frame(height: 90) // clearance for sticky conversion bottom dock
                     }
                 }
+                .coordinateSpace(name: "serviceScrollSpace")
+                .onPreferenceChange(PackageScrollKey.self) { positions in
+                    // Automatically track active package closest to the viewport center while scrolling
+                    let screenCenter = UIScreen.main.bounds.height * 0.35
+                    if let closest = positions.min(by: { abs($0.midY - screenCenter) < abs($1.midY - screenCenter) }) {
+                        if let matchedPkg = servicePackages.first(where: { $0.id == closest.id }), matchedPkg.id != selectedPackage?.id {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedPackage = matchedPkg
+                            }
+                        }
+                    }
+                }
             }
             
-            // 7. Dynamic Sticky Floating Conversion Dock with Interactive Package Picker
+            // 7. Dynamic Sticky Floating Conversion Dock with Interactive Package Picker & Call Action
             VStack(spacing: 0) {
                 Divider()
                     .background(Color(red: 226/255, green: 232/255, blue: 240/255))
@@ -476,8 +512,10 @@ struct CustomerServiceDetailScreen: View {
                     // Left: Interactive Package Selector Dropdown Button
                     Button(action: {
                         showPackagePicker = true
+                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                        impact.impactOccurred()
                     }) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 5) {
                             VStack(alignment: .leading, spacing: 1) {
                                 HStack(spacing: 4) {
                                     Text(activePackage.name)
@@ -491,24 +529,28 @@ struct CustomerServiceDetailScreen: View {
                                 
                                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                                     Text("₹\(Int(activePackage.price))")
-                                        .font(.system(size: 18, weight: .black))
+                                        .font(.system(size: 17, weight: .black))
                                         .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                    Text(activePackage.isAdjustable ? "(100% credit)" : "+ taxes")
-                                        .font(.system(size: 9.5, weight: .bold))
+                                    Text(activePackage.isAdjustable ? "(credit)" : "+ taxes")
+                                        .font(.system(size: 9, weight: .bold))
                                         .foregroundColor(activePackage.isAdjustable ? Color.blue : Color.gray)
                                 }
                             }
                         }
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
+                        .padding(.vertical, 6)
                         .background(Color(red: 241/255, green: 245/255, blue: 249/255))
-                        .cornerRadius(10)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+                        )
                     }
                     .buttonStyle(PlainButtonStyle())
                     
                     Spacer()
                     
-                    // Direct Phone Call Button (Replaces Ticket Icon)
+                    // Bottom Call Helpline Action Button
                     Button(action: dialHelpline) {
                         Image(systemName: "phone.fill")
                             .font(.system(size: 14))
@@ -553,16 +595,117 @@ struct CustomerServiceDetailScreen: View {
         .task {
             await loadServiceDataAndTrackTelemetry()
         }
-        // Interactive Package Selector Action Sheet
-        .confirmationDialog("Select Registration Plan", isPresented: $showPackagePicker, titleVisibility: .visible) {
-            ForEach(servicePackages) { pkg in
-                Button("\(pkg.name) - ₹\(Int(pkg.price))\(pkg.isPopular ? " ⭐" : "")") {
-                    withAnimation {
-                        selectedPackage = pkg
+        // Redesigned State-of-the-Art Package Selection Bottom Sheet
+        .sheet(isPresented: $showPackagePicker) {
+            ZStack {
+                Color(red: 248/255, green: 250/255, blue: 252/255).ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    Capsule()
+                        .fill(Color(red: 203/255, green: 213/255, blue: 225/255))
+                        .frame(width: 40, height: 5)
+                        .padding(.top, 12)
+                        .padding(.bottom, 12)
+                    
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Choose Registration Plan")
+                                .font(.system(size: 17, weight: .black))
+                                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            Text("All plans include dedicated CA/CS oversight")
+                                .font(.system(size: 11.5, weight: .medium))
+                                .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                        }
+                        Spacer()
+                        Button(action: { showPackagePicker = false }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
+                    
+                    Divider()
+                        .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                    
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 12) {
+                            ForEach(servicePackages) { pkg in
+                                let isSelected = activePackage.id == pkg.id
+                                
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                        selectedPackage = pkg
+                                        showPackagePicker = false
+                                    }
+                                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                                    impact.impactOccurred()
+                                }) {
+                                    HStack(alignment: .center, spacing: 14) {
+                                        // Radio Checkbox
+                                        ZStack {
+                                            Circle()
+                                                .stroke(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255) : Color(red: 203/255, green: 213/255, blue: 225/255), lineWidth: 2)
+                                                .frame(width: 22, height: 22)
+                                            if isSelected {
+                                                Circle()
+                                                    .fill(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                                    .frame(width: 12, height: 12)
+                                            }
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            HStack(spacing: 6) {
+                                                Text(pkg.name)
+                                                    .font(.system(size: 14.5, weight: .bold))
+                                                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                if pkg.isPopular {
+                                                    Text("RECOMMENDED")
+                                                        .font(.system(size: 8, weight: .black))
+                                                        .foregroundColor(.white)
+                                                        .padding(.horizontal, 6)
+                                                        .padding(.vertical, 2)
+                                                        .background(Color(red: 244/255, green: 63/255, blue: 94/255))
+                                                        .cornerRadius(4)
+                                                }
+                                            }
+                                            
+                                            if !pkg.description.isEmpty {
+                                                Text(pkg.description)
+                                                    .font(.system(size: 11, weight: .medium))
+                                                    .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                                                    .lineLimit(1)
+                                            }
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        VStack(alignment: .trailing, spacing: 1) {
+                                            Text("₹\(Int(pkg.price))")
+                                                .font(.system(size: 17, weight: .black))
+                                                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                            Text(pkg.isAdjustable ? "Adjusted" : "+ Taxes")
+                                                .font(.system(size: 9, weight: .bold))
+                                                .foregroundColor(pkg.isAdjustable ? Color.blue : Color.gray)
+                                        }
+                                    }
+                                    .padding(14)
+                                    .background(isSelected ? Color(red: 238/255, green: 242/255, blue: 255/255) : Color.white)
+                                    .cornerRadius(16)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255) : Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: isSelected ? 2 : 1)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(16)
                     }
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            .presentationDetents([.fraction(0.55), .large])
         }
         // One-time Phone Number Input Sheet if missing from profile
         .sheet(isPresented: $showPhonePrompt) {
@@ -612,6 +755,12 @@ struct CustomerServiceDetailScreen: View {
                         if clean.count >= 10 {
                             SessionManager.shared.savePhone(clean)
                             showPhonePrompt = false
+                            
+                            // Also persist to user profile in backend
+                            Task {
+                                _ = try? await NetworkManager.shared.updatePhone(phone: clean)
+                            }
+                            
                             if let pkg = pendingPackageForCheckout {
                                 onCheckoutClick(serviceTitle, pkg, clientName, clientEmail, clean)
                             }
@@ -697,5 +846,18 @@ struct CustomerServiceDetailScreen: View {
             }
             #endif
         }
+    }
+}
+
+// PreferenceKey and Model to track package scroll positions dynamically
+struct PackagePositionData: Equatable {
+    let id: String
+    let midY: CGFloat
+}
+
+struct PackageScrollKey: PreferenceKey {
+    static var defaultValue: [PackagePositionData] = []
+    static func reduce(value: inout [PackagePositionData], nextValue: () -> [PackagePositionData]) {
+        value.append(contentsOf: nextValue())
     }
 }

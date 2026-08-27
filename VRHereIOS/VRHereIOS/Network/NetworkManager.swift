@@ -119,6 +119,14 @@ class NetworkManager {
         return try await performRequest(path: "api/auth/profile", method: "GET")
     }
     
+    func updatePhone(phone: String) async throws -> UserProfile {
+        struct UpdatePhonePayload: Codable {
+            let phone: String
+        }
+        let data = try JSONEncoder().encode(UpdatePhonePayload(phone: phone))
+        return try await performRequest(path: "api/auth/profile", method: "PUT", body: data)
+    }
+    
     // --- ORDERS ---
     
     func getOrders() async throws -> [OrderResponse] {
