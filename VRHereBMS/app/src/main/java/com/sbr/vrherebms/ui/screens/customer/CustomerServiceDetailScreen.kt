@@ -408,6 +408,51 @@ fun CustomerServiceDetailScreen(
         }
     }
 
+    // Emit Category A (PAGE_VIEW) Telemetry Lead on screen open
+    LaunchedEffect(serviceKey) {
+        try {
+            val api = com.sbr.vrherebms.data.remote.VRHereAPI.getInstance(context)
+            api.sendLeadTelemetry(
+                com.sbr.vrherebms.data.model.LeadTelemetryRequest(
+                    customerId = sessionManager.getUserId(),
+                    customerName = sessionManager.getUserName(),
+                    email = sessionManager.getUserEmail(),
+                    phone = sessionManager.getPhone(),
+                    serviceId = serviceKey,
+                    serviceName = service.title,
+                    category = "PAGE_VIEW",
+                    source = "android"
+                )
+            )
+        } catch (e: Exception) {
+            // Non-blocking telemetry
+        }
+    }
+
+    val trackPackageClick: (ServicePackage) -> Unit = { pkg ->
+        scope.launch {
+            try {
+                val api = com.sbr.vrherebms.data.remote.VRHereAPI.getInstance(context)
+                api.sendLeadTelemetry(
+                    com.sbr.vrherebms.data.model.LeadTelemetryRequest(
+                        customerId = sessionManager.getUserId(),
+                        customerName = sessionManager.getUserName(),
+                        email = sessionManager.getUserEmail(),
+                        phone = sessionManager.getPhone(),
+                        serviceId = serviceKey,
+                        serviceName = service.title,
+                        packageName = pkg.name,
+                        price = pkg.price,
+                        category = "PACKAGE_CLICK",
+                        source = "android"
+                    )
+                )
+            } catch (e: Exception) {
+                // Non-blocking telemetry
+            }
+        }
+    }
+
     // Prefill form states
     var clientName by remember { mutableStateOf(sessionManager.getUserName() ?: "") }
     var clientEmail by remember { mutableStateOf(sessionManager.getUserEmail() ?: "") }
@@ -527,7 +572,10 @@ fun CustomerServiceDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp, vertical = 10.dp)
-                        .clickable { selectedPackage = pkg }
+                        .clickable {
+                            selectedPackage = pkg
+                            trackPackageClick(pkg)
+                        }
                         .graphicsLayer {
                             this.shadowElevation = if (isSelected) selectedElevation else normalElevation
                             this.shape = RoundedCornerShape(28.dp)
@@ -690,6 +738,7 @@ fun CustomerServiceDetailScreen(
                                 onClick = {
                                     selectedPackage = pkg
                                     isConfirmSheetOpen = true
+                                    trackPackageClick(pkg)
                                 }
                             )
                         }

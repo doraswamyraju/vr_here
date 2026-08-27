@@ -195,9 +195,16 @@ interface VRHereAPI {
         @Part document: okhttp3.MultipartBody.Part
     ): Response<OrderResponse>
 
-    // --- DYNAMIC SERVER-DRIVEN SERVICES ---
+    // --- DYNAMIC SERVER-DRIVEN SERVICES & LEADS TELEMETRY ---
     @GET("api/service-pages")
     suspend fun getDynamicServices(): Response<List<com.sbr.vrherebms.data.model.MobileServiceDetail>>
+
+    @GET("api/service-pages/{pageId}")
+    suspend fun getServicePageById(@Path("pageId") pageId: String): Response<com.sbr.vrherebms.data.model.MobileServiceDetail>
+
+    @POST("api/leads/telemetry")
+    suspend fun sendLeadTelemetry(@Body request: com.sbr.vrherebms.data.model.LeadTelemetryRequest): Response<Map<String, Any>>
+
 
     companion object {
         // base URL pointing directly to the live website database

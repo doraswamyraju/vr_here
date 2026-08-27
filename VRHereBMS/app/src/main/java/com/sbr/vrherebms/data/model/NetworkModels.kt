@@ -497,5 +497,21 @@ data class MobileServiceDetail(
     val faqs: List<MobileServiceFaq> = emptyList()
 )
 
+// --- CRM LEAD TELEMETRY DTO ---
+data class LeadTelemetryRequest(
+    val customerId: String? = null,
+    val customerName: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
+    val serviceId: String,
+    val serviceName: String,
+    val packageName: String? = null,
+    val price: Double? = null,
+    val category: String = "PAGE_VIEW", // 'PAGE_VIEW' (Warm / View) or 'PACKAGE_CLICK' (Hot / Intent)
+    val source: String = "android",
+    val deviceInfo: String? = "Android App"
+)
+
+
 
 

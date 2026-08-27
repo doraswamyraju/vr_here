@@ -46,10 +46,17 @@ fun CustomerServicesTab(
 
     val liveServicesMap = remember {
         mapOf(
-            "Private Limited / Public Limited Company" to "https://vrhere.in/pvt-ltd-registration",
+            "Private Limited Company" to "https://vrhere.in/pvt-ltd-registration",
+            "Public Limited Company" to "https://vrhere.in/public-limited-company",
+            "LLP Registration" to "https://vrhere.in/llp-registration",
+            "Limited Liability Partnership (LLP)" to "https://vrhere.in/llp-registration",
+            "Partnership Firm Registration" to "https://vrhere.in/partnership-firm",
+            "Proprietorship Setup" to "https://vrhere.in/proprietorship-setup",
+            "Section 8 Company (NGO)" to "https://vrhere.in/section-8-company",
+            "One Person Company" to "https://vrhere.in/one-person-company",
+            "Society / Trust Registration" to "https://vrhere.in/society-trust-registration",
             "GST Registration" to "https://vrhere.in/gst-registration",
             "Income Tax Return Filing (ITR 1-7)" to "https://vrhere.in/income-tax-return",
-            "Partnership Firm Registration" to "https://vrhere.in/partnership-firm",
             "Companies Compliance Scheme 2026 (CCFS)" to "https://vrhere.in/compliance-scheme-2026",
             "Cloud Accounting (Tally Prime, Zoho Books, QuickBooks, Marg)" to "https://vrhere.in/accounting-services",
             "GST Return Filing" to "https://vrhere.in/accounting-services",
@@ -149,7 +156,8 @@ fun CustomerServicesTab(
                     ServiceColumn(
                         title = "Company / Business Entity Registrations",
                         items = listOf(
-                            "Private Limited / Public Limited Company",
+                            "Private Limited Company",
+                            "Public Limited Company",
                             "LLP Registration",
                             "Partnership Firm Registration",
                             "Proprietorship Setup",
