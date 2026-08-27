@@ -7,6 +7,208 @@ export const slugify = (text) => {
         .replace(/^-+|-+$/g, ''); // trim leading/trailing hyphens
 };
 
+export const generateConfig = (item) => {
+    const title = item.title;
+    const slug = item.slug || slugify(title);
+    const price = item.price || 2999;
+    const category = item.category || 'Business Services';
+
+    // Domain-specific requirements & inclusions generator
+    let requirements = [
+        'PAN Card of Business / Applicant',
+        'Aadhaar Card linked with active Mobile No.',
+        'Registered Address Proof (Electricity Bill / Rent Agreement)',
+        'Bank Account Statement / Cancelled Cheque'
+    ];
+
+    let heroGraphicItems = [
+        'Dedicated CA/CS Specialist Assigned',
+        'End-to-End Government / Statutory Filing',
+        'Digital Document Verification & Quality Audit',
+        'Official Certificate & Filing Receipts Delivered',
+        'Lifetime Compliance & Advisory Support'
+    ];
+
+    let benefits = [
+        { t: '100% Online & Paperless', d: `Complete ${title} from the comfort of your home or office.` },
+        { t: 'Verified CA/CS Oversight', d: 'Every document and application is verified by senior practitioners.' },
+        { t: 'Zero Penalty Guarantee', d: 'Timely filing ensuring complete statutory compliance and protection.' },
+        { t: 'Transparent Pricing', d: 'Clear itemized billing with no hidden fees or surprise charges.' }
+    ];
+
+    // Specific domain customizations
+    if (slug.includes('cma') || slug.includes('dpr') || slug.includes('bank-loan') || slug.includes('loan')) {
+        requirements = [
+            'Last 3 Years Audited Financial Statements (P&L, Balance Sheet)',
+            'Sanction Letters of Existing Bank Limits (if any)',
+            'Provisional Balance Sheet & Current Year Estimates',
+            'Project Quotations / Machinery Invoices',
+            'Business Profile & Promoters Biodata'
+        ];
+        heroGraphicItems = [
+            '7 Standard Banking CMA Statements',
+            'Holding Period & MPBF Calculations',
+            'DSCR & Key Financial Ratio Modeling',
+            'SBI / PSU & Private Bank Format Compliant',
+            'Chartered Accountant Certified CMA File'
+        ];
+        benefits = [
+            { t: 'Bank Underwriting Compliant', d: 'Structured strictly according to RBI & commercial bank credit norms.' },
+            { t: 'Higher Loan Sanction Probability', d: 'Professional financial ratios that satisfy credit managers.' },
+            { t: 'Fast 48-72 Hour Delivery', d: 'Expedited turnaround to meet bank loan processing deadlines.' },
+            { t: 'CA Attested Reports', d: 'Signed and certified CMA reports accepted across all nationalized banks.' }
+        ];
+    } else if (slug.includes('iso')) {
+        requirements = [
+            'Company Registration Certificate (COI / GST / Udyam)',
+            'Business Process Description & Flowcharts',
+            'Organization Hierarchy & Scope of Operations',
+            'Identity Proof of Authorized Signatory'
+        ];
+        heroGraphicItems = [
+            'IAF / Non-IAF Recognized Accreditation',
+            'Quality Manual & SOP Documentation Kit',
+            'Internal Audit & Gap Analysis Assistance',
+            'Official Registrar Portal Listing',
+            '3-Year Certificate Validity with QR Code'
+        ];
+    } else if (slug.includes('udyam') || slug.includes('msme')) {
+        requirements = [
+            'Aadhaar Card of Business Owner / Director',
+            'PAN Card of Enterprise / Applicant',
+            'GSTIN Details (if applicable)',
+            'Bank Account Number & IFSC Code'
+        ];
+        heroGraphicItems = [
+            'Ministry of MSME Official Certificate',
+            '5-Digit NIC Code Classification',
+            'Priority Sector Bank Lending Benefits',
+            'Subsidized Government Tender Access',
+            'Lifetime Validity with Digital QR'
+        ];
+    } else if (slug.includes('fssai') || slug.includes('food')) {
+        requirements = [
+            'Photo ID & Address Proof of Food Business Operator',
+            'Premises Possession Proof (Rental Deed / Utility Bill)',
+            'List of Food Categories / Products Manufactured',
+            'Kitchen / Plant Layout & Equipment List'
+        ];
+        heroGraphicItems = [
+            '14-Digit FSSAI Registration / License No.',
+            'FoSCoS Portal Application & Real-time Tracking',
+            'Swiggy / Zomato Onboarding Ready',
+            'Food Safety & Hygiene Standard Compliance',
+            '1 to 5 Year Validity Options'
+        ];
+    } else if (slug.includes('trademark') || slug.includes('brand') || slug.includes('ip')) {
+        requirements = [
+            'Brand Logo / Slogan / Wordmark Image',
+            'Identity Proof of Trademark Applicant',
+            'User Date Affidavit (if TM already in use)',
+            'Power of Attorney (Form TM-48) signed'
+        ];
+        heroGraphicItems = [
+            'Comprehensive Trademark Search Report',
+            'Form TM-A Filing by Certified TM Attorney',
+            'Instant Right to Use ™ Symbol in 24 Hours',
+            '1 to 45 Nice Classification Mapping',
+            '10-Year Government Protection Period'
+        ];
+    }
+
+    return {
+        pageId: slug,
+        title: title,
+        description: `Professional ${title} services in India. 100% online legal execution with verified CA/CS oversight and statutory compliance guarantee.`,
+        iconKey: 'Briefcase',
+        hero: {
+            title: `${title} Online in {city}`,
+            subtitle: `Fast, transparent, 100% online ${title} with dedicated CA/CS assistance across {city}, {state}.`,
+            badgeText: 'GOVT & STATUTORY VERIFIED',
+            consultationPrice: 499,
+            inclusions: heroGraphicItems
+        },
+        stats: [
+            { value: '3-5 Days', label: 'AVG. TURNAROUND' },
+            { value: '100%', label: 'STATUTORY COMPLIANT' },
+            { value: '4.9/5', label: 'CLIENT RATING' },
+            { value: 'CA/CS', label: 'VERIFIED' }
+        ],
+        heroGraphicItems: heroGraphicItems,
+        whyChoose: {
+            title: `Why Choose VR Here for ${title}?`,
+            subtitle: `Get certified legal execution, dedicated financial modeling, and end-to-end statutory assistance from senior chartered accountants.`,
+            benefits: benefits,
+            requirements: requirements
+        },
+        packages: [
+            {
+                id: `${slug}-basic`,
+                name: 'Standard Package',
+                price: price,
+                isPopular: true,
+                description: `Complete ${title} execution with official filings and verification.`,
+                features: heroGraphicItems.slice(0, 4),
+                creativeButtonText: `Select Standard`
+            },
+            {
+                id: `${slug}-premium`,
+                name: 'Premium Enterprise Retainer',
+                price: Math.round(price * 1.8),
+                description: `End-to-end priority compliance, annual renewals, and legal consultation.`,
+                features: [...heroGraphicItems, 'Priority 24-48 Hr Fast-Track Delivery', 'Dedicated Senior Partner Advisory', 'Direct WhatsApp & Phone Access'],
+                creativeButtonText: 'Select Premium'
+            }
+        ],
+        reviews: [
+            {
+                name: "Rajesh Kulkarni",
+                company: "Kulkarni Enterprises",
+                avatar: "RK",
+                rating: 5,
+                date: "12 June 2026",
+                text: `VR Here handled our ${title} with supreme professionalism. The team delivered all documents on schedule with zero hassles.`,
+                verified: true
+            },
+            {
+                name: "Pooja Sharma",
+                company: "Apex Tech Innovations",
+                avatar: "PS",
+                rating: 5,
+                date: "25 May 2026",
+                text: `Very fast and transparent service for ${title}. Their CA guided us step-by-step through the requirements. Highly recommended!`,
+                verified: true
+            },
+            {
+                name: "Suresh Menon",
+                company: "Menon Logistics & Supply",
+                avatar: "SM",
+                rating: 5,
+                date: "04 July 2026",
+                text: `Top-tier customer support. We got our ${title} completed without any office visits. Superb experience!`,
+                verified: true
+            }
+        ],
+        steps: [
+            { number: '01', title: 'KYC & Data Upload', desc: 'Securely submit required business details and identity documents.', badge: 'Step 1' },
+            { number: '02', title: 'Legal & Dept Drafting', desc: 'Practicing Chartered Accountants draft and verify applications.', badge: 'Step 2' },
+            { number: '03', title: 'Statutory Portal Filing', desc: 'Application filed on official central or state government portals.', badge: 'Step 3' },
+            { number: '04', title: 'Delivery & Advisory', desc: 'Official government certificate and filing receipt delivered digitally.', badge: 'Step 4' }
+        ],
+        guide: {
+            title: `Guide to ${title}`,
+            overview: `Professional ${title} ensures strict compliance with Indian statutory authorities while saving valuable business time.`,
+            checklistTitle: 'Required Documents',
+            checklist: requirements
+        },
+        faqs: [
+            { q: `How long does the ${title} process take?`, a: 'Standard turnaround is 3 to 5 business days subject to departmental approval queues.' },
+            { q: 'Can I adjust the consultation fee against the final package?', a: 'Yes! If you book an expert CA/CS consultation at ₹499, the full ₹499 is credited and deducted when you upgrade to any full registration plan.' }
+        ],
+        popularSearches: [title, `${title} Online`, `${title} Fees in India`, `${title} Consultant`, `${title} in {city}`]
+    };
+};
+
 export const MENU_ITEMS_LIST = [
     // 1. Accounting-as-a-Service (AaaS)
     { category: 'Accounting, Compliance & Taxation Services', subCategory: 'Accounting-as-a-Service (AaaS)', title: 'Cloud Accounting (Tally Prime, Zoho Books, QuickBooks, Marg)', slug: 'cloud-accounting', price: 2999 },
@@ -146,65 +348,13 @@ export const MENU_ITEMS_LIST = [
     { category: 'Branding & Industrial Setup', subCategory: 'Industrial Support', title: 'Industry Selection & Feasibility Analysis', slug: 'industrial-feasibility-analysis', price: 14999 }
 ];
 
-export const generateConfig = (item) => {
-    return {
-        pageId: item.slug,
-        title: item.title,
-        description: `Professional ${item.title} services in India. 100% online legal execution with verified CA/CS oversight and statutory compliance guarantee.`,
-        iconKey: 'Briefcase',
-        hero: {
-            title: `${item.title} in {city}`,
-            subtitle: `Fast, transparent, 100% online ${item.title} with dedicated CA/CS assistance across {city}, {state}.`,
-            badgeText: 'GOVT & STATUTORY VERIFIED',
-            consultationPrice: 499
-        },
-        stats: [
-            { value: '3-5 Days', label: 'TURNAROUND' },
-            { value: '100%', label: 'STATUTORY COMPLIANT' },
-            { value: '4.9/5', label: 'CLIENT RATING' },
-            { value: 'CA/CS', label: 'VERIFIED' }
-        ],
-        packages: [
-            {
-                id: `${item.slug}-basic`,
-                name: 'Standard Package',
-                price: item.price,
-                isPopular: true,
-                description: `Complete ${item.title} execution with official filings and verification.`,
-                features: ['Document Review & Vetting', 'Online Government Portal Submission', 'Statutory Certificate / Return Filing', 'Dedicated Relationship Manager', 'Zero Penalty Guarantee'],
-                creativeButtonText: `Select ${item.title.split(' ')[0]}`
-            },
-            {
-                id: `${item.slug}-premium`,
-                name: 'Premium Enterprise Retainer',
-                price: item.price * 2,
-                description: `End-to-end priority compliance, annual renewals, and legal consultation.`,
-                features: ['Everything in Standard', 'Priority 24-48 Hr Fast-Track', '1-Year Annual Compliance Support', 'Senior Partner Legal Advisory', 'Direct WhatsApp Access'],
-                creativeButtonText: 'Select Premium Retainer'
-            }
-        ],
-        steps: [
-            { number: '01', title: 'KYC & Data Upload', desc: 'Securely submit required business details and identity documents.', badge: 'Step 1' },
-            { number: '02', title: 'Legal & Dept Drafting', desc: 'Practicing Chartered Accountants draft and verify applications.', badge: 'Step 2' },
-            { number: '03', title: 'Statutory Portal Filing', desc: 'Application filed on official central or state government portals.', badge: 'Step 3' },
-            { number: '04', title: 'Certificate Delivery', desc: 'Official government certificate and filing receipt delivered digitally.', badge: 'Step 4' }
-        ],
-        guide: {
-            title: `Guide to ${item.title}`,
-            overview: `Professional ${item.title} ensures strict compliance with Indian statutory authorities while saving valuable business time.`,
-            checklistTitle: 'Required Documents',
-            checklist: ['PAN Card of Business / Applicant', 'Aadhaar Card linked with Mobile', 'Registered Business Address Proof', 'Bank Statement / Cancelled Cheque']
-        },
-        faqs: [
-            { q: `How long does the ${item.title} process take?`, a: 'Standard turnaround is 3 to 5 business days subject to departmental approval queues.' },
-            { q: 'Can I adjust the consultation fee against the final package?', a: 'Yes! If you book an expert CA/CS consultation at ₹499, the full ₹499 is credited and deducted when you upgrade to any full registration plan.' }
-        ],
-        popularSearches: [item.title, `${item.title} Online`, `${item.title} Fees in India`, `${item.title} Consultant`]
-    };
-};
-
 export const EXTENDED_SERVICE_CONFIGS = {};
 
 MENU_ITEMS_LIST.forEach(item => {
-    EXTENDED_SERVICE_CONFIGS[item.slug] = generateConfig(item);
+    const config = generateConfig(item);
+    EXTENDED_SERVICE_CONFIGS[item.slug] = config;
+    // Also map title variations so exact names resolve directly
+    EXTENDED_SERVICE_CONFIGS[slugify(item.title)] = config;
+    EXTENDED_SERVICE_CONFIGS[encodeURIComponent(item.title)] = config;
+    EXTENDED_SERVICE_CONFIGS[item.title.toLowerCase()] = config;
 });

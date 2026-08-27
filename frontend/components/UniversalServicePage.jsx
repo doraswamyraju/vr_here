@@ -44,36 +44,6 @@ const DEFAULT_LOGOS = [
   { name: 'HubSpot Ecosystem', iconKey: 'Award', colorClass: 'text-orange-600' }
 ];
 
-const DEFAULT_REVIEWS = [
-  {
-    name: "Vikram Malhotra",
-    company: "Trident Tech Solutions Pvt Ltd",
-    avatar: "VM",
-    rating: 5,
-    date: "14 May 2026",
-    text: "The service execution was amazingly fast! We paid the consultation fee of 499, and it was fully adjusted in our final payment. Everything was delivered transparently without any follow-ups.",
-    verified: true
-  },
-  {
-    name: "Ananya Iyer",
-    company: "Aura CleanTech Solutions",
-    avatar: "AI",
-    rating: 5,
-    date: "28 April 2026",
-    text: "Excellent service. The online platform was super simple to upload documents, and their CA walked us through the statutory rules which saved us from rejection. Highly recommended!",
-    verified: true
-  },
-  {
-    name: "Ritesh Deshmukh",
-    company: "Pixel Labs Ventures",
-    avatar: "RD",
-    rating: 5,
-    date: "03 May 2026",
-    text: "Top-notch professionalism. I got my registrations and statutory compliance set up with end-to-end guidance. Practicing CAs delivered everything on time.",
-    verified: true
-  }
-];
-
 const UniversalServicePage = ({ config, pageId: propPageId }) => {
   const navigate = useNavigate();
   const pageId = propPageId || config?.pageId || 'service';
@@ -92,11 +62,13 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
   const [savingOverlay, setSavingOverlay] = useState(false);
   const [pageHtmlContent, setPageHtmlContent] = useState('');
 
+  const serviceTitle = pageConfig?.title || config?.title || 'Professional Service';
+
   useEffect(() => {
-    // 1. Send Category A Lead Telemetry (PAGE_VIEW / Warm Lead)
+    // Category A Lead Telemetry
     trackLead({
       serviceId: pageId,
-      serviceName: config?.title || 'VR Here Legal Service',
+      serviceName: serviceTitle,
       category: 'PAGE_VIEW',
       source: 'web'
     });
@@ -126,34 +98,99 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
   }, [pageConfig, loading]);
 
   const activeHero = pageConfig?.hero || config?.hero || {
-    title: config?.title || "Legal & Compliance Service Online",
-    subtitle: "Fast, transparent, 100% online filings with dedicated CA/CS assistance.",
-    badgeText: "GOVT & ISO VERIFIED",
+    title: `${serviceTitle} Online in {city}`,
+    subtitle: `Fast, transparent, 100% online ${serviceTitle} with dedicated CA/CS assistance across {city}, {state}.`,
+    badgeText: "GOVT & STATUTORY VERIFIED",
     consultationPrice: 499
   };
 
   const activeStats = pageConfig?.stats || config?.stats || [
-    { value: "7 Days", label: "AVG. TURNAROUND" },
-    { value: "5,000+", label: "HAPPY FOUNDERS" },
+    { value: "3-5 Days", label: "AVG. TURNAROUND" },
+    { value: "5,000+", label: "HAPPY CLIENTS" },
     { value: "4.9/5", label: "GOOGLE RATING" },
     { value: "100%", label: "ONLINE PROCESS" }
   ];
 
   const activeLogos = pageConfig?.logos || config?.logos || DEFAULT_LOGOS;
-  const activeReviews = pageConfig?.reviews || config?.reviews || DEFAULT_REVIEWS;
-  const activePackages = pageConfig?.packages || config?.packages || [];
-  const activeSteps = pageConfig?.steps || config?.steps || [
-    { number: '01', title: 'Document Collection', desc: 'Submit KYC documents online in our secure customer portal.', badge: 'Step 1' },
-    { number: '02', title: 'Legal & Dept Filing', desc: 'Expert search and formal government portal application.', badge: 'Step 2' },
-    { number: '03', title: 'Drafting & Verification', desc: 'Statutory deed / return review by practicing CA/CS.', badge: 'Step 3' },
-    { number: '04', title: 'Certificate Delivery', desc: 'Official certificate & compliance kit issued.', badge: 'Step 4' }
+
+  const activeHeroGraphicItems = pageConfig?.heroGraphicItems || pageConfig?.hero?.inclusions || config?.heroGraphicItems || [
+    'Dedicated CA/CS Specialist Assigned',
+    'Government & Statutory Portal Submission',
+    'Digital Document Verification & Quality Audit',
+    'Official Filing Receipts / Certificate Delivered',
+    'Lifetime Compliance & Advisory Support'
   ];
-  const activeGuide = pageConfig?.guide || config?.guide || {};
+
+  const activeReviews = pageConfig?.reviews || config?.reviews || [
+    {
+      name: "Rajesh Kulkarni",
+      company: "Kulkarni Enterprises",
+      avatar: "RK",
+      rating: 5,
+      date: "12 June 2026",
+      text: `VR Here handled our ${serviceTitle} with supreme professionalism. The team delivered all documents on schedule with zero hassles.`,
+      verified: true
+    },
+    {
+      name: "Pooja Sharma",
+      company: "Apex Tech Innovations",
+      avatar: "PS",
+      rating: 5,
+      date: "25 May 2026",
+      text: `Very fast and transparent service for ${serviceTitle}. Their CA guided us step-by-step through the requirements. Highly recommended!`,
+      verified: true
+    },
+    {
+      name: "Suresh Menon",
+      company: "Menon Logistics & Supply",
+      avatar: "SM",
+      rating: 5,
+      date: "04 July 2026",
+      text: `Top-tier customer support. We got our ${serviceTitle} completed without any office visits. Superb experience!`,
+      verified: true
+    }
+  ];
+
+  const activePackages = pageConfig?.packages || config?.packages || [];
+  
+  const activeSteps = pageConfig?.steps || config?.steps || [
+    { number: '01', title: 'KYC & Data Upload', desc: 'Securely submit required business details and identity documents.', badge: 'Step 1' },
+    { number: '02', title: 'Legal & Dept Drafting', desc: 'Practicing Chartered Accountants draft and verify applications.', badge: 'Step 2' },
+    { number: '03', title: 'Statutory Portal Filing', desc: 'Application filed on official central or state government portals.', badge: 'Step 3' },
+    { number: '04', title: 'Delivery & Advisory', desc: 'Official government certificate and filing receipt delivered digitally.', badge: 'Step 4' }
+  ];
+
+  const activeWhyChoose = pageConfig?.whyChoose || config?.whyChoose || {
+    title: `Why Choose VR Here for ${serviceTitle}?`,
+    subtitle: `Get certified legal execution, dedicated financial modeling, and end-to-end statutory assistance from senior chartered accountants.`,
+    benefits: [
+      { t: "100% Online & Paperless", d: `Complete ${serviceTitle} from the comfort of your home or office.` },
+      { t: "Verified CA/CS Oversight", d: "Every document and application is verified by senior practitioners." },
+      { t: "Zero Penalty Guarantee", d: "Timely filing ensuring complete statutory compliance and protection." },
+      { t: "Transparent Pricing", d: "Clear itemized billing with no hidden fees or surprise charges." }
+    ],
+    requirements: [
+      "PAN Card of Business / Applicant",
+      "Aadhaar Card linked with active Mobile No.",
+      "Registered Address Proof (Electricity Bill / Rent Agreement)",
+      "Bank Account Statement / Cancelled Cheque"
+    ]
+  };
+
+  const activeGuide = pageConfig?.guide || config?.guide || {
+    title: `Guide to ${serviceTitle}`,
+    overview: `Professional ${serviceTitle} ensures strict compliance with Indian statutory authorities while saving valuable business time.`,
+    checklistTitle: 'Required Documents',
+    checklist: activeWhyChoose.requirements || ['PAN Card of Business / Applicant', 'Aadhaar Card linked with Mobile', 'Registered Business Address Proof', 'Bank Statement / Cancelled Cheque']
+  };
+
   const activeFaqs = pageConfig?.faqs || config?.faqs || [
-    { q: 'How long does the entire process take?', a: 'Standard turnaround is 3 to 7 business days subject to government department approval queues.' },
+    { q: `How long does the ${serviceTitle} process take?`, a: 'Standard turnaround is 3 to 5 business days subject to departmental approval queues.' },
     { q: 'Can I adjust the consultation fee against the final package?', a: 'Yes! If you book an expert CA/CS consultation at ₹499, the full ₹499 is credited and deducted when you upgrade to any full registration plan.' }
   ];
-  const activePopularSearches = pageConfig?.popularSearches || config?.popularSearches || [pageId, 'Online Legal Services', 'CA Support India', 'Statutory Compliance'];
+
+  const activePopularSearches = pageConfig?.popularSearches || config?.popularSearches || [serviceTitle, `${serviceTitle} Online`, `${serviceTitle} Fees in India`, `${serviceTitle} Consultant`];
+  
   const activeRelatedServices = config?.relatedServices || [
     { title: "Private Limited Company", price: "₹6,499", desc: "Corporate incorporation with full MCA, PAN, TAN and bank setup.", link: "/pvt-ltd-registration" },
     { title: "GST Registration & Filing", price: "₹2,569", desc: "GSTIN registration with monthly compliance filing.", link: "/gst-registration" },
@@ -165,7 +202,7 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
     setSelectedPlan(pkg);
     trackLead({
       serviceId: pageId,
-      serviceName: pageConfig?.title || config?.title || 'Service',
+      serviceName: serviceTitle,
       packageName: pkg.name,
       price: pkg.price,
       category: 'PACKAGE_CLICK',
@@ -175,14 +212,14 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
     if (userInfo && userInfo.token) {
       launchRazorpayCheckout({
         amount: pkg.price,
-        serviceName: pageConfig?.title || config?.title || 'Service',
+        serviceName: serviceTitle,
         packageName: pkg.name,
         customerName: userInfo.name || 'Client',
         customerEmail: userInfo.email || 'client@vrhere.in',
         customerPhone: userInfo.phone || '',
         onSuccess: (paymentId, orderId, signature) => {
           showPaymentSuccessPopup({
-            serviceName: pageConfig?.title || config?.title || 'Service',
+            serviceName: serviceTitle,
             packageName: pkg.name,
             amount: pkg.price,
             paymentId: paymentId
@@ -197,7 +234,7 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
   const handleConsultationBook = () => {
     trackLead({
       serviceId: pageId,
-      serviceName: pageConfig?.title || config?.title || 'Service',
+      serviceName: serviceTitle,
       packageName: 'Expert Consultation',
       price: activeHero.consultationPrice || 499,
       category: 'PACKAGE_CLICK',
@@ -214,7 +251,7 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
           <div className="flex items-center gap-3">
             <span className="font-bold text-amber-400 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Admin Mode: {pageId}
+              Admin Mode: {serviceTitle} ({pageId})
             </span>
             <button
               onClick={() => setIsCustomizerOpen(true)}
@@ -291,15 +328,15 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
               <div className="relative z-10 bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 transform rotate-1 hover:rotate-0 transition duration-500">
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900">{config?.title || "Registration Package"}</h3>
-                    <p className="text-slate-500 text-xs font-semibold mt-0.5">All-inclusive online execution</p>
+                    <h3 className="text-xl font-bold text-slate-900">{serviceTitle}</h3>
+                    <p className="text-slate-500 text-xs font-semibold mt-0.5">All-inclusive professional execution</p>
                   </div>
                   <div className="bg-emerald-50 text-emerald-700 font-black px-3 py-1 rounded-full text-[10px] uppercase tracking-wider border border-emerald-200">
-                    MCA & GOVT VERIFIED
+                    VERIFIED & COMPLIANT
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {['Dedicated CA/CS Specialist Assigned', 'Government Portal Drafting & Submission', 'Digital Signature & KYC Verification', 'Official Registration Certificate & Kit', 'Lifetime Compliance Support'].map((item, i) => (
+                  {activeHeroGraphicItems.map((item, i) => (
                     <div key={i} className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
                       <CheckCircle className="w-4 h-4 text-red-600 mr-3 shrink-0" />
                       <span className="font-semibold text-xs text-slate-700">{item}</span>
@@ -367,7 +404,7 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
                 Transparent Pricing
               </span>
               <h2 className="text-3xl sm:text-5xl font-black text-slate-900 mt-4 tracking-tight">
-                Select Your Registration Plan
+                Select Your Plan
               </h2>
               <p className="text-base text-slate-600 mt-2 font-medium">
                 No hidden costs. 100% money-back compliance guarantee.
@@ -401,7 +438,7 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-2 leading-relaxed font-medium">
-                        {pkg.description || 'Full statutory registration & compliance certificate.'}
+                        {pkg.description || `Full statutory ${serviceTitle} execution.`}
                       </p>
 
                       <hr className="my-6 border-slate-100" />
@@ -482,13 +519,13 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-20">
                 <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3 py-1.5 rounded-full font-bold">
-                  Incorporation Flow
+                  Execution Flow
                 </span>
                 <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mt-4 tracking-tight">
                   Redesigned, Effortless Steps
                 </h2>
                 <p className="text-base text-slate-600 mt-2 font-medium">
-                  100% online registration managed by senior legal practitioners.
+                  100% online process managed by senior legal & financial practitioners.
                 </p>
               </div>
 
@@ -515,18 +552,13 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
           <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-12 items-center">
             <div className="md:w-1/2">
               <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mb-6 tracking-tight">
-                Why Choose VR Here?
+                {activeWhyChoose.title || `Why Choose VR Here for ${serviceTitle}?`}
               </h2>
               <p className="text-slate-600 mb-8 leading-relaxed font-medium text-sm">
-                Get certified legal execution, direct CA/CS access, and lifetime compliance tracking in one unified portal.
+                {activeWhyChoose.subtitle || `Get certified legal execution, dedicated financial modeling, and end-to-end statutory assistance from senior chartered accountants.`}
               </p>
               <div className="grid grid-cols-1 gap-4">
-                {[
-                  { t: "100% Online & Paperless", d: "Upload documents from anywhere in India; no physical office visits." },
-                  { t: "Transparent Pricing", d: "Zero hidden charges; government fees and taxes clearly itemized." },
-                  { t: "Dedicated CA/CS Support", d: "Direct relationship manager and senior chartered accountant guidance." },
-                  { t: "On-Time Compliance Guarantee", d: "Zero penalty guarantee on statutory filings and deadline submissions." }
-                ].map((item, i) => (
+                {(activeWhyChoose.benefits || []).map((item, i) => (
                   <div key={i} className="flex items-start p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
                     <CheckCircle2 className="w-5 h-5 text-emerald-500 mr-4 shrink-0 mt-0.5" />
                     <div>
@@ -539,15 +571,15 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
             </div>
             <div className="md:w-1/2">
               <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200 shadow-xs">
-                <h3 className="text-xl font-black text-slate-900 mb-6 text-center">Minimum Requirements</h3>
+                <h3 className="text-xl font-black text-slate-900 mb-6 text-center">Required Checklist</h3>
                 <ul className="space-y-3.5">
-                  {[
+                  {(activeWhyChoose.requirements || activeGuide.checklist || [
                     "PAN & Aadhaar Card of Applicant / Directors",
                     "Registered Business Address Proof (Electricity Bill / Rent Deed)",
                     "Digital Signature Certificate (Class 3 DSC) for online filings",
                     "Active Mobile Number & Email linked with Aadhaar",
                     "Bank Account Details with Cancelled Cheque"
-                  ].map((req, i) => (
+                  ]).map((req, i) => (
                     <li key={i} className="flex items-center text-slate-700 bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs text-xs font-bold">
                       <UsersIcon className="w-4 h-4 text-red-600 mr-3 shrink-0" /> {req}
                     </li>
@@ -574,7 +606,7 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
                 {/* Column 1: Guide */}
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-4">
                   <h3 className="text-lg font-black text-slate-900 border-b-2 border-red-500 pb-2">
-                    {activeGuide.title || 'Service Overview & Documents'}
+                    {activeGuide.title || `Guide to ${serviceTitle}`}
                   </h3>
                   {activeGuide.overview && (
                     <p className="text-xs text-slate-600 leading-relaxed font-semibold">
@@ -703,7 +735,7 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
         <ConsultationPaymentModal
           isOpen={showConsultationModal}
           onClose={() => setShowConsultationModal(false)}
-          defaultService={pageConfig?.title || config?.title || 'Service'}
+          defaultService={serviceTitle}
           price={activeHero.consultationPrice || 499}
         />
       )}
