@@ -46,6 +46,7 @@ fun CustomerServicesTab(
 
     val liveServicesMap = remember {
         mapOf(
+            // Corporate Entities
             "Private Limited Company" to "https://vrhere.in/pvt-ltd-registration",
             "Public Limited Company" to "https://vrhere.in/public-limited-company",
             "LLP Registration" to "https://vrhere.in/llp-registration",
@@ -55,12 +56,60 @@ fun CustomerServicesTab(
             "Section 8 Company (NGO)" to "https://vrhere.in/section-8-company",
             "One Person Company" to "https://vrhere.in/one-person-company",
             "Society / Trust Registration" to "https://vrhere.in/society-trust-registration",
+            
+            // Tax & Accounting
+            "Cloud Accounting (Tally Prime, Zoho Books, QuickBooks, Marg)" to "https://vrhere.in/cloud-accounting",
+            "GST Return Filing" to "https://vrhere.in/gst-return-filing",
+            "Payroll Management (Payslips, Leave, Form 16)" to "https://vrhere.in/payroll-management",
+            "Professional Tax (PT) Returns" to "https://vrhere.in/professional-tax",
+            "EPF / ESI Returns" to "https://vrhere.in/epf-esi-returns",
+            "TDS/TCS Filing" to "https://vrhere.in/tds-tcs-filing",
+            "Monthly MIS Reports" to "https://vrhere.in/mis-reporting",
+            "Internal Audit" to "https://vrhere.in/audit-services",
+            "GST Audit" to "https://vrhere.in/audit-services",
             "GST Registration" to "https://vrhere.in/gst-registration",
             "Income Tax Return Filing (ITR 1-7)" to "https://vrhere.in/income-tax-return",
+            "12AA/80G Certificates" to "https://vrhere.in/12aa-80g-certificates",
             "Companies Compliance Scheme 2026 (CCFS)" to "https://vrhere.in/compliance-scheme-2026",
-            "Cloud Accounting (Tally Prime, Zoho Books, QuickBooks, Marg)" to "https://vrhere.in/accounting-services",
-            "GST Return Filing" to "https://vrhere.in/accounting-services",
-            "Payroll Management (Payslips, Leave, Form 16)" to "https://vrhere.in/accounting-services"
+
+            // ISO & Quality
+            "ISO 9001:2015 - Quality Management" to "https://vrhere.in/iso-9001-certification",
+            "ISO 14001:2015 - Environmental Management" to "https://vrhere.in/iso-14001-certification",
+            "ISO 45001:2018 - Occupational Health & Safety" to "https://vrhere.in/iso-45001-certification",
+            "ISO 22000:2018 - Food Safety" to "https://vrhere.in/iso-22000-certification",
+            "ISO 27001:2022 - Information Security" to "https://vrhere.in/iso-27001-certification",
+            "GMP / HACCP" to "https://vrhere.in/gmp-haccp-certification",
+            "CE Marking" to "https://vrhere.in/ce-marking-certification",
+            "ISI / BIS Certification" to "https://vrhere.in/isi-bis-certification",
+            "Halal Certification" to "https://vrhere.in/halal-kosher-certification",
+            "Kosher Certification" to "https://vrhere.in/halal-kosher-certification",
+
+            // Licensing & Government
+            "Udyam Registration (MSME)" to "https://vrhere.in/udyam-registration",
+            "Shops & Establishment Registration" to "https://vrhere.in/shops-establishment-license",
+            "Import Export Code (IEC)" to "https://vrhere.in/import-export-code",
+            "Startup India Registration" to "https://vrhere.in/startup-india-registration",
+            "FSSAI Registration / License" to "https://vrhere.in/fssai-license",
+            "Trade License" to "https://vrhere.in/trade-license",
+            "Labour / Contract Labour License" to "https://vrhere.in/labour-license",
+            "Pollution Control Board NOC / CFE / CFO" to "https://vrhere.in/pollution-noc",
+            "ROC Annual Filings (AOC-4, MGT-7)" to "https://vrhere.in/roc-annual-filings",
+            "Director KYC (DIR-3 KYC)" to "https://vrhere.in/director-kyc",
+            "Digital Signatures (DSC Class 3)" to "https://vrhere.in/dsc-registration",
+
+            // MSME & Schemes
+            "GeM Seller Registration" to "https://vrhere.in/gem-registration",
+            "TReDS Registration" to "https://vrhere.in/treds-registration",
+            "RERA Registration" to "https://vrhere.in/rera-registration",
+            "DPR Preparation" to "https://vrhere.in/dpr-cma-preparation",
+            "CMA Data Preparation" to "https://vrhere.in/dpr-cma-preparation",
+            "PMEGP Loan Support" to "https://vrhere.in/msme-subsidies-loans",
+            "CGTMSE Loan Support" to "https://vrhere.in/msme-subsidies-loans",
+            "Mudra Loans" to "https://vrhere.in/msme-subsidies-loans",
+
+            // Branding & Setup
+            "Trademark Registration" to "https://vrhere.in/trademark-registration",
+            "Machinery Sourcing" to "https://vrhere.in/machinery-sourcing"
         )
     }
 

@@ -9,18 +9,65 @@ import {
 /* --- MENU DATA WITH LINKS --- */
 export const getServiceLink = (serviceName) => {
     const normalized = String(serviceName || '').toLowerCase();
+    
+    // Category 1: Accounting, Compliance & Taxation
+    if (normalized.includes('cloud accounting') || normalized.includes('tally') || normalized.includes('zoho books')) return '/cloud-accounting';
+    if (normalized.includes('gst return')) return '/gst-return-filing';
+    if (normalized.includes('payroll') || normalized.includes('form 16') || normalized.includes('payslip')) return '/payroll-management';
+    if (normalized.includes('professional tax') || normalized.includes('pt returns') || normalized.includes('ptec')) return '/professional-tax';
+    if (normalized.includes('epf') || normalized.includes('esi') || normalized.includes('provident fund')) return '/epf-esi-returns';
+    if (normalized.includes('tds') || normalized.includes('tcs') || normalized.includes('26q') || normalized.includes('24q')) return '/tds-tcs-filing';
+    if (normalized.includes('mis') || normalized.includes('expense tracking') || normalized.includes('inventory')) return '/mis-reporting';
+    if (normalized.includes('audit')) return '/audit-services';
+    if (normalized.includes('12aa') || normalized.includes('80g') || normalized.includes('exemption certificate')) return '/12aa-80g-certificates';
+    if (normalized.includes('compliance scheme 2026') || normalized.includes('ccfs')) return '/compliance-scheme-2026';
+    if (normalized.includes('income tax')) return '/income-tax-return';
+    if (normalized.includes('accounting')) return '/cloud-accounting';
+
+    // Category 2: ISO & Certifications
+    if (normalized.includes('9001')) return '/iso-9001-certification';
+    if (normalized.includes('14001')) return '/iso-14001-certification';
+    if (normalized.includes('45001')) return '/iso-45001-certification';
+    if (normalized.includes('22000') || normalized.includes('food safety')) return '/iso-22000-certification';
+    if (normalized.includes('27001') || normalized.includes('information security') || normalized.includes('cybersecurity')) return '/iso-27001-certification';
+    if (normalized.includes('gmp') || normalized.includes('haccp')) return '/gmp-haccp-certification';
+    if (normalized.includes('ce marking') || normalized.includes('ce mark')) return '/ce-marking-certification';
+    if (normalized.includes('isi') || normalized.includes('bis')) return '/isi-bis-certification';
+    if (normalized.includes('halal') || normalized.includes('kosher')) return '/halal-kosher-certification';
+
+    // Category 3: Corporate Registrations, Licensing & ROC
     if (normalized.includes('public limited')) return '/public-limited-company';
-    if (normalized.includes('private limited')) return '/pvt-ltd-registration';
+    if (normalized.includes('private limited') || normalized.includes('pvt ltd')) return '/pvt-ltd-registration';
     if (normalized.includes('llp')) return '/llp-registration';
     if (normalized.includes('partnership')) return '/partnership-firm-registration';
     if (normalized.includes('proprietorship')) return '/proprietorship-setup';
-    if (normalized.includes('section 8') || normalized.includes('ngo')) return '/section-8-company';
+    if (normalized.includes('section 8') || normalized.includes('ngo') || normalized.includes('darpan')) return '/section-8-company';
     if (normalized.includes('one person company') || normalized.includes('opc')) return '/one-person-company';
     if (normalized.includes('society') || normalized.includes('trust')) return '/society-trust-registration';
-    if (normalized.includes('gst registration') || normalized.includes('gst return')) return '/gst-registration';
-    if (normalized.includes('income tax')) return '/income-tax-return';
-    if (normalized.includes('compliance scheme 2026') || normalized.includes('ccfs')) return '/compliance-scheme-2026';
-    if (normalized.includes('accounting')) return '/accounting-services';
+    if (normalized.includes('udyam') || normalized.includes('msme registration')) return '/udyam-registration';
+    if (normalized.includes('shops') || normalized.includes('gumasta')) return '/shops-establishment-license';
+    if (normalized.includes('import export') || normalized.includes('iec')) return '/import-export-code';
+    if (normalized.includes('startup india') || normalized.includes('dpiit')) return '/startup-india-registration';
+    if (normalized.includes('fssai') || normalized.includes('food license')) return '/fssai-license';
+    if (normalized.includes('trade license')) return '/trade-license';
+    if (normalized.includes('labour') || normalized.includes('contract labour')) return '/labour-license';
+    if (normalized.includes('pollution') || normalized.includes('noc') || normalized.includes('spcb') || normalized.includes('cte') || normalized.includes('cto')) return '/pollution-noc';
+    if (normalized.includes('roc') || normalized.includes('aoc-4') || normalized.includes('mgt-7') || normalized.includes('annual filing')) return '/roc-annual-filings';
+    if (normalized.includes('dir-3') || normalized.includes('director kyc') || normalized.includes('directorship')) return '/director-kyc';
+    if (normalized.includes('dsc') || normalized.includes('digital signature')) return '/dsc-registration';
+    if (normalized.includes('gst registration')) return '/gst-registration';
+
+    // Category 4: Government & MSME
+    if (normalized.includes('gem')) return '/gem-registration';
+    if (normalized.includes('treds') || normalized.includes('invoice discounting')) return '/treds-registration';
+    if (normalized.includes('rera')) return '/rera-registration';
+    if (normalized.includes('dpr') || normalized.includes('cma') || normalized.includes('bank loan')) return '/dpr-cma-preparation';
+    if (normalized.includes('pmegp') || normalized.includes('subsidy') || normalized.includes('mudra') || normalized.includes('pmfme') || normalized.includes('cgtmse')) return '/msme-subsidies-loans';
+
+    // Category 5: Branding & Industry Setup
+    if (normalized.includes('trademark') || normalized.includes('brand') || normalized.includes('logo')) return '/trademark-registration';
+    if (normalized.includes('machinery') || normalized.includes('turnkey') || normalized.includes('plant') || normalized.includes('factory setup')) return '/machinery-sourcing';
+
     return `/contact?service=${encodeURIComponent(serviceName)}`;
 };
 

@@ -41,7 +41,8 @@ export const trackLeadEvent = async ({
             { headers }
         );
     } catch (err) {
-        // Non-blocking telemetry
         console.debug('Lead telemetry background sync:', err?.message);
     }
 };
+
+export const trackLead = trackLeadEvent;

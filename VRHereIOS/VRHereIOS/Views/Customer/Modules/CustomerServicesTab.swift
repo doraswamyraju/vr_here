@@ -32,7 +32,7 @@ struct CustomerServicesTab: View {
     ]
     
     private let allServicesList: [ServiceItemModel] = [
-        // Corporate Entity Registrations
+        // 1. Corporate Entity Registrations
         ServiceItemModel(
             id: "pvt-ltd-registration",
             title: "Private Limited Company",
@@ -130,18 +130,114 @@ struct CustomerServicesTab: View {
             targetUrl: "https://vrhere.in/proprietorship-setup"
         ),
 
-        // Tax & Accounting
+        // 2. Tax & Accounting Services
         ServiceItemModel(
-            id: "gst-registration",
-            title: "GST Registration",
+            id: "cloud-accounting",
+            title: "Cloud Accounting (Tally, Zoho Books)",
             categoryId: "TAX",
             categoryName: "Tax & Accounting",
-            iconName: "percent",
+            iconName: "chart.pie.fill",
+            colorTheme: Color(red: 14/255, green: 165/255, blue: 233/255),
+            turnaround: "⚡ Monthly Retainer",
+            startingPrice: "From ₹2,999/mo",
+            trustBadge: "Monthly MIS",
+            targetUrl: "https://vrhere.in/cloud-accounting"
+        ),
+        ServiceItemModel(
+            id: "gst-return-filing",
+            title: "GST Return Filing (GSTR 1, 3B, 9)",
+            categoryId: "TAX",
+            categoryName: "Tax & Accounting",
+            iconName: "arrow.triangle.2.circlepath.doc.on.clipboard",
             colorTheme: Color(red: 16/255, green: 185/255, blue: 129/255),
-            turnaround: "⚡ 3-5 Days",
-            startingPrice: "From ₹2,569",
-            trustBadge: "GST Portal",
-            targetUrl: "https://vrhere.in/gst-registration"
+            turnaround: "⚡ Monthly / Qtr",
+            startingPrice: "From ₹499/mo",
+            trustBadge: "Zero Penalty",
+            targetUrl: "https://vrhere.in/gst-return-filing"
+        ),
+        ServiceItemModel(
+            id: "payroll-management",
+            title: "Payroll Management & Payslips",
+            categoryId: "TAX",
+            categoryName: "Tax & Accounting",
+            iconName: "person.text.rectangle",
+            colorTheme: Color(red: 245/255, green: 158/255, blue: 11/255),
+            turnaround: "⚡ Monthly Cycle",
+            startingPrice: "From ₹2,499/mo",
+            trustBadge: "PF/ESI Compliant",
+            targetUrl: "https://vrhere.in/payroll-management"
+        ),
+        ServiceItemModel(
+            id: "professional-tax",
+            title: "Professional Tax (PTEC / PTRC)",
+            categoryId: "TAX",
+            categoryName: "Tax & Accounting",
+            iconName: "building.2.crop.circle",
+            colorTheme: Color(red: 59/255, green: 130/255, blue: 246/255),
+            turnaround: "⚡ 2-3 Days",
+            startingPrice: "From ₹1,999",
+            trustBadge: "Commercial Taxes",
+            targetUrl: "https://vrhere.in/professional-tax"
+        ),
+        ServiceItemModel(
+            id: "epf-esi-returns",
+            title: "EPF & ESIC Registration & ECR Filing",
+            categoryId: "TAX",
+            categoryName: "Tax & Accounting",
+            iconName: "person.crop.square.filled.and.at.rectangle",
+            colorTheme: Color(red: 16/255, green: 185/255, blue: 129/255),
+            turnaround: "⚡ 2-3 Days",
+            startingPrice: "From ₹1,999",
+            trustBadge: "EPFO & ESIC",
+            targetUrl: "https://vrhere.in/epf-esi-returns"
+        ),
+        ServiceItemModel(
+            id: "tds-tcs-filing",
+            title: "TDS / TCS Return Filing (24Q, 26Q)",
+            categoryId: "TAX",
+            categoryName: "Tax & Accounting",
+            iconName: "doc.text.fill",
+            colorTheme: Color(red: 168/255, green: 85/255, blue: 247/255),
+            turnaround: "⚡ Quarterly",
+            startingPrice: "From ₹1,999",
+            trustBadge: "TRACES Form 16",
+            targetUrl: "https://vrhere.in/tds-tcs-filing"
+        ),
+        ServiceItemModel(
+            id: "mis-reporting",
+            title: "Executive MIS & Financial Dashboards",
+            categoryId: "TAX",
+            categoryName: "Tax & Accounting",
+            iconName: "chart.bar.xaxis",
+            colorTheme: Color(red: 99/255, green: 102/255, blue: 241/255),
+            turnaround: "⚡ Monthly Delivery",
+            startingPrice: "From ₹3,999",
+            trustBadge: "Virtual CFO",
+            targetUrl: "https://vrhere.in/mis-reporting"
+        ),
+        ServiceItemModel(
+            id: "audit-services",
+            title: "Internal, GST & Tax Audits (44AB)",
+            categoryId: "TAX",
+            categoryName: "Tax & Accounting",
+            iconName: "checkmark.shield.fill",
+            colorTheme: Color(red: 239/255, green: 68/255, blue: 68/255),
+            turnaround: "⚡ Audit Cycle",
+            startingPrice: "From ₹9,999",
+            trustBadge: "ICAI CA Practice",
+            targetUrl: "https://vrhere.in/audit-services"
+        ),
+        ServiceItemModel(
+            id: "12aa-80g-certificates",
+            title: "12A & 80G Tax Exemption for NGOs",
+            categoryId: "TAX",
+            categoryName: "Tax & Accounting",
+            iconName: "gift.fill",
+            colorTheme: Color(red: 234/255, green: 88/255, blue: 12/255),
+            turnaround: "⚡ 5-7 Days",
+            startingPrice: "From ₹6,999",
+            trustBadge: "Income Tax Exempt",
+            targetUrl: "https://vrhere.in/12aa-80g-certificates"
         ),
         ServiceItemModel(
             id: "income-tax-return",
@@ -155,56 +251,8 @@ struct CustomerServicesTab: View {
             trustBadge: "CA Assisted",
             targetUrl: "https://vrhere.in/income-tax-return"
         ),
-        ServiceItemModel(
-            id: "compliance-scheme-2026",
-            title: "Companies Compliance Scheme 2026",
-            categoryId: "TAX",
-            categoryName: "Tax & Accounting",
-            iconName: "shield.checkerboard",
-            colorTheme: Color(red: 168/255, green: 85/255, blue: 247/255),
-            turnaround: "⚡ Active Scheme",
-            startingPrice: "From ₹4,999",
-            trustBadge: "Penalty Amnesty",
-            targetUrl: "https://vrhere.in/compliance-scheme-2026"
-        ),
-        ServiceItemModel(
-            id: "accounting-services",
-            title: "Cloud Accounting (Tally, Zoho Books)",
-            categoryId: "TAX",
-            categoryName: "Tax & Accounting",
-            iconName: "chart.pie.fill",
-            colorTheme: Color(red: 14/255, green: 165/255, blue: 233/255),
-            turnaround: "⚡ Monthly Retainer",
-            startingPrice: "From ₹3,999/mo",
-            trustBadge: "Monthly MIS",
-            targetUrl: "https://vrhere.in/accounting-services"
-        ),
-        ServiceItemModel(
-            id: "gst-return-filing",
-            title: "GST Return Filing (GSTR 1 & 3B)",
-            categoryId: "TAX",
-            categoryName: "Tax & Accounting",
-            iconName: "arrow.triangle.2.circlepath.doc.on.clipboard",
-            colorTheme: Color(red: 16/255, green: 185/255, blue: 129/255),
-            turnaround: "⚡ Monthly / Qtr",
-            startingPrice: "From ₹999/mo",
-            trustBadge: "Zero Penalty",
-            targetUrl: "https://vrhere.in/accounting-services"
-        ),
-        ServiceItemModel(
-            id: "payroll-management",
-            title: "Payroll Management & Payslips",
-            categoryId: "TAX",
-            categoryName: "Tax & Accounting",
-            iconName: "person.text.rectangle",
-            colorTheme: Color(red: 245/255, green: 158/255, blue: 11/255),
-            turnaround: "⚡ Monthly Cycle",
-            startingPrice: "From ₹2,499/mo",
-            trustBadge: "PF/ESI Compliant",
-            targetUrl: "https://vrhere.in/accounting-services"
-        ),
 
-        // ISO & Quality Management
+        // 3. ISO & Quality Management
         ServiceItemModel(
             id: "iso-9001-certification",
             title: "ISO 9001:2015 Quality Management",
@@ -213,13 +261,49 @@ struct CustomerServicesTab: View {
             iconName: "checkmark.seal.fill",
             colorTheme: Color(red: 99/255, green: 102/255, blue: 241/255),
             turnaround: "⚡ 5-7 Days",
-            startingPrice: "From ₹4,499",
+            startingPrice: "From ₹3,499",
             trustBadge: "IAF Accredited",
-            targetUrl: "https://vrhere.in/iso-certification"
+            targetUrl: "https://vrhere.in/iso-9001-certification"
+        ),
+        ServiceItemModel(
+            id: "iso-14001-certification",
+            title: "ISO 14001:2015 Environmental (EMS)",
+            categoryId: "ISO",
+            categoryName: "ISO & Quality",
+            iconName: "leaf.fill",
+            colorTheme: Color(red: 16/255, green: 185/255, blue: 129/255),
+            turnaround: "⚡ 5-7 Days",
+            startingPrice: "From ₹5,499",
+            trustBadge: "Green & ESG",
+            targetUrl: "https://vrhere.in/iso-14001-certification"
+        ),
+        ServiceItemModel(
+            id: "iso-45001-certification",
+            title: "ISO 45001:2018 Health & Safety (OH&S)",
+            categoryId: "ISO",
+            categoryName: "ISO & Quality",
+            iconName: "cross.case.fill",
+            colorTheme: Color(red: 239/255, green: 68/255, blue: 68/255),
+            turnaround: "⚡ 5-7 Days",
+            startingPrice: "From ₹5,999",
+            trustBadge: "Workplace Safety",
+            targetUrl: "https://vrhere.in/iso-45001-certification"
+        ),
+        ServiceItemModel(
+            id: "iso-22000-certification",
+            title: "ISO 22000:2018 Food Safety (FSMS)",
+            categoryId: "ISO",
+            categoryName: "ISO & Quality",
+            iconName: "fork.knife.circle.fill",
+            colorTheme: Color(red: 245/255, green: 158/255, blue: 11/255),
+            turnaround: "⚡ 5-7 Days",
+            startingPrice: "From ₹6,999",
+            trustBadge: "Food Safety",
+            targetUrl: "https://vrhere.in/iso-22000-certification"
         ),
         ServiceItemModel(
             id: "iso-27001-certification",
-            title: "ISO 27001:2022 InfoSec Security",
+            title: "ISO 27001:2022 InfoSec & Cybersecurity",
             categoryId: "ISO",
             categoryName: "ISO & Quality",
             iconName: "lock.shield.fill",
@@ -227,24 +311,60 @@ struct CustomerServicesTab: View {
             turnaround: "⚡ 7-10 Days",
             startingPrice: "From ₹8,999",
             trustBadge: "Cyber Verified",
-            targetUrl: "https://vrhere.in/iso-certification"
+            targetUrl: "https://vrhere.in/iso-27001-certification"
         ),
         ServiceItemModel(
-            id: "ce-marking-bis",
-            title: "CE Marking & ISI/BIS Certification",
+            id: "gmp-haccp-certification",
+            title: "GMP & HACCP Certification",
+            categoryId: "ISO",
+            categoryName: "ISO & Quality",
+            iconName: "pills.fill",
+            colorTheme: Color(red: 14/255, green: 165/255, blue: 233/255),
+            turnaround: "⚡ 5-7 Days",
+            startingPrice: "From ₹6,499",
+            trustBadge: "WHO-GMP",
+            targetUrl: "https://vrhere.in/gmp-haccp-certification"
+        ),
+        ServiceItemModel(
+            id: "ce-marking-certification",
+            title: "CE Marking for European Exports",
+            categoryId: "ISO",
+            categoryName: "ISO & Quality",
+            iconName: "globe.europe.africa.fill",
+            colorTheme: Color(red: 234/255, green: 88/255, blue: 12/255),
+            turnaround: "⚡ 7-10 Days",
+            startingPrice: "From ₹12,499",
+            trustBadge: "EU Conformity",
+            targetUrl: "https://vrhere.in/ce-marking-certification"
+        ),
+        ServiceItemModel(
+            id: "isi-bis-certification",
+            title: "ISI Mark & BIS CRS Registration",
             categoryId: "ISO",
             categoryName: "ISO & Quality",
             iconName: "star.circle.fill",
-            colorTheme: Color(red: 234/255, green: 88/255, blue: 12/255),
+            colorTheme: Color(red: 168/255, green: 85/255, blue: 247/255),
             turnaround: "⚡ 10-15 Days",
-            startingPrice: "From ₹12,499",
-            trustBadge: "Global Standards",
-            targetUrl: "https://vrhere.in/iso-certification"
+            startingPrice: "From ₹14,999",
+            trustBadge: "Bureau Standards",
+            targetUrl: "https://vrhere.in/isi-bis-certification"
+        ),
+        ServiceItemModel(
+            id: "halal-kosher-certification",
+            title: "Halal & Kosher Export Certification",
+            categoryId: "ISO",
+            categoryName: "ISO & Quality",
+            iconName: "sparkles",
+            colorTheme: Color(red: 16/255, green: 185/255, blue: 129/255),
+            turnaround: "⚡ 5-7 Days",
+            startingPrice: "From ₹7,999",
+            trustBadge: "Global Export",
+            targetUrl: "https://vrhere.in/halal-kosher-certification"
         ),
 
-        // Licensing & Compliance
+        // 4. Mandatory Licensing & Governance
         ServiceItemModel(
-            id: "fssai-registration",
+            id: "fssai-license",
             title: "FSSAI Food License / Registration",
             categoryId: "LICENSE",
             categoryName: "Licensing & Govt",
@@ -252,11 +372,11 @@ struct CustomerServicesTab: View {
             colorTheme: Color(red: 245/255, green: 158/255, blue: 11/255),
             turnaround: "⚡ 3-5 Days",
             startingPrice: "From ₹1,999",
-            trustBadge: "Food Safety",
+            trustBadge: "FoSCoS Govt",
             targetUrl: "https://vrhere.in/fssai-license"
         ),
         ServiceItemModel(
-            id: "shops-establishment",
+            id: "shops-establishment-license",
             title: "Shops & Establishment Act License",
             categoryId: "LICENSE",
             categoryName: "Licensing & Govt",
@@ -264,20 +384,8 @@ struct CustomerServicesTab: View {
             colorTheme: Color(red: 16/255, green: 185/255, blue: 129/255),
             turnaround: "⚡ 2-4 Days",
             startingPrice: "From ₹1,499",
-            trustBadge: "Municipal Reg.",
-            targetUrl: "https://vrhere.in/shops-establishment"
-        ),
-        ServiceItemModel(
-            id: "udyam-msme",
-            title: "Udyam Registration (MSME)",
-            categoryId: "LICENSE",
-            categoryName: "Licensing & Govt",
-            iconName: "bolt.badge.a.fill",
-            colorTheme: Color(red: 59/255, green: 130/255, blue: 246/255),
-            turnaround: "⚡ 24 Hours",
-            startingPrice: "From ₹999",
-            trustBadge: "Govt Subsidies",
-            targetUrl: "https://vrhere.in/udyam-msme"
+            trustBadge: "State Labour Dept",
+            targetUrl: "https://vrhere.in/shops-establishment-license"
         ),
         ServiceItemModel(
             id: "import-export-code",
@@ -286,62 +394,194 @@ struct CustomerServicesTab: View {
             categoryName: "Licensing & Govt",
             iconName: "airplane.departure",
             colorTheme: Color(red: 168/255, green: 85/255, blue: 247/255),
-            turnaround: "⚡ 2 Days",
+            turnaround: "⚡ 24 Hours",
             startingPrice: "From ₹2,199",
             trustBadge: "DGFT Verified",
-            targetUrl: "https://vrhere.in/iec-code"
+            targetUrl: "https://vrhere.in/import-export-code"
+        ),
+        ServiceItemModel(
+            id: "trade-license",
+            title: "Municipal Trade License",
+            categoryId: "LICENSE",
+            categoryName: "Licensing & Govt",
+            iconName: "building.2.crop.circle.fill",
+            colorTheme: Color(red: 14/255, green: 165/255, blue: 233/255),
+            turnaround: "⚡ 3-5 Days",
+            startingPrice: "From ₹2,499",
+            trustBadge: "Municipal Corp",
+            targetUrl: "https://vrhere.in/trade-license"
+        ),
+        ServiceItemModel(
+            id: "labour-license",
+            title: "Contract Labour License (CLRA)",
+            categoryId: "LICENSE",
+            categoryName: "Licensing & Govt",
+            iconName: "person.3.sequence.fill",
+            colorTheme: Color(red: 100/255, green: 116/255, blue: 139/255),
+            turnaround: "⚡ 5-7 Days",
+            startingPrice: "From ₹5,499",
+            trustBadge: "CLRA Act",
+            targetUrl: "https://vrhere.in/labour-license"
+        ),
+        ServiceItemModel(
+            id: "pollution-noc",
+            title: "Pollution Control Board NOC (CTE/CTO)",
+            categoryId: "LICENSE",
+            categoryName: "Licensing & Govt",
+            iconName: "smoke.fill",
+            colorTheme: Color(red: 239/255, green: 68/255, blue: 68/255),
+            turnaround: "⚡ 7-10 Days",
+            startingPrice: "From ₹9,999",
+            trustBadge: "SPCB Approved",
+            targetUrl: "https://vrhere.in/pollution-noc"
+        ),
+        ServiceItemModel(
+            id: "dsc-registration",
+            title: "Class 3 Digital Signature (DSC + Token)",
+            categoryId: "LICENSE",
+            categoryName: "Licensing & Govt",
+            iconName: "key.fill",
+            colorTheme: Color(red: 99/255, green: 102/255, blue: 241/255),
+            turnaround: "⚡ 15 Mins",
+            startingPrice: "From ₹1,499",
+            trustBadge: "CCA India",
+            targetUrl: "https://vrhere.in/dsc-registration"
+        ),
+        ServiceItemModel(
+            id: "rera-registration",
+            title: "RERA Real Estate Agent / Project",
+            categoryId: "LICENSE",
+            categoryName: "Licensing & Govt",
+            iconName: "house.and.flag.fill",
+            colorTheme: Color(red: 234/255, green: 88/255, blue: 12/255),
+            turnaround: "⚡ 5-7 Days",
+            startingPrice: "From ₹3,999",
+            trustBadge: "State RERA",
+            targetUrl: "https://vrhere.in/rera-registration"
         ),
 
-        // MSME & Schemes
+        // 5. MSME Schemes, Subsidies & Govt Portals
         ServiceItemModel(
-            id: "gem-portal-registration",
-            title: "GeM Govt Marketplace Seller Portal",
+            id: "udyam-registration",
+            title: "Udyam MSME Registration Certificate",
+            categoryId: "MSME",
+            categoryName: "MSME & Schemes",
+            iconName: "bolt.badge.a.fill",
+            colorTheme: Color(red: 59/255, green: 130/255, blue: 246/255),
+            turnaround: "⚡ 24 Hours",
+            startingPrice: "From ₹999",
+            trustBadge: "Ministry of MSME",
+            targetUrl: "https://vrhere.in/udyam-registration"
+        ),
+        ServiceItemModel(
+            id: "startup-india-registration",
+            title: "Startup India DPIIT Recognition & Tax Exemption",
+            categoryId: "MSME",
+            categoryName: "MSME & Schemes",
+            iconName: "flame.fill",
+            colorTheme: Color(red: 239/255, green: 68/255, blue: 68/255),
+            turnaround: "⚡ 3-5 Days",
+            startingPrice: "From ₹3,499",
+            trustBadge: "3 Yr Tax Holiday",
+            targetUrl: "https://vrhere.in/startup-india-registration"
+        ),
+        ServiceItemModel(
+            id: "gem-registration",
+            title: "GeM Govt Marketplace Seller & OEM Panel",
             categoryId: "MSME",
             categoryName: "MSME & Schemes",
             iconName: "cart.fill",
             colorTheme: Color(red: 234/255, green: 88/255, blue: 12/255),
             turnaround: "⚡ 3-5 Days",
-            startingPrice: "From ₹3,999",
+            startingPrice: "From ₹2,999",
             trustBadge: "Govt Tenders",
-            targetUrl: "https://vrhere.in/gem-portal"
+            targetUrl: "https://vrhere.in/gem-registration"
         ),
         ServiceItemModel(
-            id: "treds-rera",
-            title: "TReDS & RERA Project Registration",
+            id: "treds-registration",
+            title: "TReDS Invoice Factoring (RXIL, M1xchange)",
             categoryId: "MSME",
             categoryName: "MSME & Schemes",
-            iconName: "building.2.crop.circle",
-            colorTheme: Color(red: 14/255, green: 165/255, blue: 233/255),
-            turnaround: "⚡ 7 Days",
-            startingPrice: "From ₹7,499",
-            trustBadge: "Statutory",
-            targetUrl: "https://vrhere.in/rera-registration"
+            iconName: "creditcard.circle.fill",
+            colorTheme: Color(red: 16/255, green: 185/255, blue: 129/255),
+            turnaround: "⚡ 48 Hours",
+            startingPrice: "From ₹3,499",
+            trustBadge: "RBI Regulated",
+            targetUrl: "https://vrhere.in/treds-registration"
         ),
-
-        // Industrial & Startup
         ServiceItemModel(
-            id: "dpr-pitch-decks",
-            title: "DPR & Pitch Decks for Bank Loans",
-            categoryId: "STARTUP",
-            categoryName: "Industrial & Setup",
+            id: "dpr-cma-preparation",
+            title: "DPR & CMA Data for Bank Loans (CC/OD)",
+            categoryId: "MSME",
+            categoryName: "MSME & Schemes",
             iconName: "chart.line.uptrend.xyaxis",
             colorTheme: Color(red: 99/255, green: 102/255, blue: 241/255),
-            turnaround: "⚡ 5-7 Days",
-            startingPrice: "From ₹9,999",
-            trustBadge: "CMA & Bank Ready",
-            targetUrl: "https://vrhere.in/dpr-preparation"
+            turnaround: "⚡ 3-5 Days",
+            startingPrice: "From ₹4,999",
+            trustBadge: "Bank Ready",
+            targetUrl: "https://vrhere.in/dpr-cma-preparation"
         ),
         ServiceItemModel(
-            id: "machinery-turnkey-setup",
-            title: "Machinery Sourcing & Turnkey Setup",
+            id: "msme-subsidies-loans",
+            title: "PMEGP, Mudra & State MSME Subsidies",
+            categoryId: "MSME",
+            categoryName: "MSME & Schemes",
+            iconName: "indianrupeesign.circle.fill",
+            colorTheme: Color(red: 245/255, green: 158/255, blue: 11/255),
+            turnaround: "⚡ Scheme Cycle",
+            startingPrice: "From ₹6,999",
+            trustBadge: "15-35% Subsidy",
+            targetUrl: "https://vrhere.in/msme-subsidies-loans"
+        ),
+
+        // 6. Branding & Industrial Setup
+        ServiceItemModel(
+            id: "trademark-registration",
+            title: "Trademark Registration & Brand TM",
+            categoryId: "STARTUP",
+            categoryName: "Industrial & Setup",
+            iconName: "shield.righthalf.filled",
+            colorTheme: Color(red: 99/255, green: 102/255, blue: 241/255),
+            turnaround: "⚡ 24 Hours (TM)",
+            startingPrice: "From ₹1,999",
+            trustBadge: "IP India",
+            targetUrl: "https://vrhere.in/trademark-registration"
+        ),
+        ServiceItemModel(
+            id: "machinery-sourcing",
+            title: "Machinery Sourcing & Turnkey Plant Setup",
             categoryId: "STARTUP",
             categoryName: "Industrial & Setup",
             iconName: "gearshape.2.fill",
             colorTheme: Color(red: 100/255, green: 116/255, blue: 139/255),
-            turnaround: "⚡ Advisory",
-            startingPrice: "From ₹15,000",
+            turnaround: "⚡ Project Scope",
+            startingPrice: "From ₹9,999",
             trustBadge: "Vendor Verified",
             targetUrl: "https://vrhere.in/machinery-sourcing"
+        ),
+        ServiceItemModel(
+            id: "roc-annual-filings",
+            title: "ROC Annual Filings (AOC-4, MGT-7, Form 11)",
+            categoryId: "STARTUP",
+            categoryName: "Industrial & Setup",
+            iconName: "doc.badge.gearshape.fill",
+            colorTheme: Color(red: 168/255, green: 85/255, blue: 247/255),
+            turnaround: "⚡ Annual Filing",
+            startingPrice: "From ₹4,999",
+            trustBadge: "MCA21 V3",
+            targetUrl: "https://vrhere.in/roc-annual-filings"
+        ),
+        ServiceItemModel(
+            id: "director-kyc",
+            title: "Director KYC (DIR-3 KYC Web & eForm)",
+            categoryId: "STARTUP",
+            categoryName: "Industrial & Setup",
+            iconName: "person.badge.key.fill",
+            colorTheme: Color(red: 59/255, green: 130/255, blue: 246/255),
+            turnaround: "⚡ 10 Mins",
+            startingPrice: "From ₹499",
+            trustBadge: "DIN Active",
+            targetUrl: "https://vrhere.in/director-kyc"
         )
     ]
     
