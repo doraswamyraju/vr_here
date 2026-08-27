@@ -8,67 +8,125 @@ import {
 
 /* --- MENU DATA WITH LINKS --- */
 export const getServiceLink = (serviceName) => {
-    const normalized = String(serviceName || '').toLowerCase();
+    const raw = String(serviceName || '').trim();
+    const normalized = raw.toLowerCase();
     
-    // Category 1: Accounting, Compliance & Taxation
-    if (normalized.includes('cloud accounting') || normalized.includes('tally') || normalized.includes('zoho books')) return '/cloud-accounting';
-    if (normalized.includes('gst return')) return '/gst-return-filing';
-    if (normalized.includes('payroll') || normalized.includes('form 16') || normalized.includes('payslip')) return '/payroll-management';
-    if (normalized.includes('professional tax') || normalized.includes('pt returns') || normalized.includes('ptec')) return '/professional-tax';
-    if (normalized.includes('epf') || normalized.includes('esi') || normalized.includes('provident fund')) return '/epf-esi-returns';
-    if (normalized.includes('tds') || normalized.includes('tcs') || normalized.includes('26q') || normalized.includes('24q')) return '/tds-tcs-filing';
-    if (normalized.includes('mis') || normalized.includes('expense tracking') || normalized.includes('inventory')) return '/mis-reporting';
-    if (normalized.includes('audit')) return '/audit-services';
-    if (normalized.includes('12aa') || normalized.includes('80g') || normalized.includes('exemption certificate')) return '/12aa-80g-certificates';
-    if (normalized.includes('compliance scheme 2026') || normalized.includes('ccfs')) return '/compliance-scheme-2026';
-    if (normalized.includes('income tax')) return '/income-tax-return';
-    if (normalized.includes('accounting')) return '/cloud-accounting';
-
-    // Category 2: ISO & Certifications
-    if (normalized.includes('9001')) return '/iso-9001-certification';
-    if (normalized.includes('14001')) return '/iso-14001-certification';
-    if (normalized.includes('45001')) return '/iso-45001-certification';
-    if (normalized.includes('22000') || normalized.includes('food safety')) return '/iso-22000-certification';
-    if (normalized.includes('27001') || normalized.includes('information security') || normalized.includes('cybersecurity')) return '/iso-27001-certification';
-    if (normalized.includes('gmp') || normalized.includes('haccp')) return '/gmp-haccp-certification';
-    if (normalized.includes('ce marking') || normalized.includes('ce mark')) return '/ce-marking-certification';
-    if (normalized.includes('isi') || normalized.includes('bis')) return '/isi-bis-certification';
-    if (normalized.includes('halal') || normalized.includes('kosher')) return '/halal-kosher-certification';
-
-    // Category 3: Corporate Registrations, Licensing & ROC
+    // Core Specific Overrides
     if (normalized.includes('public limited')) return '/public-limited-company';
     if (normalized.includes('private limited') || normalized.includes('pvt ltd')) return '/pvt-ltd-registration';
     if (normalized.includes('llp')) return '/llp-registration';
     if (normalized.includes('partnership')) return '/partnership-firm-registration';
     if (normalized.includes('proprietorship')) return '/proprietorship-setup';
-    if (normalized.includes('section 8') || normalized.includes('ngo') || normalized.includes('darpan')) return '/section-8-company';
+    if (normalized.includes('section 8') || normalized.includes('ngo')) return '/section-8-company';
     if (normalized.includes('one person company') || normalized.includes('opc')) return '/one-person-company';
     if (normalized.includes('society') || normalized.includes('trust')) return '/society-trust-registration';
-    if (normalized.includes('udyam') || normalized.includes('msme registration')) return '/udyam-registration';
-    if (normalized.includes('shops') || normalized.includes('gumasta')) return '/shops-establishment-license';
-    if (normalized.includes('import export') || normalized.includes('iec')) return '/import-export-code';
-    if (normalized.includes('startup india') || normalized.includes('dpiit')) return '/startup-india-registration';
-    if (normalized.includes('fssai') || normalized.includes('food license')) return '/fssai-license';
-    if (normalized.includes('trade license')) return '/trade-license';
-    if (normalized.includes('labour') || normalized.includes('contract labour')) return '/labour-license';
-    if (normalized.includes('pollution') || normalized.includes('noc') || normalized.includes('spcb') || normalized.includes('cte') || normalized.includes('cto')) return '/pollution-noc';
-    if (normalized.includes('roc') || normalized.includes('aoc-4') || normalized.includes('mgt-7') || normalized.includes('annual filing')) return '/roc-annual-filings';
-    if (normalized.includes('dir-3') || normalized.includes('director kyc') || normalized.includes('directorship')) return '/director-kyc';
-    if (normalized.includes('dsc') || normalized.includes('digital signature')) return '/dsc-registration';
+    if (normalized.includes('income tax return') || normalized === 'income tax') return '/income-tax-return';
+    if (normalized.includes('compliance scheme 2026') || normalized.includes('ccfs')) return '/compliance-scheme-2026';
+    if (normalized.includes('accounting-as-a-service') || normalized.includes('cloud accounting')) return '/cloud-accounting';
+    if (normalized.includes('gst return')) return '/gst-return-filing';
     if (normalized.includes('gst registration')) return '/gst-registration';
+    
+    // ISO Standard Slugs
+    if (normalized.includes('9001')) return '/iso-9001-certification';
+    if (normalized.includes('14001')) return '/iso-14001-certification';
+    if (normalized.includes('45001')) return '/iso-45001-certification';
+    if (normalized.includes('22000')) return '/iso-22000-certification';
+    if (normalized.includes('27001')) return '/iso-27001-certification';
+    if (normalized.includes('50001')) return '/iso-50001-certification';
+    if (normalized.includes('13485')) return '/iso-13485-certification';
+    if (normalized.includes('20000')) return '/iso-20000-certification';
+    if (normalized.includes('22301')) return '/iso-22301-certification';
+    if (normalized.includes('gmp') || normalized.includes('haccp')) return '/gmp-haccp-certification';
+    if (normalized.includes('ce marking') || normalized.includes('ce mark')) return '/ce-marking-certification';
+    if (normalized.includes('isi') || normalized.includes('bis')) return '/isi-bis-certification';
+    if (normalized.includes('fda')) return '/fda-compliance-support';
+    if (normalized.includes('brcgs')) return '/brcgs-certification';
+    if (normalized.includes('kosher')) return '/kosher-certification';
+    if (normalized.includes('halal')) return '/halal-kosher-certification';
 
-    // Category 4: Government & MSME
-    if (normalized.includes('gem')) return '/gem-registration';
-    if (normalized.includes('treds') || normalized.includes('invoice discounting')) return '/treds-registration';
+    // Mandatory Registrations & Licensing
+    if (normalized.includes('udyam') || normalized.includes('msme registration')) return '/udyam-registration';
+    if (normalized.includes('shops & establishment') || normalized.includes('gumasta')) return '/shops-establishment-license';
+    if (normalized.includes('epfo') || normalized.includes('pf registration')) return '/epfo-pf-registration';
+    if (normalized.includes('esic registration')) return '/esic-registration';
+    if (normalized.includes('professional tax registration')) return '/professional-tax-registration';
+    if (normalized.includes('professional tax') || normalized.includes('pt returns')) return '/professional-tax';
+    if (normalized.includes('startup india')) return '/startup-india-registration';
+    if (normalized.includes('import export') || normalized.includes('iec')) return '/import-export-code';
+    if (normalized.includes('fssai')) return '/fssai-license';
+    if (normalized.includes('lei')) return '/lei-certificate';
+    if (normalized.includes('trade license')) return '/trade-license';
+    if (normalized.includes('contract labour') || normalized.includes('labour license')) return '/labour-license';
+    if (normalized.includes('pollution') || normalized.includes('noc') || normalized.includes('cfe') || normalized.includes('cfo')) return '/pollution-noc';
+    if (normalized.includes('factory license')) return '/factory-license';
+    if (normalized.includes('fcra')) return '/fcra-registration';
+    if (normalized.includes('darpan')) return '/ngo-darpan-registration';
+
+    // Corporate Compliances
+    if (normalized.includes('roc annual') || normalized.includes('aoc-4') || normalized.includes('mgt-7')) return '/roc-annual-filings';
+    if (normalized.includes('dir-3') || normalized.includes('director kyc')) return '/director-kyc';
+    if (normalized.includes('search certificate')) return '/roc-search-certificate';
+    if (normalized.includes('charge creation')) return '/roc-charge-creation';
+    if (normalized.includes('change in shareholding')) return '/change-in-shareholding';
+    if (normalized.includes('change in directorship')) return '/change-in-directorship';
+    if (normalized.includes('merger') || normalized.includes('winding up')) return '/merger-demerger-winding-up';
+    if (normalized.includes('buyback') || normalized.includes('bonus')) return '/bonus-loans-buyback';
+    if (normalized.includes('share allotment')) return '/share-allotment-transfer';
+    if (normalized.includes('share capital')) return '/increase-share-capital';
+    if (normalized.includes('name, address') || normalized.includes('objective')) return '/company-name-address-change';
+    if (normalized.includes('digital signature') || normalized.includes('dsc')) return '/dsc-registration';
+
+    // Govt & MSME Portals
+    if (normalized.includes('gem seller')) return '/gem-registration';
+    if (normalized.includes('oem panel')) return '/gem-oem-panel';
+    if (normalized.includes('brand approval')) return '/gem-brand-approval';
+    if (normalized.includes('product listing')) return '/gem-product-listing';
+    if (normalized.includes('tender management') || normalized.includes('bid participation')) return '/gem-tender-bidding';
+    if (normalized.includes('treds')) return '/treds-registration';
     if (normalized.includes('rera')) return '/rera-registration';
-    if (normalized.includes('dpr') || normalized.includes('cma') || normalized.includes('bank loan')) return '/dpr-cma-preparation';
-    if (normalized.includes('pmegp') || normalized.includes('subsidy') || normalized.includes('mudra') || normalized.includes('pmfme') || normalized.includes('cgtmse')) return '/msme-subsidies-loans';
+    if (normalized.includes('single window')) return '/single-window-registration';
+    if (normalized.includes('npci')) return '/npci-registration';
+    if (normalized.includes('amazon') || normalized.includes('flipkart')) return '/ecommerce-seller-registration';
+    if (normalized.includes('dpr preparation')) return '/dpr-cma-preparation';
+    if (normalized.includes('cma data')) return '/cma-data-preparation';
+    if (normalized.includes('bank loan')) return '/bank-loans-support';
+    if (normalized.includes('cgtmse')) return '/cgtmse-loan-support';
+    if (normalized.includes('pmegp')) return '/pmegp-loan-support';
+    if (normalized.includes('mudra')) return '/mudra-loans-support';
+    if (normalized.includes('stand-up') || normalized.includes('standup')) return '/standup-india-loans';
+    if (normalized.includes('zed scheme') || normalized.includes('clcss')) return '/zed-scheme-support';
+    if (normalized.includes('pmfme')) return '/pmfme-subsidy-scheme';
+    if (normalized.includes('nsic')) return '/nsic-schemes-registration';
+    if (normalized.includes('nabard')) return '/nabard-subsidy-schemes';
+    if (normalized.includes('cold chain')) return '/cold-chain-subsidy';
+    if (normalized.includes('subsidy schemes') || normalized.includes('subsidies')) return '/msme-subsidies-loans';
 
-    // Category 5: Branding & Industry Setup
-    if (normalized.includes('trademark') || normalized.includes('brand') || normalized.includes('logo')) return '/trademark-registration';
-    if (normalized.includes('machinery') || normalized.includes('turnkey') || normalized.includes('plant') || normalized.includes('factory setup')) return '/machinery-sourcing';
+    // Branding & Industrial Setup
+    if (normalized.includes('business plan')) return '/business-plan-preparation';
+    if (normalized.includes('pitch deck')) return '/pitch-deck-preparation';
+    if (normalized.includes('website & branding')) return '/website-branding-consulting';
+    if (normalized.includes('vendor empanelment')) return '/vendor-empanelment-docs';
+    if (normalized.includes('hr policy')) return '/hr-policy-documentation';
+    if (normalized.includes('sop creation') || normalized === 'sop creation') return '/sop-creation-services';
+    if (normalized.includes('loan file')) return '/loan-file-documentation';
+    if (normalized.includes('insurance')) return '/commercial-business-insurance';
+    if (normalized.includes('digital marketing')) return '/digital-marketing-support';
+    if (normalized.includes('pan / tan') || normalized.includes('pan application')) return '/pan-tan-applications';
+    if (normalized.includes('trademark') || normalized.includes('ip services')) return '/trademark-registration';
+    if (normalized.includes('wealth portfolio')) return '/wealth-portfolio-management';
+    if (normalized.includes('machinery sourcing')) return '/machinery-sourcing';
+    if (normalized.includes('vendor identification') || normalized.includes('supplier verification')) return '/vendor-verification-services';
+    if (normalized.includes('turnkey machinery')) return '/turnkey-plant-engineering';
+    if (normalized.includes('technology upgradation')) return '/technology-upgradation-consulting';
+    if (normalized.includes('feasibility analysis') || normalized.includes('industry selection')) return '/industrial-feasibility-analysis';
 
-    return `/contact?service=${encodeURIComponent(serviceName)}`;
+    // Clean fallback slug generator
+    const slug = raw
+        .toLowerCase()
+        .replace(/\(.*?\)/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    return `/${slug}`;
 };
 
 export const MENU_DATA = [

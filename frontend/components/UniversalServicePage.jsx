@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Briefcase, Globe, Zap, Clock, Award, ArrowRight, CheckCircle2,
-  Building2, CheckCircle, FileText, Star, User as UsersIcon, Check, HelpCircle,
-  MessageSquare, ShieldCheck, TrendingUp, ChevronRight, ChevronDown, Download,
-  Loader2, CreditCard, RefreshCw, Phone, Sparkles
+  Factory, Stamp, Calculator, Briefcase, Globe, IndianRupee, Lightbulb, MoreHorizontal,
+  Phone, Menu, X, ChevronDown, Clock, Award, Search, ArrowRight, CheckCircle2,
+  Building2, Mail, MapPin, CheckCircle, FileText, Star, User as UsersIcon, Check, HelpCircle,
+  MessageSquare, Zap, ShieldCheck, TrendingUp, Anchor, Truck, Hammer, FileCheck,
+  ChevronRight, Download, PlayCircle, Loader2, CreditCard, RefreshCw, Sparkles
 } from 'lucide-react';
+import * as Lucide from 'lucide-react';
 import { SharedHeader, SharedFooter } from './SharedComponents';
 import ConsultationPaymentModal from './ConsultationPaymentModal';
 import { launchRazorpayCheckout } from '../utils/razorpayCheckout';
@@ -31,6 +33,46 @@ const sanitizeText = (text, city) => {
     .replace(/\{pincode\}/gi, '')
     .trim();
 };
+
+const DEFAULT_LOGOS = [
+  { name: 'Stripe for Startups', iconKey: 'Briefcase', colorClass: 'text-indigo-600' },
+  { name: 'Razorpay Partner', iconKey: 'Zap', colorClass: 'text-blue-500' },
+  { name: 'Google Cloud Program', iconKey: 'Globe', colorClass: 'text-red-500' },
+  { name: 'AWS Activate', iconKey: 'Factory', colorClass: 'text-orange-500' },
+  { name: 'Microsoft Founders Hub', iconKey: 'Building2', colorClass: 'text-blue-600' },
+  { name: 'Shopify Partners', iconKey: 'ShieldCheck', colorClass: 'text-emerald-500' },
+  { name: 'HubSpot Ecosystem', iconKey: 'Award', colorClass: 'text-orange-600' }
+];
+
+const DEFAULT_REVIEWS = [
+  {
+    name: "Vikram Malhotra",
+    company: "Trident Tech Solutions Pvt Ltd",
+    avatar: "VM",
+    rating: 5,
+    date: "14 May 2026",
+    text: "The service execution was amazingly fast! We paid the consultation fee of 499, and it was fully adjusted in our final payment. Everything was delivered transparently without any follow-ups.",
+    verified: true
+  },
+  {
+    name: "Ananya Iyer",
+    company: "Aura CleanTech Solutions",
+    avatar: "AI",
+    rating: 5,
+    date: "28 April 2026",
+    text: "Excellent service. The online platform was super simple to upload documents, and their CA walked us through the statutory rules which saved us from rejection. Highly recommended!",
+    verified: true
+  },
+  {
+    name: "Ritesh Deshmukh",
+    company: "Pixel Labs Ventures",
+    avatar: "RD",
+    rating: 5,
+    date: "03 May 2026",
+    text: "Top-notch professionalism. I got my registrations and statutory compliance set up with end-to-end guidance. Practicing CAs delivered everything on time.",
+    verified: true
+  }
+];
 
 const UniversalServicePage = ({ config, pageId: propPageId }) => {
   const navigate = useNavigate();
@@ -97,11 +139,21 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
     { value: "100%", label: "ONLINE PROCESS" }
   ];
 
+  const activeLogos = pageConfig?.logos || config?.logos || DEFAULT_LOGOS;
+  const activeReviews = pageConfig?.reviews || config?.reviews || DEFAULT_REVIEWS;
   const activePackages = pageConfig?.packages || config?.packages || [];
-  const activeSteps = pageConfig?.steps || config?.steps || [];
+  const activeSteps = pageConfig?.steps || config?.steps || [
+    { number: '01', title: 'Document Collection', desc: 'Submit KYC documents online in our secure customer portal.', badge: 'Step 1' },
+    { number: '02', title: 'Legal & Dept Filing', desc: 'Expert search and formal government portal application.', badge: 'Step 2' },
+    { number: '03', title: 'Drafting & Verification', desc: 'Statutory deed / return review by practicing CA/CS.', badge: 'Step 3' },
+    { number: '04', title: 'Certificate Delivery', desc: 'Official certificate & compliance kit issued.', badge: 'Step 4' }
+  ];
   const activeGuide = pageConfig?.guide || config?.guide || {};
-  const activeFaqs = pageConfig?.faqs || config?.faqs || [];
-  const activePopularSearches = pageConfig?.popularSearches || config?.popularSearches || [];
+  const activeFaqs = pageConfig?.faqs || config?.faqs || [
+    { q: 'How long does the entire process take?', a: 'Standard turnaround is 3 to 7 business days subject to government department approval queues.' },
+    { q: 'Can I adjust the consultation fee against the final package?', a: 'Yes! If you book an expert CA/CS consultation at ₹499, the full ₹499 is credited and deducted when you upgrade to any full registration plan.' }
+  ];
+  const activePopularSearches = pageConfig?.popularSearches || config?.popularSearches || [pageId, 'Online Legal Services', 'CA Support India', 'Statutory Compliance'];
   const activeRelatedServices = config?.relatedServices || [
     { title: "Private Limited Company", price: "₹6,499", desc: "Corporate incorporation with full MCA, PAN, TAN and bank setup.", link: "/pvt-ltd-registration" },
     { title: "GST Registration & Filing", price: "₹2,569", desc: "GSTIN registration with monthly compliance filing.", link: "/gst-registration" },
@@ -156,61 +208,149 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans antialiased text-slate-900">
+      {/* Admin Top Edit Bar */}
+      {isAuthorized && (
+        <div className="bg-slate-900 text-white px-4 py-2 text-xs flex items-center justify-between z-50 sticky top-0 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-amber-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Admin Mode: {pageId}
+            </span>
+            <button
+              onClick={() => setIsCustomizerOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md font-bold transition flex items-center gap-1"
+            >
+              <Lucide.Sliders className="w-3 h-3" />
+              <span>Customize Page</span>
+            </button>
+            <button
+              onClick={() => setIsSeoGraderOpen(true)}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-md font-bold transition flex items-center gap-1"
+            >
+              <Lucide.Sparkles className="w-3 h-3" />
+              <span>SEO/AEO Optimizer</span>
+            </button>
+          </div>
+          <button
+            onClick={() => navigate('/admin')}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-md font-bold transition flex items-center gap-1"
+          >
+            <Lucide.LayoutDashboard className="w-3 h-3" />
+            <span>Dashboard</span>
+          </button>
+        </div>
+      )}
+
       <SharedHeader />
 
       <div id="main-service-container" className="flex-1">
         {/* 1. Hero Section */}
-        <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-white overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:24px_24px] opacity-20"></div>
+        <section className="relative pt-24 pb-20 lg:pt-32 lg:pb-28 bg-slate-50 overflow-hidden">
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-red-50 skew-x-12 opacity-50 z-0 translate-x-1/3"></div>
           
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="max-w-3xl mx-auto text-center">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-black tracking-wider uppercase mb-6 backdrop-blur-md">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                <span>{sanitizeText(activeHero.badgeText, pageConfig?.city)}</span>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col lg:flex-row items-center gap-12">
+            <div className="lg:w-1/2">
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-xs text-xs font-black text-slate-700 mb-6 uppercase tracking-wider">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                {sanitizeText(activeHero.badgeText, pageConfig?.city)}
               </div>
 
-              {/* Title */}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6">
                 {sanitizeText(activeHero.title, pageConfig?.city)}
               </h1>
 
-              {/* Subtitle */}
-              <p className="mt-6 text-base sm:text-lg text-slate-300 font-medium leading-relaxed max-w-2xl mx-auto">
+              <p className="text-lg text-slate-600 leading-relaxed mb-8 font-medium">
                 {sanitizeText(activeHero.subtitle, pageConfig?.city)}
               </p>
 
-              {/* Consultation CTA Pill */}
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <button
                   onClick={handleConsultationBook}
-                  className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+                  className="bg-red-600 text-white px-8 py-4 rounded-2xl font-black text-base hover:bg-red-700 transition shadow-xl shadow-red-600/20 transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
                 >
-                  <span>Book CA/CS Call @ ₹{activeHero.consultationPrice || 499}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>Book Consultation @ ₹{activeHero.consultationPrice || 499}</span>
+                  <ArrowRight className="w-5 h-5" />
                 </button>
-                
                 <a
                   href="#pricing-plans"
-                  className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl font-bold text-sm backdrop-blur-md transition flex items-center justify-center gap-2"
+                  className="px-8 py-4 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 rounded-2xl font-bold text-base transition flex items-center justify-center gap-2 shadow-xs"
                 >
                   <span>View All Packages</span>
                   <ChevronDown className="w-4 h-4" />
                 </a>
               </div>
+
+              <div className="flex items-center space-x-2 text-xs font-bold text-slate-500">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span>100% Fee adjustable against your final package</span>
+              </div>
+            </div>
+
+            {/* Hero Graphic Card */}
+            <div className="lg:w-1/2 relative hidden lg:block">
+              <div className="relative z-10 bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 transform rotate-1 hover:rotate-0 transition duration-500">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">{config?.title || "Registration Package"}</h3>
+                    <p className="text-slate-500 text-xs font-semibold mt-0.5">All-inclusive online execution</p>
+                  </div>
+                  <div className="bg-emerald-50 text-emerald-700 font-black px-3 py-1 rounded-full text-[10px] uppercase tracking-wider border border-emerald-200">
+                    MCA & GOVT VERIFIED
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {['Dedicated CA/CS Specialist Assigned', 'Government Portal Drafting & Submission', 'Digital Signature & KYC Verification', 'Official Registration Certificate & Kit', 'Lifetime Compliance Support'].map((item, i) => (
+                    <div key={i} className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <CheckCircle className="w-4 h-4 text-red-600 mr-3 shrink-0" />
+                      <span className="font-semibold text-xs text-slate-700">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-red-100 to-orange-100 rounded-full blur-3xl -z-10 opacity-60"></div>
             </div>
           </div>
         </section>
 
-        {/* 2. Stats Trust Marquee */}
-        <section className="bg-slate-900 border-y border-slate-800 py-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* 2. Client Logos Marquee & Stats */}
+        <section className="bg-slate-900 py-10 relative overflow-hidden">
+          <style>{`
+            @keyframes universalMarquee {
+              0% { transform: translateX(0%); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-universal-marquee {
+              display: flex;
+              animation: universalMarquee 25s linear infinite;
+            }
+          `}</style>
+
+          <div className="max-w-7xl mx-auto px-4 mb-4 text-center">
+            <p className="text-[11px] uppercase font-black tracking-widest text-red-400">
+              Trusted By Over 5,000+ Fast-Growing Indian Startups & Businesses
+            </p>
+          </div>
+
+          <div className="w-full overflow-hidden relative flex py-3 mb-8 bg-slate-900/60 border-y border-slate-800">
+            <div className="animate-universal-marquee space-x-12">
+              {[...activeLogos, ...activeLogos].map((logo, idx) => {
+                const Icon = Lucide[logo.iconKey] || Lucide.Globe;
+                return (
+                  <div key={idx} className="inline-flex items-center gap-2.5 px-6 py-2 bg-slate-800/40 rounded-xl border border-slate-700/30 shrink-0">
+                    <Icon className={`w-4 h-4 ${logo.colorClass || 'text-slate-400'}`} />
+                    <span className="text-xs font-black tracking-tight text-slate-300">{logo.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {activeStats.map((stat, idx) => (
-                <div key={idx} className="p-3">
-                  <div className="text-2xl sm:text-3xl font-black text-white">{stat.value}</div>
-                  <div className="text-[10px] sm:text-xs font-black tracking-widest text-indigo-400 uppercase mt-1">
+                <div key={idx} className="p-2">
+                  <div className="text-2xl sm:text-4xl font-black text-white">{stat.value}</div>
+                  <div className="text-[10px] sm:text-xs font-black tracking-widest text-red-400 uppercase mt-1">
                     {stat.label}
                   </div>
                 </div>
@@ -220,16 +360,16 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
         </section>
 
         {/* 3. Pricing Packages */}
-        <section id="pricing-plans" className="py-20 bg-slate-50">
+        <section id="pricing-plans" className="py-24 bg-slate-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-16">
-              <span className="text-xs uppercase font-black tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 font-bold">
+              <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3.5 py-1.5 rounded-full font-bold">
                 Transparent Pricing
               </span>
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mt-4 tracking-tight">
+              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 mt-4 tracking-tight">
                 Select Your Registration Plan
               </h2>
-              <p className="text-sm sm:text-base text-slate-600 mt-2 font-medium">
+              <p className="text-base text-slate-600 mt-2 font-medium">
                 No hidden costs. 100% money-back compliance guarantee.
               </p>
             </div>
@@ -278,13 +418,13 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
 
                     <button
                       onClick={() => handlePackageClick(pkg)}
-                      className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 ${
+                      className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 ${
                         isPopular
                           ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-indigo-600/30'
                           : 'bg-slate-900 hover:bg-slate-800 text-white'
                       }`}
                     >
-                      <span>{pkg.creativeButtonText || `PROCEED WITH ${pkg.name}`}</span>
+                      <span>{pkg.creativeButtonText || pkg.buttonText || `PROCEED WITH ${pkg.name}`}</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -294,33 +434,75 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
           </div>
         </section>
 
-        {/* 4. Process Roadmap */}
+        {/* 4. Customer Reviews Section */}
+        <section className="py-20 bg-white border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-16">
+              <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3 py-1.5 rounded-full font-bold">
+                Real Client Reviews
+              </span>
+              <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mt-4 tracking-tight">
+                Trusted by 5,000+ Founders
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {activeReviews.map((review, i) => (
+                <div key={i} className="bg-slate-50 p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:shadow-md transition">
+                  <div>
+                    <div className="flex items-center mb-4 text-amber-400">
+                      {[...Array(review.rating || 5)].map((_, r) => (
+                        <Star key={r} className="w-4 h-4 fill-amber-400" />
+                      ))}
+                    </div>
+                    <p className="text-slate-600 text-xs leading-relaxed font-medium mb-6 italic">
+                      "{review.text}"
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 border-t border-slate-200/50 pt-4">
+                    <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-xs">
+                      {review.avatar || review.name?.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-bold text-slate-900 text-sm">{review.name}</h4>
+                        {review.verified && <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />}
+                      </div>
+                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">{review.company}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 5. Process Roadmap */}
         {activeSteps.length > 0 && (
-          <section className="py-20 bg-white border-t border-slate-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center max-w-2xl mx-auto mb-16">
-                <span className="text-xs uppercase font-black tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 font-bold">
-                  Step-by-Step Roadmap
+          <section className="py-24 bg-slate-50 border-t border-slate-100">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-20">
+                <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3 py-1.5 rounded-full font-bold">
+                  Incorporation Flow
                 </span>
-                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mt-4 tracking-tight">
-                  How the Process Works
+                <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mt-4 tracking-tight">
+                  Redesigned, Effortless Steps
                 </h2>
-                <p className="text-sm sm:text-base text-slate-600 mt-2 font-medium">
-                  Effortless 4-step onboarding handled by certified legal practitioners.
+                <p className="text-base text-slate-600 mt-2 font-medium">
+                  100% online registration managed by senior legal practitioners.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid md:grid-cols-4 gap-6">
                 {activeSteps.map((step, idx) => (
-                  <div key={idx} className="bg-slate-50 p-6 rounded-3xl border border-slate-200/80 text-center relative group hover:-translate-y-1 transition">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-800 text-white text-xl font-black flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-600/20">
+                  <div key={idx} className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center hover:-translate-y-2 transition-all duration-300 relative group">
+                    <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-xl shadow-red-600/20 transform group-hover:rotate-6 transition-all border-4 border-white">
                       {step.number || `0${idx + 1}`}
                     </div>
-                    <span className="inline-block text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-md mb-2">
+                    <div className="inline-block px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500 mb-4">
                       {step.badge || `Step ${idx + 1}`}
-                    </span>
-                    <h3 className="text-base font-bold text-slate-900 mb-2">{step.title}</h3>
-                    <p className="text-xs text-slate-600 font-medium leading-relaxed">{step.desc}</p>
+                    </div>
+                    <h3 className="font-bold text-base text-slate-900 mb-2 tracking-tight">{step.title}</h3>
+                    <p className="text-slate-600 text-xs leading-relaxed font-medium">{step.desc}</p>
                   </div>
                 ))}
               </div>
@@ -328,12 +510,60 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
           </section>
         )}
 
-        {/* 5. Detailed Guide, FAQs & SEO Searches */}
+        {/* 6. Why Choose & Statutory Requirements */}
+        <section className="py-20 bg-white border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-12 items-center">
+            <div className="md:w-1/2">
+              <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mb-6 tracking-tight">
+                Why Choose VR Here?
+              </h2>
+              <p className="text-slate-600 mb-8 leading-relaxed font-medium text-sm">
+                Get certified legal execution, direct CA/CS access, and lifetime compliance tracking in one unified portal.
+              </p>
+              <div className="grid grid-cols-1 gap-4">
+                {[
+                  { t: "100% Online & Paperless", d: "Upload documents from anywhere in India; no physical office visits." },
+                  { t: "Transparent Pricing", d: "Zero hidden charges; government fees and taxes clearly itemized." },
+                  { t: "Dedicated CA/CS Support", d: "Direct relationship manager and senior chartered accountant guidance." },
+                  { t: "On-Time Compliance Guarantee", d: "Zero penalty guarantee on statutory filings and deadline submissions." }
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 mr-4 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm">{item.t}</h4>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">{item.d}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="md:w-1/2">
+              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200 shadow-xs">
+                <h3 className="text-xl font-black text-slate-900 mb-6 text-center">Minimum Requirements</h3>
+                <ul className="space-y-3.5">
+                  {[
+                    "PAN & Aadhaar Card of Applicant / Directors",
+                    "Registered Business Address Proof (Electricity Bill / Rent Deed)",
+                    "Digital Signature Certificate (Class 3 DSC) for online filings",
+                    "Active Mobile Number & Email linked with Aadhaar",
+                    "Bank Account Details with Cancelled Cheque"
+                  ].map((req, i) => (
+                    <li key={i} className="flex items-center text-slate-700 bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs text-xs font-bold">
+                      <UsersIcon className="w-4 h-4 text-red-600 mr-3 shrink-0" /> {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 7. Collapsible 3-Block Section (Guide, FAQs, Popular Searches) */}
         <section className="py-16 bg-white border-t border-slate-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <button
               onClick={() => setIsSeoExpanded(!isSeoExpanded)}
-              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-xl font-bold transition shadow-lg text-xs"
+              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-xl font-bold transition shadow-xl active:scale-95 text-xs uppercase tracking-wider"
             >
               <span>{isSeoExpanded ? 'Hide Detailed Guide & FAQs' : 'Show Detailed Guide & FAQs'}</span>
               <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isSeoExpanded ? 'rotate-180' : ''}`} />
@@ -343,7 +573,7 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
               <div className="mt-12 text-left bg-slate-50 p-8 md:p-12 rounded-3xl border border-slate-200 animate-in fade-in slide-in-from-top-4 duration-300 grid grid-cols-1 lg:grid-cols-3 gap-10">
                 {/* Column 1: Guide */}
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-4">
-                  <h3 className="text-lg font-black text-slate-900 border-b-2 border-indigo-500 pb-2">
+                  <h3 className="text-lg font-black text-slate-900 border-b-2 border-red-500 pb-2">
                     {activeGuide.title || 'Service Overview & Documents'}
                   </h3>
                   {activeGuide.overview && (
@@ -352,11 +582,11 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
                     </p>
                   )}
                   {activeGuide.checklist && activeGuide.checklist.length > 0 && (
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl">
+                    <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-inner">
                       <h4 className="text-xs font-black uppercase text-slate-900 mb-2">
                         {activeGuide.checklistTitle || 'Required Documents'}
                       </h4>
-                      <ul className="text-xs text-slate-600 space-y-1.5 font-medium">
+                      <ul className="text-xs text-slate-600 space-y-1.5 font-bold">
                         {activeGuide.checklist.map((item, cIdx) => (
                           <li key={cIdx} className="flex items-center gap-1.5">
                             <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
@@ -395,12 +625,12 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
 
                 {/* Column 3: Searches */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-black text-slate-900 border-b-2 border-emerald-500 pb-2">
+                  <h3 className="text-lg font-black text-slate-900 border-b-2 border-indigo-500 pb-2">
                     Popular Searches
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {activePopularSearches.map((tag, idx) => (
-                      <span key={idx} className="px-2.5 py-1 bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 rounded-lg border border-slate-200 text-[11px] font-semibold transition cursor-default">
+                      <span key={idx} className="px-2.5 py-1 bg-white hover:bg-red-50 text-slate-600 hover:text-red-700 rounded-lg border border-slate-200 text-[11px] font-semibold transition cursor-default">
                         #{tag}
                       </span>
                     ))}
@@ -411,35 +641,58 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
           </div>
         </section>
 
-        {/* 6. Related Services */}
-        <section className="py-16 bg-slate-50 border-t border-slate-200/60">
+        {/* 8. Related Services */}
+        <section className="py-20 bg-slate-50 border-t border-slate-200/60">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-xl mx-auto mb-12">
-              <span className="text-xs uppercase font-black tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full font-bold">
-                Allied Solutions
+            <div className="text-center max-w-xl mx-auto mb-16">
+              <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3 py-1.5 rounded-full font-bold">
+                Explore Catalog
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mt-3 tracking-tight">
+              <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mt-4 tracking-tight">
                 Related Compliance Services
               </h2>
+              <p className="text-base text-slate-600 mt-2 font-medium">Grow your business legally with our allied setup packages.</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {activeRelatedServices.map((srv, idx) => (
-                <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition flex flex-col justify-between">
+                <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900 mb-1">{srv.title}</h3>
-                    <div className="text-indigo-600 font-black text-base mb-3">{srv.price}</div>
-                    <p className="text-slate-500 text-xs leading-relaxed font-medium mb-4">{srv.desc}</p>
+                    <h3 className="font-bold text-base text-slate-900 mb-1">{srv.title}</h3>
+                    <div className="text-red-600 font-black text-lg mb-3">{srv.price} <span className="text-[10px] text-slate-400 font-bold uppercase">+ Govt Fees</span></div>
+                    <p className="text-slate-500 text-xs leading-relaxed font-medium mb-6">{srv.desc}</p>
                   </div>
                   <button
                     onClick={() => navigate(srv.link)}
-                    className="w-full py-2 bg-slate-100 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold text-slate-700 transition flex items-center justify-center gap-1"
+                    className="w-full py-2.5 bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold text-slate-800 transition flex items-center justify-center gap-1.5"
                   >
                     <span>Explore Plan</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 9. Bottom Consultation Banner */}
+        <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+          <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+            <h2 className="text-3xl lg:text-5xl font-black mb-6">Confused about the process?</h2>
+            <p className="text-lg text-slate-400 mb-10 leading-relaxed font-medium">
+              Talk to our CA/CS specialists before you commit. Pay a small booking fee now, and we will deduct it from your final bill.
+            </p>
+            <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/10 inline-block w-full max-w-md">
+              <div className="text-xs font-black text-red-400 uppercase tracking-widest mb-2">Consultation Offer</div>
+              <div className="text-5xl font-black mb-2">₹{activeHero.consultationPrice || 499}</div>
+              <p className="text-slate-300 text-xs mb-6 font-medium">Fully adjustable against registration fees</p>
+              <button
+                onClick={handleConsultationBook}
+                className="w-full bg-red-600 text-white font-bold py-4 rounded-2xl hover:bg-red-700 transition shadow-lg shadow-red-600/30 flex items-center justify-center text-sm font-black"
+              >
+                Book Now <ArrowRight className="ml-2 w-5 h-5" />
+              </button>
             </div>
           </div>
         </section>
