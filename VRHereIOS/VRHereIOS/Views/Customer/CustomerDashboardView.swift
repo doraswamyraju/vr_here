@@ -63,7 +63,7 @@ struct CustomerDashboardView: View {
                                 },
                                 onOpenLiveService: { name, url in
                                     let key = url.components(separatedBy: "/").last ?? ""
-                                    if ServiceCatalog.shared.items[key] != nil {
+                                    if !key.isEmpty && !key.hasPrefix("http") {
                                         activeServiceKey = key
                                     } else {
                                         webviewUrl = url
@@ -78,7 +78,7 @@ struct CustomerDashboardView: View {
                                 onSelectTab: { activeTab = $0 },
                                 onOpenLiveService: { name, url in
                                     let key = url.components(separatedBy: "/").last ?? ""
-                                    if ServiceCatalog.shared.items[key] != nil {
+                                    if !key.isEmpty && !key.hasPrefix("http") {
                                         activeServiceKey = key
                                     } else {
                                         webviewUrl = url

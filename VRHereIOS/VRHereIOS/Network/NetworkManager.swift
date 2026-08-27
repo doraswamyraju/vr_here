@@ -474,6 +474,40 @@ class NetworkManager {
     func deleteRecurring(id: String) async throws -> [String: AnyCodable] {
         return try await performRequest(path: "api/recurring/\(id)", method: "DELETE")
     }
+    
+    // --- SERVICE PAGES & LEADS TELEMETRY ---
+    
+    func fetchServicePageConfig(pageId: String) async throws -> ServicePageResponseModel {
+        return try await performRequest(path: "api/service-pages/\(pageId)", method: "GET")
+    }
+    
+    func sendLeadTelemetry(
+        serviceId: String,
+        serviceName: String,
+        packageName: String? = nil,
+        price: Double? = nil,
+        category: String = "PAGE_VIEW"
+    ) async {
+        let payload = LeadTelemetryPayload(
+            customerId: SessionManager.shared.getUserId(),
+            customerName: SessionManager.shared.getUserName(),
+            email: SessionManager.shared.getUserEmail(),
+            phone: SessionManager.shared.getPhone(),
+            serviceId: serviceId,
+            serviceName: serviceName,
+            packageName: packageName,
+            price: price,
+            category: category,
+            source: "ios",
+            deviceInfo: "iOS App"
+        )
+        do {
+            let data = try JSONEncoder().encode(payload)
+            let _: [String: AnyCodable]? = try? await performRequest(path: "api/leads/telemetry", method: "POST", body: data)
+        } catch {
+            print("Lead telemetry error: \(error)")
+        }
+    }
 }
 
 // AnyCodable helper struct to encode/decode dynamic types in Swift
@@ -547,6 +581,78 @@ struct ITAssessmentResponse: Codable, Identifiable {
         case id = "_id"
         case clientName, pan, financialYear, assessmentYear, status
     }
+}
+
+// MARK: - Server-Driven Service Page & Lead Models
+
+struct ServiceHeroModel: Codable {
+    let title: String?
+    let subtitle: String?
+    let badgeText: String?
+    let consultationPrice: Double?
+}
+
+struct ServiceStatModel: Codable, Identifiable {
+    var id: String { (label ?? "") + (value ?? "") }
+    let value: String?
+    let label: String?
+}
+
+struct ServiceStepModel: Codable, Identifiable {
+    var id: String { (number ?? "") + (title ?? "") }
+    let number: String?
+    let title: String?
+    let desc: String?
+    let badge: String?
+}
+
+struct ServiceFaqModel: Codable, Identifiable {
+    var id: String { q ?? UUID().uuidString }
+    let q: String?
+    let a: String?
+}
+
+struct ServiceGuideSection: Codable, Identifiable {
+    var id: String { heading ?? UUID().uuidString }
+    let heading: String?
+    let content: String?
+    let bullets: [String]?
+}
+
+struct ServiceGuideModel: Codable {
+    let title: String?
+    let overview: String?
+    let checklistTitle: String?
+    let checklist: [String]?
+    let sections: [ServiceGuideSection]?
+}
+
+struct ServicePageResponseModel: Codable {
+    let pageId: String?
+    let title: String?
+    let description: String?
+    let iconKey: String?
+    let hero: ServiceHeroModel?
+    let stats: [ServiceStatModel]?
+    let packages: [ServicePackage]?
+    let steps: [ServiceStepModel]?
+    let faqs: [ServiceFaqModel]?
+    let guide: ServiceGuideModel?
+    let popularSearches: [String]?
+}
+
+struct LeadTelemetryPayload: Codable {
+    let customerId: String?
+    let customerName: String?
+    let email: String?
+    let phone: String?
+    let serviceId: String
+    let serviceName: String
+    let packageName: String?
+    let price: Double?
+    let category: String
+    let source: String
+    let deviceInfo: String?
 }
 
 extension Error {

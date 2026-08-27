@@ -111,7 +111,8 @@ struct CustomerServicesTab: View {
                 ServiceColumn(
                     title: "Company / Business Entity Registrations",
                     items: [
-                        "Private Limited / Public Limited Company",
+                        "Private Limited Company",
+                        "Public Limited Company",
                         "LLP Registration",
                         "Partnership Firm Registration",
                         "Proprietorship Setup",
@@ -257,10 +258,17 @@ struct CustomerServicesTab: View {
     ]
     
     private let liveServicesMap = [
-        "Private Limited / Public Limited Company": "https://vrhere.in/pvt-ltd-registration",
+        "Private Limited Company": "https://vrhere.in/pvt-ltd-registration",
+        "Public Limited Company": "https://vrhere.in/public-limited-company",
+        "LLP Registration": "https://vrhere.in/llp-registration",
+        "Limited Liability Partnership (LLP)": "https://vrhere.in/llp-registration",
+        "Partnership Firm Registration": "https://vrhere.in/partnership-firm",
+        "Proprietorship Setup": "https://vrhere.in/proprietorship-setup",
+        "Section 8 Company (NGO)": "https://vrhere.in/section-8-company",
+        "One Person Company": "https://vrhere.in/one-person-company",
+        "Society / Trust Registration": "https://vrhere.in/society-trust-registration",
         "GST Registration": "https://vrhere.in/gst-registration",
         "Income Tax Return Filing (ITR 1-7)": "https://vrhere.in/income-tax-return",
-        "Partnership Firm Registration": "https://vrhere.in/partnership-firm",
         "Companies Compliance Scheme 2026 (CCFS)": "https://vrhere.in/compliance-scheme-2026",
         "Cloud Accounting (Tally Prime, Zoho Books, QuickBooks, Marg)": "https://vrhere.in/accounting-services",
         "GST Return Filing": "https://vrhere.in/accounting-services",
