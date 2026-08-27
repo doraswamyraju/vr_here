@@ -101,7 +101,7 @@ struct CustomerHomeTab: View {
                                             .frame(width: 8, height: 8)
                                             .padding(.trailing, 8)
                                             .padding(.top, 8)
-                                        }
+                                    }
                                 }
                             }
                             .buttonStyle(PlainButtonStyle())
