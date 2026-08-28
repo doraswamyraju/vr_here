@@ -242,11 +242,12 @@ const App = () => {
       <Route
         path="/customer-dashboard"
         element={
-          <ProtectedRoute allowedRoles={['customer']}>
+          <ProtectedRoute allowedRoles={['customer', 'client']}>
             <CustomerPage />
           </ProtectedRoute>
         }
       />
+      <Route path="/dashboard" element={<Navigate to="/customer-dashboard" replace />} />
       <Route
         path="/partner-dashboard"
         element={
