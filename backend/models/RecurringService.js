@@ -83,6 +83,28 @@ const recurringServiceSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order',
         default: null
+    },
+    // Renewal lifecycle fields
+    status: {
+        type: String,
+        enum: ['Upcoming', 'InternalAlertSent', 'PriceSet', 'ReminderSent', 'PaymentPending', 'PaymentSuccess', 'Expired', 'Cancelled'],
+        default: 'Upcoming'
+    },
+    renewalPrice: {
+        type: Number,
+        default: null
+    },
+    paymentLinkId: {
+        type: String,
+        default: null
+    },
+    alertSentAt: {
+        type: Date,
+        default: null
+    },
+    reminderSentAt: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true

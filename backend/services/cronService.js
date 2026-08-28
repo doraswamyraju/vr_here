@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import RecurringService from '../models/RecurringService.js';
 import Compliance from '../models/Compliance.js';
 import User from '../models/User.js';
-import { triggerNotification } from './notificationService.js';
+import { triggerNotification, sendInternalRenewalAlert } from './notificationService.js';
 import { generateOrderFromSubscription } from '../utils/automationUtils.js';
 
 export const initCronJobs = () => {
@@ -39,7 +39,47 @@ export const initCronJobs = () => {
         }
     });
 
-    // 2. Run every day at 09:00 AM for Compliance Deadline Reminders (T-7, T-3, T-1, Due Today)
+    // 2. Run every day at 08:30 AM for Internal Renewal Alerts (1-2 days before due date)
+    cron.schedule('30 8 * * *', async () => {
+        console.log('[CRON] Checking for upcoming renewals (1-2 days before due date)...'.blue);
+        try {
+            const now = new Date();
+            const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            const endOf2Days = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 23, 59, 59);
+
+            const upcomingRenewals = await RecurringService.find({
+                isActive: true,
+                status: 'Upcoming',
+                nextRunDate: { $gte: startOfTomorrow, $lte: endOf2Days }
+            })
+            .populate('user', 'name email')
+            .populate('assignedEmployee', 'name email role');
+
+            for (const sub of upcomingRenewals) {
+                try {
+                    await sendInternalRenewalAlert({
+                        subscriptionId: sub._id,
+                        employeeId: sub.assignedEmployee?._id,
+                        clientName: sub.clientName || sub.user?.name || 'Client',
+                        serviceName: sub.serviceName,
+                        dueDate: sub.nextRunDate,
+                        currentPrice: sub.renewalPrice || sub.price
+                    });
+
+                    sub.status = 'InternalAlertSent';
+                    sub.alertSentAt = new Date();
+                    await sub.save();
+                    console.log(`[CRON] Internal alert sent to staff for renewal: ${sub.serviceName} (${sub.clientName})`.green);
+                } catch (subErr) {
+                    console.error(`[CRON] Failed to send internal renewal alert for ${sub._id}:`, subErr.message);
+                }
+            }
+        } catch (error) {
+            console.error('[CRON] Error in internal renewal alert scheduler:'.red, error.message);
+        }
+    });
+
+    // 3. Run every day at 09:00 AM for Compliance Deadline Reminders (T-7, T-3, T-1, Due Today)
     cron.schedule('0 9 * * *', async () => {
         console.log('[CRON] Checking for pending compliance deadlines...'.blue);
         try {
@@ -102,3 +142,4 @@ export const initCronJobs = () => {
 
     console.log('[CRON] Recurring Services & Daily Compliance Schedulers Initialized with SMTP & Push Alerts.'.yellow.bold);
 };
+
