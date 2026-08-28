@@ -164,7 +164,7 @@ export default function CustomerApp() {
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
          case 'Invoices': return <CustomerFinanceView token={userInfo?.token} />;
          case 'Bookkeeping': return <BookkeepingView token={userInfo?.token} />;
-         case 'Account': return <AccountsView orders={orders} payments={payments} />;
+         case 'Account': return <AccountsView orders={orders} payments={payments} userInfo={userInfo} token={userInfo?.token} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: 
             if (SERVICE_CATALOG[activeTab]) {
