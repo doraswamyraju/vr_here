@@ -56,10 +56,12 @@ export const findOrCreateFolder = async (folderName, parentFolderId = null) => {
     const drive = getDriveClient();
     if (!drive) return null;
 
+    const effectiveParentId = parentFolderId || process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+
     try {
         let query = `name = '${folderName.replace(/'/g, "\\'")}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
-        if (parentFolderId) {
-            query += ` and '${parentFolderId}' in parents`;
+        if (effectiveParentId) {
+            query += ` and '${effectiveParentId}' in parents`;
         }
 
         const res = await drive.files.list({
@@ -78,12 +80,13 @@ export const findOrCreateFolder = async (folderName, parentFolderId = null) => {
         const folderMetadata = {
             name: folderName,
             mimeType: 'application/vnd.google-apps.folder',
-            parents: parentFolderId ? [parentFolderId] : [],
+            parents: effectiveParentId ? [effectiveParentId] : [],
         };
 
         const folder = await drive.files.create({
             requestBody: folderMetadata,
             fields: 'id, name',
+            supportsAllDrives: true,
         });
 
         console.log(`[GoogleDrive] Created Folder: "${folderName}" (ID: ${folder.data.id})`.cyan);
@@ -101,11 +104,13 @@ export const uploadBufferToDrive = async ({ fileBuffer, mimeType, fileName, pare
     const drive = getDriveClient();
     if (!drive) throw new Error('Google Drive client is not available');
 
+    const effectiveParentId = parentFolderId || process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+
     try {
         const stream = Readable.from(fileBuffer);
         const fileMetadata = {
             name: fileName,
-            parents: parentFolderId ? [parentFolderId] : [],
+            parents: effectiveParentId ? [effectiveParentId] : [],
         };
 
         const media = {
@@ -117,6 +122,7 @@ export const uploadBufferToDrive = async ({ fileBuffer, mimeType, fileName, pare
             requestBody: fileMetadata,
             media,
             fields: 'id, name, webViewLink, webContentLink',
+            supportsAllDrives: true,
         });
 
         // Set file permissions to be viewable via link
@@ -127,6 +133,7 @@ export const uploadBufferToDrive = async ({ fileBuffer, mimeType, fileName, pare
                     role: 'reader',
                     type: 'anyone',
                 },
+                supportsAllDrives: true,
             });
         } catch (permErr) {
             console.warn('[GoogleDrive] Warning creating public permission:', permErr.message);
@@ -159,6 +166,7 @@ export const copyDriveFile = async (fileId, targetFolderId, newFileName = null) 
                 parents: [targetFolderId],
             },
             fields: 'id, name, webViewLink',
+            supportsAllDrives: true,
         });
 
         console.log(`[GoogleDrive] Copied File ID: ${fileId} -> Target Folder ID: ${targetFolderId}`.green);
