@@ -35,6 +35,7 @@ import NewOrderModal from './components/admin/modals/NewOrderModal';
 import NewTodoModal from './components/admin/modals/NewTodoModal';
 import TodoModule from './components/admin/TodoModule';
 import RecurringServicesModule from './components/admin/RecurringServicesModule';
+import RenewalsModule from './components/admin/RenewalsModule';
 import MakeRecurringModal from './components/admin/modals/MakeRecurringModal';
 import ReferralPartnersModule from './components/admin/referrals/ReferralPartnersModule';
 import FinanceModule from './components/admin/finance/FinanceModule';
@@ -42,7 +43,7 @@ import EmployeeAnalysisModule from './components/admin/users/EmployeeAnalysisMod
 import ComplianceModule from './components/admin/compliance/ComplianceModule';
 import IncomeTaxAssessmentModule from './components/admin/IncomeTaxAssessmentModule';
 import { RevenueChart, ServiceDistributionChart, EmployeeWorkloadChart } from './components/admin/DashboardCharts';
-import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, ShieldCheck, CalendarCheck } from 'lucide-react';
+import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, ShieldCheck, CalendarCheck, Award } from 'lucide-react';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 import HRMSModule from './modules/hrms/v1.1/index.jsx';
 import CustomersModule from './components/admin/crm/CustomersModule';
@@ -709,6 +710,7 @@ function AdminApp() {
     { key: 'Support', label: 'Support Inbox', icon: MessageSquare },
     { key: 'Services', label: 'Services Master', icon: FileText },
     { key: 'Referrals', label: 'Referral Partners', icon: TrendingUp },
+    { key: 'Renewals', label: 'Renewals Hub', icon: Award },
     { key: 'Recurring', label: 'Recurring Hub', icon: RefreshCcw },
     { key: 'Bookkeeping', label: 'Bookkeeping Audits', icon: BookOpen },
     { key: 'Settings', label: 'Settings', icon: Settings }
@@ -810,6 +812,16 @@ function AdminApp() {
     if (activeTab === 'Support') return <DummyView title="Support Inbox" />;
     if (activeTab === 'Services') return <ServicesMasterView token={userInfo?.token} />;
     if (activeTab === 'Referrals') return <ReferralPartnersModule config={config} orders={orders} />;
+    if (activeTab === 'Renewals') return (
+      <RenewalsModule 
+        token={userInfo?.token} 
+        onViewOrder={(orderId) => {
+          setSelectedOrderId(orderId);
+          setActiveTab('Orders');
+          setOrderDetailTab('Overview');
+        }}
+      />
+    );
     if (activeTab === 'Recurring') return (
       <RecurringServicesModule 
         token={userInfo?.token} 

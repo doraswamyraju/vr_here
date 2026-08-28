@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { X, RefreshCcw, Calendar, User as UsersIcon, Zap, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 
-const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {
+const MakeRecurringModal = ({ isOpen, onClose, order: orderProp, selectedOrder, token, onCreated, onSuccess }) => {
+  const targetOrder = orderProp || selectedOrder;
+  const callback = onCreated || onSuccess || (() => {});
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     frequency: 'Monthly',
@@ -15,17 +17,17 @@ const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {
   });
 
   useEffect(() => {
-    if (order) {
-      setFormData({
-        ...formData,
-        assignedEmployee: order.assignedEmployee?._id || order.assignedEmployee || '',
-        assignedMaker: order.assignedMaker?._id || order.assignedMaker || '',
-        assignedChecker: order.assignedChecker?._id || order.assignedChecker || ''
-      });
+    if (targetOrder) {
+      setFormData((prev) => ({
+        ...prev,
+        assignedEmployee: targetOrder.assignedEmployee?._id || targetOrder.assignedEmployee || '',
+        assignedMaker: targetOrder.assignedMaker?._id || targetOrder.assignedMaker || '',
+        assignedChecker: targetOrder.assignedChecker?._id || targetOrder.assignedChecker || ''
+      }));
     }
-  }, [order]);
+  }, [targetOrder]);
 
-  if (!isOpen || !order) return null;
+  if (!isOpen || !targetOrder) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,11 +36,11 @@ const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
       const payload = {
-        userId: order.user?._id || order.user,
-        clientName: order.clientName,
-        serviceName: order.serviceName,
-        packageName: order.packageName,
-        price: order.price,
+        userId: targetOrder.user?._id || targetOrder.user,
+        clientName: targetOrder.clientName,
+        serviceName: targetOrder.serviceName,
+        packageName: targetOrder.packageName,
+        price: targetOrder.price,
         frequency: formData.frequency,
         dayOfMonth: Number(formData.dayOfMonth),
         dayOfWeek: Number(formData.dayOfWeek),
@@ -47,14 +49,14 @@ const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {
         assignedMaker: formData.assignedMaker || null,
         assignedChecker: formData.assignedChecker || null,
         // Clone current order structure as template
-        tasksTemplate: order.tasks || [],
-        requirementsTemplate: order.customerRequirements || [],
-        checklistsTemplate: order.checklists || []
+        tasksTemplate: targetOrder.tasks || [],
+        requirementsTemplate: targetOrder.customerRequirements || [],
+        checklistsTemplate: targetOrder.checklists || []
       };
 
       await axios.post('/api/recurring', payload, config);
       alert('Recurring service successfully scheduled!');
-      onCreated();
+      callback();
       onClose();
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating recurring service');
@@ -81,8 +83,8 @@ const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
            <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
               <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Service to Automate</p>
-              <p className="font-bold text-slate-800">{order.serviceName}</p>
-              <p className="text-xs text-slate-500">{order.clientName}</p>
+              <p className="font-bold text-slate-800">{targetOrder.serviceName}</p>
+              <p className="text-xs text-slate-500">{targetOrder.clientName}</p>
            </div>
 
            <div className="grid grid-cols-2 gap-4">
@@ -142,11 +144,11 @@ const MakeRecurringModal = ({ isOpen, onClose, order, token, onCreated }) => {
               <div className="p-3 border border-slate-100 rounded-2xl space-y-2 bg-slate-50/30">
                  <div className="flex justify-between text-xs">
                     <span className="text-slate-500 font-bold">Maker:</span>
-                    <span className="text-slate-800 font-black">{order.assignedMaker?.name || 'Inherited'}</span>
+                    <span className="text-slate-800 font-black">{targetOrder.assignedMaker?.name || 'Inherited'}</span>
                  </div>
                  <div className="flex justify-between text-xs">
                     <span className="text-slate-500 font-bold">Checker:</span>
-                    <span className="text-slate-800 font-black">{order.assignedChecker?.name || 'Inherited'}</span>
+                    <span className="text-slate-800 font-black">{targetOrder.assignedChecker?.name || 'Inherited'}</span>
                  </div>
               </div>
               <p className="text-[10px] text-slate-400 italic mt-1">
