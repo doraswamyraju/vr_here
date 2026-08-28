@@ -10,6 +10,7 @@ import { logOrderActivity } from '../utils/activityLogger.js';
 import Razorpay from 'razorpay';
 import sendEmail from '../utils/sendEmail.js';
 import { generateAndEmailInvoice } from '../utils/invoiceHelper.js';
+import { uploadBufferToDrive, getCustomerDriveFolder } from '../services/googleDriveService.js';
 
 
 
@@ -669,7 +670,30 @@ const uploadDocument = asyncHandler(async (req, res) => {
         throw new Error('No file uploaded');
     }
 
-    const documentUrl = `/uploads/${req.file.filename}`;
+    // 1. Get/Create Order folder hierarchy in Google Drive
+    const driveHierarchy = await getCustomerDriveFolder({
+        clientName: order.clientName || req.user.name,
+        orderId: order._id,
+        orderDate: order.createdAt
+    });
+
+    const orderFolderId = driveHierarchy ? driveHierarchy.orderFolderId : null;
+
+    // 2. Stream memory buffer directly to Google Drive
+    let documentUrl = `/uploads/${req.file.originalname}`;
+    try {
+        if (req.file.buffer) {
+            const driveUpload = await uploadBufferToDrive({
+                fileBuffer: req.file.buffer,
+                mimeType: req.file.mimetype,
+                fileName: `${Date.now()}_${req.file.originalname}`,
+                parentFolderId: orderFolderId
+            });
+            documentUrl = driveUpload.webViewLink;
+        }
+    } catch (driveErr) {
+        console.error('[OrderUpload] Fallback due to Google Drive upload error:', driveErr.message);
+    }
 
     if (req.user.role === 'client') {
         const docName = req.body.name || req.file.originalname;
