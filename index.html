@@ -21,10 +21,12 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
+  <!-- Socket.io Client (Self-hosted on vrhere.in to eliminate cdn.socket.io connection timeouts) -->
+  <script src="/socket.io.min.js"></script>
   <!-- Start of LetsTrack Live Chat & Tracking -->
   <script>
     window.LetsTrackConfig = {
-      websiteId: "lt_6a9347d5410be8335e42db43949caf95" // Paste the Tenant API Key from https://livechat.vrhere.in
+      websiteId: "lt_6a9347d5410be8335e42db43949caf95" // Tenant API Key from https://livechat.vrhere.in
     };
     (function () {
       var d = document, s = d.createElement('script');
