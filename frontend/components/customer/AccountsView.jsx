@@ -291,7 +291,7 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
 
       {/* SUB-TAB CONTENT 2: MY DOCUMENTS VAULT */}
       {activeSubTab === 'vault' && (
-        <ProfileDocumentsVault token={authToken} />
+        <ProfileDocumentsVault token={authToken} orders={orders} />
       )}
 
       {/* SUB-TAB CONTENT 3: RENEWALS & SUBSCRIPTIONS */}
