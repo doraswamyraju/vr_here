@@ -66,6 +66,8 @@ export const findOrCreateFolder = async (folderName, parentFolderId = null) => {
             q: query,
             fields: 'files(id, name)',
             spaces: 'drive',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true,
         });
 
         if (res.data.files && res.data.files.length > 0) {

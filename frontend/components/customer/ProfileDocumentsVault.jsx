@@ -24,6 +24,15 @@ const REQUIRED_DOC_TYPES = [
   'Incorporation Certificate'
 ];
 
+const DOC_TYPE_KEYWORDS = {
+  'Aadhaar Card': ['aadhaar', 'aadhar', 'adhar', 'uidai'],
+  'PAN Card': ['pan'],
+  'GST Certificate': ['gst'],
+  'Cancelled Cheque': ['cheque', 'check', 'bank', 'passbook'],
+  'Business Address Proof': ['address', 'proof', 'utility', 'bill', 'rent', 'electricity'],
+  'Incorporation Certificate': ['incorporation', 'inc', 'registration', 'coi', 'cert']
+};
+
 const ProfileDocumentsVault = ({ token, orders = [] }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,58 +60,68 @@ const ProfileDocumentsVault = ({ token, orders = [] }) => {
     fetchDocuments();
   }, [token]);
 
-  // Aggregate all existing documents from past orders
+  // Comprehensive Document Extraction from all past orders
   const existingOrderFiles = useMemo(() => {
     const allFiles = [];
-    orders.forEach((order) => {
+    (orders || []).forEach((order) => {
       const orderTag = order.serviceName || `Order #${order._id?.slice(-6).toUpperCase()}`;
 
       // 1. Client uploads
       (order.clientDocuments || []).forEach((doc) => {
-        allFiles.push({
-          id: doc._id || doc.url,
-          fileName: doc.name || 'Client Uploaded File',
-          url: doc.url,
-          source: orderTag,
-          date: doc.uploadedAt || order.createdAt,
-          type: 'Order Attachment'
-        });
+        if (doc && (doc.url || doc.path)) {
+          allFiles.push({
+            id: doc._id || doc.url || Math.random(),
+            fileName: doc.name || doc.filename || 'Client Uploaded File',
+            url: doc.url || doc.path,
+            source: orderTag,
+            date: doc.uploadedAt || order.createdAt,
+            type: 'Order Attachment'
+          });
+        }
       });
 
       // 2. Customer requirement uploads
       (order.customerRequirements || []).forEach((req) => {
-        if (req.uploadedDocumentUrl) {
+        const fileUrl = req.uploadedDocumentUrl || req.documentUrl || (req.value && typeof req.value === 'string' && (req.value.startsWith('http') || req.value.startsWith('/uploads')) ? req.value : null);
+        const fileName = req.uploadedDocumentName || req.title || req.name || 'Requirement Document';
+
+        if (fileUrl) {
           allFiles.push({
-            id: req._id || req.uploadedDocumentUrl,
-            fileName: req.uploadedDocumentName || req.name || 'Requirement Document',
-            url: req.uploadedDocumentUrl,
-            source: `${orderTag} (${req.name || 'Checklist'})`,
+            id: req._id || fileUrl,
+            fileName: fileName,
+            url: fileUrl,
+            source: `${orderTag} (${req.title || req.name || 'Checklist'})`,
             date: req.lastSavedAt || order.createdAt,
             type: 'Requirement File'
           });
         }
+
         (req.documents || []).forEach((subDoc) => {
-          allFiles.push({
-            id: subDoc._id || subDoc.url,
-            fileName: subDoc.name || 'Checklist Document',
-            url: subDoc.url,
-            source: orderTag,
-            date: order.createdAt,
-            type: 'Requirement File'
-          });
+          if (subDoc && (subDoc.url || subDoc.path)) {
+            allFiles.push({
+              id: subDoc._id || subDoc.url,
+              fileName: subDoc.name || 'Checklist Document',
+              url: subDoc.url || subDoc.path,
+              source: orderTag,
+              date: order.createdAt,
+              type: 'Requirement File'
+            });
+          }
         });
       });
 
       // 3. Admin provided documents
       (order.adminDocuments || []).forEach((doc) => {
-        allFiles.push({
-          id: doc._id || doc.url,
-          fileName: doc.name || 'Delivered Certificate/Doc',
-          url: doc.url,
-          source: `${orderTag} (Admin Delivered)`,
-          date: doc.uploadedAt || order.createdAt,
-          type: 'Delivered File'
-        });
+        if (doc && (doc.url || doc.path)) {
+          allFiles.push({
+            id: doc._id || doc.url,
+            fileName: doc.name || 'Delivered Certificate/Doc',
+            url: doc.url || doc.path,
+            source: `${orderTag} (Admin Delivered)`,
+            date: doc.uploadedAt || order.createdAt,
+            type: 'Delivered File'
+          });
+        }
       });
 
       // 4. Final Certificate
@@ -120,6 +139,15 @@ const ProfileDocumentsVault = ({ token, orders = [] }) => {
 
     return allFiles;
   }, [orders]);
+
+  const getFallbackFileForType = (docType) => {
+    const keywords = DOC_TYPE_KEYWORDS[docType] || [docType.toLowerCase().split(' ')[0]];
+    return existingOrderFiles.find((file) => {
+      const nameLower = file.fileName.toLowerCase();
+      const sourceLower = file.source.toLowerCase();
+      return keywords.some((kw) => nameLower.includes(kw) || sourceLower.includes(kw));
+    });
+  };
 
   const handleFileUpload = async (docType, file) => {
     if (!file) return;
@@ -200,12 +228,8 @@ const ProfileDocumentsVault = ({ token, orders = [] }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {REQUIRED_DOC_TYPES.map((docType) => {
-            // Find explicit vault document OR fallback to existing order file matching name
             const vaultDoc = documents.find((d) => d.docType === docType);
-            const fallbackOrderFile = !vaultDoc 
-              ? existingOrderFiles.find((f) => f.fileName.toLowerCase().includes(docType.toLowerCase().split(' ')[0]))
-              : null;
-
+            const fallbackOrderFile = !vaultDoc ? getFallbackFileForType(docType) : null;
             const doc = vaultDoc || fallbackOrderFile;
             const isUploading = uploadingDocType === docType;
             const fileUrl = vaultDoc?.gdriveWebViewLink || doc?.url;
@@ -224,7 +248,7 @@ const ProfileDocumentsVault = ({ token, orders = [] }) => {
                     <div className="space-y-1">
                       <h4 className="font-black text-slate-800 text-base">{docType}</h4>
                       <p className="text-xs text-slate-400">
-                        {vaultDoc ? vaultDoc.fileName : fallbackOrderFile ? `${fallbackOrderFile.fileName} (${fallbackOrderFile.source})` : 'Not uploaded yet'}
+                        {vaultDoc ? vaultDoc.fileName : fallbackOrderFile ? `${fallbackOrderFile.fileName}` : 'Not uploaded yet'}
                       </p>
                     </div>
 
@@ -257,7 +281,7 @@ const ProfileDocumentsVault = ({ token, orders = [] }) => {
                       </a>
 
                       <div className="flex gap-1">
-                        <label className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl cursor-pointer transition-all" title="Upload new version">
+                        <label className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl cursor-pointer transition-all" title="Upload new version to Google Drive">
                           <Upload size={14} />
                           <input
                             type="file"
@@ -344,7 +368,7 @@ const ProfileDocumentsVault = ({ token, orders = [] }) => {
           {existingOrderFiles.length === 0 && (
             <div className="p-10 text-center text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
               <FolderOpen size={36} className="mx-auto mb-2 opacity-30 text-slate-400" />
-              <p className="text-xs font-bold">No order documents found yet.</p>
+              <p className="text-xs font-bold">No order documents found in current session.</p>
             </div>
           )}
         </div>
