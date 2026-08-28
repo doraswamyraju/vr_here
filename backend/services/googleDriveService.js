@@ -15,20 +15,33 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 let driveClient = null;
 
 /**
- * Initializes and returns the Google Drive API client using service-account.json
+ * Initializes and returns the Google Drive API client
+ * Supports both User OAuth2 (Refresh Token) and Service Account Authentication
  */
 const getDriveClient = () => {
     if (driveClient) return driveClient;
 
     try {
-        let keyFileExists = fs.existsSync(SERVICE_ACCOUNT_PATH);
         let auth;
 
-        if (keyFileExists) {
+        // 1. Prefer User OAuth2 Refresh Token (bypasses Service Account 0 MB storage quota limits)
+        if (process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+            const oauth2Client = new google.auth.OAuth2(
+                process.env.GOOGLE_CLIENT_ID,
+                process.env.GOOGLE_CLIENT_SECRET,
+                'https://developers.google.com/oauthplayground'
+            );
+            oauth2Client.setCredentials({
+                refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+            });
+            auth = oauth2Client;
+            console.log('[GoogleDrive] Client initialized using User OAuth2 Refresh Token (vrherebms@gmail.com)'.green);
+        } else if (fs.existsSync(SERVICE_ACCOUNT_PATH)) {
             auth = new google.auth.GoogleAuth({
                 keyFile: SERVICE_ACCOUNT_PATH,
                 scopes: SCOPES,
             });
+            console.log('[GoogleDrive] Client initialized using Service Account JSON.'.green);
         } else if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
             const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
             auth = new google.auth.GoogleAuth({
@@ -41,7 +54,6 @@ const getDriveClient = () => {
         }
 
         driveClient = google.drive({ version: 'v3', auth });
-        console.log('[GoogleDrive] Client initialized successfully.'.green);
         return driveClient;
     } catch (error) {
         console.error('[GoogleDrive] Auth Initialization Error:', error.message);
@@ -55,6 +67,11 @@ const getDriveClient = () => {
 export const findOrCreateFolder = async (folderName, parentFolderId = null) => {
     const drive = getDriveClient();
     if (!drive) return null;
+
+    // If folderName is the root folder name and GOOGLE_DRIVE_ROOT_FOLDER_ID is set, return it directly!
+    if (folderName === 'VR HERE Documents' && process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID) {
+        return process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+    }
 
     const effectiveParentId = parentFolderId || process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
 
