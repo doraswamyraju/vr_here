@@ -46,19 +46,19 @@ export default function CustomerApp() {
 
    const toggleLetsTrack = () => {
       if (window.LetsTrack) {
-         if (typeof window.LetsTrack.open === 'function') {
-            window.LetsTrack.open();
-            return;
-         }
          if (typeof window.LetsTrack.toggle === 'function') {
             window.LetsTrack.toggle();
+            return;
+         }
+         if (typeof window.LetsTrack.open === 'function') {
+            window.LetsTrack.open();
             return;
          }
       }
       const rootEl = document.getElementById('letstrack-widget-root');
       const shadow = (rootEl && rootEl.shadowRoot) || window.__letsTrackShadowRoot;
       if (shadow) {
-         const btn = shadow.querySelector('.lt-widget-btn, button, [class*="widget-btn"], [class*="launcher"]');
+         const btn = shadow.querySelector('.lt-widget-btn, button:not(#lt-custom-close-btn), [class*="widget-btn"], [class*="launcher"]');
          if (btn) {
             btn.click();
             return;

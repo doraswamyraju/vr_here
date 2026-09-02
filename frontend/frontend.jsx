@@ -120,7 +120,7 @@ const App = () => {
           style = document.createElement('style');
           style.id = styleId;
           style.textContent = `
-            .lt-widget-btn, button, [class*="widget-btn"], [class*="launcher"] {
+            .lt-widget-btn, button:not(#lt-custom-close-btn), [class*="widget-btn"], [class*="launcher"] {
               display: none !important;
               visibility: hidden !important;
               opacity: 0 !important;
@@ -132,14 +132,62 @@ const App = () => {
               bottom: 96px !important;
               align-items: flex-end !important;
               z-index: 2147483640 !important;
+              position: relative !important;
             }
           `;
           shadow.appendChild(style);
+        }
+
+        // Inject stylish close button on chat window header
+        const container = shadow.querySelector('.lt-widget-container, .lt-chat-window, [class*="widget-container"]');
+        if (container && !shadow.getElementById('lt-custom-close-btn')) {
+          const closeBtn = document.createElement('button');
+          closeBtn.id = 'lt-custom-close-btn';
+          closeBtn.innerHTML = '✕';
+          closeBtn.title = 'Close Live Chat';
+          closeBtn.style.cssText = `
+            position: absolute !important;
+            top: 14px !important;
+            right: 14px !important;
+            width: 26px !important;
+            height: 26px !important;
+            background: rgba(0, 0, 0, 0.28) !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+            border-radius: 50% !important;
+            color: #ffffff !important;
+            font-size: 13px !important;
+            font-weight: 900 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            z-index: 2147483647 !important;
+            transition: all 0.2s ease !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+          `;
+          closeBtn.onmouseenter = () => { closeBtn.style.background = 'rgba(0, 0, 0, 0.55)'; };
+          closeBtn.onmouseleave = () => { closeBtn.style.background = 'rgba(0, 0, 0, 0.28)'; };
+          closeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.LetsTrack && typeof window.LetsTrack.close === 'function') {
+              window.LetsTrack.close();
+            } else if (window.LetsTrack && typeof window.LetsTrack.toggle === 'function') {
+              window.LetsTrack.toggle();
+            } else {
+              const launcherBtn = shadow.querySelector('.lt-widget-btn, button:not(#lt-custom-close-btn)');
+              if (launcherBtn) launcherBtn.click();
+            }
+          };
+          container.appendChild(closeBtn);
         }
       } else {
         if (style) {
           style.remove();
         }
+        const customClose = shadow.getElementById('lt-custom-close-btn');
+        if (customClose) customClose.remove();
       }
     };
 
