@@ -254,13 +254,13 @@ export const verifyPayment = async (req, res) => {
 
         const parsedAmount = Number(amount);
 
-        const isGuestCheckout = !req.user?._id;
         const { user: customerUser, accountCreated } = await resolveCustomerUser({
             currentUser: req.user,
             customerName,
             email,
             phone
         });
+        const isGuestCheckout = !req.user?._id && accountCreated;
         const auth = getAuthPayload(customerUser);
 
         const existingPayment = await Payment.findOne({ paymentId: razorpay_payment_id });

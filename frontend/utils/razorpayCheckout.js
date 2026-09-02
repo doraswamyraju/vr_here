@@ -7,12 +7,6 @@ const getAuthConfig = (token) => (
 );
 
 const persistAuthFromPayment = (paymentResponse) => {
-  if (paymentResponse?.resetLinkSent) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userInfo');
-    return;
-  }
-
   const auth = paymentResponse?.auth;
   if (!auth?.token) return;
 
