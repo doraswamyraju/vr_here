@@ -75,8 +75,30 @@ const ticketSchema = mongoose.Schema({
 // Auto-generate unique sequential ticket numbers (e.g. VR-TCK-1001)
 ticketSchema.pre('save', async function (next) {
     if (!this.ticketNumber) {
-        const count = await mongoose.model('Ticket').countDocuments();
-        this.ticketNumber = `VR-TCK-${1000 + count + 1}`;
+        try {
+            const lastTicket = await mongoose.model('Ticket')
+                .findOne({ ticketNumber: { $exists: true, $ne: null } })
+                .sort({ createdAt: -1 });
+
+            let nextNum = 1001;
+            if (lastTicket && lastTicket.ticketNumber) {
+                const match = String(lastTicket.ticketNumber).match(/\d+$/);
+                if (match) {
+                    nextNum = parseInt(match[0], 10) + 1;
+                }
+            }
+
+            let candidate = `VR-TCK-${nextNum}`;
+            while (await mongoose.model('Ticket').exists({ ticketNumber: candidate })) {
+                nextNum++;
+                candidate = `VR-TCK-${nextNum}`;
+            }
+
+            this.ticketNumber = candidate;
+        } catch (err) {
+            // Fallback to timestamp-based unique ticket number
+            this.ticketNumber = `VR-TCK-${Date.now().toString().slice(-6)}`;
+        }
     }
     next();
 });
