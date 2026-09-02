@@ -70,16 +70,47 @@ export default function CustomerApp() {
       }
    };
 
+   const [phonePromptOpen, setPhonePromptOpen] = useState(false);
+   const [inputPhone, setInputPhone] = useState('');
+   const [savingPhone, setSavingPhone] = useState(false);
+
    // -- Authentication --
    useEffect(() => {
       const user = localStorage.getItem('userInfo');
       if (user) {
-         setUserInfo(JSON.parse(user));
+         const parsed = JSON.parse(user);
+         setUserInfo(parsed);
          setIsLoggedIn(true);
+         if (!parsed.phone || parsed.requiresPhone) {
+            setPhonePromptOpen(true);
+         }
       } else {
          navigate('/');
       }
    }, [navigate]);
+
+   const handleSavePhone = async (e) => {
+      e.preventDefault();
+      const cleaned = inputPhone.trim();
+      if (!cleaned || cleaned.length < 10) {
+         alert('Please enter a valid 10-digit mobile number');
+         return;
+      }
+      setSavingPhone(true);
+      try {
+         const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+         await axios.put('/api/auth/profile', { phone: cleaned }, config);
+         const updated = { ...userInfo, phone: cleaned, requiresPhone: false };
+         setUserInfo(updated);
+         localStorage.setItem('userInfo', JSON.stringify(updated));
+         setPhonePromptOpen(false);
+         alert('Phone number updated successfully!');
+      } catch (err) {
+         alert(err.response?.data?.message || 'Failed to save phone number');
+      } finally {
+         setSavingPhone(false);
+      }
+   };
 
    // -- Data Fetching --
    const fetchData = useCallback(async () => {
@@ -297,13 +328,21 @@ export default function CustomerApp() {
                </div>
 
                <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                     <div className="w-9 h-9 rounded-xl bg-slate-800 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-slate-700">
-                        {userInfo.name.charAt(0).toUpperCase()}
-                     </div>
+                  <div className="flex items-center gap-2.5 min-w-0 cursor-pointer" onClick={() => setActiveTab('Account')} title="View Account Settings">
+                     {userInfo.profilePhoto || userInfo.companyLogo ? (
+                        <img
+                           src={userInfo.profilePhoto || userInfo.companyLogo}
+                           alt={userInfo.name}
+                           className="w-9 h-9 rounded-xl object-cover border border-slate-700 shrink-0"
+                        />
+                     ) : (
+                        <div className="w-9 h-9 rounded-xl bg-slate-800 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-slate-700">
+                           {(userInfo.name || 'C').charAt(0).toUpperCase()}
+                        </div>
+                     )}
                      <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-200 truncate">{userInfo.name}</p>
-                        <p className="text-[10px] text-slate-400 truncate">{userInfo.email}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{userInfo.companyName || userInfo.email}</p>
                      </div>
                   </div>
                   <button
@@ -443,13 +482,27 @@ export default function CustomerApp() {
                   </div>
 
                   {/* User Profile Snippet */}
-                  <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
-                     <div className="w-10 h-10 bg-red-50 border border-red-200 rounded-xl flex items-center justify-center text-red-600 font-black">
-                        {userInfo.name.charAt(0).toUpperCase()}
-                     </div>
+                  <div
+                     className="flex items-center gap-3 pl-3 border-l border-slate-200 cursor-pointer group"
+                     onClick={() => setActiveTab('Account')}
+                     title="View Profile & Business Settings"
+                  >
+                     {userInfo.profilePhoto || userInfo.companyLogo ? (
+                        <img
+                           src={userInfo.profilePhoto || userInfo.companyLogo}
+                           alt={userInfo.name}
+                           className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm group-hover:ring-2 group-hover:ring-red-500 transition-all"
+                        />
+                     ) : (
+                        <div className="w-10 h-10 bg-red-50 border border-red-200 rounded-xl flex items-center justify-center text-red-600 font-black group-hover:bg-red-600 group-hover:text-white transition-all">
+                           {(userInfo.name || 'C').charAt(0).toUpperCase()}
+                        </div>
+                     )}
                      <div className="text-left leading-tight">
-                        <p className="text-xs font-black text-slate-900">{userInfo.name}</p>
-                        <p className="text-[10px] font-semibold text-slate-400">Verified Client</p>
+                        <p className="text-xs font-black text-slate-900 truncate max-w-[150px]">{userInfo.name}</p>
+                        <p className="text-[10px] font-semibold text-slate-400">
+                           {userInfo.companyName || 'Verified Client'}
+                        </p>
                      </div>
                   </div>
                </div>
@@ -625,6 +678,63 @@ export default function CustomerApp() {
                            }}
                         />
                      </div>
+                  </div>
+               </div>
+            )}
+
+            {/* --- GOOGLE SIGNIN / FIRST-TIME PHONE CAPTURE MODAL --- */}
+            {phonePromptOpen && (
+               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-300">
+                  <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 space-y-6">
+                     <div className="text-center space-y-2">
+                        <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+                           <Phone size={28} />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tight">Complete Your Profile</h3>
+                        <p className="text-xs text-slate-500 font-medium">
+                           Welcome to VR HERE! Please provide your mobile number for real-time filing milestone updates and official WhatsApp communication.
+                        </p>
+                     </div>
+
+                     <form onSubmit={handleSavePhone} className="space-y-4">
+                        <div className="space-y-1.5">
+                           <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                              Mobile Number <span className="text-red-500">*</span>
+                           </label>
+                           <div className="flex items-center rounded-2xl border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/20 transition-all overflow-hidden p-1">
+                              <span className="px-3 text-xs font-black text-slate-500 border-r border-slate-200">
+                                 +91
+                              </span>
+                              <input
+                                 type="tel"
+                                 required
+                                 autoFocus
+                                 maxLength={12}
+                                 value={inputPhone}
+                                 onChange={(e) => setInputPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                                 placeholder="98765 43210"
+                                 className="w-full px-3 py-2.5 bg-transparent text-sm font-bold text-slate-900 outline-none placeholder:text-slate-400"
+                              />
+                           </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-2">
+                           <button
+                              type="button"
+                              onClick={() => setPhonePromptOpen(false)}
+                              className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+                           >
+                              Skip For Now
+                           </button>
+                           <button
+                              type="submit"
+                              disabled={savingPhone || inputPhone.trim().length < 10}
+                              className="flex-1 py-3 px-4 rounded-xl text-xs font-black text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-md shadow-red-600/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                           >
+                              {savingPhone ? 'Saving...' : 'Save & Continue'}
+                           </button>
+                        </div>
+                     </form>
                   </div>
                </div>
             )}

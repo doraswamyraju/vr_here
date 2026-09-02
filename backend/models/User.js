@@ -29,6 +29,34 @@ const userSchema = mongoose.Schema({
         type: String,
         required: false
     },
+    profilePhoto: {
+        type: String,
+        default: null
+    },
+    companyLogo: {
+        type: String,
+        default: null
+    },
+    companyName: {
+        type: String,
+        default: ''
+    },
+    businessType: {
+        type: String,
+        default: ''
+    },
+    gstin: {
+        type: String,
+        default: ''
+    },
+    panNumber: {
+        type: String,
+        default: ''
+    },
+    address: {
+        type: String,
+        default: ''
+    },
     role: {
         type: String,
         enum: ['admin', 'employee', 'client', 'partner', 'freelancer'],

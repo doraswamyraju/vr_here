@@ -8,6 +8,8 @@ import {
     forgotPassword,
     resetPassword,
     getUserProfile,
+    updateUserProfile,
+    uploadProfileMedia,
     getEmployees,
     getUsers,
     createUserByAdmin,
@@ -19,6 +21,7 @@ import {
     updateFcmToken
 } from '../controllers/authController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
 
 router.post('/register', registerUser);
 router.post('/register-partner', registerPartner);
@@ -26,7 +29,11 @@ router.post('/login', authUser);
 router.post('/google', googleAuth);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resetToken', resetPassword);
-router.route('/profile').get(protect, getUserProfile);
+router.route('/profile')
+    .get(protect, getUserProfile)
+    .put(protect, updateUserProfile);
+router.post('/upload-avatar', protect, upload.single('image'), uploadProfileMedia);
+router.post('/upload-logo', protect, upload.single('image'), uploadProfileMedia);
 router.delete('/delete-account', protect, deleteSelfAccount);
 router.route('/fcm-token').put(protect, updateFcmToken);
 router.route('/employees').get(protect, admin, getEmployees);

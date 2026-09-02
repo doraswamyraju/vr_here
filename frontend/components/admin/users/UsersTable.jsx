@@ -24,17 +24,51 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
         )}
         {users.map((user) => {
           const isEditing = editingUserId === user._id;
+          const avatarUrl = user.profilePhoto || user.companyLogo;
           return (
-            <tr key={user._id}>
+            <tr key={user._id} className="hover:bg-slate-50/60 transition-colors">
               <td className="px-4 py-3">
                 {isEditing ? (
-                  <input value={editDraft.name} onChange={(event) => setEditDraft((prev) => ({ ...prev, name: event.target.value }))} className="p-2 border rounded border-slate-300 text-sm w-full" />
-                ) : user.name}
+                  <div className="space-y-1.5">
+                    <input value={editDraft.name} onChange={(event) => setEditDraft((prev) => ({ ...prev, name: event.target.value }))} placeholder="Name" className="p-2 border rounded border-slate-300 text-sm w-full font-bold" />
+                    <input value={editDraft.phone || ''} onChange={(event) => setEditDraft((prev) => ({ ...prev, phone: event.target.value }))} placeholder="Phone (+91...)" className="p-1.5 border rounded border-slate-300 text-xs w-full" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={user.name} className="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 font-black text-xs flex items-center justify-center shrink-0">
+                        {(user.name || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 truncate flex items-center gap-1.5">
+                        <span>{user.name}</span>
+                        {user.companyName && (
+                          <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
+                            {user.companyName}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-slate-500 font-medium">{user.phone || 'No phone'}</p>
+                    </div>
+                  </div>
+                )}
               </td>
               <td className="px-4 py-3">
                 {isEditing ? (
                   <input value={editDraft.email} onChange={(event) => setEditDraft((prev) => ({ ...prev, email: event.target.value }))} className="p-2 border rounded border-slate-300 text-sm w-full" />
-                ) : user.email}
+                ) : (
+                  <div>
+                    <p className="text-slate-800 font-medium">{user.email}</p>
+                    {user.authProvider === 'google' && (
+                      <span className="inline-block mt-0.5 px-1.5 py-0.2 bg-red-50 text-red-600 border border-red-200 rounded text-[9px] font-bold">
+                        Google Auth
+                      </span>
+                    )}
+                  </div>
+                )}
               </td>
               <td className="px-4 py-3">
                 {isEditing ? (
@@ -111,7 +145,7 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
                 </span>
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {isEditing ? (
                     <>
                       <button onClick={() => onSaveEdit(user)} className="px-2 py-1 rounded bg-indigo-600 text-white text-xs font-semibold">Save</button>
@@ -119,6 +153,11 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
                     </>
                   ) : (
                     <>
+                      {onViewDetails && (
+                        <button onClick={() => onViewDetails(user)} className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold inline-flex items-center gap-1" title="View Full Details">
+                          View
+                        </button>
+                      )}
                       <button onClick={() => onStartEdit(user)} className="px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs font-semibold inline-flex items-center gap-1">
                         <Pencil size={12} /> Edit
                       </button>

@@ -21,7 +21,12 @@ import {
   Send,
   IndianRupee,
   Lock,
-  Award
+  Award,
+  Camera,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import axios from 'axios';
 import ProfileDocumentsVault from './ProfileDocumentsVault';
@@ -35,6 +40,8 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
     name: userInfo?.name || '',
     email: userInfo?.email || '',
     phone: userInfo?.phone || '',
+    profilePhoto: userInfo?.profilePhoto || null,
+    companyLogo: userInfo?.companyLogo || null,
     companyName: userInfo?.companyName || userInfo?.name || '',
     businessType: userInfo?.businessType || 'Private Limited',
     gstin: userInfo?.gstin || '',
@@ -43,6 +50,70 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
   });
 
   const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  // Upload Profile Photo Handler
+  const handleUploadPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const data = new FormData();
+      data.append('image', file);
+      data.append('type', 'profilePhoto');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      };
+      const res = await axios.post('/api/auth/upload-avatar', data, config);
+      const photoUrl = res.data.url;
+      setFormData((prev) => ({ ...prev, profilePhoto: photoUrl }));
+
+      // Update local storage
+      const savedUser = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const updatedUser = { ...savedUser, profilePhoto: photoUrl };
+      localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+      alert('Person photo uploaded successfully!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Upload Company Logo Handler
+  const handleUploadLogo = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const data = new FormData();
+      data.append('image', file);
+      data.append('type', 'companyLogo');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      };
+      const res = await axios.post('/api/auth/upload-logo', data, config);
+      const logoUrl = res.data.url;
+      setFormData((prev) => ({ ...prev, companyLogo: logoUrl }));
+
+      // Update local storage
+      const savedUser = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const updatedUser = { ...savedUser, companyLogo: logoUrl };
+      localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+      alert('Company logo uploaded successfully!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to upload company logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   // Save Profile Handler
   const handleSaveProfile = async (e) => {
@@ -50,12 +121,12 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
     setSavingProfile(true);
     try {
       const config = { headers: { Authorization: `Bearer ${authToken}` } };
-      await axios.put('/api/auth/profile', formData, config);
+      const res = await axios.put('/api/auth/profile', formData, config);
       alert('Profile & Business info updated successfully!');
       
       // Update local storage
       const savedUser = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const updatedUser = { ...savedUser, ...formData };
+      const updatedUser = { ...savedUser, ...res.data, ...formData };
       localStorage.setItem('userInfo', JSON.stringify(updatedUser));
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update profile');
@@ -72,6 +143,8 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
     return orders.filter((o) => o.isRecurring || o.status === 'Completed');
   }, [orders]);
 
+  const activeAvatarUrl = formData.profilePhoto || formData.companyLogo || userInfo?.profilePhoto || userInfo?.companyLogo;
+
   return (
     <div className="space-y-6 pb-20 md:pb-8 animate-in fade-in duration-300">
       
@@ -79,19 +152,28 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
         <div className="relative z-10 flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center font-black text-2xl text-white shadow-lg">
-            {(userInfo?.name || 'C').charAt(0).toUpperCase()}
-          </div>
+          {activeAvatarUrl ? (
+            <img
+              src={activeAvatarUrl}
+              alt={formData.name || 'Account'}
+              className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-400/50 shadow-lg"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center font-black text-2xl text-white shadow-lg">
+              {(formData.name || userInfo?.name || 'C').charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-white tracking-tight">{userInfo?.name || 'Customer Account'}</h1>
+              <h1 className="text-2xl font-black text-white tracking-tight">{formData.name || userInfo?.name || 'Customer Account'}</h1>
               <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider rounded-full border border-emerald-500/30">
                 Verified Account
               </span>
             </div>
             <p className="text-xs text-slate-300 font-medium mt-1 flex items-center gap-3">
-              <span>{userInfo?.email}</span>
-              {userInfo?.phone && <span>• {userInfo.phone}</span>}
+              <span>{formData.email || userInfo?.email}</span>
+              {(formData.phone || userInfo?.phone) && <span>• {formData.phone || userInfo?.phone}</span>}
+              {formData.companyName && <span>• {formData.companyName}</span>}
             </p>
           </div>
         </div>
@@ -160,14 +242,121 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
       {/* SUB-TAB CONTENT 1: PROFILE & BUSINESS INFO */}
       {activeSubTab === 'profile' && (
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6 animate-in fade-in duration-300">
-          <div>
-            <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <Building2 className="text-indigo-600" size={20} />
-              Basic Information & Business Profile
-            </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Keep your contact and business details updated for seamless invoice generation and document filings.
-            </p>
+          {/* Visual Branding & Identity Uploader Card */}
+          <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-5 space-y-4">
+            <div>
+              <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <Camera size={16} className="text-indigo-600" />
+                Profile Photo & Company Logo
+              </h4>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Upload your personal photo to personalize your dashboard, and company logo for invoices and compliance filings.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              
+              {/* Person Profile Photo */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-4">
+                <div className="relative shrink-0">
+                  {formData.profilePhoto ? (
+                    <img
+                      src={formData.profilePhoto}
+                      alt="Person Photo"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-indigo-500 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 border-2 border-dashed border-indigo-200 flex items-center justify-center text-indigo-400 font-bold text-xs text-center p-1">
+                      <UserIcon size={24} />
+                    </div>
+                  )}
+                  {uploadingPhoto && (
+                    <div className="absolute inset-0 bg-slate-900/60 rounded-full flex items-center justify-center text-white">
+                      <Loader2 size={18} className="animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-black text-slate-900">Personal Photo</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Used next to your name & top bar</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <label className="cursor-pointer px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200/60 transition-colors inline-flex items-center gap-1.5">
+                      <Upload size={12} />
+                      <span>{formData.profilePhoto ? 'Change' : 'Upload Photo'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleUploadPhoto}
+                        disabled={uploadingPhoto}
+                      />
+                    </label>
+                    {formData.profilePhoto && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, profilePhoto: null }))}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Remove Photo"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Company / Business Logo */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-4">
+                <div className="relative shrink-0">
+                  {formData.companyLogo ? (
+                    <img
+                      src={formData.companyLogo}
+                      alt="Company Logo"
+                      className="w-16 h-16 rounded-xl object-contain bg-slate-50 border-2 border-indigo-500 shadow-sm p-1"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-400 font-bold text-xs text-center p-1">
+                      <ImageIcon size={24} />
+                    </div>
+                  )}
+                  {uploadingLogo && (
+                    <div className="absolute inset-0 bg-slate-900/60 rounded-xl flex items-center justify-center text-white">
+                      <Loader2 size={18} className="animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-black text-slate-900">Company Logo</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Used on invoices & filings</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <label className="cursor-pointer px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200/60 transition-colors inline-flex items-center gap-1.5">
+                      <Upload size={12} />
+                      <span>{formData.companyLogo ? 'Change' : 'Upload Logo'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleUploadLogo}
+                        disabled={uploadingLogo}
+                      />
+                    </label>
+                    {formData.companyLogo && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, companyLogo: null }))}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Remove Logo"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
 
           <form onSubmit={handleSaveProfile} className="space-y-5">

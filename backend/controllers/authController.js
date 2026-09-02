@@ -5,6 +5,7 @@ import https from 'https';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
+import { uploadBufferToDrive } from '../services/googleDriveService.js';
 
 const googleClient = new OAuth2Client();
 
@@ -101,7 +102,15 @@ const authUser = asyncHandler(async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone || '',
         role: user.role,
+        profilePhoto: user.profilePhoto || null,
+        companyLogo: user.companyLogo || null,
+        companyName: user.companyName || '',
+        businessType: user.businessType || '',
+        gstin: user.gstin || '',
+        panNumber: user.panNumber || '',
+        address: user.address || '',
         isActive: user.isActive,
         isClockedIn: user.isClockedIn || false,
         activeOrderId: user.activeOrderId || null,
@@ -299,7 +308,15 @@ const getUserProfile = asyncHandler(async (req, res) => {
             _id: user._id,
             name: user.name,
             email: user.email,
+            phone: user.phone || '',
             role: user.role,
+            profilePhoto: user.profilePhoto || null,
+            companyLogo: user.companyLogo || null,
+            companyName: user.companyName || '',
+            businessType: user.businessType || '',
+            gstin: user.gstin || '',
+            panNumber: user.panNumber || '',
+            address: user.address || '',
             isActive: user.isActive,
             isClockedIn: user.isClockedIn || false,
             activeOrderId: user.activeOrderId || null,
@@ -314,6 +331,107 @@ const getUserProfile = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error('User not found');
     }
+});
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    if (req.body.name !== undefined) user.name = req.body.name;
+    if (req.body.phone !== undefined) user.phone = req.body.phone;
+    if (req.body.companyName !== undefined) user.companyName = req.body.companyName;
+    if (req.body.businessType !== undefined) user.businessType = req.body.businessType;
+    if (req.body.gstin !== undefined) user.gstin = req.body.gstin;
+    if (req.body.panNumber !== undefined) user.panNumber = req.body.panNumber;
+    if (req.body.address !== undefined) user.address = req.body.address;
+    if (req.body.profilePhoto !== undefined) user.profilePhoto = req.body.profilePhoto;
+    if (req.body.companyLogo !== undefined) user.companyLogo = req.body.companyLogo;
+
+    if (req.body.password) {
+        user.password = req.body.password;
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone || '',
+        role: updatedUser.role,
+        profilePhoto: updatedUser.profilePhoto || null,
+        companyLogo: updatedUser.companyLogo || null,
+        companyName: updatedUser.companyName || '',
+        businessType: updatedUser.businessType || '',
+        gstin: updatedUser.gstin || '',
+        panNumber: updatedUser.panNumber || '',
+        address: updatedUser.address || '',
+        isActive: updatedUser.isActive,
+        token: generateToken(updatedUser._id)
+    });
+});
+
+// @desc    Upload profile photo or company logo
+// @route   POST /api/auth/upload-avatar or /api/auth/upload-logo
+// @access  Private
+const uploadProfileMedia = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        res.status(400);
+        throw new Error('No image file uploaded');
+    }
+
+    const mediaType = req.body.type || (req.path.includes('logo') ? 'companyLogo' : 'profilePhoto');
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    let fileUrl = '';
+    try {
+        const cleanName = (req.file.originalname || 'upload.png').replace(/[^a-zA-Z0-9._-]/g, '');
+        const fileName = `${mediaType}_${user._id}_${Date.now()}_${cleanName}`;
+        const driveRes = await uploadBufferToDrive({
+            fileBuffer: req.file.buffer,
+            mimeType: req.file.mimetype,
+            fileName
+        });
+        fileUrl = driveRes.webViewLink || driveRes.webContentLink;
+    } catch (driveErr) {
+        console.warn('[ProfileMediaUpload] Google Drive upload fallback to base64 data URL:', driveErr.message);
+        const base64 = req.file.buffer.toString('base64');
+        fileUrl = `data:${req.file.mimetype};base64,${base64}`;
+    }
+
+    if (mediaType === 'companyLogo') {
+        user.companyLogo = fileUrl;
+    } else {
+        user.profilePhoto = fileUrl;
+    }
+    await user.save();
+
+    res.json({
+        success: true,
+        mediaType,
+        url: fileUrl,
+        user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone || '',
+            profilePhoto: user.profilePhoto || null,
+            companyLogo: user.companyLogo || null,
+            companyName: user.companyName || '',
+            role: user.role
+        }
+    });
 });
 
 // @desc    Update FCM Token for user
@@ -649,13 +767,17 @@ const googleAuth = asyncHandler(async (req, res) => {
         if (!user.googleId) {
             user.googleId = googleId;
             user.authProvider = user.authProvider || 'google';
-            await user.save();
         }
+        if (payload.picture && !user.profilePhoto) {
+            user.profilePhoto = payload.picture;
+        }
+        await user.save();
     } else {
         user = await User.create({
             name: name || email.split('@')[0],
             email,
             googleId,
+            profilePhoto: payload.picture || null,
             authProvider: 'google',
             role: 'client',
             isActive: true
@@ -676,7 +798,16 @@ const googleAuth = asyncHandler(async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone || '',
         role: user.role,
+        profilePhoto: user.profilePhoto || null,
+        companyLogo: user.companyLogo || null,
+        companyName: user.companyName || '',
+        businessType: user.businessType || '',
+        gstin: user.gstin || '',
+        panNumber: user.panNumber || '',
+        address: user.address || '',
+        requiresPhone: !user.phone,
         isActive: user.isActive,
         isClockedIn: user.isClockedIn || false,
         activeOrderId: user.activeOrderId || null,
@@ -692,6 +823,8 @@ export {
     forgotPassword,
     resetPassword,
     getUserProfile,
+    updateUserProfile,
+    uploadProfileMedia,
     getEmployees,
     getUsers,
     createUserByAdmin,

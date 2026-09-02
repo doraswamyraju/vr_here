@@ -97,8 +97,8 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                        <span>Welcome, {userInfo?.name?.split(' ')[0]}</span>
-                        <span className="text-xl">👋</span>
+                        <span>Welcome, {userInfo?.name || 'Valued Client'}</span>
+                        <span className="inline-block animate-bounce">👋</span>
                     </h1>
                     <p className="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">
                         Here is an executive snapshot of your filings, compliance status, and vault.
