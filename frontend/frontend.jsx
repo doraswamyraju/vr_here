@@ -113,13 +113,10 @@ const App = () => {
         styleEl = document.createElement('style');
         styleEl.id = 'hide-live-chat-style';
         styleEl.innerHTML = `
-          iframe[src*="livechat.vrhere.in"],
-          div[class*="letstrack"],
-          div[id*="letstrack"],
-          #letstrack-widget,
-          .letstrack-chat-widget,
-          div[style*="z-index: 2147483647"],
-          div[style*="z-index: 99999"] {
+          .lt-widget-btn,
+          #letstrack-widget-btn,
+          button[class*="lt-launcher"],
+          .letstrack-launcher-btn {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
