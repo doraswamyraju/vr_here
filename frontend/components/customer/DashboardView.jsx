@@ -87,12 +87,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
     const handleSelectSuggestion = (suggestion) => {
         setSearchQuery(suggestion);
         setShowSuggestions(false);
-        const lower = suggestion.toLowerCase();
-        if (lower.includes('pvt ltd') || lower.includes('private limited')) setActiveTab('pvt-ltd-registration');
-        else if (lower.includes('gst reg')) setActiveTab('gst-registration');
-        else if (lower.includes('partnership')) setActiveTab('partnership-firm');
-        else if (lower.includes('income tax') || lower.includes('itr')) setActiveTab('income-tax-return');
-        else setActiveTab('Services');
+        setActiveTab('Services', suggestion);
     };
 
     return (

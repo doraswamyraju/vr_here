@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lightbulb, Search, ChevronRight, X, ArrowUpRight } from 'lucide-react';
 import { MENU_DATA, getServiceLink } from '../SharedComponents';
 
-const ServicesView = ({ setActiveTab, initialQuery = '' }) => {
+const ServicesView = ({ setActiveTab, initialQuery = '', onSelectService }) => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState(initialQuery);
 
@@ -49,9 +49,10 @@ const ServicesView = ({ setActiveTab, initialQuery = '' }) => {
     );
 
     const handleServiceClick = (item) => {
-        const computedLink = getServiceLink(item);
-        if (computedLink && computedLink.startsWith('/')) {
-            navigate(computedLink);
+        if (onSelectService) {
+            const computedLink = getServiceLink(item);
+            const slug = computedLink ? computedLink.replace(/^\//, '') : item.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            onSelectService({ title: item, slug });
         } else if (item.toLowerCase().includes('accounting') || item.toLowerCase().includes('gst return')) {
             setActiveTab('Accounting');
         } else {

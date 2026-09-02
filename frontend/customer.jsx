@@ -40,6 +40,7 @@ export default function CustomerApp() {
    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
    const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
+   const [selectedService, setSelectedService] = useState(null);
    const [chatMessages, setChatMessages] = useState([
       { id: 1, sender: 'agent', text: 'Hello! I am your assigned Relationship Associate. How can our CA/CS team assist your business today?', time: 'Just now' }
    ]);
@@ -137,9 +138,27 @@ export default function CustomerApp() {
              />
           );
          case 'Services': {
+            if (selectedService) {
+                return (
+                    <ServiceDetailView 
+                        service={selectedService}
+                        onBack={() => setSelectedService(null)}
+                        setActiveTab={setActiveTab}
+                        userInfo={userInfo}
+                    />
+                );
+            }
             const q = serviceSearchQuery;
             if (q) setServiceSearchQuery(''); // consume once
-            return <ServicesView setActiveTab={setActiveTab} initialQuery={q} />;
+            return (
+                <ServicesView 
+                    setActiveTab={setActiveTab} 
+                    initialQuery={q} 
+                    onSelectService={(serviceObj) => {
+                        setSelectedService(serviceObj);
+                    }}
+                />
+            );
          }
          case 'Accounting': return <AccountingServicesView setActiveTab={setActiveTab} userInfo={userInfo} />;
          case 'Orders': return (
@@ -218,7 +237,10 @@ export default function CustomerApp() {
                         return (
                            <button
                               key={item.id}
-                              onClick={() => setActiveTab(item.id)}
+                              onClick={() => {
+                                 setActiveTab(item.id);
+                                 if (item.id === 'Services') setSelectedService(null);
+                              }}
                               className={`flex items-center justify-between w-full px-3.5 py-3 rounded-xl font-bold text-xs transition-all duration-200 group ${
                                  isActive
                                     ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30 font-black'
@@ -302,11 +324,15 @@ export default function CustomerApp() {
                      </button>
                   </div>
 
-                  <nav className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto">
+                   <nav className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto">
                      {allNavItems.map(item => (
                         <button
                            key={item.id}
-                           onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
+                           onClick={() => { 
+                              setActiveTab(item.id); 
+                              if (item.id === 'Services') setSelectedService(null);
+                              setIsMobileMenuOpen(false); 
+                           }}
                            className={`flex items-center w-full p-3.5 rounded-xl font-bold text-xs transition-all ${
                               activeTab === item.id ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-900'
                            }`}
@@ -358,9 +384,11 @@ export default function CustomerApp() {
             {/* Desktop Top Header Bar */}
             <header className="hidden lg:flex h-20 items-center justify-between px-10 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 sticky top-0 z-20">
                <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-black text-slate-900 tracking-tight">{activeTab}</h1>
+                  <h1 className="text-xl font-black text-slate-900 tracking-tight">
+                     {activeTab === 'Services' && selectedService ? selectedService.title : activeTab}
+                  </h1>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-50 text-red-600 border border-red-200/80">
-                     Customer Suite
+                     {activeTab === 'Services' && selectedService ? 'Service Details' : 'Customer Suite'}
                   </span>
                </div>
 
@@ -375,7 +403,10 @@ export default function CustomerApp() {
 
                   {/* New Engagement Button */}
                   <button
-                     onClick={() => setActiveTab('Services')}
+                     onClick={() => {
+                        setActiveTab('Services');
+                        setSelectedService(null);
+                     }}
                      className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all shadow-md shadow-red-600/25 flex items-center gap-2"
                   >
                      <Plus size={16} />
