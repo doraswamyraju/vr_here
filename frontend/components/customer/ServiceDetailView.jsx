@@ -122,47 +122,47 @@ const ServiceDetailView = ({ serviceKey, setActiveTab, userInfo }) => {
                 {service.packages.map((pkg) => (
                     <div 
                         key={pkg.id} 
-                        className={`bg-white rounded-[32px] p-8 border transition-all duration-300 flex flex-col relative group ${
-                            pkg.isPopular ? 'border-indigo-600 shadow-xl shadow-indigo-100/50' : 'border-slate-100 hover:border-indigo-200 shadow-sm'
+                        className={`bg-white rounded-2xl p-8 border transition-all duration-300 flex flex-col relative transform hover:-translate-y-4 hover:shadow-2xl ${
+                            pkg.isPopular ? 'border-red-600 shadow-xl scale-105 z-10' : 'border-slate-200 hover:border-red-300 shadow-sm'
                         }`}
                     >
                         {pkg.isPopular && (
-                            <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl rounded-tr-[32px] uppercase tracking-widest shadow-md">
+                            <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-md">
                                 RECOMMENDED
                             </div>
                         )}
 
-                        <h3 className="text-xl font-black text-slate-800 mb-2">{pkg.name}</h3>
-                        <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-3xl font-black text-slate-900">{formatCurrency(pkg.price)}</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                {pkg.isAdjustable ? '(Adjustable)' : '+ Taxes'}
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">{pkg.name}</h3>
+                        <div className="text-4xl font-black text-slate-900 mb-6">
+                            {formatCurrency(pkg.price)}
+                            <span className="text-[10px] font-bold text-slate-500 ml-1 block mt-1">
+                                {pkg.isAdjustable ? '(Fully Adjustable)' : '+ Taxes'}
                             </span>
                         </div>
 
                         {pkg.isAdjustable && (
-                            <div className="bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest p-2 rounded-xl mb-6 flex items-center gap-2">
-                                <RefreshCw className="w-3 h-3" /> Fully Adjustable
+                            <div className="bg-green-50 text-green-700 text-xs font-bold p-2 rounded mb-4 flex items-center">
+                                <RefreshCw className="w-3 h-3 mr-1" /> Fee Adjustable in Final Package
                             </div>
                         )}
 
-                        <p className="text-xs text-slate-500 mb-8 leading-relaxed font-medium">{pkg.description}</p>
+                        <p className="text-sm text-slate-600 mb-6 font-medium leading-relaxed">{pkg.description}</p>
 
-                        <div className="space-y-4 mb-10 flex-1">
+                        <div className="space-y-4 mb-8 flex-1">
                             {pkg.features.map((feat, i) => (
-                                <div key={i} className="flex items-start text-xs text-slate-600 font-bold group/item">
-                                    <CheckCircle2 size={16} className="text-emerald-500 mr-3 mt-0.5 shrink-0 group-hover/item:scale-110 transition-transform" />
-                                    {feat}
+                                <div key={i} className="flex items-start text-sm text-slate-700 font-medium group">
+                                    <CheckCircle2 size={16} className="text-green-500 mr-2 mt-0.5 shrink-0 group-hover:scale-125 transition-transform" />
+                                    <span>{feat}</span>
                                 </div>
                             ))}
                         </div>
 
                         <button 
                             onClick={() => handleSelectPlan(pkg)} 
-                            className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all transform active:scale-95 ${
+                            className={`w-full py-4 rounded-xl font-bold transition transform active:scale-95 ${
                                 pkg.isPopular || pkg.isAdjustable 
-                                ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-xl shadow-indigo-100' 
-                                : 'bg-slate-50 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700'
+                                ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/30' 
+                                : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
                             }`}
                         >
                             {pkg.buttonText}

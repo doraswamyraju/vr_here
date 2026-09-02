@@ -353,73 +353,82 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
           </div>
         </section>
 
-        {/* 3. Pricing Packages */}
-        <section id="pricing-plans" className="py-24 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <span className="text-xs uppercase font-black tracking-widest text-red-600 bg-red-50 px-3.5 py-1.5 rounded-full font-bold">
-                Transparent Pricing
-              </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 mt-4 tracking-tight">
-                Select Your Plan
+        {/* 3. Pricing / Packages */}
+        <section id="pricing" className="py-20 bg-slate-50">
+          <div id="pricing-plans" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl lg:text-5xl font-black text-slate-900 mb-4 tracking-tight">
+                Registration Fees & Packages
               </h2>
-              <p className="text-base text-slate-600 mt-2 font-medium">
-                No hidden costs. 100% money-back compliance guarantee.
+              <p className="text-slate-600 font-medium">
+                Transparent pricing. No hidden fees.
               </p>
             </div>
 
-            <div className={`grid gap-8 ${activePackages.length === 1 ? 'max-w-md mx-auto' : activePackages.length === 2 ? 'max-w-3xl mx-auto md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+            <div
+              className={`grid gap-6 ${
+                activePackages.length === 1
+                  ? 'max-w-md mx-auto grid-cols-1'
+                  : activePackages.length === 2
+                  ? 'max-w-3xl mx-auto md:grid-cols-2'
+                  : activePackages.length === 3
+                  ? 'max-w-5xl mx-auto md:grid-cols-3'
+                  : 'max-w-[1400px] mx-auto md:grid-cols-2 lg:grid-cols-4'
+              }`}
+            >
               {activePackages.map((pkg, idx) => {
-                const isPopular = pkg.isPopular || idx === 1;
+                const isPopular = pkg.isPopular !== undefined ? pkg.isPopular : (activePackages.length > 1 && idx === 1);
                 return (
                   <div
-                    key={idx}
-                    className={`bg-white rounded-3xl p-8 border transition-all duration-300 flex flex-col justify-between relative ${
+                    key={pkg.id || idx}
+                    className={`bg-white rounded-2xl p-8 border transition-all duration-300 flex flex-col relative transform hover:-translate-y-4 hover:shadow-2xl ${
                       isPopular
-                        ? 'border-indigo-600 shadow-2xl shadow-indigo-600/10 ring-2 ring-indigo-600/20 md:-translate-y-2'
-                        : 'border-slate-200 shadow-md hover:shadow-xl'
+                        ? 'border-red-600 shadow-xl scale-105 z-10'
+                        : 'border-slate-200 hover:border-red-300 shadow-sm'
                     }`}
                   >
                     {isPopular && (
-                      <div className="absolute -top-3.5 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-red-600 to-orange-600 text-white text-[10px] font-black uppercase tracking-wider rounded-full shadow-md">
-                        MOST POPULAR
+                      <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-md">
+                        RECOMMENDED
                       </div>
                     )}
 
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900">{pkg.name}</h3>
-                      <div className="mt-4 flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-slate-950">₹{pkg.price?.toLocaleString()}</span>
-                        <span className="text-xs text-slate-500 font-semibold">
-                          {pkg.isAdjustable ? '(100% credited)' : '+ Govt Fees'}
-                        </span>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{pkg.name}</h3>
+                    <div className="text-4xl font-black text-slate-900 mb-6">
+                      ₹{pkg.price?.toLocaleString('en-IN') || pkg.price}
+                      <span className="text-[10px] font-bold text-slate-500 ml-1 block mt-1">
+                        {pkg.isAdjustable ? '(Fully Adjustable)' : '+ Govt Fees & GST'}
+                      </span>
+                    </div>
+
+                    {pkg.isAdjustable && (
+                      <div className="bg-green-50 text-green-700 text-xs font-bold p-2 rounded mb-4 flex items-center">
+                        <RefreshCw className="w-3 h-3 mr-1" /> Fee Adjustable in Final Package
                       </div>
-                      <p className="text-xs text-slate-500 mt-2 leading-relaxed font-medium">
-                        {pkg.description || `Full statutory ${serviceTitle} execution.`}
-                      </p>
+                    )}
 
-                      <hr className="my-6 border-slate-100" />
+                    <p className="text-sm text-slate-600 mb-6 font-medium leading-relaxed">
+                      {pkg.description || `Full statutory ${serviceTitle} execution.`}
+                    </p>
 
-                      <ul className="space-y-3 mb-8">
-                        {(pkg.features || []).map((feat, fIdx) => (
-                          <li key={fIdx} className="flex items-start gap-2 text-xs font-semibold text-slate-700">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                            <span>{feat}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="space-y-4 mb-8 flex-1">
+                      {(pkg.features || []).map((feat, fIdx) => (
+                        <div key={fIdx} className="flex items-start text-sm text-slate-700 font-medium group">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0 group-hover:scale-125 transition-transform" />
+                          <span>{feat}</span>
+                        </div>
+                      ))}
                     </div>
 
                     <button
                       onClick={() => handlePackageClick(pkg)}
-                      className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 ${
-                        isPopular
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-indigo-600/30'
-                          : 'bg-slate-900 hover:bg-slate-800 text-white'
+                      className={`w-full py-4 rounded-xl font-bold transition transform active:scale-95 ${
+                        isPopular || pkg.isAdjustable
+                          ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/30'
+                          : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
                       }`}
                     >
-                      <span>{pkg.creativeButtonText || pkg.buttonText || `PROCEED WITH ${pkg.name}`}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {pkg.creativeButtonText || pkg.buttonText || (isPopular ? `Select ${pkg.name}` : `Select ${pkg.name}`)}
                     </button>
                   </div>
                 );

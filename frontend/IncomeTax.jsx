@@ -691,47 +691,59 @@ const IncomeTaxPage = () => {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
-              {PACKAGES.map((pkg) => (
-                <div 
-                  key={pkg.id} 
-                  className={`bg-white rounded-3xl p-7 border transition-all duration-300 flex flex-col relative transform hover:-translate-y-3 hover:shadow-2xl ${pkg.isAdjustable ? 'border-orange-500 shadow-lg' : 'border-slate-200 hover:border-red-300 shadow-sm'}`}
-                >
-                  {pkg.id === 'itr1' && <div className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-lg rounded-tr-3xl shadow-sm">MOST POPULAR</div>}
-                  {pkg.isAdjustable && <div className="absolute top-0 right-0 bg-orange-600 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-lg rounded-tr-3xl shadow-sm">RECOMMENDED</div>}
-
-                  <h3 className="text-lg font-black text-slate-900 mb-1">{pkg.name}</h3>
-                  <div className="text-3xl font-black text-slate-900 mb-4">
-                    {pkg.customPriceLabel || formatCurrency(pkg.price)}
-                    <span className="text-[9px] font-bold text-slate-400 ml-1 block mt-0.5">
-                      {pkg.isAdjustable ? '(Fully Refundable / Adjustable)' : '+ Taxes & Portal Fees'}
-                    </span>
-                  </div>
-
-                  {pkg.isAdjustable && (
-                    <div className="bg-green-50 text-green-700 text-[10px] font-black p-2.5 rounded-xl mb-4 flex items-center">
-                      <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin-slow" /> Adjusted in final filing bill
-                    </div>
-                  )}
-
-                  <p className="text-xs text-slate-500 mb-5 leading-relaxed font-medium">{pkg.description}</p>
-
-                  <div className="space-y-3.5 mb-6 flex-1 border-t border-slate-100 pt-5">
-                    {pkg.features.map((feat, i) => (
-                      <div key={i} className="flex items-start text-xs text-slate-700 font-semibold group">
-                        <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0 group-hover:scale-125 transition-transform" />
-                        <span>{feat}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <button 
-                    onClick={() => handleSelectPlan(pkg)} 
-                    className={`w-full py-3.5 rounded-xl font-bold transition transform active:scale-95 text-sm ${pkg.isAdjustable || pkg.id === 'itr1' ? 'bg-red-600 text-white hover:bg-red-700 shadow-md shadow-red-600/20' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
+              {PACKAGES.map((pkg) => {
+                const isPopular = pkg.isPopular || pkg.id === 'itr1';
+                return (
+                  <div 
+                    key={pkg.id} 
+                    className={`bg-white rounded-2xl p-8 border transition-all duration-300 flex flex-col relative transform hover:-translate-y-4 hover:shadow-2xl ${
+                      isPopular || pkg.isAdjustable ? 'border-red-600 shadow-xl scale-105 z-10' : 'border-slate-200 hover:border-red-300 shadow-sm'
+                    }`}
                   >
-                    {pkg.buttonText}
-                  </button>
-                </div>
-              ))}
+                    {(isPopular || pkg.isAdjustable) && (
+                      <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-md">
+                        {pkg.isAdjustable ? 'RECOMMENDED' : 'MOST POPULAR'}
+                      </div>
+                    )}
+
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{pkg.name}</h3>
+                    <div className="text-4xl font-black text-slate-900 mb-6">
+                      {pkg.customPriceLabel || formatCurrency(pkg.price)}
+                      <span className="text-[10px] font-bold text-slate-500 ml-1 block mt-1">
+                        {pkg.isAdjustable ? '(Fully Adjustable)' : '+ Taxes & Portal Fees'}
+                      </span>
+                    </div>
+
+                    {pkg.isAdjustable && (
+                      <div className="bg-green-50 text-green-700 text-xs font-bold p-2 rounded mb-4 flex items-center">
+                        <RefreshCw className="w-3 h-3 mr-1" /> Fee Adjustable in Final Package
+                      </div>
+                    )}
+
+                    <p className="text-sm text-slate-600 mb-6 font-medium leading-relaxed">{pkg.description}</p>
+
+                    <div className="space-y-4 mb-8 flex-1">
+                      {pkg.features.map((feat, i) => (
+                        <div key={i} className="flex items-start text-sm text-slate-700 font-medium group">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0 group-hover:scale-125 transition-transform" />
+                          <span>{feat}</span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <button 
+                      onClick={() => handleSelectPlan(pkg)} 
+                      className={`w-full py-4 rounded-xl font-bold transition transform active:scale-95 ${
+                        isPopular || pkg.isAdjustable
+                          ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/30'
+                          : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
+                      }`}
+                    >
+                      {pkg.buttonText}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
