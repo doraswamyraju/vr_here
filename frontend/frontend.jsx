@@ -106,20 +106,11 @@ const App = () => {
 
   React.useEffect(() => {
     const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard|partner\/dashboard)/.test(location.pathname);
-    
-    const syncVisibility = () => {
-      if (typeof window.__setLetsTrackLauncherVisibility === 'function') {
-        window.__setLetsTrackLauncherVisibility(!isDashboardPath);
-      }
-    };
-
-    syncVisibility();
-    const interval = setInterval(syncVisibility, 300);
-    const timeout = setTimeout(() => clearInterval(interval), 4000);
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
+    if (isDashboardPath) {
+      document.body.classList.add('hide-letstrack');
+    } else {
+      document.body.classList.remove('hide-letstrack');
+    }
   }, [location.pathname]);
 
   return (

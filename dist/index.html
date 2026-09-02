@@ -16,8 +16,8 @@
     gtag('js', new Date());
     gtag('config', 'G-RRSMWL2084');
   </script>
-  <script type="module" crossorigin src="/assets/index-D73rZn6r.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Cq-rYuTp.css">
+  <script type="module" crossorigin src="/assets/index-BTvizvi6.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CKyj8mL2.css">
 </head>
 
 <body>
@@ -26,85 +26,6 @@
   <script src="/socket.io.min.js"></script>
   <!-- Start of LetsTrack Live Chat & Tracking -->
   <script>
-    (function() {
-      var isDashboardRoute = function() {
-        return /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard|partner\/dashboard)/.test(window.location.pathname);
-      };
-
-      window.__setLetsTrackLauncherVisibility = function(visible) {
-        var shadow = window.__letsTrackShadowRoot || (document.getElementById('letstrack-widget-root') && document.getElementById('letstrack-widget-root').shadowRoot);
-        if (shadow) {
-          var style = shadow.getElementById('lt-custom-visibility-style');
-          if (!style) {
-            style = document.createElement('style');
-            style.id = 'lt-custom-visibility-style';
-            shadow.appendChild(style);
-          }
-          if (visible) {
-            style.textContent = `
-              .lt-widget-btn,
-              button,
-              [class*="widget-btn"],
-              [class*="launcher"],
-              .lt-launcher,
-              div[class*="launcher"] {
-                display: flex !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                pointer-events: auto !important;
-              }
-              .lt-widget-container {
-                left: auto !important;
-                right: 24px !important;
-                bottom: 24px !important;
-                align-items: flex-end !important;
-                z-index: 2147483640 !important;
-              }
-            `;
-          } else {
-            style.textContent = `
-              .lt-widget-btn,
-              button,
-              [class*="widget-btn"],
-              [class*="launcher"],
-              .lt-launcher,
-              div[class*="launcher"] {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
-              }
-              .lt-widget-container {
-                left: auto !important;
-                right: 24px !important;
-                bottom: 24px !important;
-                align-items: flex-end !important;
-                z-index: 2147483640 !important;
-              }
-            `;
-          }
-        }
-      };
-
-      var origAttachShadow = Element.prototype.attachShadow;
-      Element.prototype.attachShadow = function(init) {
-        var shadow = origAttachShadow.call(this, Object.assign({}, init, { mode: 'open' }));
-        if (this.id === 'letstrack-widget-root') {
-          window.__letsTrackShadowRoot = shadow;
-          var applyCustomStyles = function() {
-            window.__setLetsTrackLauncherVisibility(!isDashboardRoute());
-          };
-          var obs = new MutationObserver(applyCustomStyles);
-          obs.observe(shadow, { childList: true, subtree: true, attributes: true });
-          setTimeout(applyCustomStyles, 100);
-          setTimeout(applyCustomStyles, 500);
-          setTimeout(applyCustomStyles, 1500);
-          setTimeout(applyCustomStyles, 3000);
-        }
-        return shadow;
-      };
-    })();
-
     window.LetsTrackConfig = {
       websiteId: "lt_6a9347d5410be8335e42db43949caf95" // Tenant API Key from https://livechat.vrhere.in
     };

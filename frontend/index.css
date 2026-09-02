@@ -45,3 +45,7 @@
     transform: translateX(-50%);
   }
 }
+
+body.hide-letstrack #letstrack-widget-root {
+  display: none !important;
+}
