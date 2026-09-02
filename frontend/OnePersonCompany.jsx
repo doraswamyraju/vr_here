@@ -11,9 +11,7 @@ import ConsultationPaymentModal from './components/ConsultationPaymentModal';
 import { launchRazorpayCheckout } from './utils/razorpayCheckout';
 import { useNavigate } from 'react-router-dom';
 import { showPaymentSuccessPopup } from './utils/paymentSuccessPopup';
-import { fetchServicePageConfig, updateServicePageConfig } from './modules/service-editor/v1.1/services/serviceConfigApi';
-import InlineEditOverlay from './modules/service-editor/v1.1/components/InlineEditOverlay';
-import SeoAeoDashboard from './modules/seo-aeo-analyzer/v1.1/components/SeoAeoDashboard';
+import { fetchServicePageConfig } from './modules/service-editor/v1.1/services/serviceConfigApi';
 import { injectTrackingScripts } from './modules/seo-aeo-analyzer/v1.1/components/TrackingSettings';
 import { onePersonCompanyConfig } from '../backend/data/serviceConfigs/onePersonCompany.js';
 
@@ -78,37 +76,7 @@ const OnePersonCompanyPage = () => {
   const [isServicesHovered, setIsServicesHovered] = useState(false);
   const [isSeoExpanded, setIsSeoExpanded] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
-  const [pageHtmlContent, setPageHtmlContent] = useState('');
-  const [savingOverlay, setSavingOverlay] = useState(false);
-  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
-  const [isSeoGraderOpen, setIsSeoGraderOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
-
-  const handleUpdateSeoSettings = async (seo) => {
-    setSavingOverlay(true);
-    try {
-      const updated = { ...pageConfig, seoSettings: seo };
-      const data = await updateServicePageConfig(PAGE_ID, updated);
-      setPageConfig(data.page);
-    } catch (err) {
-      console.error('Failed to update SEO settings:', err);
-    } finally {
-      setSavingOverlay(false);
-    }
-  };
-
-  const handleUpdateTrackingSettings = async (tracking) => {
-    setSavingOverlay(true);
-    try {
-      const updated = { ...pageConfig, trackingSettings: tracking };
-      const data = await updateServicePageConfig(PAGE_ID, updated);
-      setPageConfig(data.page);
-    } catch (err) {
-      console.error('Failed to update tracking settings:', err);
-    } finally {
-      setSavingOverlay(false);
-    }
-  };
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -236,62 +204,7 @@ const OnePersonCompanyPage = () => {
   }
 
   return (
-    <div className={`font-sans text-slate-800 bg-white min-h-screen selection:bg-red-100 selection:text-red-900 overflow-x-hidden ${isAuthorized ? 'pt-14' : ''}`}>
-      {/* Staff Panel Header */}
-      {isAuthorized && (
-        <div className="fixed top-0 left-0 right-0 z-[100] h-14 bg-slate-900 border-b border-indigo-500/20 text-white px-6 flex items-center justify-between shadow-lg font-sans">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow">
-              VR
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-100">VR Here Staff Panel</span>
-              <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
-                <span>Active Session ({userInfo?.role})</span>
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setIsCustomizerOpen(!isCustomizerOpen);
-                setIsSeoGraderOpen(false);
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition ${
-                isCustomizerOpen ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-              }`}
-            >
-              <Lucide.Paintbrush className="w-3.5 h-3.5" />
-              <span>Customize Layout</span>
-            </button>
-            <button
-              onClick={() => {
-                setIsSeoGraderOpen(!isSeoGraderOpen);
-                setIsCustomizerOpen(false);
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition ${
-                isSeoGraderOpen ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-              }`}
-            >
-              <Lucide.Sparkles className="w-3.5 h-3.5" />
-              <span>SEO/AEO Optimizer</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(userInfo?.role === 'admin' ? '/admin' : '/employee')}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition flex items-center gap-1"
-            >
-              <Lucide.LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Back to Dashboard</span>
-            </button>
-          </div>
-        </div>
-      )}
-
+    <div className="font-sans text-slate-800 bg-white min-h-screen selection:bg-red-100 selection:text-red-900 overflow-x-hidden">
       {/* Header */}
       <SharedHeader isScrolled={isScrolled} />
 
@@ -733,32 +646,6 @@ const OnePersonCompanyPage = () => {
           </div>
         </section>
       </div>
-
-      {/* Admin Overlays */}
-      {pageConfig && isAuthorized && (
-        <>
-          <InlineEditOverlay
-            pageId={PAGE_ID}
-            config={pageConfig}
-            onConfigUpdate={setPageConfig}
-            isOpen={isCustomizerOpen}
-            setIsOpen={setIsCustomizerOpen}
-          />
-          <SeoAeoDashboard
-            pageId={PAGE_ID}
-            config={pageConfig}
-            currentHtml={pageHtmlContent}
-            faqList={activeFaqs}
-            seoSettings={pageConfig.seoSettings || {}}
-            onUpdateSeoSettings={handleUpdateSeoSettings}
-            trackingSettings={pageConfig.trackingSettings || {}}
-            onUpdateTrackingSettings={handleUpdateTrackingSettings}
-            isSaving={savingOverlay}
-            isOpen={isSeoGraderOpen}
-            setIsOpen={setIsSeoGraderOpen}
-          />
-        </>
-      )}
 
       <SharedFooter />
     </div>

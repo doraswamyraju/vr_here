@@ -12,9 +12,7 @@ import ConsultationPaymentModal from './ConsultationPaymentModal';
 import { launchRazorpayCheckout } from '../utils/razorpayCheckout';
 import { useNavigate } from 'react-router-dom';
 import { showPaymentSuccessPopup } from '../utils/paymentSuccessPopup';
-import { fetchServicePageConfig, updateServicePageConfig } from '../modules/service-editor/v1.1/services/serviceConfigApi';
-import InlineEditOverlay from '../modules/service-editor/v1.1/components/InlineEditOverlay';
-import SeoAeoDashboard from '../modules/seo-aeo-analyzer/v1.1/components/SeoAeoDashboard';
+import { fetchServicePageConfig } from '../modules/service-editor/v1.1/services/serviceConfigApi';
 import { trackLead } from '../utils/leadTelemetry';
 
 const sanitizeText = (text, city) => {
@@ -57,10 +55,6 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
   const [showConsultationModal, setShowConsultationModal] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
   const [isSeoExpanded, setIsSeoExpanded] = useState(false);
-  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
-  const [isSeoGraderOpen, setIsSeoGraderOpen] = useState(false);
-  const [savingOverlay, setSavingOverlay] = useState(false);
-  const [pageHtmlContent, setPageHtmlContent] = useState('');
 
   const serviceTitle = pageConfig?.title || config?.title || 'Professional Service';
 
@@ -245,39 +239,6 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans antialiased text-slate-900">
-      {/* Admin Top Edit Bar */}
-      {isAuthorized && (
-        <div className="bg-slate-900 text-white px-4 py-2 text-xs flex items-center justify-between z-50 sticky top-0 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-amber-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Admin Mode: {serviceTitle} ({pageId})
-            </span>
-            <button
-              onClick={() => setIsCustomizerOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md font-bold transition flex items-center gap-1"
-            >
-              <Lucide.Sliders className="w-3 h-3" />
-              <span>Customize Page</span>
-            </button>
-            <button
-              onClick={() => setIsSeoGraderOpen(true)}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-md font-bold transition flex items-center gap-1"
-            >
-              <Lucide.Sparkles className="w-3 h-3" />
-              <span>SEO/AEO Optimizer</span>
-            </button>
-          </div>
-          <button
-            onClick={() => navigate('/admin')}
-            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-md font-bold transition flex items-center gap-1"
-          >
-            <Lucide.LayoutDashboard className="w-3 h-3" />
-            <span>Dashboard</span>
-          </button>
-        </div>
-      )}
-
       <SharedHeader />
 
       <div id="main-service-container" className="flex-1">
@@ -738,52 +699,6 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
           defaultService={serviceTitle}
           price={activeHero.consultationPrice || 499}
         />
-      )}
-
-      {/* Admin Customizer Overlay */}
-      {pageConfig && isAuthorized && (
-        <>
-          <InlineEditOverlay
-            pageId={pageId}
-            config={pageConfig}
-            onConfigUpdate={setPageConfig}
-            isOpen={isCustomizerOpen}
-            setIsOpen={setIsCustomizerOpen}
-          />
-          <SeoAeoDashboard
-            pageId={pageId}
-            config={pageConfig}
-            currentHtml={pageHtmlContent}
-            faqList={activeFaqs}
-            seoSettings={pageConfig.seoSettings || {}}
-            onUpdateSeoSettings={async (newSettings) => {
-              setSavingOverlay(true);
-              try {
-                const res = await updateServicePageConfig(pageId, { ...pageConfig, seoSettings: newSettings });
-                setPageConfig(res);
-              } catch (e) {
-                console.error(e);
-              } finally {
-                setSavingOverlay(false);
-              }
-            }}
-            trackingSettings={pageConfig.trackingSettings || {}}
-            onUpdateTrackingSettings={async (newSettings) => {
-              setSavingOverlay(true);
-              try {
-                const res = await updateServicePageConfig(pageId, { ...pageConfig, trackingSettings: newSettings });
-                setPageConfig(res);
-              } catch (e) {
-                console.error(e);
-              } finally {
-                setSavingOverlay(false);
-              }
-            }}
-            isSaving={savingOverlay}
-            isOpen={isSeoGraderOpen}
-            setIsOpen={setIsSeoGraderOpen}
-          />
-        </>
       )}
 
       <SharedFooter />
