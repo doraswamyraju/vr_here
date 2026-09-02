@@ -533,8 +533,8 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
             {/* 2. MAIN HEADER NAVBAR */}
             <header className={`fixed left-0 right-0 top-0 lg:top-[33px] z-[55] transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-900/5 py-2.5 border-b border-slate-200/80' : 'bg-white/95 backdrop-blur-md border-b border-slate-100 py-3.5'}`}>
                 <div className={`absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent transition-opacity ${isScrolled ? 'opacity-100' : 'opacity-0'}`}></div>
-                <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
-                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 relative">
+                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 relative">
+                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
                         {/* LOGO */}
                         <a href="/" className="flex items-center flex-shrink-0 group cursor-pointer">
                             <img src="/logo.png" alt="VR Here" className="h-11 w-auto object-contain mr-2.5 group-hover:scale-105 transition-transform duration-300" />
@@ -545,98 +545,25 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                         </a>
 
                         {/* DESKTOP MEGA-MENU NAVIGATION */}
-                        <nav className="hidden lg:flex items-center justify-center min-w-0">
-                            <div className="relative" onMouseLeave={closeMenuWithDelay}>
-                                <div className="max-w-[980px]">
-                                    <div className="flex items-stretch gap-1 rounded-2xl border border-slate-200/90 bg-slate-50/90 p-1 shadow-inner shadow-slate-200/40">
-                                    {menuConfig.map((service) => (
-                                        <div
-                                            key={service.id}
-                                            className="relative"
-                                            onMouseEnter={() => openMenu(service.id)}
-                                        >
-                                            <button className={`h-full flex items-center px-3 py-2 text-[11.5px] font-bold rounded-xl transition-all duration-300 min-w-[108px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
-                                                <span className="text-left leading-[1.1]">
-                                                    {(TAB_LABEL_LINES[service.id] || [service.title]).map((line, idx) => (
-                                                        <span key={`${service.id}-line-${idx}`} className="block">{line}</span>
-                                                    ))}
-                                                </span>
-                                                <ChevronDown className={`ml-1.5 w-3.5 h-3.5 shrink-0 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
-                                            </button>
-                                        </div>
-                                    ))}
+                        <nav className="hidden lg:flex items-center justify-center min-w-0" onMouseLeave={closeMenuWithDelay}>
+                            <div className="max-w-[980px]">
+                                <div className="flex items-stretch gap-1 rounded-2xl border border-slate-200/90 bg-slate-50/90 p-1 shadow-inner shadow-slate-200/40">
+                                {menuConfig.map((service) => (
+                                    <div
+                                        key={service.id}
+                                        className="relative"
+                                        onMouseEnter={() => openMenu(service.id)}
+                                    >
+                                        <button className={`h-full flex items-center px-3 py-2 text-[11.5px] font-bold rounded-xl transition-all duration-300 min-w-[108px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
+                                            <span className="text-left leading-[1.1]">
+                                                {(TAB_LABEL_LINES[service.id] || [service.title]).map((line, idx) => (
+                                                    <span key={`${service.id}-line-${idx}`} className="block">{line}</span>
+                                                ))}
+                                            </span>
+                                            <ChevronDown className={`ml-1.5 w-3.5 h-3.5 shrink-0 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
+                                        </button>
                                     </div>
-                                </div>
-
-                                {/* DROPDOWN PANEL */}
-                                <div onMouseEnter={cancelClose} onMouseLeave={closeMenuWithDelay} className={`absolute top-full left-1/2 -translate-x-1/2 w-[92vw] max-w-[1240px] bg-white/98 backdrop-blur-2xl rounded-3xl shadow-[0_30px_90px_-20px_rgba(0,0,0,0.35)] border border-slate-200/90 overflow-hidden transition-all duration-300 origin-top z-50 mt-1.5 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
-                                    {activeDesktopService && (
-                                        <div className="flex min-h-[360px]">
-                                            <div className="flex-1 p-8 bg-gradient-to-br from-white via-white to-slate-50/50">
-                                                <div className={`grid gap-4 ${activeDesktopService.columns.length >= 3 ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} grid-cols-1`}>
-                                                    {activeDesktopService.columns.map((column, columnIndex) => (
-                                                        <div key={`${activeDesktopService.id}-col-${columnIndex}`} className="rounded-2xl border border-slate-200/90 bg-white p-5 hover:border-red-300 hover:shadow-lg hover:shadow-red-100/40 transition-all">
-                                                            <h4 className="text-sm font-black text-slate-900 mb-3.5 flex items-center gap-2">
-                                                                <span className="w-2 h-2 rounded-full bg-red-600"></span>
-                                                                {column.title}
-                                                            </h4>
-                                                            <div className="space-y-2">
-                                                                {(column.items || []).map((item, i) => (
-                                                                    <a
-                                                                        href={getServiceLink(item)}
-                                                                        key={`${activeDesktopService.id}-${columnIndex}-${i}`}
-                                                                        className="block text-xs font-medium text-slate-600 hover:text-red-600 transition-colors hover:translate-x-1 duration-200"
-                                                                    >
-                                                                        {item}
-                                                                    </a>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
-                                                    <a href={`/all-services?category=${encodeURIComponent(activeDesktopService.id)}`} className="text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1.5 group">
-                                                        <span>View all services in this category</span>
-                                                        <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
-                                                    </a>
-                                                    <span className="text-[11px] text-slate-400 font-semibold">100% Online MCA & CA Execution</span>
-                                                </div>
-                                            </div>
-                                            <div className="w-[320px] bg-slate-50 p-6 border-l border-slate-100 flex flex-col justify-between">
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Featured Offer</h4>
-                                                        <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">Limited Period</span>
-                                                    </div>
-                                                    <div className="space-y-3">
-                                                        {activeDesktopOffers.slice(0, 2).map((offer) => (
-                                                            <a key={offer._id || `${offer.title}-${offer.imageUrl}`} href={offer.ctaLink || '/contact'} className="block overflow-hidden rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:-translate-y-0.5 transition-all group">
-                                                                <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                                <div className="p-3">
-                                                                    <div className="text-xs font-bold text-slate-900 line-clamp-2">{offer.title}</div>
-                                                                    <div className="mt-1 text-[11px] font-black text-red-600 flex items-center gap-1">
-                                                                        Explore Offer &rarr;
-                                                                    </div>
-                                                                </div>
-                                                            </a>
-                                                        ))}
-                                                        {activeDesktopOffers.length === 0 && (
-                                                            <div className="text-xs text-slate-500 bg-white border border-dashed border-slate-300 rounded-2xl p-4 text-center">
-                                                                Special compliance packages available on request.
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div className="mt-4 pt-4 border-t border-slate-200/80">
-                                                    <a href="/contact" className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md">
-                                                        <Phone className="w-3.5 h-3.5 text-red-400" />
-                                                        <span>Need Custom Advice?</span>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                ))}
                                 </div>
                             </div>
                         </nav>
@@ -748,7 +675,6 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                 <span>Login</span>
                             </a>
                         </div>
-
                         {/* MOBILE HAMBURGER TOGGLE */}
                         <div className="flex items-center gap-2 lg:hidden ml-auto">
                             <a href="/login" className="p-2 text-slate-700 hover:text-red-600 transition">
@@ -758,6 +684,81 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                 <Menu className="w-6 h-6" />
                             </button>
                         </div>
+                    </div>
+
+                    {/* DESKTOP MEGA-MENU DROPDOWN PANEL (Center Aligned to Header Container) */}
+                    <div
+                        onMouseEnter={cancelClose}
+                        onMouseLeave={closeMenuWithDelay}
+                        className={`absolute top-full left-1/2 -translate-x-1/2 w-[92vw] max-w-[1240px] bg-white/98 backdrop-blur-2xl rounded-3xl shadow-[0_30px_90px_-20px_rgba(0,0,0,0.35)] border border-slate-200/90 overflow-hidden transition-all duration-300 origin-top z-50 mt-2 before:absolute before:-top-3 before:left-0 before:right-0 before:h-4 before:content-[''] ${activeDesktopService ? 'opacity-100 translate-y-0 visible pointer-events-auto' : 'opacity-0 translate-y-3 invisible pointer-events-none'}`}
+                    >
+                        {activeDesktopService && (
+                            <div className="flex min-h-[360px]">
+                                <div className="flex-1 p-8 bg-gradient-to-br from-white via-white to-slate-50/50">
+                                    <div className={`grid gap-4 ${activeDesktopService.columns.length >= 3 ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} grid-cols-1`}>
+                                        {activeDesktopService.columns.map((column, columnIndex) => (
+                                            <div key={`${activeDesktopService.id}-col-${columnIndex}`} className="rounded-2xl border border-slate-200/90 bg-white p-5 hover:border-red-300 hover:shadow-lg hover:shadow-red-100/40 transition-all">
+                                                <h4 className="text-sm font-black text-slate-900 mb-3.5 flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-red-600"></span>
+                                                    {column.title}
+                                                </h4>
+                                                <div className="space-y-2">
+                                                    {(column.items || []).map((item, i) => (
+                                                        <a
+                                                            href={getServiceLink(item)}
+                                                            key={`${activeDesktopService.id}-${columnIndex}-${i}`}
+                                                            className="block text-xs font-medium text-slate-600 hover:text-red-600 transition-colors hover:translate-x-1 duration-200"
+                                                        >
+                                                            {item}
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                        <a href={`/all-services?category=${encodeURIComponent(activeDesktopService.id)}`} className="text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1.5 group">
+                                            <span>View all services in this category</span>
+                                            <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                        </a>
+                                        <span className="text-[11px] text-slate-400 font-semibold">100% Online MCA & CA Execution</span>
+                                    </div>
+                                </div>
+                                <div className="w-[320px] bg-slate-50 p-6 border-l border-slate-100 flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Featured Offer</h4>
+                                            <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">Limited Period</span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {activeDesktopOffers.slice(0, 2).map((offer) => (
+                                                <a key={offer._id || `${offer.title}-${offer.imageUrl}`} href={offer.ctaLink || '/contact'} className="block overflow-hidden rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:-translate-y-0.5 transition-all group">
+                                                    <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                    <div className="p-3">
+                                                        <div className="text-xs font-bold text-slate-900 line-clamp-2">{offer.title}</div>
+                                                        <div className="mt-1 text-[11px] font-black text-red-600 flex items-center gap-1">
+                                                            Explore Offer &rarr;
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            ))}
+                                            {activeDesktopOffers.length === 0 && (
+                                                <div className="text-xs text-slate-500 bg-white border border-dashed border-slate-300 rounded-2xl p-4 text-center">
+                                                    Special compliance packages available on request.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 pt-4 border-t border-slate-200/80">
+                                        <a href="/contact" className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md">
+                                            <Phone className="w-3.5 h-3.5 text-red-400" />
+                                            <span>Need Custom Advice?</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
@@ -871,7 +872,7 @@ export const GlobalFloatingButtons = () => {
     };
 
     return (
-        <div className="fixed right-6 bottom-6 z-[100] flex flex-col gap-3">
+        <div className="fixed right-6 bottom-24 z-[100] flex flex-col gap-3">
             {/* Page Jump Navigator (Hidden on Home) */}
             {!isHome && (
                 <div className="relative mb-2">

@@ -35,21 +35,25 @@
             var btn = shadow.querySelector('.lt-widget-btn');
             var container = shadow.querySelector('.lt-widget-container');
             if (btn) {
-              btn.style.setProperty('display', 'none', 'important');
+              btn.style.setProperty('display', 'flex', 'important');
+              btn.style.setProperty('visibility', 'visible', 'important');
+              btn.style.setProperty('opacity', '1', 'important');
+              btn.style.setProperty('pointer-events', 'auto', 'important');
+              btn.style.setProperty('z-index', '2147483640', 'important');
             }
             if (container) {
               container.style.setProperty('left', 'auto', 'important');
               container.style.setProperty('right', '24px', 'important');
-              container.style.setProperty('bottom', '96px', 'important');
+              container.style.setProperty('bottom', '24px', 'important');
               container.style.setProperty('align-items', 'flex-end', 'important');
               container.style.setProperty('z-index', '2147483640', 'important');
             }
           };
           var obs = new MutationObserver(applyCustomStyles);
           obs.observe(shadow, { childList: true, subtree: true, attributes: true });
-          setTimeout(applyCustomStyles, 500);
-          setTimeout(applyCustomStyles, 1500);
-          setTimeout(applyCustomStyles, 3000);
+          setTimeout(applyCustomStyles, 300);
+          setTimeout(applyCustomStyles, 1000);
+          setTimeout(applyCustomStyles, 2500);
         }
         return shadow;
       };
