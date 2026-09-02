@@ -50,17 +50,21 @@ export const launchRazorpayCheckout = async ({
   onFailure
 }) => {
   try {
+    onSubmittingChange?.(true);
+
     const isLoaded = await loadRazorpaySDK();
     if (!isLoaded || !window.Razorpay) {
-      throw new Error('Razorpay SDK failed to load. Please disable ad-blockers or check your connection.');
+      throw new Error('Razorpay payment gateway script was blocked by browser. Please disable ad-blockers on vrhere.in and try again.');
     }
-
-    onSubmittingChange?.(true);
 
     const rawPrice = selectedPlan?.price ?? selectedPlan?.amount ?? 0;
     const cleanAmount = typeof rawPrice === 'string'
       ? Number(rawPrice.replace(/[^0-9]/g, '')) || 0
       : Number(rawPrice) || 0;
+
+    if (cleanAmount <= 0) {
+      throw new Error('Please select a valid package price.');
+    }
 
     const currentSavedUser = (() => {
       try {
@@ -72,7 +76,7 @@ export const launchRazorpayCheckout = async ({
 
     const customerName = formData?.name || currentSavedUser?.name || 'VR HERE Client';
     const email = formData?.email || currentSavedUser?.email || 'client@vrhere.in';
-    const phone = formData?.phone || currentSavedUser?.phone || '';
+    const phone = formData?.phone || currentSavedUser?.phone || '9999999999';
 
     const checkoutPayload = {
       serviceName: serviceName || selectedPlan?.name || 'Business Service',
@@ -84,14 +88,18 @@ export const launchRazorpayCheckout = async ({
       referralCode: formData?.referralCode || ''
     };
 
+    console.log('[Razorpay Checkout] Requesting checkout order from backend:', checkoutPayload);
+
     const { data: checkoutOrder } = await axios.post(
       '/api/payments/checkout-order',
       checkoutPayload,
       getAuthConfig(token || currentSavedUser?.token)
     );
 
+    console.log('[Razorpay Checkout] Received checkout order:', checkoutOrder);
+
     if (!checkoutOrder?.key || !checkoutOrder?.orderId) {
-      throw new Error('Backend did not return a valid Razorpay checkout order.');
+      throw new Error(checkoutOrder?.message || 'Failed to initialize payment gateway order from server.');
     }
 
     const options = {
@@ -100,10 +108,10 @@ export const launchRazorpayCheckout = async ({
       currency: checkoutOrder.currency || 'INR',
       name: 'VR HERE Business Solutions',
       description: `Payment for ${selectedPlan?.name || serviceName}`,
-      image: '/logo.png',
       order_id: checkoutOrder.orderId,
       handler: async function (response) {
         try {
+          console.log('[Razorpay Checkout] Handling payment response:', response);
           const { data } = await axios.post(
             '/api/payments/verify',
             {
@@ -138,6 +146,7 @@ export const launchRazorpayCheckout = async ({
       },
       modal: {
         ondismiss: function () {
+          console.log('[Razorpay Checkout] Modal dismissed');
           onSubmittingChange?.(false);
         }
       }
@@ -145,11 +154,19 @@ export const launchRazorpayCheckout = async ({
 
     const razorpayInstance = new window.Razorpay(options);
     razorpayInstance.on('payment.failed', function (response) {
+      console.error('[Razorpay Checkout] Payment failed event:', response);
       onSubmittingChange?.(false);
-      onFailure?.(response.error || new Error('Payment failed'));
+      onFailure?.(response.error || new Error('Payment was declined or cancelled.'));
     });
+    
     razorpayInstance.open();
+
+    // Auto-unlock submit button after popup trigger so UI doesn't hang
+    setTimeout(() => {
+      onSubmittingChange?.(false);
+    }, 2000);
   } catch (error) {
+    console.error('[Razorpay Checkout] Error:', error);
     onSubmittingChange?.(false);
     onFailure?.(error);
   }

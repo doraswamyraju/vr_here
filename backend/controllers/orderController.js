@@ -699,15 +699,19 @@ const uploadDocument = asyncHandler(async (req, res) => {
         console.error('[OrderUpload] Fallback due to Google Drive upload error:', driveErr.message);
     }
 
-    if (req.user.role === 'client') {
+    if (req.user.role === 'client' || req.user.role === 'customer') {
         const docName = req.body.name || req.file.originalname;
+        if (!order.clientDocuments) {
+            order.clientDocuments = [];
+        }
         order.clientDocuments.push({
             name: docName,
             url: documentUrl
         });
 
-        if (req.body.requirementId) {
-            const requirement = order.customerRequirements.id(req.body.requirementId);
+        if (req.body.requirementId && Array.isArray(order.customerRequirements)) {
+            const requirement = order.customerRequirements.find(r => String(r._id) === String(req.body.requirementId)) 
+                || (typeof order.customerRequirements.id === 'function' ? order.customerRequirements.id(req.body.requirementId) : null);
             if (requirement) {
                 if (!requirement.documents) {
                     requirement.documents = [];
@@ -730,6 +734,9 @@ const uploadDocument = asyncHandler(async (req, res) => {
             order.status = 'Completed';
         } else {
             const docName = req.body.name || req.file.originalname;
+            if (!order.adminDocuments) {
+                order.adminDocuments = [];
+            }
             order.adminDocuments.push({
                 name: docName,
                 url: documentUrl
