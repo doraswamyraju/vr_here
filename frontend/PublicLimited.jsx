@@ -112,15 +112,6 @@ const PublicLimitedPage = () => {
     loadConfig();
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const mainEl = document.getElementById('public-limited-container');
-      if (mainEl) {
-        setPageHtmlContent(mainEl.innerHTML);
-      }
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [pageConfig, loading]);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1200);

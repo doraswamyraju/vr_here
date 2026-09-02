@@ -233,7 +233,6 @@ const PrivateLimitedPage = () => {
   const isAuthorized = userInfo && (userInfo.role === 'admin' || userInfo.role === 'employee');
 
   const [pageConfig, setPageConfig] = useState(null);
-  const [pageHtmlContent, setPageHtmlContent] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeMobileCategory, setActiveMobileCategory] = useState(null);
   const [isServicesHovered, setIsServicesHovered] = useState(false);
@@ -281,15 +280,6 @@ const PrivateLimitedPage = () => {
     loadConfig();
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const mainEl = document.getElementById('private-limited-container');
-      if (mainEl) {
-        setPageHtmlContent(mainEl.innerHTML);
-      }
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [pageConfig, loading]);
 
   // --- EFFECTS ---
   useEffect(() => {

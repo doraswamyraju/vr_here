@@ -86,10 +86,6 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
     loadConfig();
   }, [pageId]);
 
-  useEffect(() => {
-    const el = document.getElementById('main-service-container');
-    if (el) setPageHtmlContent(el.innerHTML);
-  }, [pageConfig, loading]);
 
   const activeHero = pageConfig?.hero || config?.hero || {
     title: `${serviceTitle} Online in {city}`,
