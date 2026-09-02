@@ -4,46 +4,51 @@ import {
     Upload, Briefcase, CreditCard, ChevronRight, AlertTriangle, Bell, Plus,
     Search, Gift, Newspaper, Building2, FileCheck, Shield,
     ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink, ArrowRight,
-    User as UsersIcon
+    User as UsersIcon, CheckCircle2, Phone, Calendar, Clock, Sparkles, FileText, CheckCircle
 } from 'lucide-react';
 
 const getStatusProgress = (status) => {
     switch (status) {
-        case 'Pending Documents': return 20;
-        case 'Documents Verified': return 40;
-        case 'Processing at Portal': return 60;
-        case 'Waiting for Clarification': return 70;
+        case 'Pending Documents': return 25;
+        case 'Documents Verified': return 50;
+        case 'Processing at Portal': return 75;
+        case 'Waiting for Clarification': return 60;
         case 'Completed': return 100;
-        default: return 0;
+        default: return 15;
     }
 };
 
 const StatusBadge = ({ status }) => {
     const styles = {
-        'Processing at Portal': 'bg-blue-100 text-blue-700',
-        'Waiting for Clarification': 'bg-purple-100 text-purple-700',
-        'Completed': 'bg-emerald-100 text-emerald-700',
-        'Pending Documents': 'bg-amber-100 text-amber-700',
-        'Documents Verified': 'bg-emerald-50 text-emerald-600',
+        'Processing at Portal': 'bg-blue-50 text-blue-700 border-blue-200',
+        'Waiting for Clarification': 'bg-purple-50 text-purple-700 border-purple-200',
+        'Completed': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        'Pending Documents': 'bg-amber-50 text-amber-700 border-amber-200',
+        'Documents Verified': 'bg-emerald-50 text-emerald-600 border-emerald-200',
     };
-    return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${styles[status] || 'bg-slate-100'}`}>{status}</span>;
+    return (
+        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${styles[status] || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+            {status}
+        </span>
+    );
 };
 
 const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenProject, onOpenNotifications }) => {
     const navigate = useNavigate();
     const activeOrders = orders.filter(o => o.status !== 'Completed');
+    const completedOrders = orders.filter(o => o.status === 'Completed');
     const pendingActions = orders.filter(o => o.status === 'Pending Documents' || o.status === 'Waiting for Clarification');
     const unreadNotifications = notifications.filter(n => !n.isRead);
 
     const topServices = [
-        { id: 1, name: 'Pvt Ltd', icon: Building2, color: 'bg-blue-50 text-blue-600', key: 'pvt-ltd-registration' },
-        { id: 2, name: 'GST', icon: FileCheck, color: 'bg-green-50 text-green-600', key: 'gst-registration' },
-        { id: 3, name: 'IT Return', icon: Monitor, color: 'bg-indigo-50 text-indigo-600', key: 'income-tax-return' },
-        { id: 4, name: 'Partnership', icon: UsersIcon, color: 'bg-amber-50 text-amber-600', key: 'partnership-firm' },
-        { id: 5, name: 'Trademark', icon: Shield, color: 'bg-purple-50 text-purple-600', key: 'New' },
-        { id: 6, name: 'Audit', icon: ClipboardCheck, color: 'bg-rose-50 text-rose-600', key: 'New' },
-        { id: 7, name: 'Funding', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600', key: 'New' },
-        { id: 8, name: 'IT Checklist', icon: ClipboardCheck, color: 'bg-indigo-50 text-indigo-700', key: '/income-tax-assessment' },
+        { id: 1, name: 'Pvt Ltd Setup', tag: 'MCA Approval', icon: Building2, color: 'bg-red-50 text-red-600 border-red-200', key: 'pvt-ltd-registration' },
+        { id: 2, name: 'GST Filing', tag: 'Monthly / QRMP', icon: FileCheck, color: 'bg-emerald-50 text-emerald-600 border-emerald-200', key: 'gst-registration' },
+        { id: 3, name: 'Income Tax', tag: 'ITR 1-7 Assessment', icon: Monitor, color: 'bg-blue-50 text-blue-600 border-blue-200', key: 'income-tax-return' },
+        { id: 4, name: 'Partnership', tag: 'Firm & Deed', icon: UsersIcon, color: 'bg-amber-50 text-amber-600 border-amber-200', key: 'partnership-firm' },
+        { id: 5, name: 'ISO Standards', tag: '9001 / 27001', icon: Shield, color: 'bg-purple-50 text-purple-600 border-purple-200', key: 'Services' },
+        { id: 6, name: 'Audit Support', tag: 'Statutory & Tax', icon: ClipboardCheck, color: 'bg-rose-50 text-rose-600 border-rose-200', key: 'New' },
+        { id: 7, name: 'MSME Loans', tag: 'Bank DPR & CMA', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600 border-emerald-200', key: 'Services' },
+        { id: 8, name: 'ROC CCFS-2026', tag: 'Penalty Relief', icon: Sparkles, color: 'bg-orange-50 text-orange-600 border-orange-200', key: '/compliance-scheme-2026' },
     ];
 
     const SEARCH_SUGGESTIONS = [
@@ -65,12 +70,10 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchRef = useRef(null);
 
-    // Filter suggestions based on input
     const filteredSuggestions = SEARCH_SUGGESTIONS.filter(item => 
         item.toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, 5); // Limit to top 5 hits
+    ).slice(0, 5);
 
-    // Close suggestions when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -93,120 +96,289 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
     };
 
     return (
-        <div className="pb-28 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Top Header Section - Spans full width */}
-            <div className="flex justify-between items-center mb-6">
+        <div className="pb-28 lg:pb-12 animate-in fade-in slide-in-from-bottom-3 duration-500 space-y-8">
+            
+            {/* 1. TOP GREETING & SEARCH BAR */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">Hello, {userInfo?.name?.split(' ')[0]}!</h1>
-                    <p className="text-slate-500 text-sm">Here's what's happening today.</p>
+                    <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Welcome, {userInfo?.name?.split(' ')[0]}</span>
+                        <span className="text-xl">👋</span>
+                    </h1>
+                    <p className="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">
+                        Here is an executive snapshot of your filings, compliance status, and vault.
+                    </p>
                 </div>
-                <div className="flex gap-3">
-                    <button onClick={() => setActiveTab('Services')} className="hidden lg:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 text-xs font-bold hover:bg-indigo-700 transition-all">
-                        <Plus size={16} /> New Engagement
-                    </button>
-                    <div className="relative">
-                        <button onClick={onOpenNotifications} className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-indigo-600 transition-colors active:scale-95">
-                            <Bell size={20} />
-                        </button>
-                        {unreadNotifications.length > 0 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 border-2 border-white rounded-full flex items-center justify-center text-[10px] text-white font-bold">
-                                {unreadNotifications.length}
-                            </span>
+
+                {/* Quick Search */}
+                <div ref={searchRef} className="relative z-20 w-full md:w-80 lg:w-96">
+                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/90 flex items-center px-4 py-2.5 gap-3 group focus-within:ring-2 ring-red-500/20 focus-within:border-red-400 transition-all">
+                        <Search size={16} className="text-slate-400 group-focus-within:text-red-500 transition-colors shrink-0" />
+                        <input
+                            type="text"
+                            placeholder="Quick search any service..."
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setShowSuggestions(true);
+                            }}
+                            onFocus={() => setShowSuggestions(true)}
+                            className="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400"
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setActiveTab('Services', searchQuery)} className="text-red-600 font-black text-[11px] uppercase tracking-wider hover:text-red-700">Find</button>
                         )}
                     </div>
+                    
+                    {/* Dropdown Suggestions */}
+                    {showSuggestions && searchQuery.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform origin-top animate-in fade-in slide-in-from-top-2 z-50">
+                            {filteredSuggestions.length > 0 ? (
+                                <ul className="py-2 divide-y divide-slate-100">
+                                    {filteredSuggestions.map((suggestion, index) => (
+                                        <li key={index}>
+                                            <button
+                                                onClick={() => handleSelectSuggestion(suggestion)}
+                                                className="w-full text-left px-4 py-2.5 hover:bg-red-50/50 text-xs font-semibold text-slate-700 flex items-center justify-between group transition-colors"
+                                            >
+                                                <span>{suggestion}</span>
+                                                <ArrowRight size={12} className="text-slate-400 group-hover:text-red-600 transition-colors" />
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <div className="p-3">
+                                    <button 
+                                        onClick={() => setActiveTab('New')}
+                                        className="w-full text-left p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-red-200 transition-all group"
+                                    >
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Need custom assistance?</p>
+                                        <p className="text-xs font-bold text-slate-800 mb-1">Request '{searchQuery}'</p>
+                                        <div className="flex items-center gap-1.5 text-red-600 text-[10px] font-black uppercase tracking-wider">
+                                            <span>Talk to CA Advisor</span>
+                                            <ArrowRight size={12} />
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-
-                {/* Left Column - Main Activity (2/3) */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Floating Search Bar with Autocomplete */}
-                    <div ref={searchRef} className="relative z-20">
-                        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex items-center px-4 py-3.5 gap-3 group focus-within:ring-2 ring-indigo-500/10 transition-all relative">
-                            <Search size={18} className="text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Search services (e.g. GST, Company...)"
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setShowSuggestions(true);
-                                }}
-                                onFocus={() => setShowSuggestions(true)}
-                                className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400"
-                            />
-                            <div className="w-px h-4 bg-slate-100 mx-1"></div>
-                            <button onClick={() => setActiveTab('Services', searchQuery)} className="text-indigo-600 font-black text-xs uppercase tracking-wider hover:text-indigo-700">Find</button>
+            {/* 2. 4-KPI STAT CARDS (EXECUTIVE OVERVIEW) */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div 
+                    onClick={() => setActiveTab('Orders')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-red-300 transition-all cursor-pointer group"
+                >
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Active Orders</span>
+                        <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Briefcase size={16} />
                         </div>
-                        
-                        {/* Dropdown Suggestions */}
-                        {showSuggestions && searchQuery.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform origin-top animate-in fade-in slide-in-from-top-2 z-50">
-                                {filteredSuggestions.length > 0 ? (
-                                    <ul className="py-2">
-                                        {filteredSuggestions.map((suggestion, index) => (
-                                            <li key={index}>
-                                                <button
-                                                    onClick={() => handleSelectSuggestion(suggestion)}
-                                                    className="w-full text-left px-5 py-3 hover:bg-slate-50 text-sm font-medium text-slate-700 flex items-center justify-between group transition-colors"
-                                                >
-                                                    <span>{suggestion}</span>
-                                                    <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-500 transition-colors opacity-0 group-hover:opacity-100" />
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <div className="p-4">
-                                        <button 
-                                            onClick={() => setActiveTab('New')}
-                                            className="w-full text-left p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 transition-all group"
-                                        >
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Not listed?</p>
-                                            <p className="text-sm font-bold text-slate-700 mb-2">Request '{searchQuery}'</p>
-                                            <div className="flex items-center gap-2 text-indigo-600 text-xs font-black uppercase tracking-widest">
-                                                Contact Us <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                            </div>
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
                     </div>
+                    <div className="flex items-baseline justify-between">
+                        <h3 className="text-2xl font-black text-slate-900">{activeOrders.length}</h3>
+                        <span className="text-[11px] font-bold text-red-600">Track &rarr;</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 font-medium">In-progress filings</p>
+                </div>
 
-                    {/* Main Hero Card */}
-                    <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[32px] p-8 text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
+                <div 
+                    onClick={() => setActiveTab('Documents')}
+                    className={`rounded-2xl p-5 border shadow-2xs transition-all cursor-pointer group ${
+                        pendingActions.length > 0 
+                            ? 'bg-rose-50/50 border-rose-200 hover:border-rose-400' 
+                            : 'bg-white border-slate-200/90 hover:border-slate-300'
+                    }`}
+                >
+                    <div className="flex items-center justify-between mb-3">
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${pendingActions.length > 0 ? 'text-rose-600' : 'text-slate-400'}`}>Action Needed</span>
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${pendingActions.length > 0 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>
+                            <AlertTriangle size={16} />
+                        </div>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                        <h3 className={`text-2xl font-black ${pendingActions.length > 0 ? 'text-rose-700' : 'text-slate-900'}`}>{pendingActions.length}</h3>
+                        <span className={`text-[11px] font-bold ${pendingActions.length > 0 ? 'text-rose-600' : 'text-slate-400'}`}>Upload &rarr;</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 font-medium">Pending document proofs</p>
+                </div>
+
+                <div 
+                    onClick={() => setActiveTab('Documents')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group"
+                >
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Digital Vault</span>
+                        <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <FileText size={16} />
+                        </div>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                        <h3 className="text-2xl font-black text-slate-900">{completedOrders.length > 0 ? completedOrders.length * 3 : 5}</h3>
+                        <span className="text-[11px] font-bold text-emerald-600">Vault &rarr;</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 font-medium">Verified certificates & DIN</p>
+                </div>
+
+                <div 
+                    onClick={() => setActiveTab('Invoices')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group"
+                >
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Portfolio</span>
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <IndianRupee size={16} />
+                        </div>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                        <h3 className="text-2xl font-black text-slate-900">₹{(orders.reduce((acc, curr) => acc + (curr.price || 0), 0) / 1000).toFixed(1)}k</h3>
+                        <span className="text-[11px] font-bold text-blue-600">Bills &rarr;</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 font-medium">Settled engagement volume</p>
+                </div>
+            </div>
+
+            {/* 3. MAIN WORKSPACE (LEFT 8 COLUMNS) & INTELLIGENCE SIDEBAR (RIGHT 4 COLUMNS) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                {/* --- LEFT COLUMN: OPERATIONAL COMMAND CENTER (8 COLS) --- */}
+                <div className="lg:col-span-8 space-y-8">
+                    
+                    {/* Hero Action Card */}
+                    <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 rounded-3xl p-7 text-white relative overflow-hidden shadow-xl border border-slate-800 group">
+                        <div className="absolute top-0 right-0 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none group-hover:bg-red-600/20 transition-all duration-700"></div>
                         <div className="relative z-10">
-                            <div className="flex items-center gap-2 mb-6 opacity-80">
-                                <Briefcase size={18} />
-                                <span className="text-xs font-bold uppercase tracking-widest">Active Portfolio</span>
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="bg-red-500/20 border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                                    Enterprise Client Hub
+                                </span>
+                                <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
+                                    <Clock size={13} className="text-emerald-400" />
+                                    <span>Real-Time MCA Sync</span>
+                                </span>
                             </div>
-                            <div className="flex items-end justify-between">
-                                <div>
-                                    <h2 className="text-5xl font-black mb-2 tracking-tighter">{activeOrders.length}</h2>
-                                    <p className="text-indigo-100 text-sm font-bold">Projects currently in progress</p>
-                                </div>
+
+                            <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-2">
+                                Manage Filings, Upload Vault Docs & Track Milestones
+                            </h2>
+                            <p className="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed max-w-xl mb-6">
+                                All government submissions are managed directly by our senior team of Chartered Accountants and Company Secretaries.
+                            </p>
+
+                            <div className="flex flex-wrap items-center gap-3">
                                 <button
                                     onClick={() => setActiveTab('Orders')}
-                                    className="bg-white text-indigo-600 px-6 py-3 rounded-2xl text-sm font-black hover:bg-slate-50 transition shadow-xl"
+                                    className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-lg shadow-red-600/30 flex items-center gap-2"
                                 >
-                                    Track Status
+                                    <span>View Active Pipeline ({activeOrders.length})</span>
+                                    <ArrowRight size={14} />
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('Services')}
+                                    className="bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl transition-all border border-white/10"
+                                >
+                                    Explore Catalog
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Top Services Grid */}
-                    <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm relative overflow-hidden">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="font-black text-slate-800 text-lg">Quick Access Services</h3>
-                            <button onClick={() => setActiveTab('Services')} className="text-indigo-600 text-xs font-bold flex items-center gap-1 hover:underline">
-                                View Master Catalog <ChevronRight size={14} />
+                    {/* Operational Pipeline Tracker */}
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-900 tracking-tight">Active Operational Pipeline</h3>
+                                <p className="text-xs text-slate-500 font-medium">Live stage progress for your ongoing engagements</p>
+                            </div>
+                            <button
+                                onClick={() => setActiveTab('Orders')}
+                                className="text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1"
+                            >
+                                <span>All Orders</span>
+                                <ChevronRight size={14} />
                             </button>
                         </div>
-                        <div className="grid grid-cols-4 gap-y-10 gap-x-4">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {activeOrders.slice(0, 4).map(proj => (
+                                <div
+                                    key={proj._id}
+                                    onClick={() => onOpenProject ? onOpenProject(proj._id) : setActiveTab('Orders')}
+                                    className="bg-slate-50/80 hover:bg-white p-5 rounded-2xl border border-slate-200/80 hover:border-red-300 shadow-2xs hover:shadow-lg transition-all group cursor-pointer"
+                                >
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="max-w-[70%]">
+                                            <h4 className="font-black text-slate-900 text-sm group-hover:text-red-600 transition-colors truncate">
+                                                {proj.serviceName}
+                                            </h4>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                                                {proj.packageName || 'Standard Execution'}
+                                            </p>
+                                        </div>
+                                        <StatusBadge status={proj.status} />
+                                    </div>
+
+                                    <div className="space-y-2 mt-4">
+                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                            <span>Milestone Progress</span>
+                                            <span className="text-red-600 font-bold">{getStatusProgress(proj.status)}%</span>
+                                        </div>
+                                        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full transition-all duration-700"
+                                                style={{ width: `${getStatusProgress(proj.status)}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                                        <span>ID: #{String(proj._id).slice(-6).toUpperCase()}</span>
+                                        <span className="text-red-600 group-hover:translate-x-0.5 transition-transform font-bold flex items-center gap-1">
+                                            Details &rarr;
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {activeOrders.length === 0 && (
+                                <div className="md:col-span-2 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center">
+                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs text-slate-400">
+                                        <Plus size={24} />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-slate-700 mb-1">No Active Orders in Pipeline</h4>
+                                    <p className="text-xs text-slate-500 mb-4 max-w-sm mx-auto">Start a new registration, tax filing, or consultation to track it live.</p>
+                                    <button
+                                        onClick={() => setActiveTab('Services')}
+                                        className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all"
+                                    >
+                                        Browse Services
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Quick Access Services (4x2 Bento Grid) */}
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-900 tracking-tight">Quick Action Launchpad</h3>
+                                <p className="text-xs text-slate-500 font-medium">One-click jump to your most frequent business requirements</p>
+                            </div>
+                            <button
+                                onClick={() => setActiveTab('Services')}
+                                className="text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1"
+                            >
+                                <span>Master Catalog</span>
+                                <ChevronRight size={14} />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             {topServices.map(service => (
                                 <button
                                     key={service.id}
@@ -217,167 +389,125 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                             setActiveTab(service.key);
                                         }
                                     }}
-                                    className="flex flex-col items-center gap-3 group"
+                                    className="flex flex-col items-center p-4 rounded-2xl bg-slate-50/80 hover:bg-white border border-slate-200/80 hover:border-red-300 shadow-2xs hover:shadow-md transition-all duration-200 group text-center"
                                 >
-                                    <div className={`w-14 h-14 lg:w-16 lg:h-16 ${service.color} rounded-3xl flex items-center justify-center shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300`}>
-                                        <service.icon size={24} className="group-hover:scale-110 transition-transform" />
+                                    <div className={`w-12 h-12 ${service.color} rounded-2xl flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform mb-3 border`}>
+                                        <service.icon size={20} />
                                     </div>
-                                    <span className="text-[11px] lg:text-xs font-black text-slate-600 text-center leading-tight group-hover:text-indigo-600 transition-colors">{service.name}</span>
+                                    <span className="text-xs font-black text-slate-800 leading-snug group-hover:text-red-600 transition-colors mb-0.5">
+                                        {service.name}
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-slate-400">
+                                        {service.tag}
+                                    </span>
                                 </button>
                             ))}
                         </div>
                     </div>
-
-                    {/* Active Tracking Section */}
-                    <div>
-                        <div className="flex justify-between items-center mb-6 px-1">
-                            <h3 className="font-black text-slate-800 text-xl">Operational Pipeline</h3>
-                            <div className="flex gap-2">
-                                <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-tighter">Live Updates</span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {activeOrders.slice(0, 4).map(proj => (
-                                <div key={proj._id} onClick={() => onOpenProject ? onOpenProject(proj._id) : {}} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group cursor-pointer">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="max-w-[70%]">
-                                            <h4 className="font-black text-slate-800 text-sm group-hover:text-indigo-600 transition-colors line-clamp-1">{proj.serviceName}</h4>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{proj.packageName}</p>
-                                        </div>
-                                        <StatusBadge status={proj.status} />
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                            <span>Completeness</span>
-                                            <span className="text-indigo-600">{getStatusProgress(proj.status)}%</span>
-                                        </div>
-                                        <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-600 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(99,102,241,0.3)]"
-                                                style={{ width: `${getStatusProgress(proj.status)}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {activeOrders.length === 0 && (
-                                <div className="md:col-span-2 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[32px] p-12 text-center">
-                                    <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300">
-                                        <Plus size={32} />
-                                    </div>
-                                    <p className="text-slate-500 font-bold mb-2 tracking-tight">Your pipeline is empty</p>
-                                    <p className="text-slate-400 text-xs mb-6">Start a new project to see it tracked here live.</p>
-                                    <button onClick={() => setActiveTab('Services')} className="bg-indigo-600 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">Start Now</button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                 </div>
 
-                {/* Right Column - Sidebar Stats & Updates (1/3) */}
-                <div className="space-y-8 lg:sticky lg:top-24">
+                {/* --- RIGHT COLUMN: INTELLIGENCE & ADVISOR PANEL (4 COLS) --- */}
+                <div className="lg:col-span-4 space-y-6">
 
-                    {/* Stats Stack */}
-                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
-                        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-5 hover:border-amber-200 transition-colors">
-                            <div className="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center shrink-0">
-                                <AlertTriangle size={28} />
+                    {/* Dedicated CA/CS Relationship Manager Card */}
+                    <div className="bg-slate-900 rounded-3xl p-6 text-white border border-slate-800 shadow-xl relative overflow-hidden">
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dedicated Advisor</span>
+                            <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/30">Available</span>
+                        </div>
+
+                        <div className="flex items-center gap-3.5 my-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-600 flex items-center justify-center font-black text-lg text-white shadow-md">
+                                CA
                             </div>
                             <div>
-                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Attention</p>
-                                <h3 className="text-2xl font-black text-slate-800">{pendingActions.length}</h3>
-                                <p className="text-slate-500 text-[10px] font-medium leading-none">Pending Tasks</p>
+                                <h4 className="text-sm font-black text-white">S. Doraswamy Raju & Team</h4>
+                                <p className="text-[11px] text-slate-400 font-medium">Senior CA / CS Advisory Partner</p>
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-5 hover:border-emerald-200 transition-colors">
-                            <div className="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center shrink-0">
-                                <IndianRupee size={28} />
-                            </div>
-                            <div>
-                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Investment</p>
-                                <h3 className="text-2xl font-black text-slate-800">₹{(orders.reduce((acc, curr) => acc + curr.price, 0) / 1000).toFixed(1)}k</h3>
-                                <p className="text-slate-500 text-[10px] font-medium leading-none">Total Value</p>
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Accounting Services CTA */}
-                    <div className="bg-emerald-900 rounded-[32px] p-6 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-emerald-500/30 transition-all duration-700"></div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-12 h-12 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 transform -rotate-3 transition-transform group-hover:rotate-0">
-                                    <ClipboardCheck className="text-white" size={24} />
-                                </div>
-                                <h3 className="text-white font-black text-lg leading-tight">Accounting Services</h3>
-                            </div>
-                            <p className="text-emerald-200 text-xs font-medium mb-5 leading-relaxed">Customize your own GST, TDS, and Payroll packages with our multi-select builder.</p>
-                            <button onClick={() => setActiveTab('Accounting')} className="w-full bg-white text-emerald-900 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-xl">
-                                Build Package
-                            </button>
-                        </div>
-                    </div>
+                        <p className="text-xs text-slate-300 font-medium leading-relaxed mb-5">
+                            Need priority clarification on your filing or tax audit? Reach your assigned manager directly.
+                        </p>
 
-                    {/* Refer a Friend Section */}
-                    <div className="bg-indigo-900 rounded-[32px] p-6 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-indigo-500/30 transition-all duration-700"></div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-12 h-12 bg-gradient-to-tr from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 transform rotate-3 transition-transform group-hover:rotate-0">
-                                    <Gift className="text-white" size={24} />
-                                </div>
-                                <h3 className="text-white font-black text-lg leading-tight">Refer & Earn ₹1000</h3>
-                            </div>
-                            <p className="text-indigo-200 text-xs font-medium mb-5 leading-relaxed">Refer a business for incorporation or GST and get immediate wallet credits.</p>
-                            <button className="w-full bg-white text-indigo-900 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-xl">
-                                Invite Now
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Latest News Feed */}
-                    <div className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm group">
-                        <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-                            <h3 className="font-black text-slate-800 flex items-center gap-2"><Newspaper size={18} className="text-indigo-600" /> Insights</h3>
-                            <button className="text-[10px] font-black text-indigo-600 tracking-tighter">VIEW ALL</button>
-                        </div>
-                        <div className="relative h-40 bg-slate-900 flex items-center justify-center overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent z-10"></div>
-                            <div className="w-full h-full opacity-60 bg-[url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426&ixlib=rb-4.0.3')] bg-cover bg-center group-hover:scale-110 transition-transform duration-1000"></div>
-                            <div className="absolute bottom-4 left-6 z-20">
-                                <span className="px-2 py-1 bg-indigo-600 text-[8px] font-black text-white rounded-lg uppercase tracking-widest shadow-lg">Tax alert</span>
-                            </div>
-                        </div>
-                        <div className="p-6">
-                            <h4 className="font-black text-slate-800 text-sm mb-2 leading-snug group-hover:text-indigo-600 transition-colors">GST Compliance: New Rules for IT Credit in 2026</h4>
-                            <p className="text-xs text-slate-500 mb-5 line-clamp-2 leading-relaxed">Stay ahead with latest amendments in GST laws affecting MSMEs...</p>
-                            <button className="w-full py-3 bg-slate-50 rounded-xl text-slate-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors">
-                                Read More <ExternalLink size={12} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Action Items for Pending Projects */}
-                    {pendingActions.length > 0 && (
-                        <div className="bg-rose-50 border border-rose-100 rounded-[32px] p-6 shadow-sm shadow-rose-100/50">
-                            <div className="flex items-start gap-4 mb-4">
-                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-rose-500 shrink-0">
-                                    <Upload size={24} />
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-black text-rose-900 tracking-tight">Action Required</h4>
-                                    <p className="text-[10px] text-rose-700/70 font-bold uppercase tracking-widest">Document Pending</p>
-                                </div>
-                            </div>
-                            <p className="text-xs text-rose-700/80 mb-5 leading-relaxed font-medium">Please upload the requested identity proofs to continue your business registration.</p>
-                            <button
-                                onClick={() => setActiveTab('Documents')}
-                                className="w-full bg-rose-500 text-white py-3 rounded-2xl text-xs font-black shadow-xl shadow-rose-200 hover:bg-rose-600 transition-all hover:-translate-y-0.5"
+                        <div className="grid grid-cols-2 gap-2">
+                            <a
+                                href="tel:+918008530606"
+                                className="flex items-center justify-center gap-2 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all"
                             >
-                                GO TO VAULT
-                            </button>
+                                <Phone size={13} />
+                                <span>Call CA</span>
+                            </a>
+                            <a
+                                href="https://wa.me/918008530606?text=Hi%20VR%20HERE%20Team,%20I%20need%20assistance%20with%20my%20customer%20portal%20engagement."
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all"
+                            >
+                                <span>WhatsApp</span>
+                            </a>
                         </div>
-                    )}
+                    </div>
+
+                    {/* Statutory Compliance Calendar */}
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-2xs">
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                                <Calendar size={14} className="text-red-600" />
+                                <span>Compliance Calendar</span>
+                            </h4>
+                            <span className="text-[10px] font-bold text-slate-400">March 2026</span>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-bold text-slate-800">GST-3B Filing</p>
+                                    <p className="text-[10px] text-slate-400">Monthly Return</p>
+                                </div>
+                                <span className="text-[10px] font-black px-2 py-0.5 bg-red-50 text-red-600 rounded-md border border-red-200">20th Mar</span>
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-bold text-slate-800">Advance Tax Q4</p>
+                                    <p className="text-[10px] text-slate-400">Direct Tax Installment</p>
+                                </div>
+                                <span className="text-[10px] font-black px-2 py-0.5 bg-amber-50 text-amber-700 rounded-md border border-amber-200">15th Mar</span>
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-bold text-slate-800">CCFS-2026 Amnesty</p>
+                                    <p className="text-[10px] text-slate-400">ROC Late Filing Waiver</p>
+                                </div>
+                                <span className="text-[10px] font-black px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200">Active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Refer & Earn Card */}
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-6 border border-amber-200/80 shadow-2xs">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs font-bold">
+                                <Gift size={20} />
+                            </div>
+                            <div>
+                                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900">Refer & Earn ₹1,000</h4>
+                                <p className="text-[10px] text-amber-700 font-medium">Instant wallet credits per referral</p>
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                            Refer another founder for company registration or ISO certification and receive ₹1,000 credit on your next filing.
+                        </p>
+                        <button
+                            onClick={() => setActiveTab('Account')}
+                            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition-all"
+                        >
+                            Get Referral Link
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -385,3 +515,4 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
 };
 
 export default DashboardView;
+

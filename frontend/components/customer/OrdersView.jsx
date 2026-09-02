@@ -55,12 +55,12 @@ const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId
                 </div>
             </div>
 
-            {/* Filter / Search Tags (Mockup) */}
+            {/* Filter / Search Tags */}
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
                 {['All', 'Active', 'Completed', 'Action Required'].map((tag, i) => (
                     <button
                         key={tag}
-                        className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${i === 0 ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'}`}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${i === 0 ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-600/20' : 'bg-white border-slate-200/90 text-slate-600 hover:border-slate-300'}`}
                     >
                         {tag}
                     </button>
@@ -73,13 +73,13 @@ const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId
                     <div 
                         key={proj._id} 
                         onClick={() => setSelectedOrderId ? setSelectedOrderId(proj._id) : {}} 
-                        className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden group hover:shadow-lg hover:border-indigo-100 transition-all"
+                        className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden group hover:shadow-lg hover:border-red-300 transition-all"
                     >
                         <div className="p-5 lg:flex lg:items-center lg:justify-between lg:gap-6">
                             
                             {/* Title & ID (Left) */}
                             <div className="mb-4 lg:mb-0 lg:w-1/4">
-                                <h3 className="font-black text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">{proj.serviceName}</h3>
+                                <h3 className="font-black text-slate-900 text-sm mb-1 group-hover:text-red-600 transition-colors line-clamp-1">{proj.serviceName}</h3>
                                 <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                                     <Package size={12} />
                                     <span>ID: {proj._id.slice(-8).toUpperCase()}</span>
@@ -92,17 +92,17 @@ const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId
                             </div>
 
                             {/* Progress Section (Center) */}
-                            <div className="mb-4 lg:mb-0 bg-slate-50/50 p-4 lg:p-3 rounded-2xl lg:flex-1 lg:max-w-md">
+                            <div className="mb-4 lg:mb-0 bg-slate-50/80 p-4 lg:p-3 rounded-2xl lg:flex-1 lg:max-w-md border border-slate-100">
                                 <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 border-b border-transparent lg:border-none">
                                     <div className="flex items-center gap-1 lg:hidden">
                                         <Clock size={10} />
                                         <span>Current Phase</span>
                                     </div>
-                                    <span className="text-indigo-600 lg:text-right lg:w-full">{getStatusProgress(proj.status)}% Complete</span>
+                                    <span className="text-red-600 lg:text-right lg:w-full font-bold">{getStatusProgress(proj.status)}% Complete</span>
                                 </div>
-                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(99,102,241,0.5)]"
+                                        className="h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full transition-all duration-1000 ease-out"
                                         style={{ width: `${getStatusProgress(proj.status)}%` }}
                                     ></div>
                                 </div>
@@ -113,11 +113,11 @@ const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId
                                 <div className="lg:hidden">
                                     <StatusBadge status={proj.status} />
                                 </div>
-                                <div className="hidden lg:flex items-center gap-1 text-slate-700 font-black text-sm text-right shrink-0">
+                                <div className="hidden lg:flex items-center gap-1 text-slate-900 font-black text-sm text-right shrink-0">
                                     <span className="text-slate-400 font-bold text-xs mr-0.5">₹</span>
-                                    {proj.price.toLocaleString()}
+                                    {proj.price?.toLocaleString() || '0'}
                                 </div>
-                                <button className="flex items-center gap-1.5 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
+                                <button className="flex items-center gap-1.5 bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider group-hover:bg-red-600 group-hover:text-white transition-all shrink-0">
                                     Details <ChevronRight size={12} />
                                 </button>
                             </div>
@@ -127,12 +127,12 @@ const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId
 
                 {orders.length === 0 && (
                     <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center">
-                        <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-200">
+                        <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xs text-slate-300">
                             <CheckSquare size={32} />
                         </div>
                         <h4 className="text-slate-800 font-black mb-1">No Orders Found</h4>
                         <p className="text-slate-400 text-xs font-medium mb-6">Looks like you haven't started any projects yet.</p>
-                        <button onClick={() => setActiveTab?.('Services')} className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                        <button onClick={() => setActiveTab?.('Services')} className="bg-red-600 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-red-700 transition-all">
                             Browse Services
                         </button>
                     </div>

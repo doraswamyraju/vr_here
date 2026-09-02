@@ -174,96 +174,165 @@ export default function CustomerApp() {
       }
    };
 
-   const NavItems = [
-      { id: 'Home', icon: LayoutDashboard, label: 'Home' },
-      { id: 'Services', icon: Briefcase, label: 'Services' },
-      { id: 'Orders', icon: Package, label: 'Orders' },
-      { id: 'Invoices', icon: Wallet, label: 'Invoices' },
-      { id: 'Documents', icon: FileText, label: 'Vault' },
-      { id: 'Bookkeeping', icon: BookOpen, label: 'Bookkeeping' },
-      { id: 'New', icon: MessageSquare, label: 'Support' },
-      { id: 'Account', icon: User, label: 'Account' },
+   const NavGroups = [
+      {
+         group: 'Main Workspace',
+         items: [
+            { id: 'Home', icon: LayoutDashboard, label: 'Overview' },
+            { id: 'Services', icon: Briefcase, label: 'Service Catalog' },
+            { id: 'Orders', icon: Package, label: 'Orders & Projects' },
+            { id: 'Invoices', icon: Wallet, label: 'Billing & Invoices' },
+         ]
+      },
+      {
+         group: 'Compliance & Tools',
+         items: [
+            { id: 'Documents', icon: FileText, label: 'Document Vault' },
+            { id: 'Bookkeeping', icon: BookOpen, label: 'Bookkeeping & AaaS' },
+         ]
+      },
+      {
+         group: 'Help & Settings',
+         items: [
+            { id: 'New', icon: MessageSquare, label: 'Support & Tickets' },
+            { id: 'Account', icon: User, label: 'Account Settings' },
+         ]
+      }
    ];
+
+   const allNavItems = NavGroups.flatMap(g => g.items);
 
    return (
       <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden relative">
 
-         {/* --- DESKTOP SIDEBAR --- */}
-         <aside
-            className={`hidden md:flex flex-col ${sidebarCollapsed ? 'w-24' : 'w-64'} bg-white border-r border-slate-100 transition-all duration-500 z-30`}
-            onMouseEnter={() => setSidebarCollapsed(false)}
-            onMouseLeave={() => setSidebarCollapsed(true)}
-         >
-            <div className="h-24 flex items-center justify-center border-b border-slate-50">
-               <div className="w-12 h-12 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-100">
-                  VR
-               </div>
+         {/* --- DESKTOP EXECUTIVE SIDEBAR --- */}
+         <aside className="hidden lg:flex flex-col w-64 bg-slate-950 text-slate-300 border-r border-slate-800/90 z-30 shrink-0 select-none">
+            {/* Logo & Brand */}
+            <div className="h-20 px-6 flex items-center justify-between border-b border-slate-800/80">
+               <a href="/" className="flex items-center gap-3 group">
+                  <div className="w-10 h-10 bg-gradient-to-tr from-red-600 to-rose-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-md shadow-red-600/30 group-hover:scale-105 transition-transform">
+                     VR
+                  </div>
+                  <div className="flex flex-col">
+                     <span className="font-black text-white text-base leading-none tracking-tight group-hover:text-red-400 transition-colors">VR HERE</span>
+                     <span className="text-[9px] font-extrabold text-red-500 uppercase tracking-widest mt-0.5">Customer Portal</span>
+                  </div>
+               </a>
             </div>
 
-            <nav className="flex-1 py-10 px-4 space-y-2">
-               {NavItems.map(item => (
-                  <button
-                     key={item.id}
-                     onClick={() => setActiveTab(item.id)}
-                     className={`flex items-center w-full p-4 rounded-2xl transition-all group ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
-                  >
-                     <item.icon size={22} className={`${activeTab === item.id ? '' : 'group-hover:scale-110 transition-transform'}`} />
-                     <span className={`ml-4 text-sm font-black transition-all duration-300 whitespace-nowrap overflow-hidden ${sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
-                        {item.label}
-                     </span>
-                  </button>
+            {/* Navigation Groups */}
+            <div className="flex-1 py-6 px-4 space-y-6 overflow-y-auto custom-scrollbar">
+               {NavGroups.map((group, gIdx) => (
+                  <div key={gIdx} className="space-y-1.5">
+                     <p className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-300 mb-2">{group.group}</p>
+                     {group.items.map(item => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.id;
+                        return (
+                           <button
+                              key={item.id}
+                              onClick={() => setActiveTab(item.id)}
+                              className={`flex items-center justify-between w-full px-3.5 py-3 rounded-xl font-bold text-xs transition-all duration-200 group ${
+                                 isActive
+                                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30 font-black'
+                                    : 'text-slate-200 hover:text-white hover:bg-slate-900/90'
+                              }`}
+                           >
+                              <div className="flex items-center gap-3">
+                                 <Icon size={18} className={isActive ? 'text-white' : 'text-slate-300 group-hover:text-white group-hover:scale-110 transition-all'} />
+                                 <span>{item.label}</span>
+                              </div>
+                              {item.id === 'Orders' && orders.filter(o => o.status !== 'Completed').length > 0 && (
+                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${isActive ? 'bg-white text-red-600' : 'bg-slate-800 text-slate-300'}`}>
+                                    {orders.filter(o => o.status !== 'Completed').length}
+                                 </span>
+                              )}
+                              {item.id === 'New' && unreadCount > 0 && (
+                                 <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                              )}
+                           </button>
+                        );
+                     })}
+                  </div>
                ))}
-            </nav>
+            </div>
 
-            <div className="p-4 border-t border-slate-50">
-               <button
-                  onClick={handleLogout}
-                  className="flex items-center w-full p-4 rounded-2xl text-rose-500 hover:bg-rose-50 transition-colors group"
-               >
-                  <LogOut size={22} className="group-hover:rotate-12 transition-transform" />
-                  <span className={`ml-4 text-sm font-black transition-all duration-300 ${sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
-                     Logout
-                  </span>
-               </button>
+            {/* Quick CA Support & User Profile Footer */}
+            <div className="p-4 border-t border-slate-800/80 space-y-3 bg-slate-900/40">
+               <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                     <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center font-black text-xs shrink-0">
+                        CA
+                     </div>
+                     <div className="min-w-0">
+                        <p className="text-[11px] font-bold text-white truncate">Direct Helpline</p>
+                        <p className="text-[10px] text-slate-400 font-medium">+91 80085 30606</p>
+                     </div>
+                  </div>
+                  <a href="tel:+918008530606" className="p-1.5 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg transition-colors" title="Call CA Support">
+                     <Phone size={14} />
+                  </a>
+               </div>
+
+               <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                     <div className="w-9 h-9 rounded-xl bg-slate-800 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-slate-700">
+                        {userInfo.name.charAt(0).toUpperCase()}
+                     </div>
+                     <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-200 truncate">{userInfo.name}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{userInfo.email}</p>
+                     </div>
+                  </div>
+                  <button
+                     onClick={handleLogout}
+                     className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                     title="Logout"
+                  >
+                     <LogOut size={16} />
+                  </button>
+               </div>
             </div>
          </aside>
 
-         {/* --- MOBILE SIDEBAR / MENU --- */}
+         {/* --- MOBILE SIDEBAR DRAWER (PRESERVED) --- */}
          {isMobileMenuOpen && (
-            <div className="fixed inset-0 z-50 md:hidden bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="fixed inset-0 z-50 lg:hidden bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsMobileMenuOpen(false)}>
                <div
-                  className="w-72 h-full bg-white shadow-2xl animate-in slide-in-from-left duration-500 flex flex-col"
+                  className="w-72 h-full bg-slate-950 text-white shadow-2xl animate-in slide-in-from-left duration-500 flex flex-col"
                   onClick={e => e.stopPropagation()}
                >
-                  <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                  <div className="p-6 border-b border-slate-800 flex items-center justify-between">
                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-lg">VR</div>
-                        <span className="font-black text-slate-800 tracking-tight">VR HERE</span>
+                        <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white font-black text-lg">VR</div>
+                        <span className="font-black text-white tracking-tight">VR HERE Portal</span>
                      </div>
-                     <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-slate-600">
+                     <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-white">
                         <X size={24} />
                      </button>
                   </div>
 
-                  <nav className="flex-1 py-8 px-4 space-y-1 overflow-y-auto">
-                     {NavItems.map(item => (
+                  <nav className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto">
+                     {allNavItems.map(item => (
                         <button
                            key={item.id}
                            onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
-                           className={`flex items-center w-full p-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+                           className={`flex items-center w-full p-3.5 rounded-xl font-bold text-xs transition-all ${
+                              activeTab === item.id ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-900'
+                           }`}
                         >
-                           <item.icon size={22} className="mr-4" />
-                           <span className="font-bold text-sm">{item.label}</span>
+                           <item.icon size={20} className="mr-3" />
+                           <span>{item.label}</span>
                         </button>
                      ))}
                   </nav>
 
-                  <div className="p-6 border-t border-slate-50">
+                  <div className="p-6 border-t border-slate-800">
                      <button
                         onClick={handleLogout}
-                        className="flex items-center w-full p-4 rounded-2xl text-rose-500 bg-rose-50 hover:bg-rose-100 transition-colors font-bold text-sm"
+                        className="flex items-center w-full p-3.5 rounded-xl text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors font-bold text-xs"
                      >
-                        <LogOut size={22} className="mr-4" />
+                        <LogOut size={20} className="mr-3" />
                         Logout Session
                      </button>
                   </div>
@@ -275,58 +344,103 @@ export default function CustomerApp() {
          <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
 
             {/* Mobile Header */}
-            <header className="md:hidden flex h-16 items-center justify-between px-5 bg-white border-b border-slate-50 sticky top-0 z-20">
-               <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-600">
+            <header className="lg:hidden flex h-16 items-center justify-between px-5 bg-white border-b border-slate-100 sticky top-0 z-20 shadow-2xs">
+               <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-700">
                   <Menu size={24} />
                </button>
                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-sm">VR</div>
-                  <span className="font-black text-slate-800 text-sm tracking-tight uppercase">Dashboard</span>
+                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-black text-sm">VR</div>
+                  <span className="font-black text-slate-900 text-sm tracking-tight uppercase">Dashboard</span>
                </div>
-               <button onClick={handleLogout} className="p-2 -mr-2 text-rose-500">
-                  <LogOut size={22} />
-               </button>
+               <div className="flex items-center gap-2">
+                  <button onClick={() => setIsNotificationOpen(true)} className="p-2 text-slate-700 relative">
+                     <Bell size={20} />
+                     {unreadCount > 0 && (
+                        <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                     )}
+                  </button>
+                  <button onClick={handleLogout} className="p-2 -mr-2 text-rose-500">
+                     <LogOut size={20} />
+                  </button>
+               </div>
             </header>
 
-            {/* Desktop/Tablet Header */}
-            <header className="hidden md:flex h-20 items-center justify-between px-10 bg-white/50 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-20">
+            {/* Desktop Top Header Bar */}
+            <header className="hidden lg:flex h-20 items-center justify-between px-10 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 sticky top-0 z-20">
                <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-black text-slate-800 tracking-tight">{activeTab}</h1>
-                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
+                  <h1 className="text-xl font-black text-slate-900 tracking-tight">{activeTab}</h1>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-50 text-red-600 border border-red-200/80">
+                     Customer Suite
+                  </span>
                </div>
-               <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-3 bg-white p-1.5 pr-4 rounded-2xl border border-slate-100 shadow-sm">
-                     <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-black">
+
+               <div className="flex items-center gap-4">
+                  {/* Quick Website Switcher */}
+                  <a
+                     href="/"
+                     className="px-3.5 py-2 text-xs font-bold text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded-xl transition-all"
+                  >
+                     &larr; Back to Website
+                  </a>
+
+                  {/* New Engagement Button */}
+                  <button
+                     onClick={() => setActiveTab('Services')}
+                     className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all shadow-md shadow-red-600/25 flex items-center gap-2"
+                  >
+                     <Plus size={16} />
+                     <span>New Engagement</span>
+                  </button>
+
+                  {/* Notification Bell with Badge */}
+                  <div className="relative">
+                     <button
+                        onClick={() => setIsNotificationOpen(true)}
+                        className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all relative"
+                        title="Notifications"
+                     >
+                        <Bell size={18} />
+                        {unreadCount > 0 && (
+                           <span className="absolute -top-1 -right-1 px-1.5 py-0.2 bg-red-600 text-white text-[9px] font-black rounded-full border-2 border-white">
+                              {unreadCount}
+                           </span>
+                        )}
+                     </button>
+                  </div>
+
+                  {/* User Profile Snippet */}
+                  <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
+                     <div className="w-10 h-10 bg-red-50 border border-red-200 rounded-xl flex items-center justify-center text-red-600 font-black">
                         {userInfo.name.charAt(0).toUpperCase()}
                      </div>
-                     <div className="text-left">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Customer</p>
-                        <p className="text-xs font-bold text-slate-700 leading-none">{userInfo.name}</p>
+                     <div className="text-left leading-tight">
+                        <p className="text-xs font-black text-slate-900">{userInfo.name}</p>
+                        <p className="text-[10px] font-semibold text-slate-400">Verified Client</p>
                      </div>
                   </div>
                </div>
             </header>
 
             {/* SCROLLABLE VIEWPORT */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6 px-5 md:px-10 md:pt-10 scroll-smooth">
-               <div className="max-w-7xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-4 px-4 sm:px-6 lg:px-10 lg:pt-8 scroll-smooth">
+               <div className="max-w-[1440px] mx-auto w-full">
                   {renderView()}
                </div>
             </div>
 
-            {/* --- MOBILE BOTTOM NAVBAR --- */}
-            <nav className="md:hidden fixed bottom-1.5 left-4 right-4 h-16 bg-slate-900/90 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-around px-2 z-50 shadow-2xl shadow-indigo-200/50">
-               {NavItems.filter(i => i.id !== 'New' && i.id !== 'Bookkeeping').map((item) => (
+            {/* --- MOBILE BOTTOM NAVBAR (PRESERVED) --- */}
+            <nav className="lg:hidden fixed bottom-1.5 left-4 right-4 h-16 bg-slate-950/95 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-around px-2 z-50 shadow-2xl shadow-slate-900/50">
+               {allNavItems.filter(i => ['Home', 'Services', 'Orders', 'Documents', 'Account'].includes(i.id)).map((item) => (
                   <button
                      key={item.id}
                      onClick={() => setActiveTab(item.id)}
-                     className={`flex flex-col items-center gap-1 px-3 py-1.5 transition-all ${activeTab === item.id ? 'text-white' : 'text-slate-400'}`}
+                     className={`flex flex-col items-center gap-1 px-3 py-1.5 transition-all ${activeTab === item.id ? 'text-red-500' : 'text-slate-400'}`}
                   >
                      <div className={`transition-all duration-300 ${activeTab === item.id ? 'scale-110 -translate-y-0.5' : ''}`}>
                         <item.icon size={20} />
                      </div>
-                     <span className={`text-[8px] font-black uppercase tracking-widest transition-opacity ${activeTab === item.id ? 'opacity-100' : 'opacity-60'}`}>
-                        {item.id === 'Home' ? 'Me' : item.label === 'Vault' ? 'Docs' : item.label}
+                     <span className={`text-[8px] font-black uppercase tracking-widest transition-opacity ${activeTab === item.id ? 'opacity-100 font-bold' : 'opacity-60'}`}>
+                        {item.id === 'Home' ? 'Me' : item.label === 'Document Vault' ? 'Vault' : item.label.split(' ')[0]}
                      </span>
                   </button>
                ))}
