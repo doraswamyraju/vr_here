@@ -16,7 +16,7 @@ import { uploadBufferToDrive, getCustomerDriveFolder } from '../services/googleD
 
 const ORDER_POPULATE = [
     { path: 'user', select: 'name email phone' },
-    { path: 'assignedEmployee', select: 'name email role' },
+    { path: 'assignedEmployee', select: 'name email phone profilePhoto role' },
     { path: 'assignedMaker', select: 'name email role' },
     { path: 'assignedChecker', select: 'name email role' },
     { path: 'assignedFreelancer', select: 'name email phone isClockedIn lastClockInTime' },

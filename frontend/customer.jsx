@@ -327,19 +327,19 @@ export default function CustomerApp() {
                ))}
             </div>
 
-            {/* Quick CA Support & User Profile Footer */}
+            {/* Quick Advisor Helpline & User Profile Footer */}
             <div className="p-4 border-t border-slate-800/80 space-y-3 bg-slate-900/40">
                <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-2.5 min-w-0">
-                     <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center font-black text-xs shrink-0">
-                        CA
+                     <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-black text-xs shrink-0">
+                        <Phone size={14} />
                      </div>
                      <div className="min-w-0">
                         <p className="text-[11px] font-bold text-white truncate">Direct Helpline</p>
                         <p className="text-[10px] text-slate-400 font-medium">+91 80085 30606</p>
                      </div>
                   </div>
-                  <a href="tel:+918008530606" className="p-1.5 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg transition-colors" title="Call CA Support">
+                  <a href="tel:+918008530606" className="p-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors" title="Call Advisor Helpline">
                      <Phone size={14} />
                   </a>
                </div>

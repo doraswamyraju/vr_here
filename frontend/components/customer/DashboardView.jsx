@@ -271,7 +271,7 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                 Manage Filings, Upload Vault Docs & Track Milestones
                             </h2>
                             <p className="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed max-w-xl mb-6">
-                                All government submissions are managed directly by our senior team of Chartered Accountants and Company Secretaries.
+                                All filings and compliance submissions are managed directly by your assigned dedicated advisor and operations team.
                             </p>
 
                             <div className="flex flex-wrap items-center gap-3">
@@ -280,11 +280,11 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                     className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-lg shadow-red-600/30 flex items-center gap-2"
                                 >
                                     <span>View Active Pipeline ({activeOrders.length})</span>
-                                    <ArrowRight size={14} />
+                                    <ArrowRight size={15} />
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('Services')}
-                                    className="bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl transition-all border border-white/10"
+                                    className="bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all border border-white/10"
                                 >
                                     Explore Catalog
                                 </button>
@@ -292,16 +292,16 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                         </div>
                     </div>
 
-                    {/* Operational Pipeline Tracker */}
-                    <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs space-y-6">
-                        <div className="flex items-center justify-between">
+                    {/* Operational Pipeline Snapshot */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center px-1">
                             <div>
-                                <h3 className="text-lg font-black text-slate-900 tracking-tight">Active Operational Pipeline</h3>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">Active Operational Pipeline</h3>
                                 <p className="text-xs text-slate-500 font-medium">Live stage progress for your ongoing engagements</p>
                             </div>
                             <button
                                 onClick={() => setActiveTab('Orders')}
-                                className="text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1"
+                                className="text-xs font-bold text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1"
                             >
                                 <span>All Orders</span>
                                 <ChevronRight size={14} />
@@ -350,15 +350,17 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                             ))}
 
                             {activeOrders.length === 0 && (
-                                <div className="md:col-span-2 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center">
-                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs text-slate-400">
-                                        <Plus size={24} />
+                                <div className="col-span-2 bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center space-y-3">
+                                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
+                                        <Briefcase size={22} />
                                     </div>
-                                    <h4 className="text-sm font-bold text-slate-700 mb-1">No Active Orders in Pipeline</h4>
-                                    <p className="text-xs text-slate-500 mb-4 max-w-sm mx-auto">Start a new registration, tax filing, or consultation to track it live.</p>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-800">No Active Engagements</h4>
+                                        <p className="text-xs text-slate-400 mt-0.5 font-medium">Explore our catalog to start a new company incorporation, GST, or compliance filing.</p>
+                                    </div>
                                     <button
                                         onClick={() => setActiveTab('Services')}
-                                        className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all"
+                                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition"
                                     >
                                         Browse Services
                                     </button>
@@ -367,94 +369,106 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                         </div>
                     </div>
 
-                    {/* Quick Access Services (4x2 Bento Grid) */}
-                    <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 className="text-lg font-black text-slate-900 tracking-tight">Quick Action Launchpad</h3>
-                                <p className="text-xs text-slate-500 font-medium">One-click jump to your most frequent business requirements</p>
-                            </div>
-                            <button
-                                onClick={() => setActiveTab('Services')}
-                                className="text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1"
-                            >
-                                <span>Master Catalog</span>
-                                <ChevronRight size={14} />
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            {topServices.map(service => (
-                                <button
-                                    key={service.id}
-                                    onClick={() => {
-                                        if (service.key.startsWith('/')) {
-                                            navigate(service.key);
-                                        } else if (onSelectService && service.key !== 'Services' && service.key !== 'New') {
-                                            onSelectService({ title: service.name, slug: service.key });
-                                        } else {
-                                            setActiveTab(service.key);
-                                        }
-                                    }}
-                                    className="flex flex-col items-center p-4 rounded-2xl bg-slate-50/80 hover:bg-white border border-slate-200/80 hover:border-red-300 shadow-2xs hover:shadow-md transition-all duration-200 group text-center"
-                                >
-                                    <div className={`w-12 h-12 ${service.color} rounded-2xl flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform mb-3 border`}>
-                                        <service.icon size={20} />
+                    {/* Pending Action Items / Vault Upload Requests */}
+                    {pendingActions.length > 0 && (
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-3xl p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
+                                        <AlertTriangle size={20} />
                                     </div>
-                                    <span className="text-xs font-black text-slate-800 leading-snug group-hover:text-red-600 transition-colors mb-0.5">
-                                        {service.name}
-                                    </span>
-                                    <span className="text-[10px] font-semibold text-slate-400">
-                                        {service.tag}
-                                    </span>
-                                </button>
-                            ))}
+                                    <div>
+                                        <h4 className="text-sm font-black text-slate-950">Action Items Require Attention</h4>
+                                        <p className="text-xs text-slate-600 font-medium">{pendingActions.length} order(s) are waiting for your document uploads or clarification.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                {pendingActions.map(order => (
+                                    <div
+                                        key={order._id}
+                                        onClick={() => onOpenProject ? onOpenProject(order._id) : setActiveTab('Orders')}
+                                        className="bg-white p-4 rounded-2xl border border-amber-200/80 hover:border-amber-400 shadow-2xs flex items-center justify-between cursor-pointer transition group"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                                !
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-black text-slate-900 group-hover:text-red-600 transition truncate">{order.serviceName}</p>
+                                                <p className="text-[10px] text-amber-700 font-bold">{order.status}</p>
+                                            </div>
+                                        </div>
+                                        <button className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] rounded-xl transition">
+                                            Take Action &rarr;
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* --- RIGHT COLUMN: INTELLIGENCE & ADVISOR PANEL (4 COLS) --- */}
                 <div className="lg:col-span-4 space-y-6">
 
-                    {/* Dedicated CA/CS Relationship Manager Card */}
-                    <div className="bg-slate-900 rounded-3xl p-6 text-white border border-slate-800 shadow-xl relative overflow-hidden">
-                        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dedicated Advisor</span>
-                            <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/30">Available</span>
-                        </div>
+                    {/* Dedicated Advisor (Assigned Project Manager) Card */}
+                    {(() => {
+                        const assignedManager = orders.find(o => o.assignedEmployee && (o.assignedEmployee.name || o.assignedEmployee._id))?.assignedEmployee;
+                        const advisorName = (typeof assignedManager === 'object' && assignedManager?.name) ? assignedManager.name : (userInfo?.dedicatedAdvisor || 'Dedicated Advisor Team');
+                        const advisorPhone = (typeof assignedManager === 'object' && assignedManager?.phone) ? assignedManager.phone : '+918008530606';
+                        const advisorPhoto = (typeof assignedManager === 'object' && (assignedManager?.profilePhoto || assignedManager?.companyLogo)) ? (assignedManager.profilePhoto || assignedManager.companyLogo) : null;
 
-                        <div className="flex items-center gap-3.5 my-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-600 flex items-center justify-center font-black text-lg text-white shadow-md">
-                                CA
+                        return (
+                            <div className="bg-slate-900 rounded-3xl p-6 text-white border border-slate-800 shadow-xl relative overflow-hidden">
+                                <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dedicated Advisor</span>
+                                    <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/30">Available</span>
+                                </div>
+
+                                <div className="flex items-center gap-3.5 my-4">
+                                    {advisorPhoto ? (
+                                        <img
+                                            src={advisorPhoto}
+                                            alt={advisorName}
+                                            className="w-12 h-12 rounded-2xl object-cover border border-slate-700 shadow-md shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-700 flex items-center justify-center font-black text-lg text-white shadow-md shrink-0">
+                                            {(advisorName || 'A').charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div className="min-w-0">
+                                        <h4 className="text-sm font-black text-white truncate">{advisorName}</h4>
+                                        <p className="text-[11px] text-slate-400 font-medium">Dedicated Advisor</p>
+                                    </div>
+                                </div>
+
+                                <p className="text-xs text-slate-300 font-medium leading-relaxed mb-5">
+                                    Need priority clarification on your filing or requirements? Reach your dedicated advisor directly.
+                                </p>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <a
+                                        href={`tel:${advisorPhone}`}
+                                        className="flex items-center justify-center gap-2 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all"
+                                    >
+                                        <Phone size={13} />
+                                        <span>Call Advisor</span>
+                                    </a>
+                                    <a
+                                        href={`https://wa.me/${advisorPhone.replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(advisorName)},%20I%20need%20assistance%20with%20my%20order.`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all"
+                                    >
+                                        <span>WhatsApp</span>
+                                    </a>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="text-sm font-black text-white">S. Doraswamy Raju & Team</h4>
-                                <p className="text-[11px] text-slate-400 font-medium">Senior CA / CS Advisory Partner</p>
-                            </div>
-                        </div>
-
-                        <p className="text-xs text-slate-300 font-medium leading-relaxed mb-5">
-                            Need priority clarification on your filing or tax audit? Reach your assigned manager directly.
-                        </p>
-
-                        <div className="grid grid-cols-2 gap-2">
-                            <a
-                                href="tel:+918008530606"
-                                className="flex items-center justify-center gap-2 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all"
-                            >
-                                <Phone size={13} />
-                                <span>Call CA</span>
-                            </a>
-                            <a
-                                href="https://wa.me/918008530606?text=Hi%20VR%20HERE%20Team,%20I%20need%20assistance%20with%20my%20customer%20portal%20engagement."
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all"
-                            >
-                                <span>WhatsApp</span>
-                            </a>
-                        </div>
-                    </div>
+                        );
+                    })()}
 
                     {/* Statutory Compliance Calendar */}
                     <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-2xs">
