@@ -114,7 +114,16 @@ export const launchCustomerCheckout = async ({
       throw new Error(checkoutOrder?.message || 'Failed to initialize payment gateway order from server.');
     }
 
-    // 2. Configure Razorpay modal
+    // 2. Configure Razorpay modal with validated prefill
+    const prefillData = {
+      name: customerName,
+      email: email
+    };
+    const cleanPhoneDigits = String(phone || '').replace(/[^0-9]/g, '');
+    if (cleanPhoneDigits.length >= 10) {
+      prefillData.contact = cleanPhoneDigits;
+    }
+
     const options = {
       key: checkoutOrder.key,
       amount: checkoutOrder.amount,
@@ -122,11 +131,7 @@ export const launchCustomerCheckout = async ({
       name: 'VR HERE Business Solutions',
       description: `Payment for ${cleanPackageName}`,
       order_id: checkoutOrder.orderId,
-      prefill: {
-        name: customerName,
-        email: email,
-        contact: phone
-      },
+      prefill: prefillData,
       notes: {
         serviceName: cleanServiceName,
         packageName: cleanPackageName,
