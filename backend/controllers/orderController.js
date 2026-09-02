@@ -746,89 +746,91 @@ const uploadDocument = asyncHandler(async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    const uploadedDocName = req.body.name || (req.file ? req.file.originalname : 'Document');
-    await logOrderActivity(
-        order._id,
-        req.user._id,
-        'DOCUMENT_UPLOAD',
-        `Uploaded document "${uploadedDocName}"`,
-        { documentName: uploadedDocName, url: documentUrl, isFinal: req.body.isFinalCertificate === 'true' }
-    );
+    try {
+        const uploadedDocName = req.body.name || (req.file ? req.file.originalname : 'Document');
+        await logOrderActivity(
+            order._id,
+            req.user._id,
+            'DOCUMENT_UPLOAD',
+            `Uploaded document "${uploadedDocName}"`,
+            { documentName: uploadedDocName, url: documentUrl, isFinal: req.body.isFinalCertificate === 'true' }
+        );
 
-    // Trigger Notifications after successful upload and save
-    if (req.user.role === 'client') {
-        const docName = req.body.name || (req.file ? req.file.originalname : 'Document');
-        
-        // Notify assigned staff & admins
-        const message = `Client ${order.clientName} has uploaded document "${docName}" for project ${order.serviceName}.`;
-        
-        if (order.assignedEmployee) {
-            const employee = await User.findById(order.assignedEmployee);
-            if (employee) {
-                const staffEmailHtml = getClientSubmissionTemplate({
-                    staffName: employee.name,
-                    clientName: order.clientName,
-                    serviceName: order.serviceName
-                });
-                await triggerNotification({
-                    userId: order.assignedEmployee,
-                    title: 'Client Document Uploaded',
-                    message,
-                    type: 'Order',
-                    emailOpts: {
-                        send: true,
-                        subject: `Action Required: Client Uploaded Doc - ${order.serviceName}`,
-                        html: staffEmailHtml
-                    }
-                });
+        // Trigger Notifications after successful upload and save
+        if (req.user.role === 'client' || req.user.role === 'customer') {
+            const docName = req.body.name || (req.file ? req.file.originalname : 'Document');
+            const message = `Client ${order.clientName} has uploaded document "${docName}" for project ${order.serviceName}.`;
+            
+            if (order.assignedEmployee) {
+                const employee = await User.findById(order.assignedEmployee);
+                if (employee) {
+                    const staffEmailHtml = getClientSubmissionTemplate({
+                        staffName: employee.name,
+                        clientName: order.clientName,
+                        serviceName: order.serviceName
+                    });
+                    await triggerNotification({
+                        userId: order.assignedEmployee,
+                        title: 'Client Document Uploaded',
+                        message,
+                        type: 'Order',
+                        emailOpts: {
+                            send: true,
+                            subject: `Action Required: Client Uploaded Doc - ${order.serviceName}`,
+                            html: staffEmailHtml
+                        }
+                    });
+                }
             }
-        }
-        
-        await notifyAdmins({
-            title: 'Client Document Uploaded',
-            message,
-            type: 'Order',
-            email: false
-        });
-    } else {
-        // Uploaded by staff/admin
-        if (req.body.isFinalCertificate === 'true' || req.body.isFinalCertificate === true) {
-            // Notify client of completion
-            if (order.user) {
-                const clientEmailHtml = getOrderStatusUpdateTemplate({
-                    clientName: order.clientName || 'Customer',
-                    serviceName: order.serviceName,
-                    packageName: order.packageName,
-                    status: 'Completed'
-                });
-                await triggerNotification({
-                    userId: order.user,
-                    title: 'Compliance Project Completed! 🎉',
-                    message: `Congratulations! Your project for "${order.serviceName}" is now fully completed. You can download your final certificate inside your dashboard vault.`,
-                    type: 'Order',
-                    emailOpts: {
-                        send: true,
-                        subject: `Project Completed: ${order.serviceName} - VR HERE`,
-                        html: clientEmailHtml
-                    }
-                });
-            }
+            
+            await notifyAdmins({
+                title: 'Client Document Uploaded',
+                message,
+                type: 'Order',
+                email: false
+            });
         } else {
-            // Notify client of regular admin document
-            if (order.user) {
-                const docName = req.body.name || (req.file ? req.file.originalname : 'Document');
-                await triggerNotification({
-                    userId: order.user,
-                    title: 'New Document Uploaded by specialist',
-                    message: `A new document "${docName}" has been uploaded to your project: "${order.serviceName}".`,
-                    type: 'Order',
-                    emailOpts: {
-                        send: true,
-                        subject: `New Document Added: ${order.serviceName}`
-                    }
-                });
+            // Uploaded by staff/admin
+            if (req.body.isFinalCertificate === 'true' || req.body.isFinalCertificate === true) {
+                // Notify client of completion
+                if (order.user) {
+                    const clientEmailHtml = getOrderStatusUpdateTemplate({
+                        clientName: order.clientName || 'Customer',
+                        serviceName: order.serviceName,
+                        packageName: order.packageName,
+                        status: 'Completed'
+                    });
+                    await triggerNotification({
+                        userId: order.user,
+                        title: 'Compliance Project Completed! 🎉',
+                        message: `Congratulations! Your project for "${order.serviceName}" is now fully completed. You can download your final certificate inside your dashboard vault.`,
+                        type: 'Order',
+                        emailOpts: {
+                            send: true,
+                            subject: `Project Completed: ${order.serviceName} - VR HERE`,
+                            html: clientEmailHtml
+                        }
+                    });
+                }
+            } else {
+                // Notify client of regular admin document
+                if (order.user) {
+                    const docName = req.body.name || (req.file ? req.file.originalname : 'Document');
+                    await triggerNotification({
+                        userId: order.user,
+                        title: 'New Document Uploaded by specialist',
+                        message: `A new document "${docName}" has been uploaded to your project: "${order.serviceName}".`,
+                        type: 'Order',
+                        emailOpts: {
+                            send: true,
+                            subject: `New Document Added: ${order.serviceName}`
+                        }
+                    });
+                }
             }
         }
+    } catch (notifErr) {
+        console.error('[OrderUpload] Non-blocking notification/log warning:', notifErr.message);
     }
 
     res.json(updatedOrder);
