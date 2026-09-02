@@ -116,6 +116,15 @@ export default function CustomerApp() {
       );
    }
 
+   const handleOrderPlacedSuccess = async (data) => {
+      await fetchData();
+      setSelectedService(null);
+      if (data?.order?._id) {
+         setSelectedOrderId(data.order._id);
+      }
+      setActiveTab('Orders');
+   };
+
    // -- Tab Mapping --
    const renderView = () => {
       switch (activeTab) {
@@ -124,6 +133,10 @@ export default function CustomerApp() {
                 setActiveTab={(tab, query) => {
                    if (query) setServiceSearchQuery(query);
                    setActiveTab(tab);
+                }}
+                onSelectService={(serviceObj) => {
+                   setSelectedService(serviceObj);
+                   setActiveTab('Services');
                 }}
                 orders={orders}
                 notifications={notifications}
@@ -143,6 +156,7 @@ export default function CustomerApp() {
                         onBack={() => setSelectedService(null)}
                         setActiveTab={setActiveTab}
                         userInfo={userInfo}
+                        onOrderSuccess={handleOrderPlacedSuccess}
                     />
                 );
             }
@@ -158,7 +172,7 @@ export default function CustomerApp() {
                 />
             );
          }
-         case 'Accounting': return <AccountingServicesView setActiveTab={setActiveTab} userInfo={userInfo} />;
+         case 'Accounting': return <AccountingServicesView setActiveTab={setActiveTab} userInfo={userInfo} onOrderSuccess={handleOrderPlacedSuccess} />;
          case 'Orders': return (
             <OrdersView
                orders={orders}
@@ -176,7 +190,7 @@ export default function CustomerApp() {
          case 'Account': return <AccountsView orders={orders} payments={payments} userInfo={userInfo} token={userInfo?.token} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: 
-            return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} />;
+            return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} onSelectService={(serviceObj) => { setSelectedService(serviceObj); setActiveTab('Services'); }} />;
       }
    };
 

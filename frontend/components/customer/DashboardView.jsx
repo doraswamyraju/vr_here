@@ -33,7 +33,7 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenProject, onOpenNotifications }) => {
+const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenProject, onOpenNotifications, onSelectService }) => {
     const navigate = useNavigate();
     const activeOrders = orders.filter(o => o.status !== 'Completed');
     const completedOrders = orders.filter(o => o.status === 'Completed');
@@ -390,6 +390,8 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                                     onClick={() => {
                                         if (service.key.startsWith('/')) {
                                             navigate(service.key);
+                                        } else if (onSelectService && service.key !== 'Services' && service.key !== 'New') {
+                                            onSelectService({ title: service.name, slug: service.key });
                                         } else {
                                             setActiveTab(service.key);
                                         }

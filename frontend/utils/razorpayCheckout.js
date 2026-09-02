@@ -22,28 +22,66 @@ const persistAuthFromPayment = (paymentResponse) => {
 
 const loadRazorpaySDK = () => {
   return new Promise((resolve) => {
-    if (window.Razorpay) {
+    if (typeof window !== 'undefined' && window.Razorpay) {
       return resolve(true);
     }
+
     const existingScript = document.querySelector('script[src*="checkout.razorpay.com"]');
     if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(true));
-      existingScript.addEventListener('error', () => resolve(false));
+      let attempts = 0;
+      const checkInterval = setInterval(() => {
+        attempts++;
+        if (typeof window !== 'undefined' && window.Razorpay) {
+          clearInterval(checkInterval);
+          return resolve(true);
+        }
+        if (attempts > 25) { // 2.5s timeout for existing script
+          clearInterval(checkInterval);
+          try {
+            existingScript.remove();
+          } catch (e) {}
+          injectScript();
+        }
+      }, 100);
       return;
     }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.head.appendChild(script);
+
+    injectScript();
+
+    function injectScript() {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => {
+        if (typeof window !== 'undefined' && window.Razorpay) {
+          resolve(true);
+        } else {
+          setTimeout(() => resolve(!!(typeof window !== 'undefined' && window.Razorpay)), 200);
+        }
+      };
+      script.onerror = () => {
+        console.error('[Razorpay Checkout] Failed to load Razorpay script.');
+        resolve(false);
+      };
+      document.head.appendChild(script);
+
+      setTimeout(() => {
+        resolve(!!(typeof window !== 'undefined' && window.Razorpay));
+      }, 5000);
+    }
   });
 };
 
 export const launchRazorpayCheckout = async ({
   serviceName,
   selectedPlan,
+  packageName,
+  amount,
+  price,
   formData = {},
+  customerName: directCustomerName,
+  customerEmail: directCustomerEmail,
+  customerPhone: directCustomerPhone,
   token,
   onSubmittingChange,
   onSuccess,
@@ -53,11 +91,11 @@ export const launchRazorpayCheckout = async ({
     onSubmittingChange?.(true);
 
     const isLoaded = await loadRazorpaySDK();
-    if (!isLoaded || !window.Razorpay) {
-      throw new Error('Razorpay payment gateway script was blocked by browser. Please disable ad-blockers on vrhere.in and try again.');
+    if (!isLoaded || typeof window === 'undefined' || !window.Razorpay) {
+      throw new Error('Razorpay payment gateway script was blocked or could not be loaded. Please disable ad-blockers and try again.');
     }
 
-    const rawPrice = selectedPlan?.price ?? selectedPlan?.amount ?? 0;
+    const rawPrice = amount ?? price ?? selectedPlan?.price ?? selectedPlan?.amount ?? 0;
     const cleanAmount = typeof rawPrice === 'string'
       ? Number(rawPrice.replace(/[^0-9]/g, '')) || 0
       : Number(rawPrice) || 0;
@@ -74,13 +112,16 @@ export const launchRazorpayCheckout = async ({
       }
     })();
 
-    const customerName = formData?.name || currentSavedUser?.name || 'VR HERE Client';
-    const email = formData?.email || currentSavedUser?.email || 'client@vrhere.in';
-    const phone = formData?.phone || currentSavedUser?.phone || '9999999999';
+    const cleanServiceName = serviceName || selectedPlan?.name || packageName || 'Business Service';
+    const cleanPackageName = packageName || selectedPlan?.name || 'Standard Package';
+    const customerName = directCustomerName || formData?.name || currentSavedUser?.name || 'VR HERE Client';
+    const email = directCustomerEmail || formData?.email || currentSavedUser?.email || 'client@vrhere.in';
+    const phone = directCustomerPhone || formData?.phone || currentSavedUser?.phone || '9999999999';
+    const authToken = token || localStorage.getItem('token') || currentSavedUser?.token;
 
     const checkoutPayload = {
-      serviceName: serviceName || selectedPlan?.name || 'Business Service',
-      packageName: selectedPlan?.name || 'Standard Package',
+      serviceName: cleanServiceName,
+      packageName: cleanPackageName,
       amount: cleanAmount,
       customerName,
       email,
@@ -93,7 +134,7 @@ export const launchRazorpayCheckout = async ({
     const { data: checkoutOrder } = await axios.post(
       '/api/payments/checkout-order',
       checkoutPayload,
-      getAuthConfig(token || currentSavedUser?.token)
+      getAuthConfig(authToken)
     );
 
     console.log('[Razorpay Checkout] Received checkout order:', checkoutOrder);
@@ -107,11 +148,11 @@ export const launchRazorpayCheckout = async ({
       amount: checkoutOrder.amount,
       currency: checkoutOrder.currency || 'INR',
       name: 'VR HERE Business Solutions',
-      description: `Payment for ${selectedPlan?.name || serviceName}`,
+      description: `Payment for ${cleanPackageName}`,
       order_id: checkoutOrder.orderId,
       handler: async function (response) {
         try {
-          console.log('[Razorpay Checkout] Handling payment response:', response);
+          console.log('[Razorpay Checkout] Handling payment response verification:', response);
           const { data } = await axios.post(
             '/api/payments/verify',
             {
@@ -120,15 +161,20 @@ export const launchRazorpayCheckout = async ({
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature
             },
-            getAuthConfig(token || currentSavedUser?.token)
+            getAuthConfig(authToken)
           );
 
           persistAuthFromPayment(data);
           onSubmittingChange?.(false);
-          onSuccess?.(data);
+          if (onSuccess) {
+            await onSuccess(data);
+          }
         } catch (error) {
+          console.error('[Razorpay Checkout] Verification error:', error);
           onSubmittingChange?.(false);
-          onFailure?.(error);
+          if (onFailure) {
+            onFailure(error);
+          }
         }
       },
       prefill: {
@@ -137,8 +183,8 @@ export const launchRazorpayCheckout = async ({
         contact: phone
       },
       notes: {
-        serviceName: serviceName || selectedPlan?.name,
-        packageName: selectedPlan?.name,
+        serviceName: cleanServiceName,
+        packageName: cleanPackageName,
         referralCode: formData?.referralCode || ''
       },
       theme: {
@@ -146,7 +192,7 @@ export const launchRazorpayCheckout = async ({
       },
       modal: {
         ondismiss: function () {
-          console.log('[Razorpay Checkout] Modal dismissed');
+          console.log('[Razorpay Checkout] Modal dismissed by user');
           onSubmittingChange?.(false);
         }
       }
@@ -161,7 +207,6 @@ export const launchRazorpayCheckout = async ({
     
     razorpayInstance.open();
 
-    // Auto-unlock submit button after popup trigger so UI doesn't hang
     setTimeout(() => {
       onSubmittingChange?.(false);
     }, 2000);

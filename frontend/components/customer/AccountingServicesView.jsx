@@ -15,7 +15,7 @@ const ACCOUNTING_SERVICES = [
     { id: 'stock', name: 'Stock Maintenance', desc: 'Inventory tracking and valuation support.', icon: Layers }
 ];
 
-const AccountingServicesView = ({ setActiveTab, userInfo }) => {
+const AccountingServicesView = ({ setActiveTab, userInfo, onOrderSuccess }) => {
     const [loading, setLoading] = useState(true);
     const [selectedServices, setSelectedServices] = useState([]);
 
@@ -73,16 +73,20 @@ const AccountingServicesView = ({ setActiveTab, userInfo }) => {
             onSuccess: async (data) => {
                 await showPaymentSuccessPopup({
                     serviceName: dynamicServiceName,
-                    paymentId: data?.payment?.paymentId,
+                    paymentId: data?.payment?.paymentId || data?.razorpay_payment_id,
                     requiresEmailLogin: false
                 });
                 setIsModalOpen(false);
                 setSelectedServices([]);
-                setActiveTab('Orders');
+                if (onOrderSuccess) {
+                    await onOrderSuccess(data);
+                } else {
+                    setActiveTab('Orders');
+                }
             },
             onFailure: (error) => {
                 console.error('Payment Flow Error:', error);
-                alert(error?.response?.data?.message || 'Something went wrong while processing payment.');
+                alert(error?.response?.data?.message || error?.description || error?.message || 'Something went wrong while processing payment.');
             }
         });
     };
