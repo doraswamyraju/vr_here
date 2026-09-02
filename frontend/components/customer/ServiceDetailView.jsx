@@ -5,8 +5,8 @@ import {
     FileCheck, Sparkles, HelpCircle, PhoneCall, Layers
 } from 'lucide-react';
 import { fetchServicePageConfig } from '../../modules/service-editor/v1.1/services/serviceConfigApi';
-import { launchRazorpayCheckout } from '../../utils/razorpayCheckout';
-import { showPaymentSuccessPopup } from '../../utils/paymentSuccessPopup';
+import { launchCustomerCheckout } from '../../utils/customerCheckout';
+import CustomerOrderSuccessModal from './CustomerOrderSuccessModal';
 
 const formatCurrency = (amount) => {
     if (typeof amount === 'string' && (amount.includes('₹') || isNaN(Number(amount.replace(/[^0-9]/g, ''))))) {
@@ -21,6 +21,7 @@ const ServiceDetailView = ({ service, onBack, setActiveTab, userInfo, onOrderSuc
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeFaq, setActiveFaq] = useState(null);
+    const [successOrderData, setSuccessOrderData] = useState(null);
 
     const serviceTitle = service?.title || 'Business Compliance Service';
     const slug = service?.slug || 'pvt-ltd-registration';
@@ -133,33 +134,19 @@ const ServiceDetailView = ({ service, onBack, setActiveTab, userInfo, onOrderSuc
             ? Number(plan.price.replace(/[^0-9]/g, '')) || 0 
             : Number(plan.price) || 0;
 
-        launchRazorpayCheckout({
+        launchCustomerCheckout({
             serviceName: serviceTitle,
             selectedPlan: {
                 ...plan,
                 price: planPrice
             },
-            formData: {
-                name: userInfo?.name || 'Client',
-                email: userInfo?.email || 'client@vrhere.in',
-                phone: userInfo?.phone || ''
-            },
-            token: userInfo?.token,
+            userInfo,
             onSubmittingChange: setIsSubmitting,
-            onSuccess: async (data) => {
-                await showPaymentSuccessPopup({
-                    serviceName: plan.name || serviceTitle,
-                    paymentId: data?.payment?.paymentId || data?.razorpay_payment_id,
-                    requiresEmailLogin: false
-                });
-                if (onOrderSuccess) {
-                    await onOrderSuccess(data);
-                } else {
-                    setActiveTab('Orders');
-                }
+            onSuccess: (data) => {
+                setSuccessOrderData(data);
             },
             onFailure: (error) => {
-                console.error('Payment Flow Error:', error);
+                console.error('Customer Payment Flow Error:', error);
                 alert(error?.response?.data?.message || error?.description || error?.message || 'Something went wrong while processing payment.');
             }
         });
@@ -398,6 +385,22 @@ const ServiceDetailView = ({ service, onBack, setActiveTab, userInfo, onOrderSuc
                     </div>
                 </div>
             )}
+
+            {/* In-App Customer Order Success Modal */}
+            <CustomerOrderSuccessModal 
+                isOpen={!!successOrderData}
+                orderData={successOrderData}
+                onClose={() => {
+                    const data = successOrderData;
+                    setSuccessOrderData(null);
+                    if (onOrderSuccess) onOrderSuccess(data);
+                }}
+                onGoToWorkspace={() => {
+                    const data = successOrderData;
+                    setSuccessOrderData(null);
+                    if (onOrderSuccess) onOrderSuccess(data);
+                }}
+            />
         </div>
     );
 };

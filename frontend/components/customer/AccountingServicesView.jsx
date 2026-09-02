@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
     Calculator, CheckCircle2, ArrowRight, ShieldCheck, Mail, Phone, RefreshCw, Layers
 } from 'lucide-react';
-import ConsultationPaymentModal from '../ConsultationPaymentModal';
-import { launchRazorpayCheckout } from '../../utils/razorpayCheckout';
-import { showPaymentSuccessPopup } from '../../utils/paymentSuccessPopup';
+import { launchCustomerCheckout } from '../../utils/customerCheckout';
+import CustomerOrderSuccessModal from './CustomerOrderSuccessModal';
 
 const ACCOUNTING_SERVICES = [
     { id: 'gst', name: 'GST', desc: 'Monthly/Quarterly GST Returns & Compliance.', icon: Calculator },
@@ -18,10 +17,8 @@ const ACCOUNTING_SERVICES = [
 const AccountingServicesView = ({ setActiveTab, userInfo, onOrderSuccess }) => {
     const [loading, setLoading] = useState(true);
     const [selectedServices, setSelectedServices] = useState([]);
-
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [formData, setFormData] = useState({ name: userInfo?.name || '', email: userInfo?.email || '', phone: userInfo?.phone || '' });
+    const [successOrderData, setSuccessOrderData] = useState(null);
 
     useEffect(() => {
         const timer = setTimeout(() => setLoading(false), 500);
@@ -39,14 +36,6 @@ const AccountingServicesView = ({ setActiveTab, userInfo, onOrderSuccess }) => {
             alert('Please select at least one service to proceed.');
             return;
         }
-        setIsModalOpen(true);
-    };
-
-    const handleFormSubmit = ({ formData: submittedFormData, termsAccepted }) => {
-        if (!termsAccepted) {
-            alert('Please accept the Terms & Conditions before proceeding.');
-            return;
-        }
 
         const selectedNames = ACCOUNTING_SERVICES
             .filter(s => selectedServices.includes(s.id))
@@ -55,37 +44,24 @@ const AccountingServicesView = ({ setActiveTab, userInfo, onOrderSuccess }) => {
             
         const dynamicServiceName = `Accounting Consultation: ${selectedNames}`;
 
-        setFormData(submittedFormData);
-
         const consultationPlan = {
             id: 'accounting-consultation',
             name: dynamicServiceName,
             price: 499,
-            buttonText: 'Pay 499 & Proceed'
+            buttonText: 'Book CA Strategy Call'
         };
 
-        launchRazorpayCheckout({
+        launchCustomerCheckout({
             serviceName: dynamicServiceName,
             selectedPlan: consultationPlan,
-            formData: submittedFormData,
-            token: userInfo?.token,
+            userInfo,
             onSubmittingChange: setIsSubmitting,
-            onSuccess: async (data) => {
-                await showPaymentSuccessPopup({
-                    serviceName: dynamicServiceName,
-                    paymentId: data?.payment?.paymentId || data?.razorpay_payment_id,
-                    requiresEmailLogin: false
-                });
-                setIsModalOpen(false);
+            onSuccess: (data) => {
                 setSelectedServices([]);
-                if (onOrderSuccess) {
-                    await onOrderSuccess(data);
-                } else {
-                    setActiveTab('Orders');
-                }
+                setSuccessOrderData(data);
             },
             onFailure: (error) => {
-                console.error('Payment Flow Error:', error);
+                console.error('Customer Payment Flow Error:', error);
                 alert(error?.response?.data?.message || error?.description || error?.message || 'Something went wrong while processing payment.');
             }
         });
@@ -180,6 +156,22 @@ const AccountingServicesView = ({ setActiveTab, userInfo, onOrderSuccess }) => {
                     </button>
                 </div>
             </div>
+
+            {/* In-App Customer Order Success Modal */}
+            <CustomerOrderSuccessModal 
+                isOpen={!!successOrderData}
+                orderData={successOrderData}
+                onClose={() => {
+                    const data = successOrderData;
+                    setSuccessOrderData(null);
+                    if (onOrderSuccess) onOrderSuccess(data);
+                }}
+                onGoToWorkspace={() => {
+                    const data = successOrderData;
+                    setSuccessOrderData(null);
+                    if (onOrderSuccess) onOrderSuccess(data);
+                }}
+            />
         </div>
     );
 };
