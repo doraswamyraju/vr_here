@@ -25,6 +25,36 @@
   <script src="/socket.io.min.js"></script>
   <!-- Start of LetsTrack Live Chat & Tracking -->
   <script>
+    (function() {
+      var origAttachShadow = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(init) {
+        var shadow = origAttachShadow.call(this, Object.assign({}, init, { mode: 'open' }));
+        if (this.id === 'letstrack-widget-root') {
+          window.__letsTrackShadowRoot = shadow;
+          var applyCustomStyles = function() {
+            var btn = shadow.querySelector('.lt-widget-btn');
+            var container = shadow.querySelector('.lt-widget-container');
+            if (btn) {
+              btn.style.setProperty('display', 'none', 'important');
+            }
+            if (container) {
+              container.style.setProperty('left', 'auto', 'important');
+              container.style.setProperty('right', '24px', 'important');
+              container.style.setProperty('bottom', '96px', 'important');
+              container.style.setProperty('align-items', 'flex-end', 'important');
+              container.style.setProperty('z-index', '2147483640', 'important');
+            }
+          };
+          var obs = new MutationObserver(applyCustomStyles);
+          obs.observe(shadow, { childList: true, subtree: true, attributes: true });
+          setTimeout(applyCustomStyles, 500);
+          setTimeout(applyCustomStyles, 1500);
+          setTimeout(applyCustomStyles, 3000);
+        }
+        return shadow;
+      };
+    })();
+
     window.LetsTrackConfig = {
       websiteId: "lt_6a9347d5410be8335e42db43949caf95" // Tenant API Key from https://livechat.vrhere.in
     };

@@ -45,6 +45,13 @@ export default function CustomerApp() {
    const [menuExpanded, setMenuExpanded] = useState(false);
 
    const toggleLetsTrack = () => {
+      if (window.__letsTrackShadowRoot) {
+         const btn = window.__letsTrackShadowRoot.querySelector('.lt-widget-btn, button, [class*="widget-btn"]');
+         if (btn) {
+            btn.click();
+            return;
+         }
+      }
       if (window.LetsTrack) {
          if (typeof window.LetsTrack.toggle === 'function') {
             window.LetsTrack.toggle();
