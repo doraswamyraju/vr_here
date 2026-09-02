@@ -31,6 +31,23 @@ import {
 import axios from 'axios';
 import ProfileDocumentsVault from './ProfileDocumentsVault';
 
+const formatImageUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  if (url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+  }
+  if (url.includes('drive.google.com/open?id=')) {
+    const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+  }
+  return url;
+};
+
 const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
   const [activeSubTab, setActiveSubTab] = useState('profile'); // 'profile', 'vault', 'renewals', 'billing'
   const authToken = token || userInfo?.token;
@@ -143,7 +160,7 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
     return orders.filter((o) => o.isRecurring || o.status === 'Completed');
   }, [orders]);
 
-  const activeAvatarUrl = formData.profilePhoto || formData.companyLogo || userInfo?.profilePhoto || userInfo?.companyLogo;
+  const activeAvatarUrl = formatImageUrl(formData.profilePhoto || formData.companyLogo || userInfo?.profilePhoto || userInfo?.companyLogo);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8 animate-in fade-in duration-300">
@@ -261,7 +278,7 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
                 <div className="relative shrink-0">
                   {formData.profilePhoto ? (
                     <img
-                      src={formData.profilePhoto}
+                      src={formatImageUrl(formData.profilePhoto)}
                       alt="Person Photo"
                       className="w-16 h-16 rounded-full object-cover border-2 border-indigo-500 shadow-sm"
                     />
@@ -311,7 +328,7 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
                 <div className="relative shrink-0">
                   {formData.companyLogo ? (
                     <img
-                      src={formData.companyLogo}
+                      src={formatImageUrl(formData.companyLogo)}
                       alt="Company Logo"
                       className="w-16 h-16 rounded-xl object-contain bg-slate-50 border-2 border-indigo-500 shadow-sm p-1"
                     />

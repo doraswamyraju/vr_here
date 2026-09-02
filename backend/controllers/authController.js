@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import asyncHandler from 'express-async-handler';
 import { randomBytes, createHash } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
@@ -6,6 +9,9 @@ import generateToken from '../utils/generateToken.js';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
 import { uploadBufferToDrive } from '../services/googleDriveService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const googleClient = new OAuth2Client();
 
@@ -394,21 +400,29 @@ const uploadProfileMedia = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 
-    let fileUrl = '';
+    // Ensure local /uploads directory exists
+    const uploadsDir = path.resolve(__dirname, '../uploads');
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const ext = path.extname(req.file.originalname || '.png') || '.png';
+    const cleanExt = ext.startsWith('.') ? ext : `.${ext}`;
+    const filename = `${mediaType}_${user._id}_${Date.now()}${cleanExt}`;
+    const filePath = path.join(uploadsDir, filename);
+
+    // Save directly to local /uploads for instant 0ms, zero-CORS image serving
+    fs.writeFileSync(filePath, req.file.buffer);
+    let fileUrl = `/uploads/${filename}`;
+
+    // Also upload to Google Drive in background/fallback if needed
     try {
-        const cleanName = (req.file.originalname || 'upload.png').replace(/[^a-zA-Z0-9._-]/g, '');
-        const fileName = `${mediaType}_${user._id}_${Date.now()}_${cleanName}`;
-        const driveRes = await uploadBufferToDrive({
+        uploadBufferToDrive({
             fileBuffer: req.file.buffer,
             mimeType: req.file.mimetype,
-            fileName
-        });
-        fileUrl = driveRes.webViewLink || driveRes.webContentLink;
-    } catch (driveErr) {
-        console.warn('[ProfileMediaUpload] Google Drive upload fallback to base64 data URL:', driveErr.message);
-        const base64 = req.file.buffer.toString('base64');
-        fileUrl = `data:${req.file.mimetype};base64,${base64}`;
-    }
+            fileName: filename
+        }).catch(err => console.warn('[ProfileMediaUpload] Drive backup notice:', err.message));
+    } catch (e) {}
 
     if (mediaType === 'companyLogo') {
         user.companyLogo = fileUrl;

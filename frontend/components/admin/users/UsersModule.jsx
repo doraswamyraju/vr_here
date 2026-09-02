@@ -20,6 +20,23 @@ import WorkloadPanel from './WorkloadPanel';
 import AssignmentPreview from './AssignmentPreview';
 import WebmailModule from './WebmailModule';
 
+const formatImageUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  if (url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+  }
+  if (url.includes('drive.google.com/open?id=')) {
+    const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+  }
+  return url;
+};
+
 const UsersModule = ({ token, users, orders, onRefresh }) => {
   const [createDraft, setCreateDraft] = useState({ name: '', email: '', phone: '', role: 'employee', assignedTicketCategories: [] });
   const [isCreating, setIsCreating] = useState(false);
@@ -204,9 +221,9 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white flex items-start justify-between">
               <div className="flex items-center gap-4">
                 {viewingUser.profilePhoto ? (
-                  <img src={viewingUser.profilePhoto} alt={viewingUser.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-400 shadow-md" />
+                  <img src={formatImageUrl(viewingUser.profilePhoto)} alt={viewingUser.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-400 shadow-md" />
                 ) : viewingUser.companyLogo ? (
-                  <img src={viewingUser.companyLogo} alt={viewingUser.name} className="w-16 h-16 rounded-2xl object-contain bg-white/10 border-2 border-indigo-400 p-1 shadow-md" />
+                  <img src={formatImageUrl(viewingUser.companyLogo)} alt={viewingUser.name} className="w-16 h-16 rounded-2xl object-contain bg-white/10 border-2 border-indigo-400 p-1 shadow-md" />
                 ) : (
                   <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center font-black text-2xl shadow-md">
                     {(viewingUser.name || 'U').charAt(0).toUpperCase()}
@@ -241,7 +258,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center gap-3">
                   {viewingUser.profilePhoto ? (
-                    <img src={viewingUser.profilePhoto} alt="Personal" className="w-12 h-12 rounded-full object-cover border" />
+                    <img src={formatImageUrl(viewingUser.profilePhoto)} alt="Personal" className="w-12 h-12 rounded-full object-cover border" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
                       <UserIcon size={20} />
@@ -255,7 +272,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
 
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center gap-3">
                   {viewingUser.companyLogo ? (
-                    <img src={viewingUser.companyLogo} alt="Logo" className="w-12 h-12 rounded-xl object-contain bg-white border p-1" />
+                    <img src={formatImageUrl(viewingUser.companyLogo)} alt="Logo" className="w-12 h-12 rounded-xl object-contain bg-white border p-1" />
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400">
                       <ImageIcon size={20} />

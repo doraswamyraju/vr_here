@@ -21,6 +21,23 @@ import BookkeepingView from './components/customer/BookkeepingView';
 import { SERVICE_CATALOG } from './data/serviceCatalog';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 
+const formatImageUrl = (url) => {
+   if (!url || typeof url !== 'string') return '';
+   if (url.includes('drive.google.com/file/d/')) {
+      const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+         return `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+   }
+   if (url.includes('drive.google.com/open?id=')) {
+      const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+         return `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+   }
+   return url;
+};
+
 export default function CustomerApp() {
    const [activeTab, setActiveTab] = useState('Home');
    const [selectedOrderId, setSelectedOrderId] = useState('');
@@ -331,7 +348,7 @@ export default function CustomerApp() {
                   <div className="flex items-center gap-2.5 min-w-0 cursor-pointer" onClick={() => setActiveTab('Account')} title="View Account Settings">
                      {userInfo.profilePhoto || userInfo.companyLogo ? (
                         <img
-                           src={userInfo.profilePhoto || userInfo.companyLogo}
+                           src={formatImageUrl(userInfo.profilePhoto || userInfo.companyLogo)}
                            alt={userInfo.name}
                            className="w-9 h-9 rounded-xl object-cover border border-slate-700 shrink-0"
                         />
@@ -489,7 +506,7 @@ export default function CustomerApp() {
                   >
                      {userInfo.profilePhoto || userInfo.companyLogo ? (
                         <img
-                           src={userInfo.profilePhoto || userInfo.companyLogo}
+                           src={formatImageUrl(userInfo.profilePhoto || userInfo.companyLogo)}
                            alt={userInfo.name}
                            className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm group-hover:ring-2 group-hover:ring-red-500 transition-all"
                         />

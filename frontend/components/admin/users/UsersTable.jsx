@@ -1,7 +1,24 @@
 import React from 'react';
 import { Pencil, Power, Send, Trash2, ShieldCheck } from 'lucide-react';
 
-const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit, onSaveEdit, onCancelEdit, onToggleActive, onToggleComplianceAccess, onSendPasswordLink, onDeleteUser }) => (
+const formatImageUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  if (url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+  }
+  if (url.includes('drive.google.com/open?id=')) {
+    const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+  }
+  return url;
+};
+
+const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onViewDetails, onStartEdit, onSaveEdit, onCancelEdit, onToggleActive, onToggleComplianceAccess, onSendPasswordLink, onDeleteUser }) => (
   <div className="rounded-xl border border-slate-200 bg-white overflow-x-auto">
     <table className="w-full text-sm min-w-[880px]">
       <thead className="bg-slate-100 text-slate-600 text-xs uppercase">
@@ -24,7 +41,7 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
         )}
         {users.map((user) => {
           const isEditing = editingUserId === user._id;
-          const avatarUrl = user.profilePhoto || user.companyLogo;
+          const avatarUrl = formatImageUrl(user.profilePhoto || user.companyLogo);
           return (
             <tr key={user._id} className="hover:bg-slate-50/60 transition-colors">
               <td className="px-4 py-3">
