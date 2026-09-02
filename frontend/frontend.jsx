@@ -105,31 +105,23 @@ const App = () => {
   const location = useLocation();
 
   React.useEffect(() => {
-    const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard)/.test(location.pathname);
-    let styleEl = document.getElementById('hide-live-chat-style');
+    const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard|partner\/dashboard)/.test(location.pathname);
     
-    if (isDashboardPath) {
-      if (!styleEl) {
-        styleEl = document.createElement('style');
-        styleEl.id = 'hide-live-chat-style';
-        styleEl.innerHTML = `
-          .lt-widget-btn,
-          #letstrack-widget-btn,
-          button[class*="lt-launcher"],
-          .letstrack-launcher-btn {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-          }
-        `;
-        document.head.appendChild(styleEl);
+    const syncVisibility = () => {
+      if (typeof window.__setLetsTrackLauncherVisibility === 'function') {
+        window.__setLetsTrackLauncherVisibility(!isDashboardPath);
       }
-    } else {
-      if (styleEl) {
-        styleEl.remove();
-      }
-    }
+    };
+
+    syncVisibility();
+    const t1 = setTimeout(syncVisibility, 200);
+    const t2 = setTimeout(syncVisibility, 800);
+    const t3 = setTimeout(syncVisibility, 2000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, [location.pathname]);
 
   return (

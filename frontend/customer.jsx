@@ -45,32 +45,25 @@ export default function CustomerApp() {
    const [menuExpanded, setMenuExpanded] = useState(false);
 
    const toggleLetsTrack = () => {
-      if (window.__letsTrackShadowRoot) {
-         const btn = window.__letsTrackShadowRoot.querySelector('.lt-widget-btn, button, [class*="widget-btn"]');
-         if (btn) {
-            btn.click();
-            return;
-         }
-      }
       if (window.LetsTrack) {
-         if (typeof window.LetsTrack.toggle === 'function') {
-            window.LetsTrack.toggle();
-            return;
-         }
          if (typeof window.LetsTrack.open === 'function') {
             window.LetsTrack.open();
             return;
          }
+         if (typeof window.LetsTrack.toggle === 'function') {
+            window.LetsTrack.toggle();
+            return;
+         }
       }
-      const widgetRoot = document.getElementById('letstrack-widget-root');
-      if (widgetRoot && widgetRoot.shadowRoot) {
-         const btn = widgetRoot.shadowRoot.querySelector('.lt-widget-btn, button, [class*="widget-btn"]');
+      const shadow = window.__letsTrackShadowRoot || (document.getElementById('letstrack-widget-root') && document.getElementById('letstrack-widget-root').shadowRoot);
+      if (shadow) {
+         const btn = shadow.querySelector('.lt-widget-btn, button, [class*="widget-btn"], [class*="launcher"]');
          if (btn) {
             btn.click();
             return;
          }
       }
-      const fallbackBtn = document.querySelector('.lt-widget-btn, #letstrack-widget-btn');
+      const fallbackBtn = document.querySelector('.lt-widget-btn, #letstrack-widget-btn, [class*="lt-launcher"]');
       if (fallbackBtn) {
          fallbackBtn.click();
       }

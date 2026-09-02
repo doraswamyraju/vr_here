@@ -16,7 +16,7 @@
     gtag('js', new Date());
     gtag('config', 'G-RRSMWL2084');
   </script>
-  <script type="module" crossorigin src="/assets/index-webw78Ph.js"></script>
+  <script type="module" crossorigin src="/assets/index-fOyZ7TkS.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-Cq-rYuTp.css">
 </head>
 
@@ -27,34 +27,60 @@
   <!-- Start of LetsTrack Live Chat & Tracking -->
   <script>
     (function() {
+      var isDashboardRoute = function() {
+        return /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard|partner\/dashboard)/.test(window.location.pathname);
+      };
+
+      window.__setLetsTrackLauncherVisibility = function(visible) {
+        var shadow = window.__letsTrackShadowRoot || (document.getElementById('letstrack-widget-root') && document.getElementById('letstrack-widget-root').shadowRoot);
+        if (shadow) {
+          var btn = shadow.querySelector('.lt-widget-btn, button, [class*="widget-btn"], [class*="launcher"]');
+          var container = shadow.querySelector('.lt-widget-container');
+          if (btn) {
+            if (visible) {
+              btn.style.setProperty('display', 'flex', 'important');
+              btn.style.setProperty('visibility', 'visible', 'important');
+              btn.style.setProperty('opacity', '1', 'important');
+              btn.style.setProperty('pointer-events', 'auto', 'important');
+              btn.style.setProperty('position', 'relative', 'important');
+              btn.style.setProperty('width', 'auto', 'important');
+              btn.style.setProperty('height', 'auto', 'important');
+              btn.style.setProperty('z-index', '2147483640', 'important');
+            } else {
+              btn.style.setProperty('opacity', '0', 'important');
+              btn.style.setProperty('pointer-events', 'none', 'important');
+              btn.style.setProperty('position', 'absolute', 'important');
+              btn.style.setProperty('width', '0px', 'important');
+              btn.style.setProperty('height', '0px', 'important');
+              btn.style.setProperty('overflow', 'hidden', 'important');
+              btn.style.setProperty('margin', '0px', 'important');
+              btn.style.setProperty('padding', '0px', 'important');
+              btn.style.setProperty('border', 'none', 'important');
+            }
+          }
+          if (container) {
+            container.style.setProperty('left', 'auto', 'important');
+            container.style.setProperty('right', '24px', 'important');
+            container.style.setProperty('bottom', '24px', 'important');
+            container.style.setProperty('align-items', 'flex-end', 'important');
+            container.style.setProperty('z-index', '2147483640', 'important');
+          }
+        }
+      };
+
       var origAttachShadow = Element.prototype.attachShadow;
       Element.prototype.attachShadow = function(init) {
         var shadow = origAttachShadow.call(this, Object.assign({}, init, { mode: 'open' }));
         if (this.id === 'letstrack-widget-root') {
           window.__letsTrackShadowRoot = shadow;
           var applyCustomStyles = function() {
-            var btn = shadow.querySelector('.lt-widget-btn');
-            var container = shadow.querySelector('.lt-widget-container');
-            if (btn) {
-              btn.style.setProperty('display', 'flex', 'important');
-              btn.style.setProperty('visibility', 'visible', 'important');
-              btn.style.setProperty('opacity', '1', 'important');
-              btn.style.setProperty('pointer-events', 'auto', 'important');
-              btn.style.setProperty('z-index', '2147483640', 'important');
-            }
-            if (container) {
-              container.style.setProperty('left', 'auto', 'important');
-              container.style.setProperty('right', '24px', 'important');
-              container.style.setProperty('bottom', '24px', 'important');
-              container.style.setProperty('align-items', 'flex-end', 'important');
-              container.style.setProperty('z-index', '2147483640', 'important');
-            }
+            window.__setLetsTrackLauncherVisibility(!isDashboardRoute());
           };
           var obs = new MutationObserver(applyCustomStyles);
           obs.observe(shadow, { childList: true, subtree: true, attributes: true });
-          setTimeout(applyCustomStyles, 300);
-          setTimeout(applyCustomStyles, 1000);
-          setTimeout(applyCustomStyles, 2500);
+          setTimeout(applyCustomStyles, 200);
+          setTimeout(applyCustomStyles, 800);
+          setTimeout(applyCustomStyles, 2000);
         }
         return shadow;
       };
