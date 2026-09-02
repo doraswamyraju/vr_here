@@ -670,14 +670,18 @@ const uploadDocument = asyncHandler(async (req, res) => {
         throw new Error('No file uploaded');
     }
 
-    // 1. Get/Create Order folder hierarchy in Google Drive
-    const driveHierarchy = await getCustomerDriveFolder({
-        clientName: order.clientName || req.user.name,
-        orderId: order._id,
-        orderDate: order.createdAt
-    });
-
-    const orderFolderId = driveHierarchy ? driveHierarchy.orderFolderId : null;
+    // 1. Get/Create Order folder hierarchy in Google Drive (with safe fallback)
+    let orderFolderId = null;
+    try {
+        const driveHierarchy = await getCustomerDriveFolder({
+            clientName: order.clientName || req.user.name,
+            orderId: order._id,
+            orderDate: order.createdAt
+        });
+        orderFolderId = driveHierarchy ? driveHierarchy.orderFolderId : null;
+    } catch (driveHierErr) {
+        console.error('[OrderUpload] Google Drive folder hierarchy warning:', driveHierErr.message);
+    }
 
     // 2. Stream memory buffer directly to Google Drive
     let documentUrl = `/uploads/${req.file.originalname}`;

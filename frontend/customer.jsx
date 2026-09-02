@@ -39,36 +39,34 @@ export default function CustomerApp() {
    } = useNotifications(userInfo?.token);
    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
    const [selectedService, setSelectedService] = useState(null);
-   const [chatMessages, setChatMessages] = useState([
-      { id: 1, sender: 'agent', text: 'Hello! I am your assigned Relationship Associate. How can our CA/CS team assist your business today?', time: 'Just now' }
-   ]);
-   const [chatInput, setChatInput] = useState('');
    const [serviceSearchQuery, setServiceSearchQuery] = useState('');
    const navigate = useNavigate();
    const [menuExpanded, setMenuExpanded] = useState(false);
 
-   const handleSendChatMessage = (e) => {
-      e?.preventDefault();
-      if (!chatInput.trim()) return;
-      const userMsg = { id: Date.now(), sender: 'user', text: chatInput, time: 'Just now' };
-      setChatMessages(prev => [...prev, userMsg]);
-      const currentInput = chatInput;
-      setChatInput('');
-
-      // Auto reply from Advisory partner
-      setTimeout(() => {
-         setChatMessages(prev => [
-            ...prev,
-            {
-               id: Date.now() + 1,
-               sender: 'agent',
-               text: `Thank you for your message regarding "${currentInput.slice(0, 30)}...". Our CA team has received your query and will update your active file. You can also call us directly at +91 80085 30606.`,
-               time: 'Just now'
-            }
-         ]);
-      }, 1000);
+   const toggleLetsTrack = () => {
+      if (window.LetsTrack) {
+         if (typeof window.LetsTrack.toggle === 'function') {
+            window.LetsTrack.toggle();
+            return;
+         }
+         if (typeof window.LetsTrack.open === 'function') {
+            window.LetsTrack.open();
+            return;
+         }
+      }
+      const widgetRoot = document.getElementById('letstrack-widget-root');
+      if (widgetRoot && widgetRoot.shadowRoot) {
+         const btn = widgetRoot.shadowRoot.querySelector('.lt-widget-btn, button, [class*="widget-btn"]');
+         if (btn) {
+            btn.click();
+            return;
+         }
+      }
+      const fallbackBtn = document.querySelector('.lt-widget-btn, #letstrack-widget-btn');
+      if (fallbackBtn) {
+         fallbackBtn.click();
+      }
    };
 
    // -- Authentication --
@@ -215,13 +213,13 @@ export default function CustomerApp() {
 
          {/* --- DESKTOP EXECUTIVE SIDEBAR --- */}
          <aside className="hidden lg:flex flex-col w-64 bg-slate-950 text-slate-300 border-r border-slate-800/90 z-30 shrink-0 select-none">
-            {/* Official Logo & Brand Header */}
-            <div className="h-20 px-5 flex items-center justify-between border-b border-slate-800/80">
+            {/* Official Logo & Brand Header (White Background) */}
+            <div className="h-20 px-5 flex items-center justify-between bg-white border-b border-slate-200">
                <a href="/" className="flex items-center gap-3 group">
                   <img src="/logo.png" alt="VR Here" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform shrink-0" />
                   <div className="flex flex-col min-w-0">
-                     <span className="font-black text-white text-base leading-none tracking-tight group-hover:text-red-400 transition-colors">VR Here</span>
-                     <span className="text-[8.5px] font-extrabold text-red-500 uppercase tracking-widest mt-0.5 truncate">Customer Suite</span>
+                     <span className="font-black text-slate-900 text-base leading-none tracking-tight">VR Here</span>
+                     <span className="text-[8.5px] font-extrabold text-red-600 uppercase tracking-widest mt-0.5 truncate">Customer Suite</span>
                   </div>
                </a>
             </div>
@@ -311,15 +309,15 @@ export default function CustomerApp() {
                   className="w-72 h-full bg-slate-950 text-white shadow-2xl animate-in slide-in-from-left duration-500 flex flex-col"
                   onClick={e => e.stopPropagation()}
                >
-                  <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+                  <div className="p-6 bg-white border-b border-slate-200 flex items-center justify-between">
                      <div className="flex items-center gap-3">
                         <img src="/logo.png" alt="VR Here" className="h-9 w-auto object-contain" />
                         <div className="flex flex-col">
-                           <span className="font-black text-white tracking-tight">VR Here</span>
-                           <span className="text-[9px] font-extrabold text-red-500 uppercase tracking-widest">Customer Portal</span>
+                           <span className="font-black text-slate-900 tracking-tight">VR Here</span>
+                           <span className="text-[9px] font-extrabold text-red-600 uppercase tracking-widest">Customer Portal</span>
                         </div>
                      </div>
-                     <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-white">
+                     <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-500 hover:text-slate-900">
                         <X size={24} />
                      </button>
                   </div>
@@ -475,18 +473,18 @@ export default function CustomerApp() {
                      ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' 
                      : 'opacity-0 translate-y-4 scale-90 pointer-events-none'
                }`}>
-                  {/* Option 1: Live Chat Widget */}
+                  {/* Option 1: LetsTrack Live Chat */}
                   <button
                      onClick={() => {
-                        setIsLiveChatOpen(true);
+                        toggleLetsTrack();
                         setMenuExpanded(false);
                      }}
                      className="w-12 h-12 bg-rose-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-rose-600 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
-                     title="Open Live Chat Desk"
+                     title="Open Live Chat"
                   >
                      <MessageSquare size={20} />
                      <span className="absolute right-full mr-3 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
-                        Live CA Desk
+                        Live Chat
                      </span>
                   </button>
 
@@ -547,89 +545,6 @@ export default function CustomerApp() {
                   </div>
                </button>
             </div>
-
-            {/* --- LIVE CHAT DESK MODAL --- */}
-            {isLiveChatOpen && (
-               <div className="fixed bottom-24 right-4 sm:right-8 z-50 w-full max-w-sm sm:max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col h-[520px] animate-in slide-in-from-bottom-5 duration-300">
-                  {/* Chat Header */}
-                  <div className="p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
-                     <div className="flex items-center gap-3">
-                        <div className="relative">
-                           <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold text-sm">
-                              CA
-                           </div>
-                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-950"></span>
-                        </div>
-                        <div>
-                           <h4 className="text-xs font-black text-white flex items-center gap-1.5">
-                              <span>VR HERE Client Desk</span>
-                              <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 text-[8.5px] font-black rounded uppercase">Online</span>
-                           </h4>
-                           <p className="text-[10px] text-slate-400 font-medium">CA S. Doraswamy Raju & Support Team</p>
-                        </div>
-                     </div>
-                     <button
-                        onClick={() => setIsLiveChatOpen(false)}
-                        className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
-                     >
-                        <X size={18} />
-                     </button>
-                  </div>
-
-                  {/* Quick Suggestions */}
-                  <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex gap-1.5 overflow-x-auto scrollbar-none">
-                     {['Filing Status', 'Pending KYC Proof', 'Get Tax Invoice', 'Call My CA'].map((chip, idx) => (
-                        <button
-                           key={idx}
-                           onClick={() => {
-                              setChatInput(chip);
-                           }}
-                           className="px-2.5 py-1 bg-white hover:bg-red-50 hover:text-red-600 text-slate-600 text-[10px] font-bold rounded-lg border border-slate-200 shrink-0 transition-colors"
-                        >
-                           {chip}
-                        </button>
-                     ))}
-                  </div>
-
-                  {/* Message Stream */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40">
-                     {chatMessages.map(msg => (
-                        <div
-                           key={msg.id}
-                           className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                           <div className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium ${
-                              msg.sender === 'user'
-                                 ? 'bg-red-600 text-white rounded-br-none shadow-sm'
-                                 : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-none shadow-2xs'
-                           }`}>
-                              <p className="leading-relaxed">{msg.text}</p>
-                              <span className={`block text-[9px] mt-1 text-right ${msg.sender === 'user' ? 'text-red-100' : 'text-slate-400'}`}>
-                                 {msg.time}
-                              </span>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-
-                  {/* Chat Input */}
-                  <form onSubmit={handleSendChatMessage} className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
-                     <input
-                        type="text"
-                        placeholder="Type your question for CA team..."
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        className="flex-1 bg-slate-100 text-xs font-semibold px-4 py-2.5 rounded-xl border-none outline-none focus:ring-2 ring-red-500/20 text-slate-800"
-                     />
-                     <button
-                        type="submit"
-                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md"
-                     >
-                        Send
-                     </button>
-                  </form>
-               </div>
-            )}
 
             <InAppBanner 
                activeNotification={activeBannerNotification}
