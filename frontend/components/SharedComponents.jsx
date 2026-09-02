@@ -616,12 +616,12 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                             
                             {/* App Download Icons */}
                             <div className="flex items-center gap-3 border-r border-slate-200 pr-4 mr-2">
-                                <a href="#" className="text-slate-600 hover:text-black transition transform hover:scale-110" title="Download on App Store">
+                                <a href="https://apps.apple.com/in/app/vr-here-bms/id6785507672" target="_blank" rel="noreferrer" className="text-slate-600 hover:text-black transition transform hover:scale-110" title="Download on App Store">
                                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M17.05 20.28c-.98 1.56-2.02 3.1-3.72 3.14-1.67.03-2.2-.97-4.1-.97-1.9 0-2.48.94-4.08.99-1.67.06-2.86-1.66-3.85-3.08-2.02-2.9-3.56-8.17-1.48-11.75 1.03-1.78 2.87-2.9 4.88-2.93 1.52-.03 2.96 1.02 3.9 1.02.93 0 2.65-1.23 4.47-1.04.76.03 2.9.3 4.27 2.3-1.11.67-2.61 2.23-2.58 4.8.03 3.08 2.68 4.15 2.71 4.17-.02.08-.43 1.48-1.42 2.92M15 4.3c.77-.94 1.28-2.24 1.14-3.54-1.12.05-2.48.75-3.28 1.69-.7.8-1.32 2.12-1.15 3.4 1.25.1 2.52-.61 3.29-1.55z" />
                                     </svg>
                                 </a>
-                                <a href="#" className="text-slate-600 hover:text-red-600 transition transform hover:scale-110" title="Get it on Google Play">
+                                <a href="https://play.google.com/store/apps/details?id=com.sbr.vrherebms&hl=en_IN" target="_blank" rel="noreferrer" className="text-slate-600 hover:text-red-600 transition transform hover:scale-110" title="Get it on Google Play">
                                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M3.609 1.814L13.782 12l-10.173 10.186c-.328-.31-.523-.746-.523-1.23V3.044c0-.484.195-.92.523-1.23M17.47 8.35L4.85 1.196C5.074 1.071 5.332 1 5.614 1c.54 0 1.037.262 1.344.67l10.513 6.68-1.741 1.741M18.847 12.925l-2.079-1.32-1.722 1.722 1.722 1.722 2.079-1.32c.791-.502.791-1.302 0-1.804M17.07 15.65L6.958 22.09c-.307.408-.804.67-1.344.67-.282 0-.54-.071-.764-.196l12.62-7.155-1.4 1.4" />
                                     </svg>
@@ -706,13 +706,13 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                     <div className="p-6 border-t border-slate-100 bg-slate-50 mt-auto">
                         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Download Our App</div>
                         <div className="flex gap-3">
-                            <a href="#" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-900 rounded-xl text-white transition hover:bg-slate-800">
+                            <a href="https://apps.apple.com/in/app/vr-here-bms/id6785507672" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-900 rounded-xl text-white transition hover:bg-slate-800">
                                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M17.05 20.28c-.98 1.56-2.02 3.1-3.72 3.14-1.67.03-2.2-.97-4.1-.97-1.9 0-2.48.94-4.08.99-1.67.06-2.86-1.66-3.85-3.08-2.02-2.9-3.56-8.17-1.48-11.75 1.03-1.78 2.87-2.9 4.88-2.93 1.52-.03 2.96 1.02 3.9 1.02.93 0 2.65-1.23 4.47-1.04.76.03 2.9.3 4.27 2.3-1.11.67-2.61 2.23-2.58 4.8.03 3.08 2.68 4.15 2.71 4.17-.02.08-.43 1.48-1.42 2.92M15 4.3c.77-.94 1.28-2.24 1.14-3.54-1.12.05-2.48.75-3.28 1.69-.7.8-1.32 2.12-1.15 3.4 1.25.1 2.52-.61 3.29-1.55z" />
                                 </svg>
                                 <span className="text-xs font-bold">App Store</span>
                             </a>
-                            <a href="#" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-900 rounded-xl text-white transition hover:bg-slate-800">
+                            <a href="https://play.google.com/store/apps/details?id=com.sbr.vrherebms&hl=en_IN" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-900 rounded-xl text-white transition hover:bg-slate-800">
                                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M3.609 1.814L13.782 12l-10.173 10.186c-.328-.31-.523-.746-.523-1.23V3.044c0-.484.195-.92.523-1.23M17.47 8.35L4.85 1.196C5.074 1.071 5.332 1 5.614 1c.54 0 1.037.262 1.344.67l10.513 6.68-1.741 1.741M18.847 12.925l-2.079-1.32-1.722 1.722 1.722 1.722 2.079-1.32c.791-.502.791-1.302 0-1.804M17.07 15.65L6.958 22.09c-.307.408-.804.67-1.344.67-.282 0-.54-.071-.764-.196l12.62-7.155-1.4 1.4" />
                                 </svg>
@@ -838,7 +838,7 @@ export const SharedFooter = () => (
                     <div className="pt-2">
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Download our App</p>
                         <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 mb-4">
-                            <a href="#" className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-white transition hover:bg-slate-800 w-[140px]">
+                            <a href="https://apps.apple.com/in/app/vr-here-bms/id6785507672" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-white transition hover:bg-slate-800 w-[140px]">
                                 <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M17.05 20.28c-.98 1.56-2.02 3.1-3.72 3.14-1.67.03-2.2-.97-4.1-.97-1.9 0-2.48.94-4.08.99-1.67.06-2.86-1.66-3.85-3.08-2.02-2.9-3.56-8.17-1.48-11.75 1.03-1.78 2.87-2.9 4.88-2.93 1.52-.03 2.96 1.02 3.9 1.02.93 0 2.65-1.23 4.47-1.04.76.03 2.9.3 4.27 2.3-1.11.67-2.61 2.23-2.58 4.8.03 3.08 2.68 4.15 2.71 4.17-.02.08-.43 1.48-1.42 2.92M15 4.3c.77-.94 1.28-2.24 1.14-3.54-1.12.05-2.48.75-3.28 1.69-.7.8-1.32 2.12-1.15 3.4 1.25.1 2.52-.61 3.29-1.55z" />
                                 </svg>
@@ -847,7 +847,7 @@ export const SharedFooter = () => (
                                     <div className="text-xs font-bold leading-tight">App Store</div>
                                 </div>
                             </a>
-                            <a href="#" className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-white transition hover:bg-slate-800 w-[140px]">
+                            <a href="https://play.google.com/store/apps/details?id=com.sbr.vrherebms&hl=en_IN" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-white transition hover:bg-slate-800 w-[140px]">
                                 <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M3.609 1.814L13.782 12l-10.173 10.186c-.328-.31-.523-.746-.523-1.23V3.044c0-.484.195-.92.523-1.23M17.47 8.35L4.85 1.196C5.074 1.071 5.332 1 5.614 1c.54 0 1.037.262 1.344.67l10.513 6.68-1.741 1.741M18.847 12.925l-2.079-1.32-1.722 1.722 1.722 1.722 2.079-1.32c.791-.502.791-1.302 0-1.804M17.07 15.65L6.958 22.09c-.307.408-.804.67-1.344.67-.282 0-.54-.071-.764-.196l12.62-7.155-1.4 1.4" />
                                 </svg>

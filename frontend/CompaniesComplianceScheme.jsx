@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight, FileText, CheckCircle2, ShieldCheck, AlertTriangle, Calendar, Layers, Activity, Phone, LayoutDashboard } from 'lucide-react';
 import { SharedFooter, SharedHeader } from './components/SharedComponents';
 import ConsultationPaymentModal from './components/ConsultationPaymentModal';
