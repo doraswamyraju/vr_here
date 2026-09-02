@@ -114,13 +114,11 @@ const App = () => {
     };
 
     syncVisibility();
-    const t1 = setTimeout(syncVisibility, 200);
-    const t2 = setTimeout(syncVisibility, 800);
-    const t3 = setTimeout(syncVisibility, 2000);
+    const interval = setInterval(syncVisibility, 300);
+    const timeout = setTimeout(() => clearInterval(interval), 4000);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      clearInterval(interval);
+      clearTimeout(timeout);
     };
   }, [location.pathname]);
 

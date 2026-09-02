@@ -16,7 +16,7 @@
     gtag('js', new Date());
     gtag('config', 'G-RRSMWL2084');
   </script>
-  <script type="module" crossorigin src="/assets/index-fOyZ7TkS.js"></script>
+  <script type="module" crossorigin src="/assets/index-D73rZn6r.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-Cq-rYuTp.css">
 </head>
 
@@ -34,36 +34,54 @@
       window.__setLetsTrackLauncherVisibility = function(visible) {
         var shadow = window.__letsTrackShadowRoot || (document.getElementById('letstrack-widget-root') && document.getElementById('letstrack-widget-root').shadowRoot);
         if (shadow) {
-          var btn = shadow.querySelector('.lt-widget-btn, button, [class*="widget-btn"], [class*="launcher"]');
-          var container = shadow.querySelector('.lt-widget-container');
-          if (btn) {
-            if (visible) {
-              btn.style.setProperty('display', 'flex', 'important');
-              btn.style.setProperty('visibility', 'visible', 'important');
-              btn.style.setProperty('opacity', '1', 'important');
-              btn.style.setProperty('pointer-events', 'auto', 'important');
-              btn.style.setProperty('position', 'relative', 'important');
-              btn.style.setProperty('width', 'auto', 'important');
-              btn.style.setProperty('height', 'auto', 'important');
-              btn.style.setProperty('z-index', '2147483640', 'important');
-            } else {
-              btn.style.setProperty('opacity', '0', 'important');
-              btn.style.setProperty('pointer-events', 'none', 'important');
-              btn.style.setProperty('position', 'absolute', 'important');
-              btn.style.setProperty('width', '0px', 'important');
-              btn.style.setProperty('height', '0px', 'important');
-              btn.style.setProperty('overflow', 'hidden', 'important');
-              btn.style.setProperty('margin', '0px', 'important');
-              btn.style.setProperty('padding', '0px', 'important');
-              btn.style.setProperty('border', 'none', 'important');
-            }
+          var style = shadow.getElementById('lt-custom-visibility-style');
+          if (!style) {
+            style = document.createElement('style');
+            style.id = 'lt-custom-visibility-style';
+            shadow.appendChild(style);
           }
-          if (container) {
-            container.style.setProperty('left', 'auto', 'important');
-            container.style.setProperty('right', '24px', 'important');
-            container.style.setProperty('bottom', '24px', 'important');
-            container.style.setProperty('align-items', 'flex-end', 'important');
-            container.style.setProperty('z-index', '2147483640', 'important');
+          if (visible) {
+            style.textContent = `
+              .lt-widget-btn,
+              button,
+              [class*="widget-btn"],
+              [class*="launcher"],
+              .lt-launcher,
+              div[class*="launcher"] {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+              }
+              .lt-widget-container {
+                left: auto !important;
+                right: 24px !important;
+                bottom: 24px !important;
+                align-items: flex-end !important;
+                z-index: 2147483640 !important;
+              }
+            `;
+          } else {
+            style.textContent = `
+              .lt-widget-btn,
+              button,
+              [class*="widget-btn"],
+              [class*="launcher"],
+              .lt-launcher,
+              div[class*="launcher"] {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+              }
+              .lt-widget-container {
+                left: auto !important;
+                right: 24px !important;
+                bottom: 24px !important;
+                align-items: flex-end !important;
+                z-index: 2147483640 !important;
+              }
+            `;
           }
         }
       };
@@ -78,9 +96,10 @@
           };
           var obs = new MutationObserver(applyCustomStyles);
           obs.observe(shadow, { childList: true, subtree: true, attributes: true });
-          setTimeout(applyCustomStyles, 200);
-          setTimeout(applyCustomStyles, 800);
-          setTimeout(applyCustomStyles, 2000);
+          setTimeout(applyCustomStyles, 100);
+          setTimeout(applyCustomStyles, 500);
+          setTimeout(applyCustomStyles, 1500);
+          setTimeout(applyCustomStyles, 3000);
         }
         return shadow;
       };
