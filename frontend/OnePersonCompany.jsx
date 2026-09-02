@@ -76,7 +76,11 @@ const OnePersonCompanyPage = () => {
   const [isServicesHovered, setIsServicesHovered] = useState(false);
   const [isSeoExpanded, setIsSeoExpanded] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+  const [formData, setFormData] = useState({
+    name: userInfo?.name || '',
+    email: userInfo?.email || '',
+    phone: userInfo?.phone || ''
+  });
 
   useEffect(() => {
     const loadConfig = async () => {

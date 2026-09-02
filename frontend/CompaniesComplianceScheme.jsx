@@ -17,7 +17,11 @@ const CompaniesComplianceScheme = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
-    const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+    const [formData, setFormData] = useState({
+        name: userInfo?.name || '',
+        email: userInfo?.email || '',
+        phone: userInfo?.phone || ''
+    });
 
     useEffect(() => {
         const onScroll = () => setIsScrolled(window.scrollY > 20);

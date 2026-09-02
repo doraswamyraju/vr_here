@@ -319,9 +319,9 @@ const PrivateLimitedPage = () => {
   const activePopularSearches = (pageConfig?.popularSearches && pageConfig.popularSearches.length > 0) ? pageConfig.popularSearches : DEFAULT_POPULAR_SEARCHES;
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: ''
+    name: userInfo?.name || '',
+    email: userInfo?.email || '',
+    phone: userInfo?.phone || ''
   });
 
   const handleConsultationBook = () => {

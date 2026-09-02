@@ -39,43 +39,35 @@ export default function CustomerApp() {
    } = useNotifications(userInfo?.token);
    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
+   const [chatMessages, setChatMessages] = useState([
+      { id: 1, sender: 'agent', text: 'Hello! I am your assigned Relationship Associate. How can our CA/CS team assist your business today?', time: 'Just now' }
+   ]);
+   const [chatInput, setChatInput] = useState('');
    const [serviceSearchQuery, setServiceSearchQuery] = useState('');
    const navigate = useNavigate();
    const [menuExpanded, setMenuExpanded] = useState(false);
 
-   // -- Live Chat Custom styling/triggering hook --
-   useEffect(() => {
-      const injectWidgetCSS = () => {
-         const widgetRoot = document.getElementById('letstrack-widget-root');
-         if (widgetRoot && widgetRoot.shadowRoot) {
-            if (!widgetRoot.shadowRoot.querySelector('#lt-custom-styles')) {
-               const style = document.createElement('style');
-               style.id = 'lt-custom-styles';
-               style.textContent = `
-                  .lt-widget-btn, .lt-notification-popup {
-                     display: none !important;
-                  }
-                  .lt-chat-window {
-                     margin-bottom: 0px !important;
-                  }
-               `;
-               widgetRoot.shadowRoot.appendChild(style);
+   const handleSendChatMessage = (e) => {
+      e?.preventDefault();
+      if (!chatInput.trim()) return;
+      const userMsg = { id: Date.now(), sender: 'user', text: chatInput, time: 'Just now' };
+      setChatMessages(prev => [...prev, userMsg]);
+      const currentInput = chatInput;
+      setChatInput('');
+
+      // Auto reply from Advisory partner
+      setTimeout(() => {
+         setChatMessages(prev => [
+            ...prev,
+            {
+               id: Date.now() + 1,
+               sender: 'agent',
+               text: `Thank you for your message regarding "${currentInput.slice(0, 30)}...". Our CA team has received your query and will update your active file. You can also call us directly at +91 80085 30606.`,
+               time: 'Just now'
             }
-         }
-      };
-
-      const interval = setInterval(injectWidgetCSS, 1000);
-      return () => clearInterval(interval);
-   }, []);
-
-   const toggleLiveChat = () => {
-      const widgetRoot = document.getElementById('letstrack-widget-root');
-      if (widgetRoot && widgetRoot.shadowRoot) {
-         const btn = widgetRoot.shadowRoot.querySelector('.lt-widget-btn');
-         if (btn) {
-            btn.click();
-         }
-      }
+         ]);
+      }, 1000);
    };
 
    // -- Authentication --
@@ -119,7 +111,7 @@ export default function CustomerApp() {
    if (!isLoggedIn || !userInfo) {
       return (
          <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-slate-500 font-black text-xs uppercase tracking-widest">Loading Your Dashboard...</p>
          </div>
       );
@@ -143,7 +135,7 @@ export default function CustomerApp() {
                 }}
                 onOpenNotifications={() => setIsNotificationOpen(true)}
              />
-         );
+          );
          case 'Services': {
             const q = serviceSearchQuery;
             if (q) setServiceSearchQuery(''); // consume once
@@ -167,9 +159,6 @@ export default function CustomerApp() {
          case 'Account': return <AccountsView orders={orders} payments={payments} userInfo={userInfo} token={userInfo?.token} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: 
-            if (SERVICE_CATALOG[activeTab]) {
-                return <ServiceDetailView serviceKey={activeTab} setActiveTab={setActiveTab} userInfo={userInfo} />;
-            }
             return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} />;
       }
    };
@@ -207,15 +196,13 @@ export default function CustomerApp() {
 
          {/* --- DESKTOP EXECUTIVE SIDEBAR --- */}
          <aside className="hidden lg:flex flex-col w-64 bg-slate-950 text-slate-300 border-r border-slate-800/90 z-30 shrink-0 select-none">
-            {/* Logo & Brand */}
-            <div className="h-20 px-6 flex items-center justify-between border-b border-slate-800/80">
+            {/* Official Logo & Brand Header */}
+            <div className="h-20 px-5 flex items-center justify-between border-b border-slate-800/80">
                <a href="/" className="flex items-center gap-3 group">
-                  <div className="w-10 h-10 bg-gradient-to-tr from-red-600 to-rose-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-md shadow-red-600/30 group-hover:scale-105 transition-transform">
-                     VR
-                  </div>
-                  <div className="flex flex-col">
-                     <span className="font-black text-white text-base leading-none tracking-tight group-hover:text-red-400 transition-colors">VR HERE</span>
-                     <span className="text-[9px] font-extrabold text-red-500 uppercase tracking-widest mt-0.5">Customer Portal</span>
+                  <img src="/logo.png" alt="VR Here" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                     <span className="font-black text-white text-base leading-none tracking-tight group-hover:text-red-400 transition-colors">VR Here</span>
+                     <span className="text-[8.5px] font-extrabold text-red-500 uppercase tracking-widest mt-0.5 truncate">Customer Suite</span>
                   </div>
                </a>
             </div>
@@ -224,7 +211,7 @@ export default function CustomerApp() {
             <div className="flex-1 py-6 px-4 space-y-6 overflow-y-auto custom-scrollbar">
                {NavGroups.map((group, gIdx) => (
                   <div key={gIdx} className="space-y-1.5">
-                     <p className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-300 mb-2">{group.group}</p>
+                     <p className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{group.group}</p>
                      {group.items.map(item => {
                         const Icon = item.icon;
                         const isActive = activeTab === item.id;
@@ -235,11 +222,11 @@ export default function CustomerApp() {
                               className={`flex items-center justify-between w-full px-3.5 py-3 rounded-xl font-bold text-xs transition-all duration-200 group ${
                                  isActive
                                     ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30 font-black'
-                                    : 'text-slate-200 hover:text-white hover:bg-slate-900/90'
+                                    : 'text-slate-300 hover:text-white hover:bg-slate-900/90'
                               }`}
                            >
                               <div className="flex items-center gap-3">
-                                 <Icon size={18} className={isActive ? 'text-white' : 'text-slate-300 group-hover:text-white group-hover:scale-110 transition-all'} />
+                                 <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-white group-hover:scale-110 transition-all'} />
                                  <span>{item.label}</span>
                               </div>
                               {item.id === 'Orders' && orders.filter(o => o.status !== 'Completed').length > 0 && (
@@ -295,7 +282,7 @@ export default function CustomerApp() {
             </div>
          </aside>
 
-         {/* --- MOBILE SIDEBAR DRAWER (PRESERVED) --- */}
+         {/* --- MOBILE SIDEBAR DRAWER --- */}
          {isMobileMenuOpen && (
             <div className="fixed inset-0 z-50 lg:hidden bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsMobileMenuOpen(false)}>
                <div
@@ -304,8 +291,11 @@ export default function CustomerApp() {
                >
                   <div className="p-6 border-b border-slate-800 flex items-center justify-between">
                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white font-black text-lg">VR</div>
-                        <span className="font-black text-white tracking-tight">VR HERE Portal</span>
+                        <img src="/logo.png" alt="VR Here" className="h-9 w-auto object-contain" />
+                        <div className="flex flex-col">
+                           <span className="font-black text-white tracking-tight">VR Here</span>
+                           <span className="text-[9px] font-extrabold text-red-500 uppercase tracking-widest">Customer Portal</span>
+                        </div>
                      </div>
                      <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-white">
                         <X size={24} />
@@ -349,8 +339,8 @@ export default function CustomerApp() {
                   <Menu size={24} />
                </button>
                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-black text-sm">VR</div>
-                  <span className="font-black text-slate-900 text-sm tracking-tight uppercase">Dashboard</span>
+                  <img src="/logo.png" alt="VR Here" className="h-8 w-auto object-contain" />
+                  <span className="font-black text-slate-900 text-sm tracking-tight uppercase">Portal</span>
                </div>
                <div className="flex items-center gap-2">
                   <button onClick={() => setIsNotificationOpen(true)} className="p-2 text-slate-700 relative">
@@ -428,7 +418,7 @@ export default function CustomerApp() {
                </div>
             </div>
 
-            {/* --- MOBILE BOTTOM NAVBAR (PRESERVED) --- */}
+            {/* --- MOBILE BOTTOM NAVBAR --- */}
             <nav className="lg:hidden fixed bottom-1.5 left-4 right-4 h-16 bg-slate-950/95 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-around px-2 z-50 shadow-2xl shadow-slate-900/50">
                {allNavItems.filter(i => ['Home', 'Services', 'Orders', 'Documents', 'Account'].includes(i.id)).map((item) => (
                   <button
@@ -446,7 +436,7 @@ export default function CustomerApp() {
                ))}
             </nav>
 
-            {/* --- FLOATING CONTACT BUTTON --- */}
+            {/* --- FLOATING CONTACT BUTTONS (WITH SEPARATED CALL & WHATSAPP) --- */}
             <div className="fixed bottom-24 right-5 z-40 flex flex-col items-end gap-3 md:bottom-10 md:right-10">
                {/* Stacked Menu Options */}
                <div className={`flex flex-col gap-3 transition-all duration-300 origin-bottom ${
@@ -454,41 +444,59 @@ export default function CustomerApp() {
                      ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' 
                      : 'opacity-0 translate-y-4 scale-90 pointer-events-none'
                }`}>
-                  {/* Option 1: Live Chat */}
+                  {/* Option 1: Live Chat Widget */}
                   <button
                      onClick={() => {
-                        toggleLiveChat();
+                        setIsLiveChatOpen(true);
                         setMenuExpanded(false);
                      }}
                      className="w-12 h-12 bg-rose-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-rose-600 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
+                     title="Open Live Chat Desk"
                   >
                      <MessageSquare size={20} />
                      <span className="absolute right-full mr-3 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
-                        Live Chat
+                        Live CA Desk
                      </span>
                   </button>
 
-                  {/* Option 2: WhatsApp */}
+                  {/* Option 2: WhatsApp Chat */}
                   <a
-                     href="https://wa.me/918008530606"
+                     href="https://wa.me/918008530606?text=Hi%20VR%20HERE%20Team,%20I%20am%20chatting%20from%20the%20Customer%20Portal."
                      target="_blank"
                      rel="noreferrer"
                      onClick={() => setMenuExpanded(false)}
                      className="w-12 h-12 bg-emerald-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-emerald-600 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
+                     title="WhatsApp Support"
                   >
-                     <Phone size={20} />
+                     <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.632.062-1.748-.387-1.196-.481-2.097-1.636-2.158-1.716-.061-.08-1.111-1.474-1.111-2.812 0-1.34.704-1.999.954-2.271.25-.271.545-.339.726-.339.181 0 .363.003.521.011.168.008.394-.064.615.467.228.547.778 1.897.846 2.034.068.136.113.295.023.476-.091.181-.136.295-.272.453-.136.159-.286.355-.408.476-.136.136-.278.283-.12.554.159.272.705 1.162 1.512 1.881 1.038.924 1.913 1.21 2.185 1.346.272.136.431.114.59-.068.159-.181.68-.793.861-1.065.181-.272.363-.227.612-.136.25.091 1.587.748 1.859.884.272.136.453.204.521.317.068.113.068.657-.076 1.062zM12 2C6.477 2 2 6.477 2 12c0 1.891.526 3.662 1.442 5.176L2 22l4.981-1.306C8.423 21.536 10.151 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" />
+                     </svg>
                      <span className="absolute right-full mr-3 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
-                        WhatsApp
+                        WhatsApp Chat
                      </span>
                   </a>
 
-                  {/* Option 3: Raise Ticket */}
+                  {/* Option 3: Phone Direct Call */}
+                  <a
+                     href="tel:+918008530606"
+                     onClick={() => setMenuExpanded(false)}
+                     className="w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
+                     title="Direct Phone Call"
+                  >
+                     <Phone size={20} />
+                     <span className="absolute right-full mr-3 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+                        Call Helpline
+                     </span>
+                  </a>
+
+                  {/* Option 4: Raise Ticket */}
                   <button
                      onClick={() => {
                         setActiveTab('New');
                         setMenuExpanded(false);
                      }}
-                     className="w-12 h-12 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-indigo-700 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
+                     className="w-12 h-12 bg-slate-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-800 transform hover:scale-110 active:scale-95 transition-all group relative border-2 border-white"
+                     title="Support Ticket Desk"
                   >
                      <Headphones size={20} />
                      <span className="absolute right-full mr-3 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
@@ -497,47 +505,150 @@ export default function CustomerApp() {
                   </button>
                </div>
 
-               {/* Main Toggle Button */}
+               {/* Main Floating Toggle Button */}
                <button
                   onClick={() => setMenuExpanded(!menuExpanded)}
-                  className="w-14 h-14 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-800 transform hover:scale-105 active:scale-95 transition-all border-4 border-white z-50 relative"
+                  className="w-14 h-14 bg-gradient-to-tr from-red-600 to-rose-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all border-4 border-white z-50 relative"
+                  title="Contact Actions"
                >
                   <div className={`transition-transform duration-300 transform ${menuExpanded ? 'rotate-[135deg]' : ''}`}>
                      <Plus size={28} />
                   </div>
                </button>
             </div>
+
+            {/* --- LIVE CHAT DESK MODAL --- */}
+            {isLiveChatOpen && (
+               <div className="fixed bottom-24 right-4 sm:right-8 z-50 w-full max-w-sm sm:max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col h-[520px] animate-in slide-in-from-bottom-5 duration-300">
+                  {/* Chat Header */}
+                  <div className="p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
+                     <div className="flex items-center gap-3">
+                        <div className="relative">
+                           <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold text-sm">
+                              CA
+                           </div>
+                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-950"></span>
+                        </div>
+                        <div>
+                           <h4 className="text-xs font-black text-white flex items-center gap-1.5">
+                              <span>VR HERE Client Desk</span>
+                              <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 text-[8.5px] font-black rounded uppercase">Online</span>
+                           </h4>
+                           <p className="text-[10px] text-slate-400 font-medium">CA S. Doraswamy Raju & Support Team</p>
+                        </div>
+                     </div>
+                     <button
+                        onClick={() => setIsLiveChatOpen(false)}
+                        className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                     >
+                        <X size={18} />
+                     </button>
+                  </div>
+
+                  {/* Quick Suggestions */}
+                  <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex gap-1.5 overflow-x-auto scrollbar-none">
+                     {['Filing Status', 'Pending KYC Proof', 'Get Tax Invoice', 'Call My CA'].map((chip, idx) => (
+                        <button
+                           key={idx}
+                           onClick={() => {
+                              setChatInput(chip);
+                           }}
+                           className="px-2.5 py-1 bg-white hover:bg-red-50 hover:text-red-600 text-slate-600 text-[10px] font-bold rounded-lg border border-slate-200 shrink-0 transition-colors"
+                        >
+                           {chip}
+                        </button>
+                     ))}
+                  </div>
+
+                  {/* Message Stream */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40">
+                     {chatMessages.map(msg => (
+                        <div
+                           key={msg.id}
+                           className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                           <div className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium ${
+                              msg.sender === 'user'
+                                 ? 'bg-red-600 text-white rounded-br-none shadow-sm'
+                                 : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-none shadow-2xs'
+                           }`}>
+                              <p className="leading-relaxed">{msg.text}</p>
+                              <span className={`block text-[9px] mt-1 text-right ${msg.sender === 'user' ? 'text-red-100' : 'text-slate-400'}`}>
+                                 {msg.time}
+                              </span>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+
+                  {/* Chat Input */}
+                  <form onSubmit={handleSendChatMessage} className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+                     <input
+                        type="text"
+                        placeholder="Type your question for CA team..."
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        className="flex-1 bg-slate-100 text-xs font-semibold px-4 py-2.5 rounded-xl border-none outline-none focus:ring-2 ring-red-500/20 text-slate-800"
+                     />
+                     <button
+                        type="submit"
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md"
+                     >
+                        Send
+                     </button>
+                  </form>
+               </div>
+            )}
+
             <InAppBanner 
                activeNotification={activeBannerNotification}
                onDismiss={() => setActiveBannerNotification(null)}
                onClickAction={() => setActiveTab('Home')}
             />
 
-            {/* --- NOTIFICATIONS MODAL OVERLAY --- */}
+            {/* --- NOTIFICATIONS FULL-SCREEN / RESPONSIVE COMMAND CENTER --- */}
             {isNotificationOpen && (
-               <div className="fixed inset-0 z-50 flex items-start justify-center md:justify-end md:pr-10 pt-24 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsNotificationOpen(false)}>
+               <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 lg:p-10 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsNotificationOpen(false)}>
                   <div 
-                     className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-slate-100/80 overflow-hidden animate-in slide-in-from-top-5 md:slide-in-from-right-5 duration-500 flex flex-col max-h-[75vh] m-4"
+                     className="w-full max-w-5xl h-[88vh] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-300"
                      onClick={e => e.stopPropagation()}
                   >
-                     <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                        <div className="flex items-center gap-2">
-                           <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                              <Bell size={18} />
+                     {/* Full-Screen Notification Header */}
+                     <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-900 text-white">
+                        <div className="flex items-center gap-3">
+                           <div className="w-10 h-10 rounded-2xl bg-red-600 flex items-center justify-center text-white font-bold shadow-md shadow-red-600/30">
+                              <Bell size={20} />
                            </div>
-                           <span className="font-black text-slate-800 text-xs tracking-wider uppercase">Notifications</span>
-                           {unreadCount > 0 && (
-                              <span className="px-2 py-0.5 bg-rose-500 text-[9px] text-white font-black rounded-full uppercase tracking-wider">
-                                 {unreadCount} New
-                              </span>
-                           )}
+                           <div>
+                              <h3 className="font-black text-white text-base tracking-tight flex items-center gap-2">
+                                 <span>Notification Command Center</span>
+                                 {unreadCount > 0 && (
+                                    <span className="px-2 py-0.5 bg-red-600 text-[10px] text-white font-black rounded-full uppercase tracking-wider">
+                                       {unreadCount} Unread
+                                    </span>
+                                 )}
+                              </h3>
+                              <p className="text-xs text-slate-400 font-medium">Real-time alerts, MCA status changes, and filing milestones</p>
+                           </div>
                         </div>
-                        <button onClick={() => setIsNotificationOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition active:scale-95">
-                           <X size={18} />
-                        </button>
+
+                        <div className="flex items-center gap-3">
+                           {unreadCount > 0 && (
+                              <button
+                                 onClick={markAllRead}
+                                 className="hidden sm:inline-block px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-all"
+                              >
+                                 Mark All as Read
+                              </button>
+                           )}
+                           <button onClick={() => setIsNotificationOpen(false)} className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition">
+                              <X size={20} />
+                           </button>
+                        </div>
                      </div>
 
-                     <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30">
+                     {/* Notification Body Feed */}
+                     <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
                         <NotificationsFeed 
                            notifications={notifications}
                            onMarkRead={markRead}

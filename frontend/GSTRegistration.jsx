@@ -84,12 +84,10 @@ const GSTRegistrationPage = () => {
         };
     }, [isServicesHovered]);
 
-    // --- ACTIONS ---
-
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: ''
+        name: userInfo?.name || '',
+        email: userInfo?.email || '',
+        phone: userInfo?.phone || ''
     });
 
     const handleConsultationBook = () => {
