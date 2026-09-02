@@ -690,7 +690,17 @@ const IncomeTaxPage = () => {
               <p className="text-slate-600 font-medium mt-1">Transparent professional pricing. Clear scope with expert Chartered Accountant allocation.</p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
+            <div
+              className={`grid gap-6 justify-center ${
+                PACKAGES.length === 1
+                  ? 'max-w-md mx-auto grid-cols-1'
+                  : PACKAGES.length === 2
+                  ? 'max-w-3xl mx-auto grid-cols-1 md:grid-cols-2'
+                  : PACKAGES.length === 3
+                  ? 'max-w-5xl mx-auto grid-cols-1 md:grid-cols-3'
+                  : 'max-w-[1400px] mx-auto grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+              }`}
+            >
               {PACKAGES.map((pkg) => {
                 const isPopular = pkg.isPopular || pkg.id === 'itr1';
                 return (

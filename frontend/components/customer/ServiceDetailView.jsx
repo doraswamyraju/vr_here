@@ -118,7 +118,17 @@ const ServiceDetailView = ({ serviceKey, setActiveTab, userInfo }) => {
             />
 
             {/* Packages Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            <div
+                className={`grid gap-6 mt-8 justify-center ${
+                    service.packages.length === 1
+                        ? 'max-w-md mx-auto grid-cols-1'
+                        : service.packages.length === 2
+                        ? 'max-w-3xl mx-auto grid-cols-1 md:grid-cols-2'
+                        : service.packages.length === 3
+                        ? 'max-w-5xl mx-auto grid-cols-1 md:grid-cols-3'
+                        : 'max-w-[1400px] mx-auto grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+                }`}
+            >
                 {service.packages.map((pkg) => (
                     <div 
                         key={pkg.id} 
