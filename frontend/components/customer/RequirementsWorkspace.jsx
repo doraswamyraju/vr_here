@@ -63,7 +63,8 @@ const RequirementsWorkspace = ({ selectedOrder, userInfo, refreshOrders }) => {
       }
       refreshOrders();
     } catch (error) {
-      alert('Error uploading file(s).');
+      console.error('Document Upload Error:', error);
+      alert(error?.response?.data?.message || 'Error uploading file(s). Check server log.');
     } finally {
       setUploadingId('');
     }
