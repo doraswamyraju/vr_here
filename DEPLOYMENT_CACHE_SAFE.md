@@ -6,13 +6,14 @@ Run these commands on the server:
 ```bash
 cd /var/www/vrhere
 
-# 1. Pull the latest code
+# 1. Discard previous local build diffs (dist/ and modified templates)
+git checkout -- .
+git clean -fd dist/
+
+# 2. Pull the latest code cleanly
 git pull origin main
 
-# 2. Restore index.html in case it was mutated by old deployment commands
-git checkout index.html
-
-# 3. Clean install and compile
+# 3. Clean install and compile frontend
 npm install
 npm run build
 
@@ -21,6 +22,11 @@ cd backend
 npm install
 pm2 restart vrhere-api --update-env
 pm2 save
+```
+
+### Quick One-Liner (Copy-Paste Safe):
+```bash
+cd /var/www/vrhere && git checkout -- . && git clean -fd dist/ && git pull origin main && npm install && npm run build && cd backend && npm install && pm2 restart vrhere-api --update-env && pm2 save
 ```
 
 > [!IMPORTANT]
