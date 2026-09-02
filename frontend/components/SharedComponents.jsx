@@ -498,80 +498,94 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
 
     return (
         <>
-            <div className="bg-slate-900 text-slate-400 text-xs py-2 px-4 hidden lg:block border-b border-slate-800 fixed top-0 left-0 right-0 z-[60]">
-                <div className="max-w-[1400px] mx-auto flex justify-between items-center">
+            {/* 1. TOP TICKER & ANNOUNCEMENT BAR */}
+            <div className="bg-slate-950 text-slate-300 text-xs py-1.5 px-4 hidden lg:block border-b border-slate-800/80 fixed top-0 left-0 right-0 z-[60] backdrop-blur-md">
+                <div className="max-w-[1400px] mx-auto flex justify-between items-center text-[11px]">
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                        {/* ADDRESS REMOVED HERE */}
-                        <span className="flex items-center hover:text-white transition cursor-default"><Clock className="w-3 h-3 mr-2 text-red-600" /> Mon - Sat: 10AM - 7PM</span>
-                        <span className="flex items-center hover:text-white transition cursor-default"><Award className="w-3 h-3 mr-2 text-red-600" /> ISO 9001:2015 Certified</span>
-                        <div className="min-w-0 flex-1 overflow-hidden rounded-full border border-slate-700/80 bg-slate-800/70 h-6">
+                        <span className="flex items-center text-slate-300 hover:text-white transition cursor-default">
+                            <Clock className="w-3.5 h-3.5 mr-1.5 text-red-500" /> Mon - Sat: 10AM - 7PM
+                        </span>
+                        <span className="flex items-center text-slate-300 hover:text-white transition cursor-default">
+                            <Award className="w-3.5 h-3.5 mr-1.5 text-emerald-400" /> ISO 9001:2015 Certified
+                        </span>
+                        <div className="min-w-0 flex-1 overflow-hidden rounded-full border border-slate-800 bg-slate-900/80 h-6">
                             <div className="ticker-track h-full flex items-center gap-10 px-4 text-[11px] font-semibold text-slate-200 whitespace-nowrap">
                                 {[...tickerMessages, ...tickerMessages].map((msg, idx) => (
                                     <span key={`ticker-msg-${idx}`} className="inline-flex items-center">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-2"></span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-2 animate-pulse"></span>
                                         {msg}
                                     </span>
                                 ))}
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-6">
-                        <a href="mailto:vrherebms@gmail.com" className="flex items-center hover:text-red-500 transition"><Mail className="w-3 h-3 mr-2" /> vrherebms@gmail.com</a>
-                        <a href="tel:+918008530606" className="flex items-center hover:text-red-500 font-bold transition"><Phone className="w-3 h-3 mr-2" /> +91 80085 30606</a>
+                    <div className="flex items-center space-x-6 pl-4 font-medium">
+                        <a href="mailto:vrherebms@gmail.com" className="flex items-center text-slate-300 hover:text-red-400 transition">
+                            <Mail className="w-3.5 h-3.5 mr-1.5 text-slate-400" /> vrherebms@gmail.com
+                        </a>
+                        <a href="tel:+918008530606" className="flex items-center text-slate-200 hover:text-emerald-400 font-bold transition">
+                            <Phone className="w-3.5 h-3.5 mr-1.5 text-emerald-400" /> +91 80085 30606
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <header className={`fixed left-0 right-0 top-0 lg:top-8 z-[55] transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-xl py-2' : 'bg-white border-b border-slate-100 py-4'}`}>
-                <div className={`absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/60 to-transparent transition-opacity ${isScrolled ? 'opacity-100' : 'opacity-0'}`}></div>
+            {/* 2. MAIN HEADER NAVBAR */}
+            <header className={`fixed left-0 right-0 top-0 lg:top-[33px] z-[55] transition-all duration-300 w-full ${isScrolled ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-900/5 py-2.5 border-b border-slate-200/80' : 'bg-white/95 backdrop-blur-md border-b border-slate-100 py-3.5'}`}>
+                <div className={`absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent transition-opacity ${isScrolled ? 'opacity-100' : 'opacity-0'}`}></div>
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
                     <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 relative">
-                        {/* LOGO: Points to / (Home) */}
+                        {/* LOGO */}
                         <a href="/" className="flex items-center flex-shrink-0 group cursor-pointer">
-                            <img src="/logo.png" alt="VR Here" className="h-12 w-auto object-contain mr-2 group-hover:scale-105 transition-transform duration-300" />
+                            <img src="/logo.png" alt="VR Here" className="h-11 w-auto object-contain mr-2.5 group-hover:scale-105 transition-transform duration-300" />
                             <div className="flex flex-col">
-                                <span className="text-2xl font-extrabold text-black leading-none tracking-tight group-hover:text-red-600 transition-colors">VR Here</span>
-                                <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-0.5">Business Management Solutions</span>
+                                <span className="text-2xl font-black text-slate-900 leading-none tracking-tight group-hover:text-red-600 transition-colors">VR Here</span>
+                                <span className="text-[9.5px] font-extrabold text-red-600 uppercase tracking-widest mt-0.5">Business Management Solutions</span>
                             </div>
                         </a>
 
+                        {/* DESKTOP MEGA-MENU NAVIGATION */}
                         <nav className="hidden lg:flex items-center justify-center min-w-0">
                             <div className="relative" onMouseLeave={closeMenuWithDelay}>
                                 <div className="max-w-[980px]">
-                                    <div className="flex items-stretch gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
+                                    <div className="flex items-stretch gap-1 rounded-2xl border border-slate-200/90 bg-slate-50/90 p-1 shadow-inner shadow-slate-200/40">
                                     {menuConfig.map((service) => (
                                         <div
                                             key={service.id}
                                             className="relative"
                                             onMouseEnter={() => openMenu(service.id)}
                                         >
-                                            <button className={`h-full flex items-center px-3 py-2 text-[12px] font-bold rounded-xl transition-all duration-300 min-w-[110px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
-                                                <span className="text-left leading-[1.05]">
+                                            <button className={`h-full flex items-center px-3 py-2 text-[11.5px] font-bold rounded-xl transition-all duration-300 min-w-[108px] ${activeDesktopServiceId === service.id ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30 -translate-y-0.5' : 'text-slate-700 hover:text-red-600 hover:bg-white'}`}>
+                                                <span className="text-left leading-[1.1]">
                                                     {(TAB_LABEL_LINES[service.id] || [service.title]).map((line, idx) => (
                                                         <span key={`${service.id}-line-${idx}`} className="block">{line}</span>
                                                     ))}
                                                 </span>
-                                                <ChevronDown className={`ml-1 w-3.5 h-3.5 shrink-0 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
+                                                <ChevronDown className={`ml-1.5 w-3.5 h-3.5 shrink-0 transition-transform duration-300 ${activeDesktopServiceId === service.id ? 'rotate-180' : ''}`} />
                                             </button>
                                         </div>
                                     ))}
                                     </div>
                                 </div>
 
-                                <div onMouseEnter={cancelClose} onMouseLeave={closeMenuWithDelay} className={`absolute top-full left-1/2 -translate-x-1/2 w-[92vw] max-w-[1240px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_30px_80px_-25px_rgba(0,0,0,0.4)] border border-slate-200 overflow-hidden transition-all duration-300 origin-top z-50 mt-1 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
+                                {/* DROPDOWN PANEL */}
+                                <div onMouseEnter={cancelClose} onMouseLeave={closeMenuWithDelay} className={`absolute top-full left-1/2 -translate-x-1/2 w-[92vw] max-w-[1240px] bg-white/98 backdrop-blur-2xl rounded-3xl shadow-[0_30px_90px_-20px_rgba(0,0,0,0.35)] border border-slate-200/90 overflow-hidden transition-all duration-300 origin-top z-50 mt-1.5 ${activeDesktopService ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-4 invisible pointer-events-none'}`}>
                                     {activeDesktopService && (
                                         <div className="flex min-h-[360px]">
-                                            <div className="flex-1 p-8 bg-gradient-to-br from-white via-white to-slate-50">
+                                            <div className="flex-1 p-8 bg-gradient-to-br from-white via-white to-slate-50/50">
                                                 <div className={`grid gap-4 ${activeDesktopService.columns.length >= 3 ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} grid-cols-1`}>
                                                     {activeDesktopService.columns.map((column, columnIndex) => (
-                                                        <div key={`${activeDesktopService.id}-col-${columnIndex}`} className="rounded-xl border border-slate-200 bg-white p-4 hover:border-red-200 hover:shadow-lg hover:shadow-red-100/40 transition-all">
-                                                            <h4 className="text-sm font-extrabold text-slate-800 mb-3">{column.title}</h4>
+                                                        <div key={`${activeDesktopService.id}-col-${columnIndex}`} className="rounded-2xl border border-slate-200/90 bg-white p-5 hover:border-red-300 hover:shadow-lg hover:shadow-red-100/40 transition-all">
+                                                            <h4 className="text-sm font-black text-slate-900 mb-3.5 flex items-center gap-2">
+                                                                <span className="w-2 h-2 rounded-full bg-red-600"></span>
+                                                                {column.title}
+                                                            </h4>
                                                             <div className="space-y-2">
                                                                 {(column.items || []).map((item, i) => (
                                                                     <a
                                                                         href={getServiceLink(item)}
                                                                         key={`${activeDesktopService.id}-${columnIndex}-${i}`}
-                                                                        className="block text-sm font-medium text-slate-600 hover:text-red-600 transition-colors"
+                                                                        className="block text-xs font-medium text-slate-600 hover:text-red-600 transition-colors hover:translate-x-1 duration-200"
                                                                     >
                                                                         {item}
                                                                     </a>
@@ -580,29 +594,45 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className="mt-4">
-                                                    <a href={`/all-services?category=${encodeURIComponent(activeDesktopService.id)}`} className="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wide">View all services &rarr;</a>
+                                                <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                                    <a href={`/all-services?category=${encodeURIComponent(activeDesktopService.id)}`} className="text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1.5 group">
+                                                        <span>View all services in this category</span>
+                                                        <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                                    </a>
+                                                    <span className="text-[11px] text-slate-400 font-semibold">100% Online MCA & CA Execution</span>
                                                 </div>
                                             </div>
-                                            <div className="w-[320px] bg-slate-50 p-6 border-l border-slate-100">
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <h4 className="text-sm font-black text-slate-900">Latest Offers</h4>
-                                                </div>
-                                                <div className="space-y-3">
-                                                    {activeDesktopOffers.slice(0, 2).map((offer) => (
-                                                        <a key={offer._id || `${offer.title}-${offer.imageUrl}`} href={offer.ctaLink || '/contact'} className="block overflow-hidden rounded-xl border border-slate-200 bg-white hover:shadow-xl hover:-translate-y-0.5 transition-all">
-                                                            <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover" />
-                                                            <div className="p-3">
-                                                                <div className="text-sm font-bold text-slate-800 line-clamp-2">{offer.title}</div>
-                                                                <div className="mt-1 text-xs font-bold text-red-600">Explore Offer</div>
+                                            <div className="w-[320px] bg-slate-50 p-6 border-l border-slate-100 flex flex-col justify-between">
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Featured Offer</h4>
+                                                        <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">Limited Period</span>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        {activeDesktopOffers.slice(0, 2).map((offer) => (
+                                                            <a key={offer._id || `${offer.title}-${offer.imageUrl}`} href={offer.ctaLink || '/contact'} className="block overflow-hidden rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:-translate-y-0.5 transition-all group">
+                                                                <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                                <div className="p-3">
+                                                                    <div className="text-xs font-bold text-slate-900 line-clamp-2">{offer.title}</div>
+                                                                    <div className="mt-1 text-[11px] font-black text-red-600 flex items-center gap-1">
+                                                                        Explore Offer &rarr;
+                                                                    </div>
+                                                                </div>
+                                                            </a>
+                                                        ))}
+                                                        {activeDesktopOffers.length === 0 && (
+                                                            <div className="text-xs text-slate-500 bg-white border border-dashed border-slate-300 rounded-2xl p-4 text-center">
+                                                                Special compliance packages available on request.
                                                             </div>
-                                                        </a>
-                                                    ))}
-                                                    {activeDesktopOffers.length === 0 && (
-                                                        <div className="text-xs text-slate-500 bg-white border border-dashed border-slate-300 rounded-xl px-3 py-4">
-                                                            Latest offers will appear here soon.
-                                                        </div>
-                                                    )}
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-4 pt-4 border-t border-slate-200/80">
+                                                    <a href="/contact" className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md">
+                                                        <Phone className="w-3.5 h-3.5 text-red-400" />
+                                                        <span>Need Custom Advice?</span>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -611,112 +641,200 @@ export const SharedHeader = ({ isScrolled: externalIsScrolled }) => {
                             </div>
                         </nav>
 
-                        <div className="hidden lg:flex items-center flex-shrink-0 gap-4 justify-end">
-                            <button onClick={handleSearchClick} className="p-2 text-slate-600 hover:text-red-600 transition transform hover:scale-110"><Search className="w-5 h-5" /></button>
+                        {/* RIGHT ACTIONS: APPS HUB, SEARCH, CTA, LOGIN */}
+                        <div className="hidden lg:flex items-center flex-shrink-0 gap-3 justify-end">
+                            {/* SEARCH BUTTON */}
+                            <button
+                                onClick={handleSearchClick}
+                                className="p-2.5 bg-slate-50 hover:bg-red-50 hover:text-red-600 text-slate-600 border border-slate-200/80 rounded-xl transition-all shadow-2xs"
+                                title="Search services"
+                            >
+                                <Search className="w-4 h-4" />
+                            </button>
                             
-                            {/* App Download Icons */}
-                            <div className="flex items-center gap-3 border-r border-slate-200 pr-4 mr-2">
-                                <a href="https://apps.apple.com/in/app/vr-here-bms/id6785507672" target="_blank" rel="noreferrer" className="text-slate-600 hover:text-black transition transform hover:scale-110" title="Download on App Store">
-                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M17.05 20.28c-.98 1.56-2.02 3.1-3.72 3.14-1.67.03-2.2-.97-4.1-.97-1.9 0-2.48.94-4.08.99-1.67.06-2.86-1.66-3.85-3.08-2.02-2.9-3.56-8.17-1.48-11.75 1.03-1.78 2.87-2.9 4.88-2.93 1.52-.03 2.96 1.02 3.9 1.02.93 0 2.65-1.23 4.47-1.04.76.03 2.9.3 4.27 2.3-1.11.67-2.61 2.23-2.58 4.8.03 3.08 2.68 4.15 2.71 4.17-.02.08-.43 1.48-1.42 2.92M15 4.3c.77-.94 1.28-2.24 1.14-3.54-1.12.05-2.48.75-3.28 1.69-.7.8-1.32 2.12-1.15 3.4 1.25.1 2.52-.61 3.29-1.55z" />
-                                    </svg>
-                                </a>
-                                <a href="https://play.google.com/store/apps/details?id=com.sbr.vrherebms&hl=en_IN" target="_blank" rel="noreferrer" className="text-slate-600 hover:text-red-600 transition transform hover:scale-110" title="Get it on Google Play">
-                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M3.609 1.814L13.782 12l-10.173 10.186c-.328-.31-.523-.746-.523-1.23V3.044c0-.484.195-.92.523-1.23M17.47 8.35L4.85 1.196C5.074 1.071 5.332 1 5.614 1c.54 0 1.037.262 1.344.67l10.513 6.68-1.741 1.741M18.847 12.925l-2.079-1.32-1.722 1.722 1.722 1.722 2.079-1.32c.791-.502.791-1.302 0-1.804M17.07 15.65L6.958 22.09c-.307.408-.804.67-1.344.67-.282 0-.54-.071-.764-.196l12.62-7.155-1.4 1.4" />
-                                    </svg>
-                                </a>
+                            {/* PREMIUM APP STORE & GOOGLE PLAY PRESENTATION */}
+                            <div className="relative group/app">
+                                <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/90 rounded-xl transition-all duration-300 shadow-2xs cursor-pointer group-hover/app:border-red-300 group-hover/app:shadow-md">
+                                    <div className="flex items-center -space-x-1.5">
+                                        <div className="w-6 h-6 rounded-lg bg-black text-white flex items-center justify-center shadow-xs" title="Apple iOS App">
+                                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M17.05 20.28c-.98 1.56-2.02 3.1-3.72 3.14-1.67.03-2.2-.97-4.1-.97-1.9 0-2.48.94-4.08.99-1.67.06-2.86-1.66-3.85-3.08-2.02-2.9-3.56-8.17-1.48-11.75 1.03-1.78 2.87-2.9 4.88-2.93 1.52-.03 2.96 1.02 3.9 1.02.93 0 2.65-1.23 4.47-1.04.76.03 2.9.3 4.27 2.3-1.11.67-2.61 2.23-2.58 4.8.03 3.08 2.68 4.15 2.71 4.17-.02.08-.43 1.48-1.42 2.92M15 4.3c.77-.94 1.28-2.24 1.14-3.54-1.12.05-2.48.75-3.28 1.69-.7.8-1.32 2.12-1.15 3.4 1.25.1 2.52-.61 3.29-1.55z" />
+                                            </svg>
+                                        </div>
+                                        <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs ring-2 ring-white" title="Google Play Android App">
+                                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M3.609 1.814L13.782 12l-10.173 10.186c-.328-.31-.523-.746-.523-1.23V3.044c0-.484.195-.92.523-1.23M17.47 8.35L4.85 1.196C5.074 1.071 5.332 1 5.614 1c.54 0 1.037.262 1.344.67l10.513 6.68-1.741 1.741M18.847 12.925l-2.079-1.32-1.722 1.722 1.722 1.722 2.079-1.32c.791-.502.791-1.302 0-1.804M17.07 15.65L6.958 22.09c-.307.408-.804.67-1.344.67-.282 0-.54-.071-.764-.196l12.62-7.155-1.4 1.4" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-900 leading-none flex items-center gap-1">
+                                            Apps <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        </span>
+                                        <span className="text-[9px] font-bold text-red-600 leading-tight">iOS & Android</span>
+                                    </div>
+                                </div>
+
+                                {/* APPS POPOVER CARD */}
+                                <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl p-4 shadow-2xl border border-slate-200/90 opacity-0 translate-y-2 invisible group-hover/app:opacity-100 group-hover/app:translate-y-0 group-hover/app:visible transition-all duration-200 z-50">
+                                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                        <div>
+                                            <div className="text-xs font-black text-slate-900">VR HERE Mobile Suite</div>
+                                            <div className="text-[10px] text-slate-500 font-medium">Live document & filing tracking</div>
+                                        </div>
+                                        <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-200">v2.0 Live</span>
+                                    </div>
+
+                                    <div className="space-y-2 mt-3">
+                                        <a
+                                            href="https://apps.apple.com/in/app/vr-here-bms/id6785507672"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-950 text-white hover:bg-slate-800 transition group/btn"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M17.05 20.28c-.98 1.56-2.02 3.1-3.72 3.14-1.67.03-2.2-.97-4.1-.97-1.9 0-2.48.94-4.08.99-1.67.06-2.86-1.66-3.85-3.08-2.02-2.9-3.56-8.17-1.48-11.75 1.03-1.78 2.87-2.9 4.88-2.93 1.52-.03 2.96 1.02 3.9 1.02.93 0 2.65-1.23 4.47-1.04.76.03 2.9.3 4.27 2.3-1.11.67-2.61 2.23-2.58 4.8.03 3.08 2.68 4.15 2.71 4.17-.02.08-.43 1.48-1.42 2.92M15 4.3c.77-.94 1.28-2.24 1.14-3.54-1.12.05-2.48.75-3.28 1.69-.7.8-1.32 2.12-1.15 3.4 1.25.1 2.52-.61 3.29-1.55z" />
+                                                </svg>
+                                            </div>
+                                            <div className="flex flex-col text-left flex-1">
+                                                <span className="text-[9px] text-slate-400 font-semibold uppercase leading-none">Download on the</span>
+                                                <span className="text-xs font-black tracking-tight leading-tight">Apple App Store</span>
+                                            </div>
+                                            <span className="text-xs text-slate-400 group-hover/btn:text-white">&rarr;</span>
+                                        </a>
+
+                                        <a
+                                            href="https://play.google.com/store/apps/details?id=com.sbr.vrherebms&hl=en_IN"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-950 text-white hover:bg-slate-800 transition group/btn"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M3.609 1.814L13.782 12l-10.173 10.186c-.328-.31-.523-.746-.523-1.23V3.044c0-.484.195-.92.523-1.23M17.47 8.35L4.85 1.196C5.074 1.071 5.332 1 5.614 1c.54 0 1.037.262 1.344.67l10.513 6.68-1.741 1.741M18.847 12.925l-2.079-1.32-1.722 1.722 1.722 1.722 2.079-1.32c.791-.502.791-1.302 0-1.804M17.07 15.65L6.958 22.09c-.307.408-.804.67-1.344.67-.282 0-.54-.071-.764-.196l12.62-7.155-1.4 1.4" />
+                                                </svg>
+                                            </div>
+                                            <div className="flex flex-col text-left flex-1">
+                                                <span className="text-[9px] text-slate-400 font-semibold uppercase leading-none">Get it on</span>
+                                                <span className="text-xs font-black tracking-tight leading-tight">Google Play Store</span>
+                                            </div>
+                                            <span className="text-xs text-slate-400 group-hover/btn:text-white">&rarr;</span>
+                                        </a>
+                                    </div>
+
+                                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
+                                        <span className="text-amber-500 font-bold">★ 4.9 Rating</span>
+                                        <span>MCA & CA Verified</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                                <a href="/contact" className="bg-red-600 text-white px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red-600/20 flex items-center whitespace-nowrap">
-                                    <Phone className="w-4 h-4 mr-2" /> Talk to Expert
-                                </a>
-                                <a href="/login" className="flex items-center gap-1.5 px-3 py-2.5 text-slate-700 hover:text-red-600 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 whitespace-nowrap transition-all flex-shrink-0">
-                                    <LogIn className="w-4 h-4" />
-                                    <span>Login</span>
-                                </a>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1 lg:hidden ml-auto">
-                            <a href="/login" className="p-2 text-slate-700 hover:text-red-600 transition">
-                                <LogIn className="w-6 h-6" />
+                            {/* TALK TO EXPERT CTA BUTTON */}
+                            <a
+                                href="/contact"
+                                className="bg-gradient-to-r from-red-600 via-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/25 flex items-center gap-2 whitespace-nowrap transform hover:-translate-y-0.5 active:scale-95"
+                            >
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>Talk to Expert</span>
                             </a>
-                            <button className="p-2 text-slate-800 hover:bg-slate-100 rounded-lg transition" onClick={() => setIsMobileMenuOpen(true)}>
-                                <Menu className="w-7 h-7" />
+
+                            {/* LOGIN BUTTON */}
+                            <a
+                                href="/login"
+                                className="flex items-center gap-1.5 px-3.5 py-2.5 text-slate-700 hover:text-red-600 font-bold text-xs uppercase tracking-wider border border-slate-200/90 rounded-xl hover:bg-slate-50 hover:border-slate-300 whitespace-nowrap transition-all flex-shrink-0 shadow-2xs"
+                            >
+                                <LogIn className="w-3.5 h-3.5" />
+                                <span>Login</span>
+                            </a>
+                        </div>
+
+                        {/* MOBILE HAMBURGER TOGGLE */}
+                        <div className="flex items-center gap-2 lg:hidden ml-auto">
+                            <a href="/login" className="p-2 text-slate-700 hover:text-red-600 transition">
+                                <LogIn className="w-5 h-5" />
+                            </a>
+                            <button className="p-2 text-slate-800 hover:bg-slate-100 rounded-xl transition" onClick={() => setIsMobileMenuOpen(true)}>
+                                <Menu className="w-6 h-6" />
                             </button>
                         </div>
                     </div>
                 </div>
             </header>
-            <div className="h-[84px] lg:h-[132px]"></div>
+            <div className="h-[76px] lg:h-[120px]"></div>
 
-            {/* MOBILE MENU */}
+            {/* MOBILE MENU DRAWER */}
             <div className={`fixed inset-0 bg-white z-[60] transform transition-transform duration-300 lg:hidden overflow-y-auto ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
                     <div className="flex items-center">
                         <img src="/logo.png" alt="VR HERE" className="h-8 w-auto object-contain mr-2" />
-                        <span className="font-bold text-lg">Menu</span>
+                        <span className="font-bold text-base text-slate-900">Services Menu</span>
                     </div>
-                    <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 rounded-full hover:bg-red-100 hover:text-red-600 transition"><X className="w-6 h-6" /></button>
+                    <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 rounded-full hover:bg-red-100 hover:text-red-600 transition">
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
-                <div className="p-4 space-y-1">
-                    <div className="border rounded-xl overflow-hidden border-slate-100 my-2">
-                        <div className="bg-slate-50 px-4 py-3 font-bold text-lg flex justify-between items-center text-slate-900">Services <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{menuConfig.length} Tabs</span></div>
+                <div className="p-4 space-y-3">
+                    <div className="border rounded-2xl overflow-hidden border-slate-100">
+                        <div className="bg-slate-50 px-4 py-3 font-bold text-sm flex justify-between items-center text-slate-900">
+                            <span>Browse Categories</span>
+                            <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">{menuConfig.length} Tabs</span>
+                        </div>
                         <div className="divide-y divide-slate-100">
                             {menuConfig.map((service) => (
                                 <div key={service.id} className="bg-white">
                                     <button onClick={() => setActiveMobileCategory(activeMobileCategory === service.id ? null : service.id)} className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-50 transition">
                                         <div className="flex items-center space-x-3">
                                             <div className={`p-1.5 rounded-lg ${activeMobileCategory === service.id ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                                                <service.icon className="w-5 h-5" />
+                                                <service.icon className="w-4 h-4" />
                                             </div>
-                                            <span className={`text-sm font-bold ${activeMobileCategory === service.id ? 'text-red-600' : 'text-slate-700'}`}>{service.title}</span>
+                                            <span className={`text-xs font-bold ${activeMobileCategory === service.id ? 'text-red-600' : 'text-slate-700'}`}>{service.title}</span>
                                         </div>
                                         <ChevronDown className={`w-4 h-4 transition-transform ${activeMobileCategory === service.id ? 'rotate-180 text-red-600' : 'text-slate-400'}`} />
                                     </button>
                                     {activeMobileCategory === service.id && (
-                                        <div className="bg-slate-50 px-4 pb-4 pt-2 space-y-2 pl-14 animate-fade-in">
+                                        <div className="bg-slate-50 px-4 pb-4 pt-2 space-y-2 pl-12 animate-fade-in">
                                             {service.columns.map((column, colIdx) => (
                                                 <div key={`${service.id}-mobile-col-${colIdx}`} className="mb-3">
-                                                    <div className="text-xs font-black uppercase tracking-wider text-slate-800 mb-1">{column.title}</div>
+                                                    <div className="text-[11px] font-black uppercase tracking-wider text-slate-800 mb-1">{column.title}</div>
                                                     {(column.items || []).map((item, i) => (
-                                                        <a href={getServiceLink(item)} key={`${service.id}-${colIdx}-${i}`} className="block text-sm text-slate-600 border-l-2 border-slate-200 pl-3 py-1 active:text-red-600 hover:text-red-600">
+                                                        <a href={getServiceLink(item)} key={`${service.id}-${colIdx}-${i}`} className="block text-xs text-slate-600 border-l-2 border-slate-200 pl-3 py-1 active:text-red-600 hover:text-red-600">
                                                             {item}
                                                         </a>
                                                     ))}
                                                 </div>
                                             ))}
-                                            <a href={`/all-services?category=${encodeURIComponent(service.id)}`} className="block text-sm font-bold text-red-600 border-l-2 border-red-200 pl-3 py-1 mt-2">
-                                                View All Services
+                                            <a href={`/all-services?category=${encodeURIComponent(service.id)}`} className="block text-xs font-bold text-red-600 border-l-2 border-red-200 pl-3 py-1 mt-2">
+                                                View All Services &rarr;
                                             </a>
-                                            {((Array.isArray(service.offers) && service.offers.length > 0 ? service.offers : SAMPLE_OFFERS_BY_CATEGORY[service.id] || [])).slice(0, 1).map((offer) => (
-                                                <a key={offer._id || offer.title} href={offer.ctaLink || '/contact'} className="block border rounded-lg border-slate-200 overflow-hidden bg-white mt-3">
-                                                    <img src={offer.imageUrl} alt={offer.title} className="w-full h-28 object-cover" />
-                                                    <div className="p-2 text-xs font-semibold text-slate-700">{offer.title}</div>
-                                                </a>
-                                            ))}
                                         </div>
                                     )}
                                 </div>
                             ))}
                         </div>
                     </div>
-                    {/* Mobile App Download Section */}
-                    <div className="p-6 border-t border-slate-100 bg-slate-50 mt-auto">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Download Our App</div>
-                        <div className="flex gap-3">
-                            <a href="https://apps.apple.com/in/app/vr-here-bms/id6785507672" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-900 rounded-xl text-white transition hover:bg-slate-800">
+
+                    {/* Mobile App Download Card */}
+                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-900 text-white shadow-lg">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Download VR HERE App</span>
+                            <span className="bg-emerald-500/20 text-emerald-300 text-[9px] font-black px-2 py-0.5 rounded-full">v2.0 Live</span>
+                        </div>
+                        <p className="text-xs text-slate-300 mb-3 leading-relaxed">
+                            Access CA consultations, status tracking, and certificates directly on your phone.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                            <a href="https://apps.apple.com/in/app/vr-here-bms/id6785507672" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white transition text-xs font-bold">
                                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M17.05 20.28c-.98 1.56-2.02 3.1-3.72 3.14-1.67.03-2.2-.97-4.1-.97-1.9 0-2.48.94-4.08.99-1.67.06-2.86-1.66-3.85-3.08-2.02-2.9-3.56-8.17-1.48-11.75 1.03-1.78 2.87-2.9 4.88-2.93 1.52-.03 2.96 1.02 3.9 1.02.93 0 2.65-1.23 4.47-1.04.76.03 2.9.3 4.27 2.3-1.11.67-2.61 2.23-2.58 4.8.03 3.08 2.68 4.15 2.71 4.17-.02.08-.43 1.48-1.42 2.92M15 4.3c.77-.94 1.28-2.24 1.14-3.54-1.12.05-2.48.75-3.28 1.69-.7.8-1.32 2.12-1.15 3.4 1.25.1 2.52-.61 3.29-1.55z" />
                                 </svg>
-                                <span className="text-xs font-bold">App Store</span>
+                                <span>App Store</span>
                             </a>
-                            <a href="https://play.google.com/store/apps/details?id=com.sbr.vrherebms&hl=en_IN" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-900 rounded-xl text-white transition hover:bg-slate-800">
+                            <a href="https://play.google.com/store/apps/details?id=com.sbr.vrherebms&hl=en_IN" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white transition text-xs font-bold">
                                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M3.609 1.814L13.782 12l-10.173 10.186c-.328-.31-.523-.746-.523-1.23V3.044c0-.484.195-.92.523-1.23M17.47 8.35L4.85 1.196C5.074 1.071 5.332 1 5.614 1c.54 0 1.037.262 1.344.67l10.513 6.68-1.741 1.741M18.847 12.925l-2.079-1.32-1.722 1.722 1.722 1.722 2.079-1.32c.791-.502.791-1.302 0-1.804M17.07 15.65L6.958 22.09c-.307.408-.804.67-1.344.67-.282 0-.54-.071-.764-.196l12.62-7.155-1.4 1.4" />
                                 </svg>
-                                <span className="text-xs font-bold">Google Play</span>
+                                <span>Google Play</span>
                             </a>
                         </div>
                     </div>
