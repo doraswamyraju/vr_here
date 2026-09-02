@@ -22,57 +22,81 @@ const SERVICES_GRID_DATA = [
     id: 'accounting-compliance-taxation',
     title: 'Accounting, Compliance & Taxation',
     icon: Calculator,
-    color: 'bg-red-50 text-red-600',
-    description: 'AaaS, GST, ITR, TDS/TCS, Audit services',
+    color: 'bg-red-50 text-red-600 border-red-200',
+    badge: 'Popular',
+    description: 'Cloud Bookkeeping, GST Returns, ITR 1-7, TDS/TCS & Statutory Audit Support.',
+    tags: ['Cloud Accounting', 'GST & ITR', 'Statutory Audits'],
     link: '/all-services?category=accounting-compliance-taxation'
   },
   {
     id: 'certification-quality-management',
     title: 'Certification & Quality Management',
     icon: Stamp,
-    color: 'bg-blue-50 text-blue-600',
-    description: 'ISO, GMP/HACCP, CE, BIS, Halal and more',
+    color: 'bg-blue-50 text-blue-600 border-blue-200',
+    badge: 'Global Standards',
+    description: 'ISO 9001, 14001, 27001, 45001, GMP/HACCP, CE, BIS & Halal certifications.',
+    tags: ['ISO Standards', 'GMP / HACCP', 'CE & BIS'],
     link: '/all-services?category=certification-quality-management'
   },
   {
     id: 'business-registration-licensing-corporate',
     title: 'Business Registrations & Corporate',
     icon: Briefcase,
-    color: 'bg-red-50 text-red-600',
-    description: 'Company setup, licenses, ROC and secretarial',
+    color: 'bg-rose-50 text-rose-600 border-rose-200',
+    badge: 'Fast-Track MCA',
+    description: 'Private Limited, LLP, Section 8 NGO, OPC, Partnerships, Udyam & FSSAI licenses.',
+    tags: ['Pvt Ltd & LLP', 'Section 8 NGO', 'MSME / FSSAI'],
     link: '/all-services?category=business-registration-licensing-corporate'
   },
   {
     id: 'government-portal-registrations',
     title: 'Government Portal Registrations',
     icon: Globe,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'GeM, TReDS, RERA, AP/TS single-window',
+    color: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    badge: 'Govt Verified',
+    description: 'GeM Seller & OEM, TReDS, RERA, Single-Window & Public Tender management.',
+    tags: ['GeM Seller/OEM', 'TReDS Portal', 'RERA Approvals'],
     link: '/all-services?category=government-portal-registrations'
   },
   {
     id: 'industrial-msme-consultancy',
     title: 'Industrial & MSME Consultancy',
     icon: IndianRupee,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'DPR, CMA, loans, subsidy and scheme guidance',
+    color: 'bg-amber-50 text-amber-600 border-amber-200',
+    badge: 'Subsidies & Loans',
+    description: 'Bankable DPR preparation, CMA data, PMEGP, CGTMSE loans & state subsidies.',
+    tags: ['Bank DPR & CMA', 'PMEGP / CGTMSE', 'State Subsidies'],
     link: '/all-services?category=industrial-msme-consultancy'
   },
   {
     id: 'branding-documentation-startup-support',
     title: 'Branding & Startup Support',
     icon: Lightbulb,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'Business plans, branding, SOPs, documentation',
+    color: 'bg-purple-50 text-purple-600 border-purple-200',
+    badge: 'Growth Ready',
+    description: 'Pitch decks for funding, business plans, SOPs, HR documentation & Trademark/IP.',
+    tags: ['Pitch Decks', 'SOPs & HR Manuals', 'Trademark & IP'],
     link: '/all-services?category=branding-documentation-startup-support'
   },
   {
     id: 'machinery-industrial-support',
-    title: 'Machinery & Industrial Support',
+    title: 'Machinery & Industrial Setup',
     icon: Factory,
-    color: 'bg-slate-100 text-slate-700',
-    description: 'Sourcing, verification, turnkey setup, feasibility',
+    color: 'bg-cyan-50 text-cyan-600 border-cyan-200',
+    badge: 'Turnkey Execution',
+    description: 'Machinery imports, supplier verification, turnkey setup & feasibility studies.',
+    tags: ['Machine Imports', 'Supplier Audits', 'Plant Feasibility'],
     link: '/all-services?category=machinery-industrial-support'
+  },
+  {
+    id: 'corporate-compliances-roc',
+    title: 'ROC & Corporate Compliances',
+    icon: ShieldCheck,
+    color: 'bg-orange-50 text-orange-600 border-orange-200',
+    badge: 'Statutory Safe',
+    description: 'CCFS-2026 penalty relief, ROC annual filings (AOC-4/MGT-7), Director KYC & DSC.',
+    tags: ['CCFS-2026 Scheme', 'Annual Filings', 'Director KYC'],
+    link: '/compliance-scheme-2026'
   }
 ];
 
@@ -92,20 +116,34 @@ const PACKAGES = [
 /* --- FAQ DATA --- */
 const FAQS = [
   {
-    question: "Do I need to visit your office?",
-    answer: "Not at all. VR HERE is a 100% digital platform. We collect documents online, file applications on your behalf, and deliver certificates via email/courier. You can focus on your business while we handle the paperwork."
+    category: "Process & Delivery",
+    question: "Do I need to visit your office physically?",
+    answer: "Not at all. VR HERE is a 100% cloud-native platform. Document verification, government filings, and fee payments are handled digitally via our encrypted portal. Final certificates, DIN, DSC, and ROC approvals are delivered directly to your email and client dashboard."
   },
   {
-    question: "How long does company registration take?",
-    answer: "Typically, a Private Limited Company is registered in 7-10 working days, subject to ROC processing time. We ensure all documents are perfect to avoid rejections and delays."
+    category: "Timeline",
+    question: "How long does company registration and licensing take?",
+    answer: "Typically, Private Limited & LLP incorporations take 5 to 7 business days, subject to MCA portal processing. Digital signatures (DSC) and PAN/TAN are issued within 24-48 hours. Our dedicated team pre-checks documents to guarantee zero rejection delay."
   },
   {
-    question: "Can you help with Industrial Loans?",
-    answer: "Yes, we specialize in MSME and Industrial loans. We prepare detailed Project Reports (DPR) and guide you through schemes like CGTMSE and PMEGP for collateral-free loans."
+    category: "Industrial & Finance",
+    question: "Can you help with Industrial Project Loans & MSME Subsidies?",
+    answer: "Yes! We specialize in end-to-end industrial finance. We prepare bankable Detailed Project Reports (DPR), CMA data, and liaise with major financial institutions for collateral-free loans under CGTMSE, PMEGP, Stand-Up India, and state subsidy schemes."
   },
   {
-    question: "What is the 'Consultation Fee Adjustment'?",
-    answer: "If you book a consultation for ₹499, this amount is credited to your wallet. When you purchase any major service (like Company Registration) within 30 days, we deduct ₹499 from the final bill."
+    category: "Pricing Guarantee",
+    question: "How does the '₹499 Consultation Fee Adjustment' work?",
+    answer: "Your initial ₹499 consultation fee is 100% credited against any package purchase. When you proceed with your registration, certification, or compliance order within 30 days, ₹499 is automatically deducted from the final invoice."
+  },
+  {
+    category: "Post-Registration",
+    question: "What compliance support is provided after registration?",
+    answer: "We offer complete post-incorporation compliance including GST return filing, TDS/TCS management, ROC annual filings (AOC-4 & MGT-7), Director KYC, Cloud Bookkeeping on Tally/Zoho, and ISO audit certifications."
+  },
+  {
+    category: "Data Security",
+    question: "Is my company and financial data secure?",
+    answer: "Absolutely. All documents are encrypted with 256-bit SSL encryption, stored in enterprise vaults, and handled under strict Non-Disclosure Agreements (NDAs). We adhere to ISO 27001:2022 security protocols."
   }
 ];
 
@@ -534,50 +572,154 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* SERVICE CATEGORIES GRID */}
-      <section id="services" className="py-24 bg-gradient-to-b from-white to-slate-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-black text-slate-900">Everything Your Business Needs</h2>
-            <p className="text-slate-500 mt-4">Built on our latest category structure. Click a category to explore all included services.</p>
+      {/* 1. SERVICE CATEGORIES BENTO GRID */}
+      <section id="services" className="py-24 bg-gradient-to-b from-white via-slate-50 to-slate-100/60 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-black uppercase tracking-widest text-red-600 bg-red-50 border border-red-200/80 px-3.5 py-1.5 rounded-full">
+              Full Spectrum Capabilities
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 mt-4 tracking-tight">
+              Everything Your Business Needs
+            </h2>
+            <p className="text-base text-slate-600 mt-3 font-medium leading-relaxed">
+              From day-one incorporation and statutory licenses to factory machinery setup and bank project loans.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-            {SERVICES_GRID_DATA.map((service) => (
-              <a href={service.link || '#'} key={service.id} className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 hover:border-red-200 shadow-sm hover:shadow-xl hover:shadow-red-600/10 transition-all duration-300 group relative overflow-hidden">
-                <div className={`absolute -top-10 -right-10 w-28 h-28 rounded-full ${service.color.replace('text-', 'bg-').replace('600', '100')} opacity-50 blur-2xl`} />
-                <div className={`w-12 h-12 ${service.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <service.icon className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-red-600 transition-colors leading-tight">{service.title}</h3>
-                <p className="text-slate-500 text-sm mb-5 leading-relaxed min-h-[44px]">{service.description}</p>
-                <div className="flex items-center text-sm font-bold text-slate-900 group-hover:text-red-600 transition-colors">
-                  Explore <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </a>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {SERVICES_GRID_DATA.map((service) => {
+              const Icon = service.icon;
+              return (
+                <a
+                  href={service.link || '#'}
+                  key={service.id}
+                  className="bg-white rounded-3xl p-7 border border-slate-200/90 hover:border-red-400 shadow-xs hover:shadow-xl hover:shadow-red-600/10 transition-all duration-300 group flex flex-col justify-between relative overflow-hidden transform hover:-translate-y-1.5"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red-500/5 via-orange-500/5 to-transparent rounded-bl-full pointer-events-none group-hover:scale-125 transition-transform duration-500"></div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-5">
+                      <div className={`w-12 h-12 ${service.color} rounded-2xl flex items-center justify-center border shadow-xs group-hover:scale-110 transition-transform duration-300`}>
+                        <Icon className="w-6 h-6" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full group-hover:bg-red-50 group-hover:text-red-600 transition-colors">
+                        {service.badge}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-black text-slate-900 mb-2 group-hover:text-red-600 transition-colors leading-snug">
+                      {service.title}
+                    </h3>
+                    <p className="text-xs text-slate-600 font-medium leading-relaxed mb-5">
+                      {service.description}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex flex-wrap gap-1.5 mb-5">
+                      {service.tags.map((tag, tIdx) => (
+                        <span key={tIdx} className="text-[10px] font-semibold text-slate-600 bg-slate-50 border border-slate-200/80 px-2 py-0.5 rounded-md">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-black text-slate-900 group-hover:text-red-600 transition-colors">
+                      <span>Explore Services</span>
+                      <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-all duration-300">
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-black text-slate-900 mb-4">How It Works</h2>
-            <p className="text-lg text-slate-600">Get your business sorted in 3 simple steps.</p>
+      {/* 2. HOW IT WORKS WORKFLOW */}
+      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] opacity-10 [background-size:24px_24px]"></div>
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-xs font-black uppercase tracking-widest text-red-400 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full">
+              Frictionless 3-Step Execution
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black mt-4 tracking-tight">
+              How It Works
+            </h2>
+            <p className="text-base text-slate-400 mt-2 font-medium">
+              Get your company incorporated, compliant, or financed in 3 effortless steps.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-slate-200 -z-10"></div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connecting line on desktop */}
+            <div className="hidden md:block absolute top-[52px] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-red-600 via-orange-500 to-emerald-500 z-0"></div>
+
             {[
-              { title: "Book Consultation", desc: "Pay ₹499 to speak with our expert. We analyze your needs and explain the process." },
-              { title: "Submit Documents", desc: "Upload basic documents securely on our 100% digital dashboard." },
-              { title: "Service Delivered", desc: "We file everything. You receive your Certificates or Approvals via email." }
-            ].map((step, i) => (
-              <div key={i} className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100 text-center hover:-translate-y-2 transition-transform duration-300">
-                <div className="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-md border-4 border-white">{i + 1}</div>
-                <h3 className="font-bold text-xl text-slate-900 mb-3">{step.title}</h3>
-                <p className="text-slate-600 text-sm leading-relaxed">{step.desc}</p>
+              {
+                step: "01",
+                badge: "Discovery & CA Call",
+                title: "Book Quick Consultation",
+                desc: "Pay ₹499 to speak with our licensed CA/CS specialist. We analyze your requirements, check naming feasibility, and structure your package.",
+                time: "⚡ 30 Mins Advisory Call",
+                credit: "100% Fee Credited on Order",
+                color: "from-red-600 to-rose-600"
+              },
+              {
+                step: "02",
+                badge: "100% Digital Vault",
+                title: "Upload Documents",
+                desc: "Securely upload basic KYC proofs and information to your private client portal. No paperwork, zero physical queues, and real-time validation.",
+                time: "⚡ Instant Checklist",
+                credit: "256-Bit SSL Encrypted Vault",
+                color: "from-orange-500 to-amber-500"
+              },
+              {
+                step: "03",
+                badge: "Official Certification",
+                title: "Government Delivery",
+                desc: "Our senior compliance partners file statutory documents with MCA/Govt authorities. Receive official certificates and lifelong advisory support.",
+                time: "⚡ Fast-Track 5-7 Days",
+                credit: "Digital Delivery & Support",
+                color: "from-emerald-500 to-teal-600"
+              }
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="bg-slate-800/80 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-8 hover:border-slate-500 transition-all duration-300 flex flex-col justify-between relative z-10 group hover:-translate-y-2 hover:shadow-2xl hover:shadow-red-600/10"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} text-white font-black text-xl flex items-center justify-center shadow-lg shadow-black/40 border-2 border-white/20 group-hover:scale-110 transition-transform`}>
+                      {item.step}
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
+                      {item.badge}
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-white mb-3 tracking-tight group-hover:text-red-400 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-slate-300 text-xs font-medium leading-relaxed mb-6">
+                    {item.desc}
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-700/60 space-y-2">
+                  <div className="flex items-center text-[11px] font-bold text-slate-200">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mr-2 shrink-0" />
+                    <span>{item.time}</span>
+                  </div>
+                  <div className="flex items-center text-[11px] font-bold text-slate-300">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-red-400 mr-2 shrink-0" />
+                    <span>{item.credit}</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -585,7 +727,7 @@ const HomePage = () => {
       </section>
 
       {/* WHY CHOOSE US */}
-      <section className="py-24 bg-slate-900 relative overflow-hidden text-white">
+      <section className="py-24 bg-slate-900 relative overflow-hidden text-white border-t border-slate-800">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-16 relative z-10">
           <div className="md:w-1/2">
@@ -657,40 +799,121 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* FAQ SECTION */}
+      {/* 3. FREQUENTLY ASKED QUESTIONS (2-COLUMN SPLIT WITH IMAGE) */}
       <section className="py-24 bg-white border-t border-slate-100 relative overflow-hidden">
-        {/* Decorative Grid */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-
-        <div className="max-w-4xl mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-black text-slate-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-slate-500">Everything you need to know about the process.</p>
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-xs font-black uppercase tracking-widest text-red-600 bg-red-50 border border-red-200/80 px-3.5 py-1.5 rounded-full">
+              Clear & Transparent
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 mt-4 tracking-tight">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-base text-slate-600 mt-2 font-medium">
+              Everything you need to know about registration, compliance, and our process.
+            </p>
           </div>
 
-          <div className="space-y-4">
-            {FAQS.map((faq, i) => (
-              <div
-                key={i}
-                className={`border rounded-2xl overflow-hidden transition-all duration-300 ${activeAccordion === i ? 'border-red-200 shadow-lg bg-red-50/30' : 'border-slate-200 hover:border-red-100 hover:shadow-md bg-white'}`}
-              >
-                <button
-                  onClick={() => toggleAccordion(i)}
-                  className="w-full flex justify-between items-center p-6 text-left"
-                >
-                  <span className={`font-bold text-lg ${activeAccordion === i ? 'text-red-700' : 'text-slate-800'}`}>{faq.question}</span>
-                  {activeAccordion === i ?
-                    <div className="bg-red-100 p-1 rounded-full"><ChevronUp className="w-5 h-5 text-red-600" /></div> :
-                    <div className="bg-slate-100 p-1 rounded-full group-hover:bg-slate-200"><ChevronDown className="w-5 h-5 text-slate-500" /></div>
-                  }
-                </button>
-                <div
-                  className={`px-6 text-slate-600 text-[15px] leading-relaxed overflow-hidden transition-all duration-300 ease-in-out ${activeAccordion === i ? 'max-h-48 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
-                >
-                  {faq.answer}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            {/* Left Column: Visual Showcase & Direct Contact */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="bg-slate-900 rounded-3xl p-6 text-white relative overflow-hidden shadow-2xl border border-slate-800 group">
+                <div className="relative rounded-2xl overflow-hidden mb-6 aspect-square max-h-[320px] w-full">
+                  <img
+                    src="/faq-advisor.jpg"
+                    alt="VR HERE CA Advisory Specialist"
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+                  
+                  {/* Floating Trust Pills */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
+                    <div className="bg-slate-900/90 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-black text-emerald-400 flex items-center gap-1.5 shadow-lg">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                      <span>Avg. Reply &lt; 15 Mins</span>
+                    </div>
+                    <div className="bg-slate-900/90 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-black text-amber-300 flex items-center gap-1 shadow-lg">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span>4.9 / 5 Rating</span>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-black text-white mb-2 tracking-tight">
+                  Still Have Questions?
+                </h3>
+                <p className="text-xs text-slate-300 font-medium leading-relaxed mb-6">
+                  Speak directly with our practicing Chartered Accountants and Company Secretaries. We provide clear roadmap clarity for your business.
+                </p>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={handleConsultationBook}
+                    className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-black text-xs uppercase tracking-wider py-4 px-6 rounded-2xl transition-all shadow-lg shadow-red-600/30 flex items-center justify-center gap-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>Book 1-on-1 Consultation @ ₹499</span>
+                  </button>
+
+                  <a
+                    href="https://wa.me/918008530606?text=Hi%20VR%20HERE%20Team,%20I%20have%20a%20question%20regarding%20business%20registration%20and%20compliance."
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider py-3.5 px-6 rounded-2xl transition-all flex items-center justify-center gap-2 border border-slate-700"
+                  >
+                    <MessageSquare className="w-4 h-4 text-emerald-400" />
+                    <span>WhatsApp Advisory Hotline</span>
+                  </a>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Right Column: Interactive FAQ Accordion */}
+            <div className="lg:col-span-7 space-y-4">
+              {FAQS.map((faq, i) => (
+                <div
+                  key={i}
+                  className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+                    activeAccordion === i
+                      ? 'border-red-500 bg-red-50/20 shadow-lg ring-1 ring-red-500/20'
+                      : 'border-slate-200/90 hover:border-slate-300 bg-white shadow-2xs'
+                  }`}
+                >
+                  <button
+                    onClick={() => toggleAccordion(i)}
+                    className="w-full flex items-start justify-between p-6 text-left gap-4"
+                  >
+                    <div className="flex-1">
+                      {faq.category && (
+                        <span className="text-[10px] font-black uppercase tracking-wider text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md mb-2 inline-block">
+                          {faq.category}
+                        </span>
+                      )}
+                      <h4 className={`font-bold text-base sm:text-lg leading-snug ${activeAccordion === i ? 'text-red-700 font-black' : 'text-slate-900'}`}>
+                        {faq.question}
+                      </h4>
+                    </div>
+                    <div className={`p-2 rounded-xl shrink-0 transition-colors ${activeAccordion === i ? 'bg-red-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500'}`}>
+                      {activeAccordion === i ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </button>
+
+                  <div
+                    className={`px-6 text-slate-600 text-sm leading-relaxed overflow-hidden transition-all duration-300 ease-in-out ${
+                      activeAccordion === i ? 'max-h-60 pb-6 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <p className="pt-2 border-t border-slate-100/80 font-medium">
+                      {faq.answer}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
