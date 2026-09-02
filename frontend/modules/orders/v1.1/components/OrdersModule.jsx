@@ -533,7 +533,7 @@ const OrdersModule = ({
                 </select>
               </div>
               <div>
-                <label className="text-xs text-slate-500">Owner</label>
+                <label className="text-xs text-slate-500 font-semibold">Project Manager</label>
                 <select value={selectedOrder.assignedEmployee?._id || selectedOrder.assignedEmployee || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { employeeId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white">
                   <option value="">Unassigned</option>
                   {employees.map((employee) => <option key={employee._id} value={employee._id}>{employee.name}</option>)}

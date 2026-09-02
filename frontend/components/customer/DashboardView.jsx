@@ -408,6 +408,51 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                             </div>
                         </div>
                     )}
+
+                    {/* Quick Access Services (4x2 Bento Grid) */}
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-900 tracking-tight">Quick Action Launchpad</h3>
+                                <p className="text-xs text-slate-500 font-medium">One-click jump to your most frequent business requirements</p>
+                            </div>
+                            <button
+                                onClick={() => setActiveTab('Services')}
+                                className="text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-wider flex items-center gap-1"
+                            >
+                                <span>Master Catalog</span>
+                                <ChevronRight size={14} />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {topServices.map(service => (
+                                <button
+                                    key={service.id}
+                                    onClick={() => {
+                                        if (service.key.startsWith('/')) {
+                                            navigate(service.key);
+                                        } else if (onSelectService && service.key !== 'Services' && service.key !== 'New') {
+                                            onSelectService({ title: service.name, slug: service.key });
+                                        } else {
+                                            setActiveTab(service.key);
+                                        }
+                                    }}
+                                    className="flex flex-col items-center p-4 rounded-2xl bg-slate-50/80 hover:bg-white border border-slate-200/80 hover:border-red-300 shadow-2xs hover:shadow-md transition-all duration-200 group text-center"
+                                >
+                                    <div className={`w-12 h-12 ${service.color} rounded-2xl flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform mb-3 border`}>
+                                        <service.icon size={20} />
+                                    </div>
+                                    <span className="text-xs font-black text-slate-800 leading-snug group-hover:text-red-600 transition-colors mb-0.5">
+                                        {service.name}
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-slate-400">
+                                        {service.tag}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {/* --- RIGHT COLUMN: INTELLIGENCE & ADVISOR PANEL (4 COLS) --- */}
