@@ -266,8 +266,10 @@ const canAccessOrder = (user, order) => {
     if (!user || !order) return false;
     if (user.role === 'admin') return true;
 
-    if (user.role === 'client') {
-        return normalizeId(order.user) === user._id.toString();
+    if (user.role === 'client' || user.role === 'customer') {
+        const isUserMatch = normalizeId(order.user) === user._id.toString();
+        const isEmailMatch = Boolean(user.email && order.clientEmail && user.email.toLowerCase().trim() === order.clientEmail.toLowerCase().trim());
+        return isUserMatch || isEmailMatch;
     }
 
     if (user.role === 'employee' || user.role === 'freelancer') {
