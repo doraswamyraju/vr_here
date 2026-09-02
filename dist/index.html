@@ -16,8 +16,8 @@
     gtag('js', new Date());
     gtag('config', 'G-RRSMWL2084');
   </script>
-  <script type="module" crossorigin src="/assets/index-BTvizvi6.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CKyj8mL2.css">
+  <script type="module" crossorigin src="/assets/index-BLIfEtSs.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Cq-rYuTp.css">
 </head>
 
 <body>
@@ -26,6 +26,17 @@
   <script src="/socket.io.min.js"></script>
   <!-- Start of LetsTrack Live Chat & Tracking -->
   <script>
+    (function() {
+      var origAttachShadow = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(init) {
+        var shadow = origAttachShadow.call(this, Object.assign({}, init, { mode: 'open' }));
+        if (this.id === 'letstrack-widget-root') {
+          window.__letsTrackShadowRoot = shadow;
+        }
+        return shadow;
+      };
+    })();
+
     window.LetsTrackConfig = {
       websiteId: "lt_6a9347d5410be8335e42db43949caf95" // Tenant API Key from https://livechat.vrhere.in
     };

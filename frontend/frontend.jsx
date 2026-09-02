@@ -106,11 +106,52 @@ const App = () => {
 
   React.useEffect(() => {
     const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard|partner\/dashboard)/.test(location.pathname);
-    if (isDashboardPath) {
-      document.body.classList.add('hide-letstrack');
-    } else {
-      document.body.classList.remove('hide-letstrack');
-    }
+    
+    const applyMode = () => {
+      const rootEl = document.getElementById('letstrack-widget-root');
+      const shadow = (rootEl && rootEl.shadowRoot) || window.__letsTrackShadowRoot;
+      if (!shadow) return;
+
+      const styleId = 'lt-dashboard-override-style';
+      let style = shadow.getElementById(styleId);
+
+      if (isDashboardPath) {
+        if (!style) {
+          style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = `
+            .lt-widget-btn, button, [class*="widget-btn"], [class*="launcher"] {
+              display: none !important;
+              visibility: hidden !important;
+              opacity: 0 !important;
+              pointer-events: none !important;
+            }
+            .lt-widget-container {
+              left: auto !important;
+              right: 24px !important;
+              bottom: 96px !important;
+              align-items: flex-end !important;
+              z-index: 2147483640 !important;
+            }
+          `;
+          shadow.appendChild(style);
+        }
+      } else {
+        if (style) {
+          style.remove();
+        }
+      }
+    };
+
+    applyMode();
+    const t1 = setTimeout(applyMode, 500);
+    const t2 = setTimeout(applyMode, 1500);
+    const t3 = setTimeout(applyMode, 3500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, [location.pathname]);
 
   return (

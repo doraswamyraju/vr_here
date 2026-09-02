@@ -45,18 +45,6 @@ export default function CustomerApp() {
    const [menuExpanded, setMenuExpanded] = useState(false);
 
    const toggleLetsTrack = () => {
-      document.body.classList.remove('hide-letstrack');
-      const rootEl = document.getElementById('letstrack-widget-root');
-      if (rootEl) {
-         rootEl.style.display = 'block';
-         if (rootEl.shadowRoot) {
-            const btn = rootEl.shadowRoot.querySelector('.lt-widget-btn, button, [class*="widget-btn"]');
-            if (btn) {
-               btn.click();
-               return;
-            }
-         }
-      }
       if (window.LetsTrack) {
          if (typeof window.LetsTrack.open === 'function') {
             window.LetsTrack.open();
@@ -64,6 +52,15 @@ export default function CustomerApp() {
          }
          if (typeof window.LetsTrack.toggle === 'function') {
             window.LetsTrack.toggle();
+            return;
+         }
+      }
+      const rootEl = document.getElementById('letstrack-widget-root');
+      const shadow = (rootEl && rootEl.shadowRoot) || window.__letsTrackShadowRoot;
+      if (shadow) {
+         const btn = shadow.querySelector('.lt-widget-btn, button, [class*="widget-btn"], [class*="launcher"]');
+         if (btn) {
+            btn.click();
             return;
          }
       }

@@ -872,7 +872,7 @@ export const GlobalFloatingButtons = () => {
     };
 
     return (
-        <div className="fixed right-6 bottom-24 z-[100] flex flex-col gap-3">
+        <div className="fixed right-6 bottom-6 z-[100] flex flex-col gap-3">
             {/* Page Jump Navigator (Hidden on Home) */}
             {!isHome && (
                 <div className="relative mb-2">
