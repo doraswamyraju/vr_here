@@ -127,12 +127,13 @@ const App = () => {
               pointer-events: none !important;
             }
             .lt-widget-container {
+              position: fixed !important;
               left: auto !important;
               right: 24px !important;
               bottom: 96px !important;
               align-items: flex-end !important;
               z-index: 2147483640 !important;
-              position: relative !important;
+              margin: 0 !important;
             }
           `;
           shadow.appendChild(style);

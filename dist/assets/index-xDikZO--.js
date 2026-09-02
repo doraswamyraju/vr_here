@@ -7233,12 +7233,13 @@ Upon receiving your request, we will verify your identity and permanently delete
               pointer-events: none !important;
             }
             .lt-widget-container {
+              position: fixed !important;
               left: auto !important;
               right: 24px !important;
               bottom: 96px !important;
               align-items: flex-end !important;
               z-index: 2147483640 !important;
-              position: relative !important;
+              margin: 0 !important;
             }
           `,c.appendChild(u));const h=c.querySelector('.lt-widget-container, .lt-chat-window, [class*="widget-container"]');if(h&&!c.getElementById("lt-custom-close-btn")){const x=document.createElement("button");x.id="lt-custom-close-btn",x.innerHTML="✕",x.title="Close Live Chat",x.style.cssText=`
             position: absolute !important;
