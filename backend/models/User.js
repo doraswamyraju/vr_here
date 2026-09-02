@@ -34,6 +34,11 @@ const userSchema = mongoose.Schema({
         enum: ['admin', 'employee', 'client', 'partner', 'freelancer'],
         default: 'client'
     },
+    assignedTicketCategories: {
+        type: [String],
+        enum: ['Technical', 'Service', 'Support'],
+        default: []
+    },
     skills: {
         type: [String],
         default: []

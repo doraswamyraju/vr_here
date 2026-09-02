@@ -4,9 +4,9 @@ import {
     getTickets,
     getTicketById,
     addTicketMessage,
-    updateTicketStatus
+    updateTicket
 } from '../controllers/ticketController.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -15,10 +15,11 @@ router.route('/')
     .get(protect, getTickets);
 
 router.route('/:id')
-    .get(protect, getTicketById);
+    .get(protect, getTicketById)
+    .put(protect, updateTicket);
 
 router.route('/:id/status')
-    .put(protect, admin, updateTicketStatus);
+    .put(protect, updateTicket);
 
 router.route('/:id/messages')
     .post(protect, addTicketMessage);

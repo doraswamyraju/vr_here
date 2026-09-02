@@ -105,6 +105,7 @@ const authUser = asyncHandler(async (req, res) => {
         isActive: user.isActive,
         isClockedIn: user.isClockedIn || false,
         activeOrderId: user.activeOrderId || null,
+        assignedTicketCategories: user.assignedTicketCategories || [],
         token: generateToken(user._id)
     });
 });
@@ -405,7 +406,7 @@ const createUserByAdmin = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/users/:id
 // @access  Private/Admin
 const updateUserByAdmin = asyncHandler(async (req, res) => {
-    const { name, email, phone, role, isActive, commissionPercentage, panCard, canManageCompliance } = req.body;
+    const { name, email, phone, role, isActive, commissionPercentage, panCard, canManageCompliance, assignedTicketCategories } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -421,6 +422,9 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
     if (canManageCompliance !== undefined) user.canManageCompliance = Boolean(canManageCompliance);
     if (commissionPercentage !== undefined) user.commissionPercentage = Number(commissionPercentage);
     if (panCard !== undefined) user.panCard = panCard;
+    if (assignedTicketCategories !== undefined) {
+        user.assignedTicketCategories = Array.isArray(assignedTicketCategories) ? assignedTicketCategories : [];
+    }
 
     await user.save();
 
@@ -436,6 +440,7 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
             canManageCompliance: user.canManageCompliance,
             commissionPercentage: user.commissionPercentage,
             panCard: user.panCard,
+            assignedTicketCategories: user.assignedTicketCategories,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         }

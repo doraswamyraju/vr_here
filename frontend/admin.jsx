@@ -27,6 +27,7 @@ import { useNavigate } from 'react-router-dom';
 import ServicesMasterView from './components/admin/ServicesMasterView';
 import { AdminOrdersView } from './modules/orders/v1.1';
 import UsersModule from './components/admin/users/UsersModule';
+import TicketCenter from './components/tickets/TicketCenter';
 import { ORDER_STATUSES } from './modules/orders/v1.1/constants/constants';
 import { nextStatus } from './modules/orders/v1.1/utils/helpers';
 import { parseRequirementWorkbook, parseTaskWorkbook } from './modules/orders/v1.1/utils/excelParsers';
@@ -809,7 +810,7 @@ function AdminApp() {
       />
     );
     if (activeTab === 'Knowledge') return <DummyView title="Knowledge Base" />;
-    if (activeTab === 'Support') return <DummyView title="Support Inbox" />;
+    if (activeTab === 'Support') return <TicketCenter userInfo={userInfo} userRole="admin" />;
     if (activeTab === 'Services') return <ServicesMasterView token={userInfo?.token} />;
     if (activeTab === 'Referrals') return <ReferralPartnersModule config={config} orders={orders} />;
     if (activeTab === 'Renewals') return (

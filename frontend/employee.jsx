@@ -12,6 +12,7 @@ import TimeTrackingModule from './components/employee/TimeTrackingModule';
 import DocumentsModule from './components/employee/DocumentsModule';
 import RequirementsModule from './components/employee/RequirementsModule';
 import SupportModule from './components/employee/SupportModule';
+import TicketCenter from './components/tickets/TicketCenter';
 import CommercialsModule from './components/employee/CommercialsModule';
 import NotificationsModule from './components/employee/NotificationsModule';
 import SecurityModule from './components/employee/SecurityModule';
@@ -469,7 +470,7 @@ const EmployeeApp = () => {
           />
         );
       case 'support':
-        return <SupportModule tickets={tickets} />;
+        return <TicketCenter userInfo={userInfo} userRole="employee" />;
       case 'commercials':
         return <CommercialsModule selectedOrder={selectedOrder} />;
       case 'finance':
@@ -510,6 +511,7 @@ const EmployeeApp = () => {
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
         onLogout={handleLogout}
+        userInfo={userInfo}
       />
 
       <main className="flex-1 flex flex-col h-full overflow-hidden">

@@ -7,8 +7,17 @@ const EmployeeSidebar = ({
   setActiveTab,
   collapsed,
   setCollapsed,
-  onLogout
+  onLogout,
+  userInfo
 }) => {
+  const visibleTabs = EMPLOYEE_TABS.filter(item => {
+    if (item.id === 'support') {
+      const hasCategories = userInfo?.assignedTicketCategories && userInfo.assignedTicketCategories.length > 0;
+      return userInfo?.role === 'admin' || hasCategories;
+    }
+    return true;
+  });
+
   return (
     <aside
       className={`${collapsed ? 'w-20' : 'w-72'} bg-white/75 backdrop-blur-md h-full border-r border-slate-200/70 flex flex-col z-20 transition-all duration-300`}
@@ -22,7 +31,7 @@ const EmployeeSidebar = ({
       </div>
 
       <div className="flex-1 py-5 px-3 space-y-1 overflow-y-auto">
-        {EMPLOYEE_TABS.map((item) => {
+        {visibleTabs.map((item) => {
           const Icon = item.icon;
           return (
             <button

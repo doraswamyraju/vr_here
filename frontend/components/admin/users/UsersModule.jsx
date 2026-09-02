@@ -9,10 +9,10 @@ import AssignmentPreview from './AssignmentPreview';
 import WebmailModule from './WebmailModule';
 
 const UsersModule = ({ token, users, orders, onRefresh }) => {
-  const [createDraft, setCreateDraft] = useState({ name: '', email: '', phone: '', role: 'employee' });
+  const [createDraft, setCreateDraft] = useState({ name: '', email: '', phone: '', role: 'employee', assignedTicketCategories: [] });
   const [isCreating, setIsCreating] = useState(false);
   const [editingUserId, setEditingUserId] = useState('');
-  const [editDraft, setEditDraft] = useState({ name: '', email: '', role: 'employee', phone: '' });
+  const [editDraft, setEditDraft] = useState({ name: '', email: '', role: 'employee', phone: '', assignedTicketCategories: [] });
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [attendanceSummary, setAttendanceSummary] = useState({ items: [] });
   const [roleFilter, setRoleFilter] = useState('all');
@@ -48,7 +48,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
     setIsCreating(true);
     try {
       await axios.post('/api/auth/users', createDraft, config);
-      setCreateDraft({ name: '', email: '', phone: '', role: 'employee' });
+      setCreateDraft({ name: '', email: '', phone: '', role: 'employee', assignedTicketCategories: [] });
       await onRefresh();
       await loadSummary();
       alert('User created and password setup email sent.');
@@ -61,7 +61,13 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
 
   const startEdit = (user) => {
     setEditingUserId(user._id);
-    setEditDraft({ name: user.name || '', email: user.email || '', role: user.role || 'employee', phone: user.phone || '' });
+    setEditDraft({
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'employee',
+      phone: user.phone || '',
+      assignedTicketCategories: user.assignedTicketCategories || []
+    });
   };
 
   const saveEdit = async (user) => {

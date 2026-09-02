@@ -9,6 +9,7 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
           <th className="text-left px-4 py-3">Name</th>
           <th className="text-left px-4 py-3">Email</th>
           <th className="text-left px-4 py-3">Role</th>
+          <th className="text-left px-4 py-3">Ticket Queues</th>
           <th className="text-left px-4 py-3">Status</th>
           <th className="text-left px-4 py-3">Actions</th>
         </tr>
@@ -16,7 +17,7 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
       <tbody className="divide-y divide-slate-100">
         {!users.length && (
           <tr>
-            <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+            <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
               No users found for selected filters.
             </td>
           </tr>
@@ -45,11 +46,61 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onStartEdit
                   </select>
                 ) : (
                   <div className="flex items-center gap-1.5">
-                    <span>{user.role}</span>
+                    <span className="font-semibold">{user.role}</span>
                     {user.canManageCompliance && (
                       <span className="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase" title="Authorized Compliance Manager">
                         Compliance
                       </span>
+                    )}
+                  </div>
+                )}
+              </td>
+              <td className="px-4 py-3">
+                {isEditing && (editDraft.role === 'employee' || editDraft.role === 'admin') ? (
+                  <div className="flex items-center gap-2">
+                    {['Technical', 'Service', 'Support'].map((cat) => {
+                      const isChecked = (editDraft.assignedTicketCategories || []).includes(cat);
+                      return (
+                        <label key={cat} className="inline-flex items-center gap-1 text-[11px] font-bold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const current = editDraft.assignedTicketCategories || [];
+                              const updated = e.target.checked
+                                ? [...current, cat]
+                                : current.filter(c => c !== cat);
+                              setEditDraft(prev => ({ ...prev, assignedTicketCategories: updated }));
+                            }}
+                            className="rounded border-slate-300 text-red-600 focus:ring-red-500"
+                          />
+                          {cat}
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {user.role === 'admin' ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-900 text-white">
+                        All Queues (Admin)
+                      </span>
+                    ) : user.role === 'employee' ? (
+                      user.assignedTicketCategories && user.assignedTicketCategories.length > 0 ? (
+                        user.assignedTicketCategories.map(cat => (
+                          <span key={cat} className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                            cat === 'Technical' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            cat === 'Service' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                            'bg-amber-50 text-amber-800 border-amber-200'
+                          }`}>
+                            {cat}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">No tickets assigned</span>
+                      )
+                    ) : (
+                      <span className="text-[11px] text-slate-400">-</span>
                     )}
                   </div>
                 )}
