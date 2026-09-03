@@ -11,7 +11,11 @@ import {
   ShieldCheck,
   Calendar,
   User as UserIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Copy,
+  Check,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import AddUserForm from './AddUserForm';
 import UsersFilters from './UsersFilters';
@@ -113,14 +117,27 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
     await loadSummary();
   };
 
+  const [passwordLinkModal, setPasswordLinkModal] = useState(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
   const toggleComplianceAccess = async (user) => {
     await axios.put(`/api/auth/users/${user._id}`, { canManageCompliance: !user.canManageCompliance }, config);
     await onRefresh();
   };
 
   const sendPasswordLink = async (user) => {
-    await axios.post(`/api/auth/users/${user._id}/send-password-link`, {}, config);
-    alert(`Password link sent to ${user.email}`);
+    try {
+      const { data } = await axios.post(`/api/auth/users/${user._id}/send-password-link`, {}, config);
+      setPasswordLinkModal({
+        user,
+        resetUrl: data.resetUrl,
+        success: data.success,
+        message: data.message,
+        emailError: data.emailError
+      });
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to generate password setup link');
+    }
   };
 
   const deleteUser = async (user) => {
@@ -322,6 +339,87 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setViewingUser(null)}
+                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- PASSWORD SETUP / RESET LINK MODAL --- */}
+      {passwordLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className={`p-6 text-white ${passwordLinkModal.success ? 'bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900' : 'bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900'} flex items-start justify-between`}>
+              <div>
+                <h3 className="text-lg font-black flex items-center gap-2">
+                  {passwordLinkModal.success ? <CheckCircle2 className="text-emerald-400" size={20} /> : <AlertTriangle className="text-amber-400" size={20} />}
+                  Password Setup Link
+                </h3>
+                <p className="text-xs text-slate-300 mt-1">
+                  User: <span className="font-bold text-white">{passwordLinkModal.user.name}</span> ({passwordLinkModal.user.email})
+                </p>
+              </div>
+              <button onClick={() => { setPasswordLinkModal(null); setCopiedLink(false); }} className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {passwordLinkModal.success ? (
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                  <Check size={16} className="text-emerald-600 shrink-0" />
+                  Email was dispatched successfully to {passwordLinkModal.user.email}.
+                </div>
+              ) : (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-950 space-y-1.5">
+                  <p className="font-bold flex items-center gap-1.5 text-amber-900 text-sm">
+                    <AlertTriangle size={16} className="shrink-0 text-amber-600" />
+                    Email could not be delivered via SMTP
+                  </p>
+                  <p className="text-amber-800 text-[11px] leading-relaxed">
+                    Reason: {passwordLinkModal.emailError || 'Invalid login: Username and Password not accepted by Gmail SMTP'}.
+                  </p>
+                  <p className="text-slate-600 text-[11px] pt-1">
+                    The reset link has been generated below. You can copy it now and share it directly with the user via WhatsApp / SMS / Chat.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">
+                  Direct Password Setup Link (Valid for 24 hours)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    readOnly 
+                    value={passwordLinkModal.resetUrl || ''} 
+                    className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono select-all outline-none"
+                    onClick={(e) => e.target.select()}
+                  />
+                  <button
+                    onClick={() => {
+                      if (passwordLinkModal.resetUrl) {
+                        navigator.clipboard.writeText(passwordLinkModal.resetUrl);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2500);
+                      }
+                    }}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap ${
+                      copiedLink ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
+                    }`}
+                  >
+                    {copiedLink ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Link</>}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => { setPasswordLinkModal(null); setCopiedLink(false); }}
                 className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
               >
                 Close

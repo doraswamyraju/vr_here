@@ -68,19 +68,30 @@ const issueResetToken = async (user, expiryMs = 24 * 60 * 60 * 1000) => {
 const sendPasswordSetupEmail = async (user, token, subject = 'Set Your VR HERE Password') => {
     const resetUrl = buildResetUrl(token);
     const message = `
-        <h2>Welcome ${user.name}</h2>
-        <p>Your account is ready. Click below to set your password and start using the dashboard.</p>
-        <p><a href="${resetUrl}" clicktracking="off">Set Password</a></p>
-        <p>If the button does not work, copy this URL:</p>
-        <p>${resetUrl}</p>
-        <p>This link will expire soon for security.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="color: #4f46e5; margin: 0; font-size: 24px; font-weight: 800;">VR HERE Business Solutions</h2>
+            </div>
+            <h3 style="color: #1e293b; margin-top: 0;">Hello ${user.name || 'User'},</h3>
+            <p style="color: #475569; font-size: 15px; line-height: 1.6;">Your account on the VR HERE Platform is ready. Click the button below to set or reset your password and access your dashboard.</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background: #4f46e5; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 15px; display: inline-block;">Set / Reset Password</a>
+            </div>
+            <p style="color: #64748b; font-size: 13px; margin-bottom: 6px;">If the button above does not work, copy and paste this link into your browser:</p>
+            <p style="background: #f1f5f9; padding: 10px 14px; border-radius: 8px; font-size: 13px; color: #4f46e5; word-break: break-all; margin: 0;">
+                <a href="${resetUrl}" style="color: #4f46e5; text-decoration: underline;">${resetUrl}</a>
+            </p>
+            <p style="color: #94a3b8; font-size: 12px; margin-top: 28px; border-top: 1px solid #f1f5f9; padding-top: 14px;">This security link is valid for 24 hours. If you did not request this, please ignore this email or contact support.</p>
+        </div>
     `;
 
-    await sendEmail({
+    const emailResult = await sendEmail({
         email: user.email,
         subject,
         message
     });
+
+    return { resetUrl, ...emailResult };
 };
 
 // @desc    Auth user & get token
@@ -619,9 +630,17 @@ const sendPasswordLinkByAdmin = asyncHandler(async (req, res) => {
     }
 
     const resetToken = await issueResetToken(user, 24 * 60 * 60 * 1000);
-    await sendPasswordSetupEmail(user, resetToken, 'Set or Reset Your VR HERE Password');
+    const emailResult = await sendPasswordSetupEmail(user, resetToken, 'Set or Reset Your VR HERE Password');
+    const resetUrl = buildResetUrl(resetToken);
 
-    res.json({ message: 'Password setup email sent' });
+    res.json({
+        success: Boolean(emailResult.success),
+        message: emailResult.success 
+            ? `Password setup email sent to ${user.email}` 
+            : `Password link generated, but email delivery failed (${emailResult.error || emailResult.reason || 'SMTP Error'})`,
+        resetUrl,
+        emailError: emailResult.error || emailResult.reason || null
+    });
 });
 
 // @desc    Delete user
