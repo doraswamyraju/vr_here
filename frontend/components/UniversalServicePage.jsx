@@ -700,9 +700,18 @@ const UniversalServicePage = ({ config, pageId: propPageId }) => {
       {showConsultationModal && (
         <ConsultationPaymentModal
           isOpen={showConsultationModal}
-          onClose={() => setShowConsultationModal(false)}
+          onClose={() => {
+            setShowConsultationModal(false);
+            setSelectedPlan(null);
+          }}
+          selectedPlan={selectedPlan || {
+            name: `${serviceTitle} Consultation`,
+            price: activeHero.consultationPrice || 499,
+            isAdjustable: true
+          }}
+          title={selectedPlan ? `Get Started: ${selectedPlan.name}` : `Consultation: ${serviceTitle}`}
           defaultService={serviceTitle}
-          price={activeHero.consultationPrice || 499}
+          price={selectedPlan?.price || activeHero.consultationPrice || 499}
         />
       )}
 

@@ -1,15 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { X, CreditCard, RefreshCw, Loader2, ShieldCheck, Gift, CheckCircle2, AlertCircle } from 'lucide-react';
+import { launchRazorpayCheckout } from '../utils/razorpayCheckout';
+
+const defaultFormatCurrency = (amount) => {
+  const num = typeof amount === 'string' ? Number(amount.replace(/[^0-9]/g, '')) || 0 : Number(amount) || 0;
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(num);
+};
 
 const ConsultationPaymentModal = ({
   isOpen,
   onClose,
   selectedPlan,
+  defaultService,
+  price,
   initialFormData,
   initialTermsAccepted = false,
   onSubmit,
-  isSubmitting,
+  isSubmitting = false,
   formatCurrency,
   title,
   nonAdjustableNote = '+ Government Fees as applicable'
@@ -22,7 +34,19 @@ const ConsultationPaymentModal = ({
   });
   const [termsAccepted, setTermsAccepted] = useState(initialTermsAccepted);
   const [validationStatus, setValidationStatus] = useState({ loading: false, error: '', success: '', partnerName: '' });
+  const [localSubmitting, setLocalSubmitting] = useState(false);
   const hasInitializedForOpen = useRef(false);
+
+  const currencyFormatter = typeof formatCurrency === 'function' ? formatCurrency : defaultFormatCurrency;
+
+  const effectivePlan = selectedPlan || {
+    id: 'consultation',
+    name: defaultService ? `${defaultService} Consultation` : 'Expert Guidance',
+    price: price || 499,
+    isAdjustable: true
+  };
+
+  const modalTitle = title || (effectivePlan?.name ? `Book: ${effectivePlan.name}` : 'Expert Guidance');
 
   useEffect(() => {
     if (!isOpen) {
@@ -30,12 +54,19 @@ const ConsultationPaymentModal = ({
       return;
     }
 
-    // Initialize only once per open cycle so typing isn't reset by parent re-renders.
     if (!hasInitializedForOpen.current) {
+      const currentSavedUser = (() => {
+        try {
+          return JSON.parse(localStorage.getItem('userInfo') || 'null');
+        } catch {
+          return null;
+        }
+      })();
+
       setFormData({
-        name: initialFormData?.name || '',
-        phone: initialFormData?.phone || '',
-        email: initialFormData?.email || '',
+        name: initialFormData?.name || currentSavedUser?.name || '',
+        phone: initialFormData?.phone || currentSavedUser?.phone || '',
+        email: initialFormData?.email || currentSavedUser?.email || '',
         referralCode: ''
       });
       setTermsAccepted(Boolean(initialTermsAccepted));
@@ -57,6 +88,41 @@ const ConsultationPaymentModal = ({
     }
   };
 
+  const executeProceed = async () => {
+    if (typeof onSubmit === 'function') {
+      onSubmit({
+        formData,
+        termsAccepted,
+        selectedPlan: effectivePlan
+      });
+      return;
+    }
+
+    setLocalSubmitting(true);
+    try {
+      await launchRazorpayCheckout({
+        serviceName: defaultService || effectivePlan.name || 'Business Consultation',
+        selectedPlan: effectivePlan,
+        packageName: effectivePlan.name,
+        amount: effectivePlan.price,
+        formData,
+        onSubmittingChange: setLocalSubmitting,
+        onSuccess: (data) => {
+          alert('Payment completed successfully! Order has been registered.');
+          onClose();
+          window.location.href = '/customer-dashboard';
+        },
+        onFailure: (err) => {
+          alert(err?.response?.data?.message || err?.message || 'Payment could not be completed.');
+        }
+      });
+    } catch (err) {
+      alert(err?.message || 'Failed to initialize payment gateway.');
+    } finally {
+      setLocalSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     
@@ -67,13 +133,9 @@ const ConsultationPaymentModal = ({
         const { data } = await axios.get(`/api/partner/validate/${formData.referralCode}`);
         setValidationStatus({ loading: false, error: '', success: 'Valid Partner!', partnerName: data.partnerName });
         
-        // Brief delay to show success before proceeding
         setTimeout(() => {
-          onSubmit({
-            formData,
-            termsAccepted
-          });
-        }, 800);
+          executeProceed();
+        }, 500);
         return;
       } catch (err) {
         setValidationStatus({ 
@@ -85,11 +147,10 @@ const ConsultationPaymentModal = ({
       }
     }
 
-    onSubmit({
-      formData,
-      termsAccepted
-    });
+    executeProceed();
   };
+
+  const submitting = isSubmitting || localSubmitting;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -103,8 +164,8 @@ const ConsultationPaymentModal = ({
         </button>
 
         <div className="bg-slate-900 p-6 text-center border-b-4 border-red-600">
-          <h3 className="text-white font-bold text-xl">{title}</h3>
-          <p className="text-slate-400 text-sm mt-1">{selectedPlan?.name || 'Expert Guidance'}</p>
+          <h3 className="text-white font-bold text-xl">{modalTitle}</h3>
+          <p className="text-slate-400 text-sm mt-1">{effectivePlan?.name || 'Expert Guidance'}</p>
         </div>
 
         <div className="p-6">
@@ -112,9 +173,9 @@ const ConsultationPaymentModal = ({
             <CreditCard className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
             <div>
               <div className="font-bold text-slate-900 text-sm">
-                Payment Amount: {selectedPlan ? formatCurrency(selectedPlan.price) : '...'}
+                Payment Amount: {currencyFormatter(effectivePlan.price)}
               </div>
-              {selectedPlan?.isAdjustable ? (
+              {effectivePlan?.isAdjustable ? (
                 <p className="text-xs text-green-700 font-bold mt-1 flex items-center">
                   <RefreshCw className="w-3 h-3 mr-1" /> Fully adjustable against final package
                 </p>
@@ -207,14 +268,14 @@ const ConsultationPaymentModal = ({
             </label>
 
             <button
-              disabled={isSubmitting || !termsAccepted}
+              disabled={submitting || !termsAccepted}
               type="submit"
-              className="w-full bg-red-600 text-white font-bold py-3.5 rounded-lg hover:bg-red-700 transition transform active:scale-95 flex items-center justify-center shadow-lg shadow-red-600/20 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-red-600 text-white font-bold py-3.5 rounded-lg hover:bg-red-700 transition transform active:scale-95 flex items-center justify-center shadow-lg shadow-red-600/20 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
-              {isSubmitting ? (
+              {submitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                `Pay ${selectedPlan ? formatCurrency(selectedPlan.price) : ''} & Proceed`
+                `Pay ${currencyFormatter(effectivePlan.price)} & Proceed`
               )}
             </button>
           </form>
