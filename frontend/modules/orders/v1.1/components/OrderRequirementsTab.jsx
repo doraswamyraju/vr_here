@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Upload, Plus, Trash2, CheckCircle2, Send } from 'lucide-react';
+import axios from 'axios';
+import { Upload, Plus, Trash2, CheckCircle2, Send, AlertTriangle } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { REQUIREMENT_STATUSES } from '../constants/constants';
 
@@ -8,10 +9,13 @@ const OrderRequirementsTab = ({
   onImportRequirementsWorkbook,
   onRaiseRequirement,
   onUpdateRequirementStatus,
-  onDeleteRequirement
+  onDeleteRequirement,
+  onResetRequirements
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('details');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [confirmResetType, setConfirmResetType] = useState(null);
+  const [isResetting, setIsResetting] = useState(false);
   const [requirementFile, setRequirementFile] = useState(null);
   const [replaceExisting, setReplaceExisting] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
@@ -42,6 +46,25 @@ const OrderRequirementsTab = ({
     }
   };
 
+  const handleReset = async (type = 'Detail') => {
+    setIsResetting(true);
+    try {
+      if (onResetRequirements) {
+        await onResetRequirements(type);
+      } else {
+        const activeToken = JSON.parse(localStorage.getItem('userInfo') || '{}')?.token;
+        await axios.delete(`/api/orders/${selectedOrder._id}/requirements?type=${type}`, {
+          headers: { Authorization: `Bearer ${activeToken}` }
+        });
+      }
+      setConfirmResetType(null);
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to reset requirements.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const handleRaise = async () => {
     if (!quickRequirementText.trim()) return;
     try {
@@ -63,9 +86,9 @@ const OrderRequirementsTab = ({
     return (
       <div className="space-y-2">
         {list.map((item) => (
-          <div key={item._id} className="rounded-lg border border-slate-200 p-3">
+          <div key={item._id} className="rounded-lg border border-slate-200 p-3 hover:border-slate-300 transition-colors bg-white">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
+              <div className="flex-1 min-w-[200px]">
                 <p className="font-medium text-slate-800">{item.title}</p>
                 <p className="text-xs text-slate-500">
                   {item.type} {item.description ? `- ${item.description}` : ''}
@@ -83,43 +106,42 @@ const OrderRequirementsTab = ({
                 <select
                   value={item.status || 'Pending'}
                   onChange={(event) => onUpdateRequirementStatus(item._id, event.target.value)}
-                  className="p-2 border rounded-lg border-slate-300 bg-white text-xs"
+                  className="p-2 border rounded-lg border-slate-300 bg-white text-xs font-medium outline-none focus:border-indigo-500"
                 >
                   {REQUIREMENT_STATUSES.map((status) => (
                     <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
-                {item.isAdditional && (
-                  <div className="flex items-center gap-1">
-                    {confirmDeleteId === item._id ? (
-                      <div className="flex items-center gap-1 animate-fade-in">
-                        <button 
-                          onClick={() => {
-                            onDeleteRequirement(item._id);
-                            setConfirmDeleteId(null);
-                          }}
-                          className="px-2 py-1 text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white rounded hover:bg-rose-700 active:scale-95 transition-all"
-                        >
-                          Confirm
-                        </button>
-                        <button 
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-1 text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 rounded hover:bg-slate-200 active:scale-95 transition-all"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
+
+                <div className="flex items-center gap-1">
+                  {confirmDeleteId === item._id ? (
+                    <div className="flex items-center gap-1 animate-fade-in">
                       <button 
-                        onClick={() => setConfirmDeleteId(item._id)}
-                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Delete Requirement"
+                        onClick={() => {
+                          onDeleteRequirement(item._id);
+                          setConfirmDeleteId(null);
+                        }}
+                        className="px-2 py-1 text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white rounded hover:bg-rose-700 active:scale-95 transition-all"
                       >
-                        <Trash2 size={16} />
+                        Confirm
                       </button>
-                    )}
-                  </div>
-                )}
+                      <button 
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="px-2 py-1 text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 rounded hover:bg-slate-200 active:scale-95 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setConfirmDeleteId(item._id)}
+                      className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+                      title="Delete Item"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -135,14 +157,14 @@ const OrderRequirementsTab = ({
         <p className="text-xs text-slate-500 mb-3">Upload workbook with 2 sheets: details and documents.</p>
         <div className="flex flex-wrap items-center gap-3">
           <input type="file" accept=".xlsx,.xls" onChange={(event) => setRequirementFile(event.target.files?.[0] || null)} className="text-sm" />
-          <label className="text-xs text-slate-600 inline-flex items-center gap-1">
+          <label className="text-xs text-slate-600 inline-flex items-center gap-1 cursor-pointer">
             <input type="checkbox" checked={replaceExisting} onChange={(event) => setReplaceExisting(event.target.checked)} />
             Replace existing requirements
           </label>
           <button
             onClick={handleImport}
             disabled={!requirementFile || isImporting}
-            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold disabled:opacity-50 inline-flex items-center gap-1"
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold disabled:opacity-50 inline-flex items-center gap-1 hover:bg-indigo-700 transition"
           >
             <Upload size={14} />
             {isImporting ? 'Importing...' : 'Import Workbook'}
@@ -157,6 +179,42 @@ const OrderRequirementsTab = ({
             <Plus size={14} />
             {showManualForm ? 'Discard Manual' : 'Add Manual Item'}
           </button>
+
+          {detailRequirements.length > 0 && (
+            <>
+              <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+              {confirmResetType === 'top_Detail' ? (
+                <div className="flex items-center gap-1.5 bg-rose-50 px-2.5 py-1.5 border border-rose-200 rounded-lg animate-fade-in">
+                  <span className="text-xs font-bold text-rose-700 flex items-center gap-1">
+                    <AlertTriangle size={13} /> Reset {detailRequirements.length} details?
+                  </span>
+                  <button
+                    onClick={() => handleReset('Detail')}
+                    disabled={isResetting}
+                    className="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-rose-600 text-white rounded hover:bg-rose-700 active:scale-95 disabled:opacity-50 transition"
+                  >
+                    {isResetting ? 'Resetting...' : 'Yes, Reset All'}
+                  </button>
+                  <button
+                    onClick={() => setConfirmResetType(null)}
+                    disabled={isResetting}
+                    className="px-2 py-1 text-xs font-bold bg-white border border-slate-200 text-slate-600 rounded hover:bg-slate-100 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmResetType('top_Detail')}
+                  className="px-3.5 py-2 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 text-sm font-bold hover:bg-rose-600 hover:text-white transition-all inline-flex items-center gap-1.5 shadow-sm"
+                  title="Reset all imported client details"
+                >
+                  <Trash2 size={14} />
+                  Reset All Details ({detailRequirements.length})
+                </button>
+              )}
+            </>
+          )}
         </div>
 
         {showManualForm && (
@@ -213,32 +271,99 @@ const OrderRequirementsTab = ({
                     className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm shadow-xl shadow-indigo-100 hover:bg-slate-900 transition-all flex items-center justify-center gap-2"
                  >
                     {manualLoading ? 'Creating...' : <><Send size={18} /> Publish Requirement</>}
-                  </button>
+                 </button>
               </div>
            </div>
         )}
       </div>
 
       {/* Sub Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-        <button
-          onClick={() => setActiveSubTab('details')}
-          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${activeSubTab === 'details' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}
-        >
-          Details ({detailRequirements.length})
-        </button>
-        <button
-          onClick={() => setActiveSubTab('uploads')}
-          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${activeSubTab === 'uploads' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}
-        >
-          Customer Uploads ({uploadRequirements.length})
-        </button>
-        <button
-          onClick={() => setActiveSubTab('additional')}
-          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${activeSubTab === 'additional' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}
-        >
-          Additional Requirements ({additionalRequirements.length})
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setActiveSubTab('details')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${activeSubTab === 'details' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            Details ({detailRequirements.length})
+          </button>
+          <button
+            onClick={() => setActiveSubTab('uploads')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${activeSubTab === 'uploads' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            Customer Uploads ({uploadRequirements.length})
+          </button>
+          <button
+            onClick={() => setActiveSubTab('additional')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${activeSubTab === 'additional' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            Additional Requirements ({additionalRequirements.length})
+          </button>
+        </div>
+
+        {/* Tab specific action buttons */}
+        <div className="flex items-center gap-2">
+          {activeSubTab === 'details' && detailRequirements.length > 0 && (
+            confirmResetType === 'subtab_Detail' ? (
+              <div className="flex items-center gap-1.5 bg-rose-50 px-2.5 py-1 border border-rose-200 rounded-lg animate-fade-in">
+                <span className="text-xs font-bold text-rose-700">Delete all {detailRequirements.length} details?</span>
+                <button
+                  onClick={() => handleReset('Detail')}
+                  disabled={isResetting}
+                  className="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-rose-600 text-white rounded hover:bg-rose-700 active:scale-95 disabled:opacity-50 transition"
+                >
+                  {isResetting ? 'Resetting...' : 'Confirm Reset'}
+                </button>
+                <button
+                  onClick={() => setConfirmResetType(null)}
+                  disabled={isResetting}
+                  className="px-2 py-1 text-xs font-bold bg-white border border-slate-200 text-slate-600 rounded hover:bg-slate-100 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmResetType('subtab_Detail')}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white transition-all inline-flex items-center gap-1.5 shadow-sm"
+                title="Reset all details for this order"
+              >
+                <Trash2 size={13} />
+                Reset All Details ({detailRequirements.length})
+              </button>
+            )
+          )}
+
+          {activeSubTab === 'uploads' && uploadRequirements.length > 0 && (
+            confirmResetType === 'subtab_Document' ? (
+              <div className="flex items-center gap-1.5 bg-rose-50 px-2.5 py-1 border border-rose-200 rounded-lg animate-fade-in">
+                <span className="text-xs font-bold text-rose-700">Delete all {uploadRequirements.length} documents?</span>
+                <button
+                  onClick={() => handleReset('Document')}
+                  disabled={isResetting}
+                  className="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-rose-600 text-white rounded hover:bg-rose-700 active:scale-95 disabled:opacity-50 transition"
+                >
+                  {isResetting ? 'Resetting...' : 'Confirm Reset'}
+                </button>
+                <button
+                  onClick={() => setConfirmResetType(null)}
+                  disabled={isResetting}
+                  className="px-2 py-1 text-xs font-bold bg-white border border-slate-200 text-slate-600 rounded hover:bg-slate-100 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmResetType('subtab_Document')}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white transition-all inline-flex items-center gap-1.5 shadow-sm"
+                title="Reset all document requirements for this order"
+              >
+                <Trash2 size={13} />
+                Reset All Documents ({uploadRequirements.length})
+              </button>
+            )
+          )}
+        </div>
       </div>
 
       {/* Content */}

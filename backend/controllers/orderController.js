@@ -1497,6 +1497,41 @@ const deleteRequirement = asyncHandler(async (req, res) => {
     res.json(order);
 });
 
+// @desc    Reset/Clear customer requirements (all or by type e.g. Detail / Document / Additional)
+// @route   DELETE /api/orders/:id/requirements
+// @access  Private/Admin
+const resetRequirements = asyncHandler(async (req, res) => {
+    const { type } = req.query; // 'Detail', 'Document', 'Additional', or 'all'
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    if (!canAccessOrder(req.user, order)) {
+        res.status(403);
+        throw new Error('Not authorized to modify requirements for this order');
+    }
+
+    if (!type || type === 'all') {
+        order.customerRequirements = [];
+    } else if (type === 'Detail' || type === 'details') {
+        order.customerRequirements = order.customerRequirements.filter(r => r.type !== 'Detail' || r.isAdditional);
+    } else if (type === 'all_details') {
+        order.customerRequirements = order.customerRequirements.filter(r => r.type !== 'Detail');
+    } else if (type === 'Document' || type === 'documents') {
+        order.customerRequirements = order.customerRequirements.filter(r => r.type !== 'Document' || r.isAdditional);
+    } else if (type === 'all_documents') {
+        order.customerRequirements = order.customerRequirements.filter(r => r.type !== 'Document');
+    } else if (type === 'Additional' || type === 'additional') {
+        order.customerRequirements = order.customerRequirements.filter(r => !r.isAdditional);
+    }
+
+    await order.save();
+    res.json(order);
+});
+
 // @desc    Get history logs for an order
 // @route   GET /api/orders/:id/history
 // @access  Private
@@ -1636,6 +1671,7 @@ export {
     updateRequirement,
     addRequirement,
     deleteRequirement,
+    resetRequirements,
     // Export utilities for reuse in Recurring Services
     parseTasksFromText,
     parseRequirementsFromText,

@@ -26,7 +26,8 @@ import {
     importRequirements,
     updateRequirement,
     addRequirement,
-    deleteRequirement
+    deleteRequirement,
+    resetRequirements
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -100,7 +101,8 @@ router.route('/:id/requirements/import')
     .post(protect, admin, importRequirements);
 
 router.route('/:id/requirements')
-    .post(protect, addRequirement);
+    .post(protect, addRequirement)
+    .delete(protect, admin, resetRequirements);
 
 router.route('/:id/requirements/:requirementId')
     .put(protect, updateRequirement)

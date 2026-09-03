@@ -241,6 +241,11 @@ function AdminApp() {
     fetchData();
   };
 
+  const resetRequirements = async (orderId, type = 'Detail') => {
+    await axios.delete(`/api/orders/${orderId}/requirements?type=${type}`, config);
+    fetchData();
+  };
+
   const addInvoice = async (orderId) => {
     if (!invoiceForm.invoiceNumber || !invoiceForm.amount) return;
     await axios.post(`/api/orders/${orderId}/invoices`, {
@@ -755,6 +760,7 @@ function AdminApp() {
           onRaiseRequirement={raiseRequirement}
           onUpdateRequirementStatus={updateRequirementStatus}
           onDeleteRequirement={deleteRequirement}
+          onResetRequirements={resetRequirements}
           onAddInvoice={addInvoice}
           onUpdateInvoiceStatus={updateInvoiceStatus}
           onOpenRecurringModal={() => setIsMakeRecurringModalOpen(true)}

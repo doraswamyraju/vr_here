@@ -76,6 +76,7 @@ const OrdersModule = ({
   onRaiseRequirement,
   onUpdateRequirementStatus,
   onDeleteRequirement,
+  onResetRequirements,
   onAddInvoice,
   onUpdateInvoiceStatus,
   onOpenRecurringModal,
@@ -263,6 +264,7 @@ const OrdersModule = ({
                   onRaiseRequirement={(payload) => onRaiseRequirement(selectedOrder._id, payload)}
                   onUpdateRequirementStatus={(requirementId, status) => onUpdateRequirementStatus(selectedOrder._id, requirementId, status)}
                   onDeleteRequirement={(requirementId) => onDeleteRequirement(selectedOrder._id, requirementId)}
+                  onResetRequirements={(type) => onResetRequirements && onResetRequirements(selectedOrder._id, type)}
                 />
               )}
               {orderDetailTab === 'Invoices' && (
