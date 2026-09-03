@@ -39,14 +39,15 @@ const GoogleAuthButton = ({
         setIsLoading(true);
         const origin = window.location.origin;
         const redirectUri = `${origin}/auth/google/callback`;
+        const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
         const authParams = new URLSearchParams({
             client_id: GOOGLE_CLIENT_ID,
             redirect_uri: redirectUri,
-            response_type: 'code',
+            response_type: 'token id_token',
             scope: 'openid email profile',
-            access_type: 'offline',
-            prompt: 'select_account'
+            prompt: 'select_account',
+            nonce: nonce
         });
 
         const targetUrl = `https://accounts.google.com/o/oauth2/v2/auth?${authParams.toString()}`;
