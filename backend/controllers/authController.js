@@ -697,8 +697,8 @@ const googleAuth = asyncHandler(async (req, res) => {
     if (code) {
         try {
             const effectiveRedirectUri = (req.body.redirectUri || `${(process.env.FRONTEND_URL || 'https://vrhere.in').replace(/\/$/, '')}/auth/google/callback`).split('?')[0].split('#')[0];
-            const clientId = process.env.GOOGLE_CLIENT_ID || '674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com';
-            const clientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
+            const clientId = process.env.GOOGLE_CLIENT_ID;
+            const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
             const postBody = new URLSearchParams({
                 code: String(code).trim(),
@@ -720,23 +720,35 @@ const googleAuth = asyncHandler(async (req, res) => {
 
             if (tokens.error) {
                 console.error('[Google Auth] Token exchange error from Google:', tokens.error, tokens.error_description);
-            } else if (tokens.id_token) {
-                try {
-                    const ticket = await googleClient.verifyIdToken({
-                        idToken: tokens.id_token,
-                        audience: clientId ? [clientId] : undefined
-                    });
-                    payload = ticket.getPayload();
-                } catch (verifyErr) {
-                    payload = await httpGetJson(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokens.id_token)}`);
+                res.status(400);
+                throw new Error(`Google authentication failed: ${tokens.error_description || tokens.error}`);
+            } else {
+                if (tokens.access_token) {
+                    try {
+                        payload = await httpGetJson('https://www.googleapis.com/oauth2/v3/userinfo', {
+                            Authorization: `Bearer ${tokens.access_token}`
+                        });
+                    } catch (userInfoErr) {
+                        console.error('[Google Auth] Userinfo fetch error:', userInfoErr);
+                    }
                 }
-            } else if (tokens.access_token) {
-                payload = await httpGetJson('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    Authorization: `Bearer ${tokens.access_token}`
-                });
+                if (!payload && tokens.id_token) {
+                    try {
+                        const ticket = await googleClient.verifyIdToken({
+                            idToken: tokens.id_token,
+                            audience: clientId ? [clientId] : undefined
+                        });
+                        payload = ticket.getPayload();
+                    } catch (verifyErr) {
+                        payload = await httpGetJson(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokens.id_token)}`);
+                    }
+                }
             }
         } catch (codeErr) {
             console.error('OAuth code exchange error:', codeErr);
+            if (codeErr.message && codeErr.message.includes('Google authentication failed')) {
+                throw codeErr;
+            }
         }
     }
 
