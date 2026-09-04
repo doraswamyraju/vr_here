@@ -227,6 +227,7 @@ export default function CustomerApp() {
                     setActiveTab={setActiveTab} 
                     userInfo={userInfo} 
                     onOrderSuccess={handleOrderPlacedSuccess} 
+                    onSelectService={(serviceObj) => setSelectedService(serviceObj)}
                     preSelectedService={selectedService}
                     initialSearchQuery={serviceSearchQuery}
                 />

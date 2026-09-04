@@ -88,19 +88,6 @@ const AccountingServicesView = ({ setActiveTab, userInfo, onOrderSuccess }) => {
                 </div>
             </div>
 
-            <ConsultationPaymentModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                selectedPlan={{ price: 499, buttonText: 'Confirm Consultation' }}
-                initialFormData={formData}
-                onSubmit={handleFormSubmit}
-                isSubmitting={isSubmitting}
-                formatCurrency={formatCurrency}
-                title="Book Service Consultation"
-                nonAdjustableNote="Our expert will review your requirements on the call."
-                initialTermsAccepted={false}
-            />
-
             <div className="bg-white rounded-[32px] border border-slate-100 p-6 md:p-8 shadow-sm">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-6 mb-8">
                     <h2 className="text-xl font-bold text-slate-800">Select Your Requirements</h2>
