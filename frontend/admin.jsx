@@ -915,14 +915,17 @@ function AdminApp() {
         <aside className={`fixed lg:static z-50 h-screen border-r border-slate-200/70 bg-white/80 backdrop-blur-md flex flex-col transition-all duration-300 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} ${sidebarCollapsed ? 'w-20' : 'w-72'}`}>
           <div className="h-20 px-4 flex items-center justify-between border-b border-slate-200/70">
             {!sidebarCollapsed ? (
-              <div>
-                <p className="text-xs uppercase tracking-widest text-indigo-500 font-bold">VR Here</p>
-                <p className="text-xl font-black text-slate-900">Admin Studio</p>
-              </div>
+              <a href="/admin" className="flex items-center gap-3 group">
+                <img src="/logo.png" alt="VR Here" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="font-black text-slate-900 text-base leading-none tracking-tight">VR Here</span>
+                  <span className="text-[8.5px] font-extrabold text-indigo-600 uppercase tracking-widest mt-0.5 truncate">Admin Studio</span>
+                </div>
+              </a>
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md mx-auto">
-                VR
-              </div>
+              <a href="/admin" className="mx-auto block" title="VR Here Admin Studio">
+                <img src="/logo.png" alt="VR Here" className="h-9 w-auto object-contain mx-auto hover:scale-105 transition-transform" />
+              </a>
             )}
             
             <div className="flex items-center gap-1">
