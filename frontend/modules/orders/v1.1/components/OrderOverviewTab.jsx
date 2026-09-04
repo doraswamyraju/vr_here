@@ -27,7 +27,7 @@ const Metric = ({ label, value, icon: Icon, color = 'indigo' }) => {
   );
 };
 
-const OrderOverviewTab = ({ selectedOrder, token }) => {
+const OrderOverviewTab = ({ selectedOrder, token, onRefresh }) => {
   const [todos, setTodos] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [history, setHistory] = useState([]);
@@ -108,8 +108,8 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
         notes: 'Balance fees invoice raised by CA review.',
         dueDate: ''
       });
-      if (typeof window.location.reload === 'function') {
-        setTimeout(() => window.location.reload(), 1500);
+      if (onRefresh) {
+        onRefresh();
       }
     } catch (err) {
       setInvoiceError(err.response?.data?.message || 'Failed to raise balance invoice');
@@ -246,7 +246,7 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
                         try {
                           await axios.put(`/api/freelancer/admin/broadcast/${selectedOrder._id}`, { payoutAmount: amount }, config);
                           alert('Order broadcasted successfully!');
-                          window.location.reload();
+                          if (onRefresh) onRefresh();
                         } catch (err) {
                           alert(err.response?.data?.message || 'Failed to broadcast order');
                         }
@@ -292,7 +292,7 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
                           await axios.put(`/api/freelancer/admin/broadcast/${selectedOrder._id}`, { payoutAmount: amount }, config);
                           await axios.post(`/api/freelancer/admin/reassign/${selectedOrder._id}`, { freelancerId: selectedFreelancerId }, config);
                           alert('Freelancer assigned successfully!');
-                          window.location.reload();
+                          if (onRefresh) onRefresh();
                         } catch (err) {
                           alert(err.response?.data?.message || 'Failed to assign freelancer');
                         }
@@ -357,7 +357,7 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
                             try {
                               await axios.post(`/api/freelancer/admin/reassign/${selectedOrder._id}`, { freelancerId: selectedFreelancerId }, config);
                               alert('Freelancer reassigned successfully!');
-                              window.location.reload();
+                              if (onRefresh) onRefresh();
                             } catch (err) {
                               alert(err.response?.data?.message || 'Failed to reassign freelancer');
                             }
@@ -388,7 +388,7 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
                           try {
                             await axios.post(`/api/freelancer/admin/approve-payout/${selectedOrder._id}`, {}, config);
                             alert('Work effort verified and payout approved successfully!');
-                            window.location.reload();
+                            if (onRefresh) onRefresh();
                           } catch (err) {
                             alert(err.response?.data?.message || 'Failed to approve payout');
                           }
@@ -419,7 +419,7 @@ const OrderOverviewTab = ({ selectedOrder, token }) => {
                           try {
                             await axios.post(`/api/freelancer/admin/reassign/${selectedOrder._id}`, { freelancerId: null }, config);
                             alert('Freelancer assignment removed successfully!');
-                            window.location.reload();
+                            if (onRefresh) onRefresh();
                           } catch (err) {
                             alert(err.response?.data?.message || 'Failed to remove freelancer');
                           }

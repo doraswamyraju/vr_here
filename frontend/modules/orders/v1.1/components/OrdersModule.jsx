@@ -589,7 +589,7 @@ const OrdersModule = ({
               ))}
             </div>
             <div className="p-5 space-y-4">
-              {orderDetailTab === 'Overview' && <OrderOverviewTab selectedOrder={selectedOrder} token={token} />}
+              {orderDetailTab === 'Overview' && <OrderOverviewTab selectedOrder={selectedOrder} token={token} onRefresh={onRefresh} />}
               {orderDetailTab === 'Tasks' && (
                 <OrderTasksTab
                   selectedOrder={selectedOrder}

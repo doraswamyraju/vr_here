@@ -20,7 +20,9 @@ import {
   Trash2,
   TrendingUp,
   Plus,
-  Activity
+  Activity,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -61,11 +63,39 @@ const Card = ({ children, className = '' }) => (
 
 function AdminApp() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Dashboard');
+
+  const getInitialTab = () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabFromUrl = urlParams.get('tab');
+      if (tabFromUrl) return tabFromUrl;
+      return localStorage.getItem('admin_active_tab') || 'Dashboard';
+    } catch (e) {
+      return 'Dashboard';
+    }
+  };
+
+  const getInitialOrderId = () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('orderId') || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [selectedOrderId, setSelectedOrderId] = useState(getInitialOrderId);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('admin_sidebar_collapsed') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [ordersViewMode, setOrdersViewMode] = useState('list');
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [orderDetailTab, setOrderDetailTab] = useState('Overview');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
@@ -84,6 +114,32 @@ function AdminApp() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [recurring, setRecurring] = useState([]);
   const [orderFilter, setOrderFilter] = useState('All');
+
+  // Sync activeTab and selectedOrderId to URL & localStorage seamlessly
+  useEffect(() => {
+    try {
+      localStorage.setItem('admin_active_tab', activeTab);
+      const params = new URLSearchParams();
+      params.set('tab', activeTab);
+      if (activeTab === 'Orders' && selectedOrderId) {
+        params.set('orderId', selectedOrderId);
+      }
+      const newRelativePathQuery = window.location.pathname + '?' + params.toString();
+      window.history.replaceState(null, '', newRelativePathQuery);
+    } catch (e) {
+      console.error('Failed to sync active tab with URL:', e);
+    }
+  }, [activeTab, selectedOrderId]);
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('admin_sidebar_collapsed', String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
 
   const {
     notifications,
@@ -730,7 +786,6 @@ function AdminApp() {
     { key: 'Performance', label: 'Performance', icon: BarChart3 },
     { key: 'HRMS', label: 'HRMS Portal', icon: Users },
     { key: 'Reports', label: 'Reports', icon: Activity },
-    { key: 'Notifications', label: 'Notifications', icon: Bell },
     { key: 'Customers', label: 'Customers', icon: UsersIcon },
     { key: 'Knowledge', label: 'Knowledge Base', icon: BookOpen },
     { key: 'Support', label: 'Support Inbox', icon: MessageSquare },
@@ -810,20 +865,6 @@ function AdminApp() {
     if (activeTab === 'Performance') return <EmployeeAnalysisModule token={userInfo?.token} users={users} />;
     if (activeTab === 'HRMS') return <HRMSModule role={userInfo?.role} />;
     if (activeTab === 'Reports') return <DummyView title="Reports" />;
-    if (activeTab === 'Notifications') return (
-      <NotificationsFeed 
-        notifications={notifications}
-        onMarkRead={markRead}
-        onMarkAllRead={markAllRead}
-        onClickAction={(notif) => {
-          if (notif.type === 'Ticket') {
-            setActiveTab('Support');
-          } else {
-            setActiveTab('Orders');
-          }
-        }}
-      />
-    );
     if (activeTab === 'Customers') return (
       <CustomersModule 
         users={users} 
@@ -869,30 +910,90 @@ function AdminApp() {
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 text-slate-800">
       <div className="flex h-screen">
         <div className={`fixed inset-0 bg-slate-900/35 z-40 lg:hidden ${mobileSidebarOpen ? 'block' : 'hidden'}`} onClick={() => setMobileSidebarOpen(false)} />
-        <aside onMouseEnter={() => setSidebarExpanded(true)} onMouseLeave={() => setSidebarExpanded(false)} className={`fixed lg:static z-50 h-screen border-r border-slate-200/70 bg-white/75 backdrop-blur-md flex flex-col transition-all duration-300 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} ${sidebarExpanded ? 'w-72' : 'w-20 lg:w-20'}`}>
+        
+        {/* Collapsible / Pin-able Sidebar */}
+        <aside className={`fixed lg:static z-50 h-screen border-r border-slate-200/70 bg-white/80 backdrop-blur-md flex flex-col transition-all duration-300 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} ${sidebarCollapsed ? 'w-20' : 'w-72'}`}>
           <div className="h-20 px-4 flex items-center justify-between border-b border-slate-200/70">
-            <div className={`${sidebarExpanded ? 'block' : 'hidden'}`}><p className="text-xs uppercase tracking-widest text-indigo-500 font-bold">VR Here</p><p className="text-xl font-black text-slate-900">Admin Studio</p></div>
-            {!sidebarExpanded && <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">VR</div>}
-            <button className="lg:hidden text-slate-500" onClick={() => setMobileSidebarOpen(false)}><X size={18} /></button>
+            {!sidebarCollapsed ? (
+              <div>
+                <p className="text-xs uppercase tracking-widest text-indigo-500 font-bold">VR Here</p>
+                <p className="text-xl font-black text-slate-900">Admin Studio</p>
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md mx-auto">
+                VR
+              </div>
+            )}
+            
+            <div className="flex items-center gap-1">
+              {/* Keep/Collapse toggle for desktop */}
+              <button 
+                onClick={toggleSidebarCollapse}
+                className="hidden lg:flex p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
+                title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+              >
+                {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              </button>
+              <button className="lg:hidden text-slate-500 p-2" onClick={() => setMobileSidebarOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
           </div>
+          
           <div className="p-3 space-y-1 flex-1 overflow-y-auto">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.key;
-              return <button key={item.key} onClick={() => { setActiveTab(item.key); setMobileSidebarOpen(false); if (item.key !== 'Orders') setSelectedOrderId(null); }} className={`w-full px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition ${active ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg' : 'text-slate-700 hover:bg-indigo-50'}`}><Icon size={16} /> {sidebarExpanded && item.label}</button>;
+              return (
+                <button 
+                  key={item.key} 
+                  onClick={() => { 
+                    setActiveTab(item.key); 
+                    setMobileSidebarOpen(false); 
+                    if (item.key !== 'Orders') setSelectedOrderId(null); 
+                  }} 
+                  title={sidebarCollapsed ? item.label : undefined}
+                  className={`w-full px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 transition ${
+                    active 
+                      ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-600/20' 
+                      : 'text-slate-700 hover:bg-indigo-50'
+                  } ${sidebarCollapsed ? 'justify-center' : ''}`}
+                >
+                  <Icon size={18} className="shrink-0" /> 
+                  {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                </button>
+              );
             })}
           </div>
-          <div className="p-3 border-t border-slate-200/70"><button onClick={handleLogout} className="w-full px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 text-rose-600 hover:bg-rose-50"><LogOut size={16} /> {sidebarExpanded && 'Logout'}</button></div>
+
+          <div className="p-3 border-t border-slate-200/70">
+            <button 
+              onClick={handleLogout} 
+              title={sidebarCollapsed ? 'Logout' : undefined}
+              className={`w-full px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 text-rose-600 hover:bg-rose-50 transition ${sidebarCollapsed ? 'justify-center' : ''}`}
+            >
+              <LogOut size={18} className="shrink-0" /> 
+              {!sidebarCollapsed && <span>Logout</span>}
+            </button>
+          </div>
         </aside>
+
         <main className="flex-1 flex flex-col overflow-hidden w-full">
           <header className="h-20 px-4 sm:px-6 flex items-center justify-between border-b border-slate-200/70 bg-white/60 backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <button className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-600" onClick={() => setMobileSidebarOpen(true)}><Menu size={18} /></button>
-              <div><p className="text-xs text-slate-500">VR Here Admin Panel</p><h1 className="font-bold text-xl sm:text-2xl text-slate-900">{activeTab}</h1></div>
+              <button className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-600" onClick={() => setMobileSidebarOpen(true)}>
+                <Menu size={18} />
+              </button>
+              <div>
+                <p className="text-xs text-slate-500">VR Here Admin Panel</p>
+                <h1 className="font-bold text-xl sm:text-2xl text-slate-900">{activeTab}</h1>
+              </div>
             </div>
+
             <div className="flex items-center gap-3">
+              {/* Notifications Bell Button - Opens Popup */}
               <button 
-                onClick={() => setActiveTab('Notifications')}
+                onClick={() => setIsNotificationOpen(true)}
                 className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all relative group"
                 title="Notifications"
               >
@@ -903,6 +1004,7 @@ function AdminApp() {
                   </div>
                 )}
               </button>
+
               <button 
                 onClick={handleRefresh}
                 className={`p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all ${isRefreshing ? 'animate-spin' : ''}`}
@@ -910,17 +1012,74 @@ function AdminApp() {
               >
                 <RefreshCcw size={16} />
               </button>
+
               <div className="hidden sm:flex rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 items-center gap-1">
                 <Clock3 size={14} /> Live
               </div>
+
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 text-white flex items-center justify-center text-xs font-semibold">
                 {userInfo?.name?.charAt(0) || 'A'}
               </div>
             </div>
           </header>
+
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">{renderView()}</div>
         </main>
       </div>
+
+      {/* --- NOTIFICATIONS POPUP MODAL (Similar to Customer Panel) --- */}
+      {isNotificationOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full h-[80vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md">
+                  <Bell size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Notification Center</h3>
+                  <p className="text-xs text-slate-400">Activity logs & operational alerts</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={markAllRead}
+                    className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-all"
+                  >
+                    Mark All as Read
+                  </button>
+                )}
+                <button 
+                  onClick={() => setIsNotificationOpen(false)}
+                  className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Notification Body Feed */}
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+              <NotificationsFeed 
+                notifications={notifications}
+                onMarkRead={markRead}
+                onMarkAllRead={markAllRead}
+                onClickAction={(notif) => {
+                  setIsNotificationOpen(false);
+                  if (notif.type === 'Ticket') {
+                    setActiveTab('Support');
+                  } else {
+                    if (notif.referenceId) setSelectedOrderId(notif.referenceId);
+                    setActiveTab('Orders');
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {isMakeRecurringModalOpen && selectedOrder && (
         <MakeRecurringModal 
@@ -996,7 +1155,7 @@ function AdminApp() {
       <InAppBanner 
         activeNotification={activeBannerNotification}
         onDismiss={() => setActiveBannerNotification(null)}
-        onClickAction={() => setActiveTab('Notifications')}
+        onClickAction={() => setIsNotificationOpen(true)}
       />
     </div>
   );
