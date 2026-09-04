@@ -25,7 +25,10 @@ import {
   DollarSign,
   ShieldCheck,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  Zap,
+  Check,
+  TrendingUp
 } from 'lucide-react';
 
 const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
@@ -38,8 +41,9 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
   const [sourceFilter, setSourceFilter] = useState('ALL');
   const [employeeFilter, setEmployeeFilter] = useState('ALL');
   
-  // Accordion expansion state
+  // Accordion expansion state & internal client tab filter
   const [expandedClientKeys, setExpandedClientKeys] = useState({});
+  const [clientServiceFilters, setClientServiceFilters] = useState({}); // { [clientId]: 'ALL' | 'HOT' | 'VIEWS' }
   const [clientNoteInputs, setClientNoteInputs] = useState({});
   const [isSubmittingNoteFor, setIsSubmittingNoteFor] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -132,7 +136,8 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
           lastActivityAt: activityTime,
           viewCount: lead.category === 'PAGE_VIEW' ? 1 : 0,
           clickCount: lead.category === 'PACKAGE_CLICK' ? 1 : 0,
-          leadId: lead._id
+          leadId: lead._id,
+          source: lead.source
         });
 
         map.set(clientKey, {
@@ -148,6 +153,7 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
           highestCategory: lead.category || 'PAGE_VIEW',
           totalPriceInterest: lead.price || 0,
           sources: new Set([lead.source || 'web']),
+          sourceLogs: { [lead.source || 'web']: 1 },
           firstSeenAt: activityTime,
           lastActivityAt: activityTime,
           leadIds: [lead._id],
@@ -159,7 +165,9 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
         const client = map.get(clientKey);
         client.leadIds.push(lead._id);
         client.activities.push(lead);
-        if (lead.source) client.sources.add(lead.source);
+        const src = lead.source || 'web';
+        client.sources.add(src);
+        client.sourceLogs[src] = (client.sourceLogs[src] || 0) + 1;
 
         if (client.customerName === 'Guest Prospect' && cleanName !== 'Guest Prospect') {
           client.customerName = cleanName;
@@ -212,7 +220,8 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
             lastActivityAt: activityTime,
             viewCount: lead.category === 'PAGE_VIEW' ? 1 : 0,
             clickCount: lead.category === 'PACKAGE_CLICK' ? 1 : 0,
-            leadId: lead._id
+            leadId: lead._id,
+            source: lead.source
           });
         } else {
           const s = client.servicesMap.get(sKey);
@@ -267,7 +276,6 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
   const handleClientStatusChange = async (client, newStatus) => {
     setIsUpdatingStatusFor(client.id);
     try {
-      // Update all lead documents for this client
       await Promise.all(
         client.leadIds.map(leadId =>
           axios.put(`/api/leads/${leadId}`, { status: newStatus }, authHeaders)
@@ -298,12 +306,11 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
     }
   };
 
-  const handleAddClientNote = async (client) => {
-    const text = (clientNoteInputs[client.id] || '').trim();
+  const handleAddClientNote = async (client, predefinedText = null) => {
+    const text = (predefinedText || clientNoteInputs[client.id] || '').trim();
     if (!text) return;
     setIsSubmittingNoteFor(client.id);
     try {
-      // Append note to the latest lead of this client
       const targetLeadId = client.activities[0]?._id || client.leadIds[0];
       const res = await axios.put(
         `/api/leads/${targetLeadId}`,
@@ -335,25 +342,33 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
     return `${diffDays}d ago`;
   };
 
-  const getClientWhatsAppLink = (client) => {
+  const getClientWhatsAppLink = (client, specificService = null) => {
     const cleanPhone = (client.phone || '').replace(/[^0-9]/g, '');
     const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
     const nameGreeting = client.customerName && client.customerName !== 'Guest Prospect' ? client.customerName : 'there';
 
-    const latestService = client.services[0];
+    const target = specificService || client.services[0];
     let text = `Hi ${nameGreeting}, I am reaching out from VR Here Business Solutions. `;
 
-    if (latestService?.packages?.length > 0) {
-      const topPkg = latestService.packages[0];
-      text += `I saw you were interested in *${latestService.serviceName} (${topPkg.name})*. Would you like our CA & legal experts to assist you with the onboarding requirements?`;
-    } else if (latestService) {
-      text += `I noticed you were exploring *${latestService.serviceName}* on our platform. How can our compliance experts help you today?`;
+    if (target?.packages?.length > 0) {
+      const topPkg = target.packages[0];
+      text += `I saw you were interested in *${target.serviceName} (${topPkg.name})*. Would you like our CA & legal experts to assist you with the onboarding requirements?`;
+    } else if (target) {
+      text += `I noticed you were exploring *${target.serviceName}* on our platform. How can our compliance experts help you today?`;
     } else {
       text += `How can our legal and business compliance team assist you today?`;
     }
 
     return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`;
   };
+
+  const notePresetChips = [
+    '📞 Called - No Answer',
+    '💬 Sent WhatsApp Quote',
+    '🤝 Follow up Tomorrow',
+    '📋 Requested KYC Documents',
+    '✅ Ready to Order'
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
@@ -561,6 +576,13 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
             const totalActivitiesCount = client.activities.length;
             const uniqueServicesCount = client.services.length;
             const latestService = client.services[0];
+            const currentServiceFilter = clientServiceFilters[client.id] || 'ALL';
+
+            const filteredServices = client.services.filter(s => {
+              if (currentServiceFilter === 'HOT') return s.highestCategory === 'PACKAGE_CLICK';
+              if (currentServiceFilter === 'VIEWS') return s.highestCategory === 'PAGE_VIEW';
+              return true;
+            });
 
             return (
               <div
@@ -669,7 +691,7 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
                     </div>
                   </div>
 
-                  {/* Right Actions & Status Controls (Stop propagation so clicking dropdowns won't toggle accordion) */}
+                  {/* Right Actions & Status Controls */}
                   <div
                     className="flex flex-wrap items-center gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0"
                     onClick={(e) => e.stopPropagation()}
@@ -743,183 +765,305 @@ const LeadsManagerView = ({ userInfo, role = 'admin', employees = [] }) => {
                   </div>
                 </div>
 
-                {/* 5. Expanded Accordion Content (Complete Client Journey Inside) */}
+                {/* 5. Refined 2-Column Detailed View (Left: Services Journey | Right: Intelligence & Notes) */}
                 {isExpanded && (
-                  <div className="p-5 md:p-6 bg-slate-50/70 border-t border-slate-100 space-y-6 animate-in fade-in slide-in-from-top-2 duration-200">
-                    {/* A. Services & Pricing Interest Grid */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Layers className="w-4 h-4 text-indigo-600" />
-                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">
-                            Explored Services & Packages ({client.services.length})
-                          </h4>
-                        </div>
-                        {client.totalPriceInterest > 0 && (
-                          <span className="text-xs font-black text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg">
-                            Pipeline Interest: ₹{client.totalPriceInterest.toLocaleString()}
-                          </span>
-                        )}
-                      </div>
+                  <div className="p-5 md:p-6 bg-slate-50/70 border-t border-slate-200/80 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                      
+                      {/* Left Column (7 of 12 Cols): High-Density Explored Services Journey */}
+                      <div className="lg:col-span-7 space-y-4">
+                        {/* Section Header with mini-filter tabs */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200">
+                          <div className="flex items-center gap-2">
+                            <Layers className="w-4 h-4 text-indigo-600" />
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                              Explored Services & Plans
+                            </h4>
+                          </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {client.services.map((service, sIdx) => {
-                          const hasPackageClicks = service.highestCategory === 'PACKAGE_CLICK';
-
-                          return (
-                            <div
-                              key={sIdx}
-                              className={`p-4 rounded-2xl border transition-all ${
-                                hasPackageClicks
-                                  ? 'bg-white border-rose-200 shadow-sm'
-                                  : 'bg-white border-slate-200'
+                          {/* Mini Tabs */}
+                          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm text-[11px] font-bold">
+                            <button
+                              onClick={() => setClientServiceFilters(prev => ({ ...prev, [client.id]: 'ALL' }))}
+                              className={`px-2.5 py-1 rounded-lg transition ${
+                                currentServiceFilter === 'ALL'
+                                  ? 'bg-slate-900 text-white'
+                                  : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <h5 className="font-bold text-sm text-slate-900 leading-snug">
-                                  {service.serviceName}
-                                </h5>
-                                {hasPackageClicks ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full text-[10px] font-black uppercase shrink-0">
-                                    <Flame className="w-3 h-3" />
-                                    <span>Hot Package Click</span>
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold shrink-0">
-                                    <Eye className="w-3 h-3" />
-                                    <span>Page View</span>
-                                  </span>
-                                )}
-                              </div>
+                              All ({client.services.length})
+                            </button>
+                            <button
+                              onClick={() => setClientServiceFilters(prev => ({ ...prev, [client.id]: 'HOT' }))}
+                              className={`px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
+                                currentServiceFilter === 'HOT'
+                                  ? 'bg-rose-500 text-white'
+                                  : 'text-rose-600 hover:bg-rose-50'
+                              }`}
+                            >
+                              <Flame className="w-3 h-3" />
+                              <span>Hot Plans</span>
+                            </button>
+                            <button
+                              onClick={() => setClientServiceFilters(prev => ({ ...prev, [client.id]: 'VIEWS' }))}
+                              className={`px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
+                                currentServiceFilter === 'VIEWS'
+                                  ? 'bg-blue-600 text-white'
+                                  : 'text-blue-600 hover:bg-blue-50'
+                              }`}
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Views</span>
+                            </button>
+                          </div>
+                        </div>
 
-                              {/* Package Clicks under this service */}
-                              {service.packages.length > 0 ? (
-                                <div className="space-y-1.5 mt-2 pt-2 border-t border-slate-100">
-                                  <div className="text-[10px] font-black uppercase text-slate-400">Selected Plans & Pricing:</div>
-                                  {service.packages.map((pkg, pIdx) => (
-                                    <div key={pIdx} className="flex items-center justify-between bg-rose-50/60 p-2 rounded-xl border border-rose-100 text-xs">
-                                      <span className="font-bold text-rose-900 flex items-center gap-1.5">
-                                        <Tag className="w-3 h-3 text-rose-500" />
-                                        <span>{pkg.name}</span>
-                                      </span>
-                                      <div className="flex items-center gap-2">
-                                        {pkg.price > 0 && (
-                                          <span className="font-black text-rose-700 bg-white px-2 py-0.5 rounded-lg border border-rose-200">
-                                            ₹{pkg.price.toLocaleString()}
-                                          </span>
+                        {/* High-density Services Timeline List */}
+                        <div className="space-y-2.5">
+                          {filteredServices.length === 0 ? (
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-400 italic">
+                              No services match this filter.
+                            </div>
+                          ) : (
+                            filteredServices.map((service, sIdx) => {
+                              const hasPackageClicks = service.highestCategory === 'PACKAGE_CLICK';
+
+                              return (
+                                <div
+                                  key={sIdx}
+                                  className={`p-3.5 rounded-2xl border transition-all ${
+                                    hasPackageClicks
+                                      ? 'bg-white border-rose-200/90 shadow-sm hover:border-rose-300'
+                                      : 'bg-white border-slate-200/80 shadow-sm hover:border-slate-300'
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                                      {/* Status Icon */}
+                                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                                        hasPackageClicks ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-slate-100 text-slate-500'
+                                      }`}>
+                                        {hasPackageClicks ? <Flame className="w-4 h-4 fill-current" /> : <Eye className="w-4 h-4" />}
+                                      </div>
+
+                                      <div className="space-y-1 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <h5 className="font-bold text-xs md:text-sm text-slate-900 leading-snug truncate">
+                                            {service.serviceName}
+                                          </h5>
+                                          {hasPackageClicks ? (
+                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200/60 rounded-full text-[9px] font-black uppercase">
+                                              Hot Intent
+                                            </span>
+                                          ) : (
+                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-[9px] font-bold uppercase">
+                                              Page View
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {/* Package chips */}
+                                        {service.packages.length > 0 ? (
+                                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                            {service.packages.map((pkg, pIdx) => (
+                                              <span
+                                                key={pIdx}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 border border-rose-200 rounded-lg text-xs font-bold text-rose-900"
+                                              >
+                                                <Tag className="w-3 h-3 text-rose-500" />
+                                                <span>Plan: {pkg.name}</span>
+                                                {pkg.price > 0 && (
+                                                  <span className="font-black text-rose-700 bg-white px-1.5 py-0.2 rounded border border-rose-200">
+                                                    ₹{pkg.price.toLocaleString()}
+                                                  </span>
+                                                )}
+                                                <span className="text-[10px] text-slate-400 ml-1">
+                                                  ({formatTimeAgo(pkg.time)})
+                                                </span>
+                                              </span>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p className="text-[11px] text-slate-400">
+                                            Explored service details, eligibility & compliance rules.
+                                          </p>
                                         )}
-                                        <span className="text-[10px] text-slate-400 font-medium">
-                                          {formatTimeAgo(pkg.time)}
-                                        </span>
                                       </div>
                                     </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="text-[11px] text-slate-400 italic mt-2">
-                                  Browsed service details and requirements.
-                                </div>
-                              )}
 
-                              {/* Footer metrics for this service */}
-                              <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium mt-3 pt-2 border-t border-slate-100">
-                                <span>{service.clickCount} Price Taps • {service.viewCount} Views</span>
-                                <span>Active {formatTimeAgo(service.lastActivityAt)}</span>
-                              </div>
+                                    {/* Right Metadata & WhatsApp quick icon */}
+                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                      <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        <span>{formatTimeAgo(service.lastActivityAt)}</span>
+                                      </span>
+
+                                      {client.phone && (
+                                        <a
+                                          href={getClientWhatsAppLink(client, service)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          title={`Send WhatsApp quote about ${service.serviceName}`}
+                                          className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 border border-emerald-200/60"
+                                        >
+                                          <MessageSquare className="w-3 h-3" />
+                                          <span className="hidden sm:inline">WhatsApp Quote</span>
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {/* Collapsible raw telemetry events */}
+                        <div className="pt-2">
+                          <details className="group">
+                            <summary className="cursor-pointer text-[11px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1.5 select-none py-1">
+                              <Activity className="w-3.5 h-3.5 text-indigo-500" />
+                              <span>View All {client.activities.length} Raw Telemetry Logs</span>
+                              <ChevronRight className="w-3.5 h-3.5 transition group-open:rotate-90 ml-auto text-slate-400" />
+                            </summary>
+                            <div className="mt-2 space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                              {client.activities.map((act, actIdx) => (
+                                <div key={actIdx} className="bg-white p-2 rounded-xl border border-slate-200 flex items-center justify-between text-[11px]">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${act.category === 'PACKAGE_CLICK' ? 'bg-rose-500' : 'bg-blue-500'}`}></span>
+                                    <strong className="text-slate-800">{act.serviceName}</strong>
+                                    {act.packageName && (
+                                      <span className="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.2 rounded text-[10px]">
+                                        {act.packageName} {act.price ? `(₹${act.price})` : ''}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-slate-400 text-[10px]">
+                                    <span className="uppercase font-bold">{act.source}</span>
+                                    <span>•</span>
+                                    <span>{new Date(act.lastActivityAt || act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* B. Follow-Up Notes & Client Conversation Thread */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4 text-indigo-600" />
-                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">
-                            Client Follow-Up Notes ({client.notes.length})
-                          </h4>
+                          </details>
                         </div>
                       </div>
 
-                      {/* Notes list */}
-                      <div className="space-y-2">
-                        {client.notes.length > 0 ? (
-                          client.notes.map((note, nIdx) => (
-                            <div key={nIdx} className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs space-y-1 shadow-sm">
-                              <div className="flex items-center justify-between text-slate-400 font-bold text-[10px]">
-                                <span className="text-indigo-600 font-black flex items-center gap-1">
-                                  <UserCheck className="w-3 h-3" />
-                                  <span>{note.author} ({note.authorRole})</span>
-                                </span>
-                                <span>{new Date(note.createdAt).toLocaleString()}</span>
-                              </div>
-                              <p className="text-slate-700 font-medium leading-relaxed">{note.text}</p>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="bg-white p-4 rounded-xl border border-slate-200 text-center text-xs text-slate-400 italic">
-                            No follow-up notes recorded yet for this client. Add the first note below.
+                      {/* Right Column (5 of 12 Cols): Client Intelligence Summary & Follow-Up Notes Thread */}
+                      <div className="lg:col-span-5 space-y-4">
+                        {/* 1. Executive Summary & Pipeline Value */}
+                        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Client Intelligence</span>
+                            {client.totalPriceInterest > 0 ? (
+                              <span className="px-2.5 py-1 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl text-xs font-black shadow-sm">
+                                ₹{client.totalPriceInterest.toLocaleString()} Pipeline
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold">
+                                Informational Lead
+                              </span>
+                            )}
                           </div>
-                        )}
-                      </div>
 
-                      {/* Inline Note Composer */}
-                      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <input
-                          type="text"
-                          placeholder="Write a follow-up note (e.g. Spoke to client on call, interested in startup plan)..."
-                          value={clientNoteInputs[client.id] || ''}
-                          onChange={(e) => setClientNoteInputs(prev => ({ ...prev, [client.id]: e.target.value }))}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddClientNote(client);
-                            }
-                          }}
-                          className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
-                        />
-                        <button
-                          onClick={() => handleAddClientNote(client)}
-                          disabled={isSubmittingNoteFor === client.id || !(clientNoteInputs[client.id] || '').trim()}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shrink-0"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                          <span>{isSubmittingNoteFor === client.id ? 'Saving...' : 'Add Note'}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* C. Full Telemetry Journey Trail */}
-                    <div className="pt-2 border-t border-slate-200">
-                      <details className="group">
-                        <summary className="cursor-pointer text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1.5 select-none py-1">
-                          <Activity className="w-3.5 h-3.5 text-indigo-500" />
-                          <span>View Complete Raw Event Telemetry ({client.activities.length} Events)</span>
-                          <ChevronRight className="w-3.5 h-3.5 transition group-open:rotate-90 ml-auto text-slate-400" />
-                        </summary>
-                        <div className="mt-3 space-y-2 max-h-52 overflow-y-auto pr-1">
-                          {client.activities.map((act, actIdx) => (
-                            <div key={actIdx} className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-[11px]">
-                              <div className="flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${act.category === 'PACKAGE_CLICK' ? 'bg-rose-500' : 'bg-blue-500'}`}></span>
-                                <strong className="text-slate-800">{act.serviceName}</strong>
-                                {act.packageName && (
-                                  <span className="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded">
-                                    {act.packageName} {act.price ? `(₹${act.price})` : ''}
+                          {/* Quick Matrix Grid */}
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">Device Split</div>
+                              <div className="font-bold text-slate-800 mt-0.5 flex flex-wrap gap-1">
+                                {Object.entries(client.sourceLogs || {}).map(([s, cnt]) => (
+                                  <span key={s} className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-[10px]">
+                                    {s === 'ios' ? '📱 iOS' : s === 'android' ? '🤖 Android' : '💻 Web'}: {cnt}
                                   </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 text-slate-400 text-[10px]">
-                                <span className="uppercase font-bold">{act.source}</span>
-                                <span>•</span>
-                                <span>{new Date(act.lastActivityAt || act.createdAt).toLocaleString()}</span>
+                                ))}
                               </div>
                             </div>
-                          ))}
+
+                            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">First / Last Active</div>
+                              <div className="font-bold text-slate-800 mt-0.5 text-[11px] truncate">
+                                {formatTimeAgo(client.firstSeenAt)} ➔ {formatTimeAgo(client.lastActivityAt)}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </details>
+
+                        {/* 2. Unified Follow-Up Notes Feed */}
+                        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3 flex flex-col">
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                            <div className="flex items-center gap-1.5">
+                              <MessageSquare className="w-4 h-4 text-indigo-600" />
+                              <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                                Follow-Up Notes ({client.notes.length})
+                              </h4>
+                            </div>
+                          </div>
+
+                          {/* Scrollable Notes List */}
+                          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            {client.notes.length > 0 ? (
+                              client.notes.map((note, nIdx) => (
+                                <div key={nIdx} className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1">
+                                  <div className="flex items-center justify-between text-slate-400 font-bold text-[10px]">
+                                    <span className="text-indigo-600 font-black flex items-center gap-1">
+                                      <UserCheck className="w-3 h-3" />
+                                      <span>{note.author} ({note.authorRole})</span>
+                                    </span>
+                                    <span>{new Date(note.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                  </div>
+                                  <p className="text-slate-700 font-medium leading-relaxed">{note.text}</p>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="p-4 bg-slate-50 rounded-xl text-center text-xs text-slate-400 italic">
+                                No follow-up notes logged yet. Use the quick presets or write a custom note below.
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Quick Preset Action Chips */}
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                            {notePresetChips.map((chip, cIdx) => (
+                              <button
+                                key={cIdx}
+                                type="button"
+                                onClick={() => handleAddClientNote(client, chip)}
+                                disabled={isSubmittingNoteFor === client.id}
+                                className="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 rounded-lg text-[10px] font-bold transition active:scale-95 border border-slate-200/60"
+                              >
+                                {chip}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Inline Custom Note Composer */}
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                            <input
+                              type="text"
+                              placeholder="Write a follow-up note..."
+                              value={clientNoteInputs[client.id] || ''}
+                              onChange={(e) => setClientNoteInputs(prev => ({ ...prev, [client.id]: e.target.value }))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddClientNote(client);
+                                }
+                              }}
+                              className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+                            />
+                            <button
+                              onClick={() => handleAddClientNote(client)}
+                              disabled={isSubmittingNoteFor === client.id || !(clientNoteInputs[client.id] || '').trim()}
+                              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm shrink-0"
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                              <span>{isSubmittingNoteFor === client.id ? 'Saving...' : 'Add'}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
                     </div>
                   </div>
                 )}
