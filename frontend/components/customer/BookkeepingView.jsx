@@ -30,6 +30,7 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
 
     // Modal triggers
     const [showFormModal, setShowFormModal] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState(null);
     const [formTxType, setFormTxType] = useState('Sales');
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -66,33 +67,48 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
         fetchData();
     }, []);
 
-    // Create Transaction
-    const handleCreateTransaction = async (formData) => {
+    // Create or Update Transaction
+    const handleSaveTransaction = async (formData, editId) => {
         try {
-            const { data } = await axios.post('/api/accounting/transactions', formData, config);
-            setTransactions([data, ...transactions]);
-            setShowFormModal(false);
-            // If new party not in directory, add it
-            if (formData.partyName && !parties.some(p => p.name.toLowerCase() === formData.partyName.toLowerCase())) {
-                const newParty = {
-                    name: formData.partyName,
-                    partyType: formData.transactionType === 'Sales' ? 'Customer' : 'Vendor',
-                    gstin: formData.partyGstin || '',
-                    pan: formData.partyPan || '',
-                    billingAddress: formData.partyAddress || '',
-                    state: formData.placeOfSupply || 'Andhra Pradesh',
-                    phone: formData.partyPhone || '',
-                    email: formData.partyEmail || ''
-                };
-                try {
-                    const partyRes = await axios.post('/api/accounting/parties', newParty, config);
-                    setParties([...parties, partyRes.data]);
-                } catch(e) {}
+            if (editId) {
+                const { data } = await axios.put(`/api/accounting/transactions/${editId}`, formData, config);
+                setTransactions(transactions.map(t => (t._id === editId ? data : t)));
+                setShowFormModal(false);
+                setEditingTransaction(null);
+                alert(`${formData.transactionType} updated successfully!`);
+            } else {
+                const { data } = await axios.post('/api/accounting/transactions', formData, config);
+                setTransactions([data, ...transactions]);
+                setShowFormModal(false);
+                setEditingTransaction(null);
+                // If new party not in directory, add it
+                if (formData.partyName && !parties.some(p => p.name.toLowerCase() === formData.partyName.toLowerCase())) {
+                    const newParty = {
+                        name: formData.partyName,
+                        partyType: formData.transactionType === 'Sales' ? 'Customer' : 'Vendor',
+                        gstin: formData.partyGstin || '',
+                        pan: formData.partyPan || '',
+                        billingAddress: formData.partyAddress || '',
+                        state: formData.placeOfSupply || 'Andhra Pradesh',
+                        phone: formData.partyPhone || '',
+                        email: formData.partyEmail || ''
+                    };
+                    try {
+                        const partyRes = await axios.post('/api/accounting/parties', newParty, config);
+                        setParties([...parties, partyRes.data]);
+                    } catch(e) {}
+                }
+                alert(`${formData.transactionType} recorded successfully!`);
             }
-            alert(`${formData.transactionType} recorded successfully!`);
         } catch (error) {
             alert('Failed to save voucher: ' + (error.response?.data?.message || error.message));
         }
+    };
+
+    const handleOpenEdit = (tx) => {
+        setEditingTransaction(tx);
+        setFormTxType(tx.transactionType);
+        setShowFormModal(true);
     };
 
     // Delete Transaction
@@ -231,9 +247,11 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
                         <SalesInvoicesTab 
                             transactions={transactions}
                             onAddNew={() => {
+                                setEditingTransaction(null);
                                 setFormTxType('Sales');
                                 setShowFormModal(true);
                             }}
+                            onEditInvoice={handleOpenEdit}
                             onViewInvoice={(inv) => setSelectedInvoice(inv)}
                             onDeleteInvoice={handleDeleteTransaction}
                             onWhatsAppShare={handleWhatsAppShare}
@@ -245,9 +263,11 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
                         <PurchaseBillsTab 
                             transactions={transactions}
                             onAddNew={() => {
+                                setEditingTransaction(null);
                                 setFormTxType('Purchase');
                                 setShowFormModal(true);
                             }}
+                            onEditInvoice={handleOpenEdit}
                             onViewInvoice={(inv) => setSelectedInvoice(inv)}
                             onDeleteInvoice={handleDeleteTransaction}
                         />
@@ -257,13 +277,16 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
                         <IncomeExpensesTab 
                             transactions={transactions}
                             onAddNewIncome={() => {
+                                setEditingTransaction(null);
                                 setFormTxType('Income');
                                 setShowFormModal(true);
                             }}
                             onAddNewExpense={() => {
+                                setEditingTransaction(null);
                                 setFormTxType('Expense');
                                 setShowFormModal(true);
                             }}
+                            onEditInvoice={handleOpenEdit}
                             onViewInvoice={(inv) => setSelectedInvoice(inv)}
                             onDeleteInvoice={handleDeleteTransaction}
                         />
@@ -299,12 +322,16 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
             {/* Modal: Add/Edit Transaction */}
             <TransactionFormModal 
                 show={showFormModal}
-                onClose={() => setShowFormModal(false)}
+                onClose={() => {
+                    setShowFormModal(false);
+                    setEditingTransaction(null);
+                }}
                 txType={formTxType}
-                onSubmit={handleCreateTransaction}
+                onSubmit={handleSaveTransaction}
                 parties={parties}
                 companyState={company?.state || 'Andhra Pradesh'}
                 invoiceCount={transactions.filter(t => t.transactionType === formTxType).length + 1}
+                editingTransaction={editingTransaction}
             />
 
             {/* Modal: Company Settings */}

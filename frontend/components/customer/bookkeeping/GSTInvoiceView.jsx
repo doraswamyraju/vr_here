@@ -1,37 +1,40 @@
 import React from 'react';
-import { Printer, Share2, ArrowLeft, Download, MessageCircle } from 'lucide-react';
+import { Printer, Share2, ArrowLeft, Download, MessageCircle, FileCheck, CheckCircle2 } from 'lucide-react';
 
 const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) => {
     if (!selectedInvoice) return null;
     
     const isSales = selectedInvoice.transactionType === 'Sales';
     const isPurchase = selectedInvoice.transactionType === 'Purchase';
+    const isIncome = selectedInvoice.transactionType === 'Income';
+    const isExpense = selectedInvoice.transactionType === 'Expense';
+    const isVoucher = isIncome || isExpense;
 
-    // Invoice info
+    // Doc details
     const copyType = selectedInvoice.copyType || 'Original for Recipient';
-    const docNumber = selectedInvoice.docNumber || 'INV-0001';
+    const docNumber = selectedInvoice.docNumber || (isIncome ? 'RV-0001' : isExpense ? 'PV-0001' : 'INV-0001');
     const docDate = selectedInvoice.docDate ? new Date(selectedInvoice.docDate).toLocaleDateString('en-GB') : 'DD/MM/YYYY';
     const dueDate = selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString('en-GB') : docDate;
     const paymentMode = selectedInvoice.paymentMode || selectedInvoice.paymentType || 'Bank Transfer';
     const placeOfSupply = selectedInvoice.placeOfSupply || company?.state || 'Andhra Pradesh';
 
-    // Supplier Info (For sales: our company. For purchase: party)
-    const supplierName = isSales ? (company?.companyName || 'Business Name') : selectedInvoice.partyName;
-    const supplierTrade = isSales ? (company?.tradeName || '') : '';
-    const supplierAddress = isSales ? (company?.address || 'Address Line, City, State - PIN') : (selectedInvoice.partyAddress || '');
-    const supplierGstin = isSales ? (company?.gstin || 'N/A') : selectedInvoice.partyGstin;
-    const supplierState = isSales ? (company?.state || 'State') : placeOfSupply;
-    const supplierPhone = isSales ? (company?.phone || '') : selectedInvoice.partyPhone;
-    const supplierEmail = isSales ? (company?.email || '') : selectedInvoice.partyEmail;
+    // Supplier Info (For sales/vouchers: our company. For purchase: party)
+    const supplierName = (isSales || isVoucher) ? (company?.companyName || 'Business Name') : selectedInvoice.partyName;
+    const supplierTrade = (isSales || isVoucher) ? (company?.tradeName || '') : '';
+    const supplierAddress = (isSales || isVoucher) ? (company?.address || 'Address Line, City, State - PIN') : (selectedInvoice.partyAddress || '');
+    const supplierGstin = (isSales || isVoucher) ? (company?.gstin || 'N/A') : selectedInvoice.partyGstin;
+    const supplierState = (isSales || isVoucher) ? (company?.state || 'State') : placeOfSupply;
+    const supplierPhone = (isSales || isVoucher) ? (company?.phone || '') : selectedInvoice.partyPhone;
+    const supplierEmail = (isSales || isVoucher) ? (company?.email || '') : selectedInvoice.partyEmail;
 
-    // Bill To (Customer / Recipient)
-    const billToName = isSales ? selectedInvoice.partyName : (company?.companyName || 'Business Name');
-    const billToAddress = isSales ? (selectedInvoice.partyAddress || 'N/A') : (company?.address || 'N/A');
-    const billToGstin = isSales ? (selectedInvoice.partyGstin || 'URP / N/A') : (company?.gstin || 'N/A');
-    const billToPan = isSales ? (selectedInvoice.partyPan || (selectedInvoice.partyGstin?.length === 15 ? selectedInvoice.partyGstin.substring(2, 12) : 'N/A')) : 'N/A';
-    const billToState = isSales ? (selectedInvoice.partyState || placeOfSupply) : (company?.state || 'N/A');
-    const billToPhone = isSales ? (selectedInvoice.partyPhone || 'N/A') : (company?.phone || 'N/A');
-    const billToEmail = isSales ? (selectedInvoice.partyEmail || 'N/A') : (company?.email || 'N/A');
+    // Bill To / Party (Customer / Recipient / Vendor / Beneficiary)
+    const billToName = isSales ? selectedInvoice.partyName : isVoucher ? (selectedInvoice.partyName || selectedInvoice.items?.[0]?.description || 'General') : (company?.companyName || 'Business Name');
+    const billToAddress = isSales ? (selectedInvoice.partyAddress || 'N/A') : isVoucher ? (selectedInvoice.partyAddress || '') : (company?.address || 'N/A');
+    const billToGstin = isSales ? (selectedInvoice.partyGstin || 'URP / N/A') : isVoucher ? (selectedInvoice.partyGstin || '') : (company?.gstin || 'N/A');
+    const billToPan = isSales ? (selectedInvoice.partyPan || (selectedInvoice.partyGstin?.length === 15 ? selectedInvoice.partyGstin.substring(2, 12) : 'N/A')) : (selectedInvoice.partyPan || 'N/A');
+    const billToState = isSales ? (selectedInvoice.partyState || placeOfSupply) : (selectedInvoice.partyState || company?.state || 'N/A');
+    const billToPhone = isSales ? (selectedInvoice.partyPhone || 'N/A') : (selectedInvoice.partyPhone || '');
+    const billToEmail = isSales ? (selectedInvoice.partyEmail || 'N/A') : (selectedInvoice.partyEmail || '');
 
     // Ship To (Consignee)
     const shipToSame = selectedInvoice.shipToSameAsBilling !== false;
@@ -75,7 +78,8 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
         : defaultTerms;
 
     const handleWhatsAppShare = () => {
-        const text = `*Tax Invoice from ${supplierName}*%0AInvoice No: ${docNumber}%0ADate: ${docDate}%0ATotal Amount: ₹${summary.totalAmount.toLocaleString('en-IN')}%0APlease let us know if you have any questions!`;
+        const docTitle = isIncome ? 'Receipt Voucher' : isExpense ? 'Payment Voucher' : isPurchase ? 'Purchase Bill' : 'Tax Invoice';
+        const text = `*${docTitle} from ${supplierName}*%0AVoucher/Invoice No: ${docNumber}%0ADate: ${docDate}%0ATotal Amount: ₹${summary.totalAmount.toLocaleString('en-IN')}%0APlease let us know if you have any questions!`;
         const phone = selectedInvoice.partyPhone ? selectedInvoice.partyPhone.replace(/[^0-9]/g, '') : '';
         const url = phone ? `https://wa.me/91${phone}?text=${text}` : `https://wa.me/?text=${text}`;
         window.open(url, '_blank');
@@ -122,7 +126,7 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                     onClick={onBack} 
                     className="flex items-center gap-2 text-slate-700 font-bold hover:text-slate-900 transition px-3 py-2 rounded-xl hover:bg-slate-100"
                 >
-                    <ArrowLeft size={16} /> Back to Invoices
+                    <ArrowLeft size={16} /> Back to List
                 </button>
                 <div className="flex items-center gap-2 flex-wrap">
                     <button 
@@ -146,256 +150,411 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
                 </div>
             </div>
 
-            {/* Printable Invoice matching SALES INVOICE TEMPLATE.xlsx */}
-            <div className="bg-white p-6 md:p-10 rounded-3xl border border-slate-300 shadow-xl font-sans text-slate-900 printable-area text-[11px] leading-tight">
-                
-                {/* Top Copy Indicator */}
-                <div className="flex justify-end mb-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-                        copy : {copyType.toLowerCase()}
-                    </span>
-                </div>
-
-                {/* Company & Invoice Header */}
-                <div className="grid grid-cols-12 border-2 border-slate-900 rounded-t-xl p-4 gap-4 bg-slate-50/40">
-                    <div className="col-span-7 flex gap-3">
-                        {company?.logo && (
-                            <img src={company.logo} alt="Logo" className="w-16 h-16 object-contain rounded border border-slate-200 bg-white p-1 shrink-0" />
-                        )}
-                        <div className="space-y-1">
-                            <h1 className="text-xl font-black text-slate-900 leading-none">{supplierName}</h1>
-                            {supplierTrade && <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">{supplierTrade}</p>}
-                            <p className="text-slate-600">{supplierAddress}</p>
-                            <p className="font-bold text-slate-800">
-                                GSTIN: <span className="font-mono">{supplierGstin}</span> &nbsp;|&nbsp; State: {supplierState}
-                            </p>
-                            {(supplierPhone || supplierEmail) && (
-                                <p className="text-slate-600">
-                                    {supplierPhone && `Phone: ${supplierPhone}`} {supplierEmail && ` | Email: ${supplierEmail}`}
+            {/* IF INCOME OR EXPENSE: INDUSTRY STANDARD ACCOUNTING VOUCHER FORMAT */}
+            {isVoucher ? (
+                <div className="bg-white p-6 md:p-10 rounded-3xl border-2 border-slate-900 shadow-xl font-sans text-slate-900 printable-area text-[11px] leading-tight space-y-4">
+                    {/* Voucher Top Header */}
+                    <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4">
+                        <div className="flex gap-3 items-center">
+                            {company?.logo && (
+                                <img src={company.logo} alt="Logo" className="w-14 h-14 object-contain rounded border border-slate-200 bg-white p-1 shrink-0" />
+                            )}
+                            <div>
+                                <h1 className="text-xl font-black text-slate-900 leading-none">{company?.companyName || 'Business Name'}</h1>
+                                {company?.tradeName && <p className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider mt-0.5">{company?.tradeName}</p>}
+                                <p className="text-slate-600 text-[10px] mt-0.5">{company?.address || 'Registered Office Address'}</p>
+                                <p className="text-slate-800 font-bold text-[10px]">
+                                    GSTIN: <span className="font-mono">{company?.gstin || 'N/A'}</span> &nbsp;|&nbsp; PAN: <span className="font-mono">{company?.pan || 'N/A'}</span>
                                 </p>
-                            )}
+                            </div>
+                        </div>
+
+                        {/* Title Badge */}
+                        <div className="text-right space-y-1">
+                            <span className={`inline-block px-4 py-1.5 rounded-lg text-white font-black text-sm tracking-wider uppercase ${
+                                isIncome ? 'bg-teal-700' : 'bg-rose-700'
+                            }`}>
+                                {isIncome ? 'RECEIPT VOUCHER' : 'PAYMENT VOUCHER'}
+                            </span>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                {isIncome ? '(Money Received / Inflow)' : '(Money Paid / Outflow)'}
+                            </p>
                         </div>
                     </div>
 
-                    <div className="col-span-5 border-l border-slate-300 pl-4 space-y-1.5 text-right">
-                        <div className="text-center bg-slate-900 text-white py-1 rounded font-black tracking-wider text-sm uppercase mb-2">
-                            {isSales ? 'TAX INVOICE' : 'PURCHASE INVOICE'}
+                    {/* Voucher Metadata & Beneficiary Block */}
+                    <div className="grid grid-cols-12 border border-slate-400 rounded-xl overflow-hidden text-xs">
+                        {/* Left: Voucher details */}
+                        <div className="col-span-6 p-3 bg-slate-50/60 border-r border-slate-300 space-y-1.5">
+                            <div className="grid grid-cols-3 gap-1">
+                                <span className="font-bold text-slate-600">Voucher No:</span>
+                                <span className="col-span-2 font-mono font-black text-slate-900">{docNumber}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                                <span className="font-bold text-slate-600">Voucher Date:</span>
+                                <span className="col-span-2 text-slate-900 font-bold">{docDate}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                                <span className="font-bold text-slate-600">Payment Mode:</span>
+                                <span className="col-span-2 text-slate-900 font-bold">{paymentMode}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                                <span className="font-bold text-slate-600">Place of Supply:</span>
+                                <span className="col-span-2 text-slate-800">{placeOfSupply}</span>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 text-left gap-y-1 text-[11px]">
-                            <span className="font-bold text-slate-600">Invoice No.:</span>
-                            <span className="font-bold text-slate-900 font-mono text-right">{docNumber}</span>
-                            
-                            <span className="font-bold text-slate-600">Invoice Date:</span>
-                            <span className="text-slate-900 text-right">{docDate}</span>
-                            
-                            <span className="font-bold text-slate-600">Due Date:</span>
-                            <span className="text-slate-900 text-right">{dueDate}</span>
-                            
-                            <span className="font-bold text-slate-600">Place of Supply:</span>
-                            <span className="text-slate-900 text-right">{placeOfSupply}</span>
-                            
-                            <span className="font-bold text-slate-600">Payment Mode:</span>
-                            <span className="text-slate-900 text-right font-medium">{paymentMode}</span>
+
+                        {/* Right: Paid To / Received From */}
+                        <div className="col-span-6 p-3 bg-white space-y-1.5">
+                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                {isIncome ? 'RECEIVED WITH THANKS FROM:' : 'PAID TO (BENEFICIARY):'}
+                            </p>
+                            <p className="font-black text-slate-900 text-sm">{billToName}</p>
+                            {billToAddress && <p className="text-slate-600 text-[10px]">{billToAddress}</p>}
+                            <div className="flex gap-4 text-[10px] font-mono text-slate-700">
+                                {billToGstin && <p><span className="font-sans font-bold">GSTIN:</span> {billToGstin}</p>}
+                                {billToPan && <p><span className="font-sans font-bold">PAN:</span> {billToPan}</p>}
+                            </div>
+                            {billToPhone && <p className="text-[10px] text-slate-600"><span className="font-bold">Contact:</span> {billToPhone}</p>}
                         </div>
                     </div>
-                </div>
 
-                {/* Parties Block: BILL TO and SHIP TO */}
-                <div className="grid grid-cols-2 border-x-2 border-b-2 border-slate-900">
-                    {/* BILL TO */}
-                    <div className="p-3 border-r border-slate-300 space-y-1 bg-white">
-                        <div className="font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-1 mb-1.5 text-xs text-indigo-900 flex items-center justify-between">
-                            <span>BILL TO</span>
-                        </div>
-                        <p className="font-bold text-slate-900 text-xs">{billToName}</p>
-                        <p className="text-slate-600">{billToAddress}</p>
-                        <div className="grid grid-cols-2 gap-x-2 pt-1 font-mono text-[10px]">
-                            <p><span className="font-sans font-bold text-slate-700">GSTIN:</span> {billToGstin}</p>
-                            <p><span className="font-sans font-bold text-slate-700">PAN:</span> {billToPan}</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-2 text-[10px] text-slate-600">
-                            <p><span className="font-bold text-slate-700">State:</span> {billToState}</p>
-                            <p><span className="font-bold text-slate-700">Mobile:</span> {billToPhone}</p>
-                        </div>
-                        {billToEmail && <p className="text-[10px] text-slate-600"><span className="font-bold text-slate-700">Email:</span> {billToEmail}</p>}
-                    </div>
-
-                    {/* SHIP TO */}
-                    <div className="p-3 space-y-1 bg-white">
-                        <div className="font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-1 mb-1.5 text-xs text-slate-800 flex items-center justify-between">
-                            <span>SHIP TO (Consignee)</span>
-                            {shipToSame && <span className="text-[9px] font-normal text-slate-500 lowercase">(same as billing)</span>}
-                        </div>
-                        <p className="font-bold text-slate-900 text-xs">{shipToName}</p>
-                        <p className="text-slate-600">{shipToAddress}</p>
-                        <div className="grid grid-cols-2 gap-x-2 pt-1 font-mono text-[10px]">
-                            <p><span className="font-sans font-bold text-slate-700">GSTIN:</span> {shipToGstin}</p>
-                            <p><span className="font-sans font-bold text-slate-700">PAN:</span> {shipToPan}</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-2 text-[10px] text-slate-600">
-                            <p><span className="font-bold text-slate-700">State:</span> {shipToState}</p>
-                            <p><span className="font-bold text-slate-700">Mobile:</span> {shipToPhone}</p>
-                        </div>
-                        {shipToEmail && <p className="text-[10px] text-slate-600"><span className="font-bold text-slate-700">Email:</span> {shipToEmail}</p>}
-                    </div>
-                </div>
-
-                {/* Items Table matching SALES INVOICE TEMPLATE.xlsx 15 columns */}
-                <div className="border-x-2 border-b-2 border-slate-900 overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-[10.5px]">
-                        <thead>
-                            <tr className="bg-slate-900 text-white font-bold text-center">
-                                <th className="p-1.5 border-r border-slate-700 w-7">#</th>
-                                <th className="p-1.5 border-r border-slate-700 text-left">Item / Service Description</th>
-                                <th className="p-1.5 border-r border-slate-700 w-16">HSN/SAC</th>
-                                <th className="p-1.5 border-r border-slate-700 w-10">Qty</th>
-                                <th className="p-1.5 border-r border-slate-700 w-11">Unit</th>
-                                <th className="p-1.5 border-r border-slate-700 w-16 text-right">Rate (₹)</th>
-                                <th className="p-1.5 border-r border-slate-700 w-12 text-right">Disc %</th>
-                                <th className="p-1.5 border-r border-slate-700 w-20 text-right">Taxable (₹)</th>
-                                <th className="p-1.5 border-r border-slate-700 w-11 text-right">CGST %</th>
-                                <th className="p-1.5 border-r border-slate-700 w-14 text-right">CGST (₹)</th>
-                                <th className="p-1.5 border-r border-slate-700 w-11 text-right">SGST %</th>
-                                <th className="p-1.5 border-r border-slate-700 w-14 text-right">SGST (₹)</th>
-                                <th className="p-1.5 border-r border-slate-700 w-11 text-right">IGST %</th>
-                                <th className="p-1.5 border-r border-slate-700 w-14 text-right">IGST (₹)</th>
-                                <th className="p-1.5 w-20 text-right">Total (₹)</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-300">
-                            {items.map((item, idx) => {
-                                const isInter = selectedInvoice.isInterstate;
-                                const halfRate = (item.gstRate || 0) / 2;
-                                return (
+                    {/* Accounting Particulars Table */}
+                    <div className="border border-slate-900 rounded-xl overflow-hidden">
+                        <table className="w-full text-left border-collapse text-[11px]">
+                            <thead>
+                                <tr className="bg-slate-900 text-white font-bold text-center">
+                                    <th className="p-2 border-r border-slate-700 w-10">#</th>
+                                    <th className="p-2 border-r border-slate-700 text-left">Ledger Head & Particulars / Narration</th>
+                                    <th className="p-2 border-r border-slate-700 w-24">HSN / SAC</th>
+                                    <th className="p-2 border-r border-slate-700 w-20 text-right">GST Rate</th>
+                                    <th className="p-2 border-r border-slate-700 w-28 text-right">Taxable (₹)</th>
+                                    <th className="p-2 w-32 text-right">Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-300">
+                                {items.map((item, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50/50">
-                                        <td className="p-1.5 border-r border-slate-300 text-center font-bold text-slate-500">{idx + 1}</td>
-                                        <td className="p-1.5 border-r border-slate-300 font-bold text-slate-900">{item.description}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-center font-mono text-slate-600">{item.hsnSac || '-'}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-center">{item.qty}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-center text-slate-600">{item.unit || 'PCS'}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono">{Number(item.rate).toFixed(2)}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono text-slate-600">{item.discPercent ? `${item.discPercent}%` : '-'}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono font-bold">{Number(item.taxableValue).toFixed(2)}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono text-slate-600">{!isInter && item.gstRate ? `${halfRate}%` : '-'}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono">{!isInter ? Number(item.cgst || 0).toFixed(2) : '-'}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono text-slate-600">{!isInter && item.gstRate ? `${halfRate}%` : '-'}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono">{!isInter ? Number(item.sgst || 0).toFixed(2) : '-'}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono text-slate-600">{isInter && item.gstRate ? `${item.gstRate}%` : '-'}</td>
-                                        <td className="p-1.5 border-r border-slate-300 text-right font-mono">{isInter ? Number(item.igst || 0).toFixed(2) : '-'}</td>
-                                        <td className="p-1.5 text-right font-mono font-black text-slate-900">{Number(item.total).toFixed(2)}</td>
+                                        <td className="p-2 border-r border-slate-300 text-center font-bold text-slate-500">{idx + 1}</td>
+                                        <td className="p-2 border-r border-slate-300 font-bold text-slate-900">
+                                            {item.description}
+                                            {selectedInvoice.notes && <span className="block text-[10px] font-normal text-slate-500 mt-0.5">{selectedInvoice.notes}</span>}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-300 text-center font-mono text-slate-600">{item.hsnSac || '-'}</td>
+                                        <td className="p-2 border-r border-slate-300 text-right font-mono text-slate-600">{item.gstRate ? `${item.gstRate}%` : '0%'}</td>
+                                        <td className="p-2 border-r border-slate-300 text-right font-mono">{Number(item.taxableValue || item.rate).toFixed(2)}</td>
+                                        <td className="p-2 text-right font-mono font-black text-slate-900">{Number(item.total || item.rate).toFixed(2)}</td>
                                     </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Totals and Calculations Block */}
-                <div className="grid grid-cols-12 border-x-2 border-b-2 border-slate-900">
-                    <div className="col-span-7 p-3 border-r border-slate-300 flex flex-col justify-between space-y-3 bg-slate-50/20">
-                        <div>
-                            <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">Amount in Words:</span>
-                            <p className="font-black text-slate-900 italic text-xs mt-0.5 capitalize">
-                                {summary.amountInWords || 'Rupees Zero Only'}
-                            </p>
-                        </div>
-
-                        {selectedInvoice.notes && (
-                            <div className="border-t border-slate-200 pt-2 text-[10px] text-slate-600">
-                                <span className="font-bold text-slate-700">Special Notes: </span>
-                                {selectedInvoice.notes}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="col-span-5 p-3 space-y-1.5 text-[11px] bg-slate-50/40">
-                        <div className="flex justify-between text-slate-700">
-                            <span>Subtotal (Taxable Value):</span>
-                            <span className="font-mono font-bold">₹{summary.totalTaxableValue.toFixed(2)}</span>
-                        </div>
-                        {summary.totalCgst > 0 && (
-                            <div className="flex justify-between text-slate-700">
-                                <span>Total CGST:</span>
-                                <span className="font-mono font-bold">₹{summary.totalCgst.toFixed(2)}</span>
-                            </div>
-                        )}
-                        {summary.totalSgst > 0 && (
-                            <div className="flex justify-between text-slate-700">
-                                <span>Total SGST:</span>
-                                <span className="font-mono font-bold">₹{summary.totalSgst.toFixed(2)}</span>
-                            </div>
-                        )}
-                        {summary.totalIgst > 0 && (
-                            <div className="flex justify-between text-slate-700">
-                                <span>Total IGST:</span>
-                                <span className="font-mono font-bold">₹{summary.totalIgst.toFixed(2)}</span>
-                            </div>
-                        )}
-                        {summary.roundOff !== 0 && (
-                            <div className="flex justify-between text-slate-500 text-[10px]">
-                                <span>Round Off:</span>
-                                <span className="font-mono">{summary.roundOff > 0 ? `+${summary.roundOff.toFixed(2)}` : summary.roundOff.toFixed(2)}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between border-t-2 border-slate-900 pt-2 text-sm font-black text-slate-900">
-                            <span>GRAND TOTAL:</span>
-                            <span className="font-mono text-base text-indigo-950">₹{summary.totalAmount.toLocaleString('en-IN')}.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer: Bank Details, Terms & Conditions, Declaration, Authorized Signatory */}
-                <div className="grid grid-cols-12 border-x-2 border-b-2 border-slate-900 rounded-b-xl">
-                    {/* Bank Details */}
-                    <div className="col-span-5 p-3 border-r border-slate-300 space-y-1.5 bg-white">
-                        <div className="font-black text-slate-900 uppercase tracking-wider text-[10.5px] border-b border-slate-200 pb-1">
-                            BANK DETAILS
-                        </div>
-                        <div className="space-y-0.5 text-[10px]">
-                            <p><span className="font-bold text-slate-700">Bank Name:</span> {bankName}</p>
-                            <p><span className="font-bold text-slate-700">Account No.:</span> <span className="font-mono font-bold">{bankAccount}</span></p>
-                            <p><span className="font-bold text-slate-700">IFSC Code:</span> <span className="font-mono font-bold">{bankIfsc}</span></p>
-                            <p><span className="font-bold text-slate-700">Branch:</span> {bankBranch}</p>
-                            {upiId && <p><span className="font-bold text-slate-700">UPI ID:</span> <span className="font-mono font-bold text-indigo-700">{upiId}</span></p>}
-                        </div>
-                    </div>
-
-                    {/* Terms and Conditions */}
-                    <div className="col-span-7 p-3 space-y-1 bg-white flex flex-col justify-between">
-                        <div>
-                            <div className="font-black text-slate-900 uppercase tracking-wider text-[10.5px] border-b border-slate-200 pb-1 mb-1">
-                                TERMS & CONDITIONS
-                            </div>
-                            <div className="text-[9.5px] text-slate-600 space-y-0.5 leading-snug">
-                                {terms.map((t, idx) => (
-                                    <p key={idx}>{t}</p>
                                 ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Voucher Summary & Amount in Words */}
+                    <div className="grid grid-cols-12 border border-slate-900 rounded-xl overflow-hidden">
+                        <div className="col-span-7 p-3 border-r border-slate-300 bg-slate-50/30 flex flex-col justify-between space-y-2">
+                            <div>
+                                <span className="font-bold text-slate-600 uppercase tracking-wider text-[10px]">Amount in Words:</span>
+                                <p className="font-black text-slate-900 italic text-xs mt-0.5 capitalize">
+                                    {summary.amountInWords || 'Rupees Zero Only'}
+                                </p>
+                            </div>
+                            <div className="border-t border-slate-200 pt-2 text-[10px] text-slate-600">
+                                <span className="font-bold text-slate-700">Bank / Payment Account: </span>
+                                {bankName} (A/c: {bankAccount})
+                            </div>
+                        </div>
+
+                        <div className="col-span-5 p-3 space-y-1.5 text-xs bg-slate-50/60">
+                            <div className="flex justify-between text-slate-700">
+                                <span>Gross Amount:</span>
+                                <span className="font-mono font-bold">₹{summary.totalTaxableValue.toFixed(2)}</span>
+                            </div>
+                            {(summary.totalCgst > 0 || summary.totalSgst > 0 || summary.totalIgst > 0) && (
+                                <div className="flex justify-between text-slate-700">
+                                    <span>Applicable GST:</span>
+                                    <span className="font-mono font-bold">₹{(summary.totalCgst + summary.totalSgst + summary.totalIgst).toFixed(2)}</span>
+                                </div>
+                            )}
+                            {summary.roundOff !== 0 && (
+                                <div className="flex justify-between text-slate-500 text-[10px]">
+                                    <span>Round Off:</span>
+                                    <span className="font-mono">{summary.roundOff > 0 ? `+${summary.roundOff.toFixed(2)}` : summary.roundOff.toFixed(2)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between border-t-2 border-slate-900 pt-1.5 text-sm font-black text-slate-900">
+                                <span>NET {isIncome ? 'RECEIVED' : 'PAID'}:</span>
+                                <span className="font-mono text-base text-indigo-950">₹{summary.totalAmount.toLocaleString('en-IN')}.00</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Declaration & Authorized Signatory */}
-                    <div className="col-span-12 border-t border-slate-300 p-3 grid grid-cols-12 gap-4 bg-slate-50/50">
-                        <div className="col-span-8 flex items-center text-[10px] text-slate-600 italic">
-                            <p>
-                                <span className="font-bold not-italic">Declaration:</span> We declare that this invoice shows the actual price of the goods/services described and that all particulars are true and correct.
-                            </p>
+                    {/* Voucher Signatures & Authorization */}
+                    <div className="grid grid-cols-4 border border-slate-900 rounded-xl p-4 gap-4 bg-white text-center">
+                        <div className="flex flex-col justify-end h-20 border-r border-slate-200 pr-2">
+                            <div className="border-t border-slate-400 pt-1">
+                                <p className="font-bold text-slate-800 text-[10.5px]">Prepared By</p>
+                                <p className="text-[9px] text-slate-400">Accountant / Staff</p>
+                            </div>
                         </div>
-                        <div className="col-span-4 text-center space-y-2 flex flex-col justify-end items-center">
-                            {company?.signature ? (
-                                <img src={company.signature} alt="Signature" className="h-10 object-contain mx-auto" />
-                            ) : (
-                                <div className="h-10"></div>
-                            )}
-                            <div className="border-t border-slate-400 pt-1 w-full text-center">
-                                <p className="font-black text-slate-900 text-[10.5px]">Authorized Signatory</p>
-                                <p className="text-[9px] text-slate-500 font-bold uppercase">{supplierName}</p>
+                        <div className="flex flex-col justify-end h-20 border-r border-slate-200 pr-2">
+                            <div className="border-t border-slate-400 pt-1">
+                                <p className="font-bold text-slate-800 text-[10.5px]">Checked & Verified</p>
+                                <p className="text-[9px] text-slate-400">Audit / Manager</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col justify-end h-20 border-r border-slate-200 pr-2">
+                            <div className="border-t border-slate-400 pt-1">
+                                <p className="font-bold text-slate-800 text-[10.5px]">Authorized Signatory</p>
+                                <p className="text-[9px] text-slate-400">{company?.companyName || 'Management'}</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col justify-end h-20">
+                            <div className="border-t border-slate-400 pt-1">
+                                <p className="font-bold text-slate-800 text-[10.5px]">Receiver's Signature</p>
+                                <p className="text-[9px] text-slate-400">Payee / Beneficiary</p>
                             </div>
                         </div>
                     </div>
                 </div>
+            ) : (
+                /* SALES & PURCHASE TAX INVOICE FORMAT (COMPACT 10 COLUMNS) */
+                <div className="bg-white p-6 md:p-10 rounded-3xl border border-slate-300 shadow-xl font-sans text-slate-900 printable-area text-[11px] leading-tight">
+                    
+                    {/* Top Copy Indicator */}
+                    <div className="flex justify-end mb-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+                            copy : {copyType.toLowerCase()}
+                        </span>
+                    </div>
 
-            </div>
+                    {/* Company & Invoice Header */}
+                    <div className="grid grid-cols-12 border-2 border-slate-900 rounded-t-xl p-4 gap-4 bg-slate-50/40">
+                        <div className="col-span-7 flex gap-3">
+                            {company?.logo && (
+                                <img src={company.logo} alt="Logo" className="w-16 h-16 object-contain rounded border border-slate-200 bg-white p-1 shrink-0" />
+                            )}
+                            <div className="space-y-1">
+                                <h1 className="text-xl font-black text-slate-900 leading-none">{supplierName}</h1>
+                                {supplierTrade && <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">{supplierTrade}</p>}
+                                <p className="text-slate-600">{supplierAddress}</p>
+                                <p className="font-bold text-slate-800">
+                                    GSTIN: <span className="font-mono">{supplierGstin}</span> &nbsp;|&nbsp; State: {supplierState}
+                                </p>
+                                {(supplierPhone || supplierEmail) && (
+                                    <p className="text-slate-600">
+                                        {supplierPhone && `Phone: ${supplierPhone}`} {supplierEmail && ` | Email: ${supplierEmail}`}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="col-span-5 border-l border-slate-300 pl-4 space-y-1.5 text-right">
+                            <div className="text-center bg-slate-900 text-white py-1 rounded font-black tracking-wider text-sm uppercase mb-2">
+                                {isSales ? 'TAX INVOICE' : 'PURCHASE INVOICE'}
+                            </div>
+                            <div className="grid grid-cols-2 text-left gap-y-1 text-[11px]">
+                                <span className="font-bold text-slate-600">Invoice No.:</span>
+                                <span className="font-bold text-slate-900 font-mono text-right">{docNumber}</span>
+                                
+                                <span className="font-bold text-slate-600">Invoice Date:</span>
+                                <span className="text-slate-900 text-right">{docDate}</span>
+                                
+                                <span className="font-bold text-slate-600">Due Date:</span>
+                                <span className="text-slate-900 text-right">{dueDate}</span>
+                                
+                                <span className="font-bold text-slate-600">Place of Supply:</span>
+                                <span className="text-slate-900 text-right">{placeOfSupply}</span>
+                                
+                                <span className="font-bold text-slate-600">Payment Mode:</span>
+                                <span className="text-slate-900 text-right font-medium">{paymentMode}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Parties Block: BILL TO and SHIP TO */}
+                    <div className="grid grid-cols-2 border-x-2 border-b-2 border-slate-900">
+                        {/* BILL TO */}
+                        <div className="p-3 border-r border-slate-300 space-y-1 bg-white">
+                            <div className="font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-1 mb-1.5 text-xs text-indigo-900 flex items-center justify-between">
+                                <span>BILL TO</span>
+                            </div>
+                            <p className="font-bold text-slate-900 text-xs">{billToName}</p>
+                            <p className="text-slate-600">{billToAddress}</p>
+                            <div className="grid grid-cols-2 gap-x-2 pt-1 font-mono text-[10px]">
+                                <p><span className="font-sans font-bold text-slate-700">GSTIN:</span> {billToGstin}</p>
+                                <p><span className="font-sans font-bold text-slate-700">PAN:</span> {billToPan}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-2 text-[10px] text-slate-600">
+                                <p><span className="font-bold text-slate-700">State:</span> {billToState}</p>
+                                <p><span className="font-bold text-slate-700">Mobile:</span> {billToPhone}</p>
+                            </div>
+                            {billToEmail && <p className="text-[10px] text-slate-600"><span className="font-bold text-slate-700">Email:</span> {billToEmail}</p>}
+                        </div>
+
+                        {/* SHIP TO */}
+                        <div className="p-3 space-y-1 bg-white">
+                            <div className="font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-1 mb-1.5 text-xs text-slate-800 flex items-center justify-between">
+                                <span>SHIP TO (Consignee)</span>
+                                {shipToSame && <span className="text-[9px] font-normal text-slate-500 lowercase">(same as billing)</span>}
+                            </div>
+                            <p className="font-bold text-slate-900 text-xs">{shipToName}</p>
+                            <p className="text-slate-600">{shipToAddress}</p>
+                            <div className="grid grid-cols-2 gap-x-2 pt-1 font-mono text-[10px]">
+                                <p><span className="font-sans font-bold text-slate-700">GSTIN:</span> {shipToGstin}</p>
+                                <p><span className="font-sans font-bold text-slate-700">PAN:</span> {shipToPan}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-2 text-[10px] text-slate-600">
+                                <p><span className="font-bold text-slate-700">State:</span> {shipToState}</p>
+                                <p><span className="font-bold text-slate-700">Mobile:</span> {shipToPhone}</p>
+                            </div>
+                            {shipToEmail && <p className="text-[10px] text-slate-600"><span className="font-bold text-slate-700">Email:</span> {shipToEmail}</p>}
+                        </div>
+                    </div>
+
+                    {/* Compact Items Table (10 Columns without redundant itemwise CGST/SGST/IGST breakdown) */}
+                    <div className="border-x-2 border-b-2 border-slate-900 overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-[10.5px]">
+                            <thead>
+                                <tr className="bg-slate-900 text-white font-bold text-center">
+                                    <th className="p-2 border-r border-slate-700 w-8">#</th>
+                                    <th className="p-2 border-r border-slate-700 text-left">Item / Service Description</th>
+                                    <th className="p-2 border-r border-slate-700 w-20">HSN/SAC</th>
+                                    <th className="p-2 border-r border-slate-700 w-12">Qty</th>
+                                    <th className="p-2 border-r border-slate-700 w-14">Unit</th>
+                                    <th className="p-2 border-r border-slate-700 w-24 text-right">Rate (₹)</th>
+                                    <th className="p-2 border-r border-slate-700 w-16 text-right">Disc %</th>
+                                    <th className="p-2 border-r border-slate-700 w-16 text-right">GST %</th>
+                                    <th className="p-2 border-r border-slate-700 w-28 text-right">Taxable (₹)</th>
+                                    <th className="p-2 w-28 text-right">Total (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-300">
+                                {items.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                        <td className="p-2 border-r border-slate-300 text-center font-bold text-slate-500">{idx + 1}</td>
+                                        <td className="p-2 border-r border-slate-300 font-bold text-slate-900">{item.description}</td>
+                                        <td className="p-2 border-r border-slate-300 text-center font-mono text-slate-600">{item.hsnSac || '-'}</td>
+                                        <td className="p-2 border-r border-slate-300 text-center">{item.qty}</td>
+                                        <td className="p-2 border-r border-slate-300 text-center text-slate-600">{item.unit || 'PCS'}</td>
+                                        <td className="p-2 border-r border-slate-300 text-right font-mono">{Number(item.rate).toFixed(2)}</td>
+                                        <td className="p-2 border-r border-slate-300 text-right font-mono text-slate-600">{item.discPercent ? `${item.discPercent}%` : '-'}</td>
+                                        <td className="p-2 border-r border-slate-300 text-right font-mono text-slate-600">{item.gstRate ? `${item.gstRate}%` : '0%'}</td>
+                                        <td className="p-2 border-r border-slate-300 text-right font-mono font-bold">{Number(item.taxableValue).toFixed(2)}</td>
+                                        <td className="p-2 text-right font-mono font-black text-slate-900">{Number(item.total).toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Totals and Calculations Block */}
+                    <div className="grid grid-cols-12 border-x-2 border-b-2 border-slate-900">
+                        <div className="col-span-7 p-3 border-r border-slate-300 flex flex-col justify-between space-y-3 bg-slate-50/20">
+                            <div>
+                                <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">Amount in Words:</span>
+                                <p className="font-black text-slate-900 italic text-xs mt-0.5 capitalize">
+                                    {summary.amountInWords || 'Rupees Zero Only'}
+                                </p>
+                            </div>
+
+                            {selectedInvoice.notes && (
+                                <div className="border-t border-slate-200 pt-2 text-[10px] text-slate-600">
+                                    <span className="font-bold text-slate-700">Special Notes: </span>
+                                    {selectedInvoice.notes}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="col-span-5 p-3 space-y-1.5 text-[11px] bg-slate-50/40">
+                            <div className="flex justify-between text-slate-700">
+                                <span>Subtotal (Taxable Value):</span>
+                                <span className="font-mono font-bold">₹{summary.totalTaxableValue.toFixed(2)}</span>
+                            </div>
+                            {summary.totalCgst > 0 && (
+                                <div className="flex justify-between text-slate-700">
+                                    <span>Total CGST:</span>
+                                    <span className="font-mono font-bold">₹{summary.totalCgst.toFixed(2)}</span>
+                                </div>
+                            )}
+                            {summary.totalSgst > 0 && (
+                                <div className="flex justify-between text-slate-700">
+                                    <span>Total SGST:</span>
+                                    <span className="font-mono font-bold">₹{summary.totalSgst.toFixed(2)}</span>
+                                </div>
+                            )}
+                            {summary.totalIgst > 0 && (
+                                <div className="flex justify-between text-slate-700">
+                                    <span>Total IGST:</span>
+                                    <span className="font-mono font-bold">₹{summary.totalIgst.toFixed(2)}</span>
+                                </div>
+                            )}
+                            {summary.roundOff !== 0 && (
+                                <div className="flex justify-between text-slate-500 text-[10px]">
+                                    <span>Round Off:</span>
+                                    <span className="font-mono">{summary.roundOff > 0 ? `+${summary.roundOff.toFixed(2)}` : summary.roundOff.toFixed(2)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between border-t-2 border-slate-900 pt-2 text-sm font-black text-slate-900">
+                                <span>GRAND TOTAL:</span>
+                                <span className="font-mono text-base text-indigo-950">₹{summary.totalAmount.toLocaleString('en-IN')}.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer: Bank Details, Terms & Conditions, Declaration, Authorized Signatory */}
+                    <div className="grid grid-cols-12 border-x-2 border-b-2 border-slate-900 rounded-b-xl">
+                        {/* Bank Details */}
+                        <div className="col-span-5 p-3 border-r border-slate-300 space-y-1.5 bg-white">
+                            <div className="font-black text-slate-900 uppercase tracking-wider text-[10.5px] border-b border-slate-200 pb-1">
+                                BANK DETAILS
+                            </div>
+                            <div className="space-y-0.5 text-[10px]">
+                                <p><span className="font-bold text-slate-700">Bank Name:</span> {bankName}</p>
+                                <p><span className="font-bold text-slate-700">Account No.:</span> <span className="font-mono font-bold">{bankAccount}</span></p>
+                                <p><span className="font-bold text-slate-700">IFSC Code:</span> <span className="font-mono font-bold">{bankIfsc}</span></p>
+                                <p><span className="font-bold text-slate-700">Branch:</span> {bankBranch}</p>
+                                {upiId && <p><span className="font-bold text-slate-700">UPI ID:</span> <span className="font-mono font-bold text-indigo-700">{upiId}</span></p>}
+                            </div>
+                        </div>
+
+                        {/* Terms and Conditions */}
+                        <div className="col-span-7 p-3 space-y-1 bg-white flex flex-col justify-between">
+                            <div>
+                                <div className="font-black text-slate-900 uppercase tracking-wider text-[10.5px] border-b border-slate-200 pb-1 mb-1">
+                                    TERMS & CONDITIONS
+                                </div>
+                                <div className="text-[9.5px] text-slate-600 space-y-0.5 leading-snug">
+                                    {terms.map((t, idx) => (
+                                        <p key={idx}>{t}</p>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Declaration & Authorized Signatory */}
+                        <div className="col-span-12 border-t border-slate-300 p-3 grid grid-cols-12 gap-4 bg-slate-50/50">
+                            <div className="col-span-8 flex items-center text-[10px] text-slate-600 italic">
+                                <p>
+                                    <span className="font-bold not-italic">Declaration:</span> We declare that this invoice shows the actual price of the goods/services described and that all particulars are true and correct.
+                                </p>
+                            </div>
+                            <div className="col-span-4 text-center space-y-2 flex flex-col justify-end items-center">
+                                {company?.signature ? (
+                                    <img src={company.signature} alt="Signature" className="h-10 object-contain mx-auto" />
+                                ) : (
+                                    <div className="h-10"></div>
+                                )}
+                                <div className="border-t border-slate-400 pt-1 w-full text-center">
+                                    <p className="font-black text-slate-900 text-[10.5px]">Authorized Signatory</p>
+                                    <p className="text-[9px] text-slate-500 font-bold uppercase">{supplierName}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            )}
         </div>
     );
 };

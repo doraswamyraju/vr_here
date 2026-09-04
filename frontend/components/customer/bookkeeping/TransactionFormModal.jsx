@@ -8,7 +8,8 @@ const TransactionFormModal = ({
     onSubmit,
     parties = [],
     companyState = 'Andhra Pradesh',
-    invoiceCount = 1
+    invoiceCount = 1,
+    editingTransaction = null
 }) => {
     if (!show) return null;
 
@@ -61,12 +62,74 @@ const TransactionFormModal = ({
         '08-Rajasthan', '23-Madhya Pradesh', '06-Haryana', '03-Punjab', '21-Odisha', '10-Bihar'
     ];
 
-    // Set automatic doc number on mount
+    // Initialize or load edit data
     useEffect(() => {
-        const prefix = isSales ? 'INV-' : isPurchase ? 'BILL-' : isIncome ? 'INC-' : 'EXP-';
-        const padded = String(invoiceCount).padStart(4, '0');
-        setDocNumber(`${prefix}${padded}`);
-    }, [isSales, isPurchase, isIncome, isExpense, invoiceCount]);
+        if (editingTransaction) {
+            setDocNumber(editingTransaction.docNumber || '');
+            setCopyType(editingTransaction.copyType || 'Original for Recipient');
+            setDocDate(editingTransaction.docDate ? new Date(editingTransaction.docDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+            setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+            setPaymentMode(editingTransaction.paymentMode || 'Bank Transfer');
+            setPaymentStatus(editingTransaction.paymentStatus || 'Unpaid');
+            setPartyName(editingTransaction.partyName || '');
+            setPartyGstin(editingTransaction.partyGstin || '');
+            setPartyPan(editingTransaction.partyPan || '');
+            setPartyAddress(editingTransaction.partyAddress || '');
+            setPartyState(editingTransaction.partyState || companyState || 'Andhra Pradesh');
+            setPartyPhone(editingTransaction.partyPhone || '');
+            setPartyEmail(editingTransaction.partyEmail || '');
+            setPlaceOfSupply(editingTransaction.placeOfSupply || companyState || 'Andhra Pradesh');
+            setShipToSameAsBilling(editingTransaction.shipToSameAsBilling !== false);
+            setShipToName(editingTransaction.shipToName || '');
+            setShipToAddress(editingTransaction.shipToAddress || '');
+            setShipToGstin(editingTransaction.shipToGstin || '');
+            setShipToPan(editingTransaction.shipToPan || '');
+            setShipToState(editingTransaction.shipToState || companyState || 'Andhra Pradesh');
+            setShipToMobile(editingTransaction.shipToMobile || '');
+            if (editingTransaction.items && editingTransaction.items.length > 0) {
+                setItems(editingTransaction.items.map(it => ({
+                    description: it.description || '',
+                    hsnSac: it.hsnSac || '',
+                    qty: it.qty || 1,
+                    unit: it.unit || 'PCS',
+                    rate: it.rate || 0,
+                    discPercent: it.discPercent || 0,
+                    gstRate: it.gstRate !== undefined ? it.gstRate : 18
+                })));
+            }
+            setItcEligibility(editingTransaction.itcEligibility || (isPurchase ? 'Inputs' : 'N/A'));
+            setNotes(editingTransaction.notes || '');
+            setAttachmentUrl(editingTransaction.attachmentUrl || '');
+        } else {
+            const prefix = isSales ? 'INV-' : isPurchase ? 'BILL-' : isIncome ? 'INC-' : 'EXP-';
+            const padded = String(invoiceCount).padStart(4, '0');
+            setDocNumber(`${prefix}${padded}`);
+            setCopyType('Original for Recipient');
+            setDocDate(new Date().toISOString().split('T')[0]);
+            setDueDate(new Date().toISOString().split('T')[0]);
+            setPaymentMode('Bank Transfer');
+            setPaymentStatus('Unpaid');
+            setPartyName('');
+            setPartyGstin('');
+            setPartyPan('');
+            setPartyAddress('');
+            setPartyState(companyState || 'Andhra Pradesh');
+            setPartyPhone('');
+            setPartyEmail('');
+            setPlaceOfSupply(companyState || 'Andhra Pradesh');
+            setShipToSameAsBilling(true);
+            setShipToName('');
+            setShipToAddress('');
+            setShipToGstin('');
+            setShipToPan('');
+            setShipToState(companyState || 'Andhra Pradesh');
+            setShipToMobile('');
+            setItems([{ description: '', hsnSac: '', qty: 1, unit: 'PCS', rate: 0, discPercent: 0, gstRate: 18 }]);
+            setItcEligibility(isPurchase ? 'Inputs' : 'N/A');
+            setNotes('');
+            setAttachmentUrl('');
+        }
+    }, [editingTransaction, isSales, isPurchase, isIncome, isExpense, invoiceCount, companyState, show]);
 
     // Interstate check
     useEffect(() => {
@@ -178,7 +241,7 @@ const TransactionFormModal = ({
             itcEligibility,
             notes,
             attachmentUrl
-        });
+        }, editingTransaction?._id);
     };
 
     return (
@@ -193,7 +256,7 @@ const TransactionFormModal = ({
                             isPurchase ? 'bg-indigo-100 text-indigo-800' :
                             isIncome ? 'bg-teal-100 text-teal-800' : 'bg-rose-100 text-rose-800'
                         }`}>
-                            {isSales ? 'New Tax Invoice' : isPurchase ? 'New Purchase Bill' : isIncome ? 'New Income Voucher' : 'New Expense Voucher'}
+                            {editingTransaction ? `Edit ${isSales ? 'Tax Invoice' : isPurchase ? 'Purchase Bill' : isIncome ? 'Income Voucher' : 'Expense Voucher'}` : `New ${isSales ? 'Tax Invoice' : isPurchase ? 'Purchase Bill' : isIncome ? 'Income Voucher' : 'Expense Voucher'}`}
                         </span>
                         <h2 className="font-black text-slate-900 text-base">{docNumber}</h2>
                     </div>
@@ -614,7 +677,7 @@ const TransactionFormModal = ({
                             type="submit"
                             className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition shadow-lg shadow-indigo-200"
                         >
-                            Save & Generate {isSales ? 'Invoice' : 'Voucher'}
+                            {editingTransaction ? 'Save Changes' : `Save & Generate ${isSales ? 'Invoice' : 'Voucher'}`}
                         </button>
                     </div>
                 </form>

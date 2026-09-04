@@ -120,7 +120,7 @@ function AdminApp() {
   const [recurring, setRecurring] = useState([]);
   const [orderFilter, setOrderFilter] = useState('All');
   const [adminBookkeepingSubTab, setAdminBookkeepingSubTab] = useState('ledger');
-  const [adminBookkeepingExpanded, setAdminBookkeepingExpanded] = useState(true);
+  const [adminBookkeepingExpanded, setAdminBookkeepingExpanded] = useState(false);
 
   // Sync activeTab and selectedOrderId to URL & localStorage seamlessly
   useEffect(() => {
@@ -964,13 +964,17 @@ function AdminApp() {
               const active = activeTab === item.key;
 
               if (item.key === 'Bookkeeping') {
-                const isExpanded = adminBookkeepingExpanded || active;
+                const isExpanded = active && adminBookkeepingExpanded;
                 return (
                   <div key={item.key} className="space-y-1">
                     <button 
                       onClick={() => { 
-                        setActiveTab('Bookkeeping'); 
-                        setAdminBookkeepingExpanded(!adminBookkeepingExpanded);
+                        if (active) {
+                          setAdminBookkeepingExpanded(!adminBookkeepingExpanded);
+                        } else {
+                          setActiveTab('Bookkeeping'); 
+                          setAdminBookkeepingExpanded(true);
+                        }
                         if (sidebarCollapsed) setSidebarCollapsed(false);
                       }} 
                       title={sidebarCollapsed ? item.label : undefined}

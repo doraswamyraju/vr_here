@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Search, Eye, Trash2, FileText, ArrowUpRight, ArrowDownRight, Tag } from 'lucide-react';
+import { Plus, Search, Eye, Edit2, Trash2, FileText, ArrowUpRight, ArrowDownRight, Tag } from 'lucide-react';
 
 const IncomeExpensesTab = ({
     transactions = [],
     onAddNewIncome,
     onAddNewExpense,
+    onEditInvoice,
     onViewInvoice,
     onDeleteInvoice
 }) => {
@@ -165,6 +166,15 @@ const IncomeExpensesTab = ({
                                             >
                                                 <Eye size={16} />
                                             </button>
+                                            {onEditInvoice && (
+                                                <button 
+                                                    onClick={() => onEditInvoice(vx)}
+                                                    title="Edit Voucher"
+                                                    className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition inline-flex items-center"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                            )}
                                             <button 
                                                 onClick={() => onDeleteInvoice(vx._id)}
                                                 title="Delete Voucher"

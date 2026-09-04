@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Search, Eye, Trash2, MessageCircle, FileText, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Search, Eye, Edit2, Trash2, MessageCircle, FileText, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
 const SalesInvoicesTab = ({
     transactions = [],
     onAddNew,
+    onEditInvoice,
     onViewInvoice,
     onDeleteInvoice,
     onWhatsAppShare,
@@ -164,6 +165,15 @@ const SalesInvoicesTab = ({
                                             >
                                                 <Eye size={16} />
                                             </button>
+                                            {onEditInvoice && (
+                                                <button 
+                                                    onClick={() => onEditInvoice(inv)}
+                                                    title="Edit Tax Invoice"
+                                                    className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition inline-flex items-center"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                            )}
                                             <button 
                                                 onClick={() => onWhatsAppShare(inv)}
                                                 title="Share via WhatsApp"

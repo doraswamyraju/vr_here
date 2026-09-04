@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Search, Eye, Trash2, FileText, UploadCloud, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Plus, Search, Eye, Edit2, Trash2, FileText, UploadCloud, ShieldCheck, AlertCircle } from 'lucide-react';
 
 const PurchaseBillsTab = ({
     transactions = [],
     onAddNew,
+    onEditInvoice,
     onViewInvoice,
     onDeleteInvoice
 }) => {
@@ -167,6 +168,15 @@ const PurchaseBillsTab = ({
                                             >
                                                 <Eye size={16} />
                                             </button>
+                                            {onEditInvoice && (
+                                                <button 
+                                                    onClick={() => onEditInvoice(bill)}
+                                                    title="Edit Purchase Bill"
+                                                    className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition inline-flex items-center"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                            )}
                                             <button 
                                                 onClick={() => onDeleteInvoice(bill._id)}
                                                 title="Delete Bill"

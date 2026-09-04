@@ -43,7 +43,7 @@ const formatImageUrl = (url) => {
 export default function CustomerApp() {
    const [activeTab, setActiveTab] = useState('Home');
    const [bookkeepingSubTab, setBookkeepingSubTab] = useState('sales');
-   const [bookkeepingExpanded, setBookkeepingExpanded] = useState(true);
+   const [bookkeepingExpanded, setBookkeepingExpanded] = useState(false);
    const [selectedOrderId, setSelectedOrderId] = useState('');
    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
    const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -321,13 +321,17 @@ export default function CustomerApp() {
                         const isActive = activeTab === item.id;
                         
                         if (item.id === 'Bookkeeping') {
-                           const isExpanded = bookkeepingExpanded || isActive;
+                           const isExpanded = isActive && bookkeepingExpanded;
                            return (
                               <div key={item.id} className="space-y-1">
                                  <button
                                     onClick={() => {
-                                       setActiveTab('Bookkeeping');
-                                       setBookkeepingExpanded(!bookkeepingExpanded);
+                                       if (isActive) {
+                                          setBookkeepingExpanded(!bookkeepingExpanded);
+                                       } else {
+                                          setActiveTab('Bookkeeping');
+                                          setBookkeepingExpanded(true);
+                                       }
                                     }}
                                     className={`flex items-center justify-between w-full px-3.5 py-3 rounded-xl font-bold text-xs transition-all duration-200 group ${
                                        isActive
