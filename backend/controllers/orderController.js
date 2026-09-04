@@ -438,13 +438,26 @@ const getOrders = asyncHandler(async (req, res) => {
 
     const orders = await populateOrderQuery(orderQuery.sort({ createdAt: -1 }));
 
-    // Add linked todos for EACH order in the list
-    const ordersWithTodos = await Promise.all(orders.map(async (order) => {
-        const orderObj = order.toObject();
-        const linkedTodos = await Todo.find({ orderId: order._id }).populate('assignedTo', 'name email role');
-        orderObj.linkedTodos = linkedTodos;
+    // Batch fetch all linked todos in ONE single database query instead of N individual queries
+    const orderIds = orders.map((o) => o._id);
+    const allLinkedTodos = await Todo.find({ orderId: { $in: orderIds } })
+        .populate('assignedTo', 'name email role')
+        .lean();
+
+    const todoMap = {};
+    allLinkedTodos.forEach((t) => {
+        const oId = t.orderId?.toString();
+        if (oId) {
+            if (!todoMap[oId]) todoMap[oId] = [];
+            todoMap[oId].push(t);
+        }
+    });
+
+    const ordersWithTodos = orders.map((order) => {
+        const orderObj = order.toObject ? order.toObject() : order;
+        orderObj.linkedTodos = todoMap[orderObj._id.toString()] || [];
         return orderObj;
-    }));
+    });
 
     res.json(ordersWithTodos);
 });

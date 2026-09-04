@@ -109,22 +109,38 @@ function AdminApp() {
 
   const config = useMemo(() => (userInfo?.token ? { headers: { Authorization: `Bearer ${userInfo.token}` } } : null), [userInfo]);
 
+  const [dataLoaded, setDataLoaded] = useState(false);
+
   const fetchData = async () => {
     if (!config) return;
-    const [ordersRes, employeesRes, usersRes, todosRes, recurringRes, freelancersRes] = await Promise.all([
-      axios.get('/api/orders', config),
-      axios.get('/api/auth/employees', config),
-      axios.get('/api/auth/users', config),
-      axios.get('/api/todos', config),
-      axios.get('/api/recurring', config).catch(() => ({ data: [] })),
-      axios.get('/api/freelancer/admin/users', config).catch(() => ({ data: [] }))
-    ]);
-    setOrders(ordersRes.data || []);
-    setEmployees(employeesRes.data || []);
-    setUsers(usersRes.data || []);
-    setTodos(todosRes.data || []);
-    setRecurring(recurringRes.data || []);
-    setFreelancers(freelancersRes.data || []);
+    
+    // Fetch and populate state progressively for instant UI responsiveness
+    const pOrders = axios.get('/api/orders', config)
+      .then((res) => { setOrders(res.data || []); setDataLoaded(true); })
+      .catch((err) => console.error('Failed to load orders:', err));
+
+    const pEmployees = axios.get('/api/auth/employees', config)
+      .then((res) => setEmployees(res.data || []))
+      .catch((err) => console.error('Failed to load employees:', err));
+
+    const pUsers = axios.get('/api/auth/users', config)
+      .then((res) => setUsers(res.data || []))
+      .catch((err) => console.error('Failed to load users:', err));
+
+    const pTodos = axios.get('/api/todos', config)
+      .then((res) => setTodos(res.data || []))
+      .catch((err) => console.error('Failed to load todos:', err));
+
+    const pRecurring = axios.get('/api/recurring', config)
+      .then((res) => setRecurring(res.data || []))
+      .catch(() => setRecurring([]));
+
+    const pFreelancers = axios.get('/api/freelancer/admin/users', config)
+      .then((res) => setFreelancers(res.data || []))
+      .catch(() => setFreelancers([]));
+
+    await Promise.allSettled([pOrders, pEmployees, pUsers, pTodos, pRecurring, pFreelancers]);
+    setDataLoaded(true);
   };
 
   useEffect(() => {
@@ -332,11 +348,11 @@ function AdminApp() {
           <div className="mt-4 flex gap-4 relative z-10">
              <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg border border-white/10">
                 <p className="text-[9px] font-black uppercase text-cyan-300">Active Pipeline</p>
-                <p className="text-sm font-black">{orders.filter(o => o.status !== 'Completed').length} Projects</p>
+                <p className="text-sm font-black">{!dataLoaded && orders.length === 0 ? '...' : `${orders.filter(o => o.status !== 'Completed').length} Projects`}</p>
              </div>
              <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg border border-white/10">
                 <p className="text-[9px] font-black uppercase text-emerald-300">Total Value</p>
-                <p className="text-sm font-black">Rs. {orders.reduce((s, o) => s + Number(o.price || 0), 0).toLocaleString()}</p>
+                <p className="text-sm font-black">{!dataLoaded && orders.length === 0 ? '...' : `Rs. ${orders.reduce((s, o) => s + Number(o.price || 0), 0).toLocaleString()}`}</p>
              </div>
           </div>
         </Card>
@@ -359,10 +375,10 @@ function AdminApp() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {[
-            { l: 'Total Orders', v: orders.length, key: 'Orders', f: 'All', i: Layers, c: 'text-blue-600', bg: 'bg-blue-50' },
-            { l: 'Pending', v: orders.filter((o) => o.status !== 'Completed').length, key: 'Orders', f: 'Pending', i: Clock3, c: 'text-amber-600', bg: 'bg-amber-50' },
-            { l: 'Completed', v: orders.filter((o) => o.status === 'Completed').length, key: 'Orders', f: 'Completed', i: ShieldCheck, c: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { l: 'Order Value', v: `Rs. ${orders.reduce((s, o) => s + Number(o.price || 0), 0).toLocaleString()}`, key: 'Finance', f: 'All', i: DollarSign, c: 'text-indigo-600', bg: 'bg-indigo-50' }
+            { l: 'Total Orders', v: !dataLoaded && orders.length === 0 ? '...' : orders.length, key: 'Orders', f: 'All', i: Layers, c: 'text-blue-600', bg: 'bg-blue-50' },
+            { l: 'Pending', v: !dataLoaded && orders.length === 0 ? '...' : orders.filter((o) => o.status !== 'Completed').length, key: 'Orders', f: 'Pending', i: Clock3, c: 'text-amber-600', bg: 'bg-amber-50' },
+            { l: 'Completed', v: !dataLoaded && orders.length === 0 ? '...' : orders.filter((o) => o.status === 'Completed').length, key: 'Orders', f: 'Completed', i: ShieldCheck, c: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { l: 'Order Value', v: !dataLoaded && orders.length === 0 ? '...' : `Rs. ${orders.reduce((s, o) => s + Number(o.price || 0), 0).toLocaleString()}`, key: 'Finance', f: 'All', i: DollarSign, c: 'text-indigo-600', bg: 'bg-indigo-50' }
           ].map((item) => (
             <Card 
               key={item.l} 
@@ -420,11 +436,15 @@ function AdminApp() {
                       <td className="py-3 text-sm font-black text-slate-900 text-right">Rs. {Number(o.price || 0).toLocaleString()}</td>
                     </tr>
                   ))}
-                  {recentOrders.length === 0 && (
+                  {!dataLoaded && orders.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="py-8 text-center text-indigo-500 text-xs font-bold italic animate-pulse">Loading latest operations data...</td>
+                    </tr>
+                  ) : recentOrders.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="py-8 text-center text-slate-400 text-xs italic">No recent orders found</td>
                     </tr>
-                  )}
+                  ) : null}
                 </tbody>
               </table>
             </div>

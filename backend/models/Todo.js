@@ -42,6 +42,11 @@ const todoSchema = mongoose.Schema({
     timestamps: true
 });
 
+todoSchema.index({ orderId: 1 });
+todoSchema.index({ assignedTo: 1 });
+todoSchema.index({ status: 1 });
+todoSchema.index({ createdAt: -1 });
+
 const Todo = mongoose.model('Todo', todoSchema);
 
 export default Todo;

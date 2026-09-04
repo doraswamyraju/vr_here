@@ -360,6 +360,14 @@ const orderSchema = mongoose.Schema({
     timestamps: true
 });
 
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ user: 1 });
+orderSchema.index({ assignedEmployee: 1 });
+orderSchema.index({ assignedMaker: 1 });
+orderSchema.index({ assignedChecker: 1 });
+orderSchema.index({ assignedFreelancer: 1 });
+orderSchema.index({ status: 1 });
+
 const Order = mongoose.model('Order', orderSchema);
 
 export default Order;
