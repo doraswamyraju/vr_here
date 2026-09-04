@@ -42,11 +42,22 @@ const formatImageUrl = (url) => {
 
 export default function CustomerApp() {
    const [activeTab, setActiveTab] = useState('Home');
+   const [bookkeepingSubTab, setBookkeepingSubTab] = useState('sales');
+   const [bookkeepingExpanded, setBookkeepingExpanded] = useState(true);
    const [selectedOrderId, setSelectedOrderId] = useState('');
    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
    const [isLoggedIn, setIsLoggedIn] = useState(false);
    const [userInfo, setUserInfo] = useState(null);
    const [orders, setOrders] = useState([]);
+
+   const bookkeepingSubItems = [
+      { id: 'sales', label: 'Sales Invoices', icon: FileText },
+      { id: 'purchases', label: 'Purchase Bills', icon: ShoppingCart },
+      { id: 'expenses', label: 'Income & Expenses', icon: ArrowDownRight },
+      { id: 'bank', label: 'Bank Statements', icon: Landmark },
+      { id: 'parties', label: 'Customers & Vendors', icon: Building2 },
+      { id: 'reports', label: 'Reports & P&L', icon: BarChart3 }
+   ];
    const [payments, setPayments] = useState([]);
    const {
       notifications,
