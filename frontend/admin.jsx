@@ -22,7 +22,12 @@ import {
   Plus,
   Activity,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  ShieldCheck,
+  FileSpreadsheet,
+  Users,
+  Building2
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -46,7 +51,7 @@ import EmployeeAnalysisModule from './components/admin/users/EmployeeAnalysisMod
 import ComplianceModule from './components/admin/compliance/ComplianceModule';
 import IncomeTaxAssessmentModule from './components/admin/IncomeTaxAssessmentModule';
 import { RevenueChart, ServiceDistributionChart, EmployeeWorkloadChart } from './components/admin/DashboardCharts';
-import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, Users, CreditCard, ShieldCheck, CalendarCheck, Award } from 'lucide-react';
+import { AlertCircle, ArrowUpRight, TrendingUp as TrendIcon, CreditCard, CalendarCheck, Award } from 'lucide-react';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 import HRMSModule from './modules/hrms/v1.1/index.jsx';
 import CustomersModule from './components/admin/crm/CustomersModule';
@@ -114,6 +119,8 @@ function AdminApp() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [recurring, setRecurring] = useState([]);
   const [orderFilter, setOrderFilter] = useState('All');
+  const [adminBookkeepingSubTab, setAdminBookkeepingSubTab] = useState('ledger');
+  const [adminBookkeepingExpanded, setAdminBookkeepingExpanded] = useState(true);
 
   // Sync activeTab and selectedOrderId to URL & localStorage seamlessly
   useEffect(() => {
@@ -900,9 +907,17 @@ function AdminApp() {
         }}
       />
     );
-    if (activeTab === 'Bookkeeping') return <AdminBookkeepingView token={userInfo?.token} />;
+    if (activeTab === 'Bookkeeping') return <AdminBookkeepingView token={userInfo?.token} activeSubTab={adminBookkeepingSubTab} onSubTabChange={setAdminBookkeepingSubTab} />;
     return <DummyView title="Settings" />;
   };
+
+  const adminBookkeepingSubItems = [
+    { id: 'clients', label: 'Client Directory', icon: Building2 },
+    { id: 'ledger', label: 'Ledger Audit & Vouchers', icon: FileText },
+    { id: 'gst', label: 'GST Returns & 3B Sheet', icon: ShieldCheck },
+    { id: 'tally', label: 'Tally XML Exporter', icon: FileSpreadsheet },
+    { id: 'payroll', label: 'Payroll & Form 16 / TDS', icon: Users },
+  ];
 
   if (!isLoggedIn) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-semibold">Verifying Access...</div>;
 
@@ -943,10 +958,69 @@ function AdminApp() {
             </div>
           </div>
           
-          <div className="p-3 space-y-1 flex-1 overflow-y-auto">
+          <div className="p-3 space-y-1 flex-1 overflow-y-auto custom-scrollbar">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.key;
+
+              if (item.key === 'Bookkeeping') {
+                const isExpanded = adminBookkeepingExpanded || active;
+                return (
+                  <div key={item.key} className="space-y-1">
+                    <button 
+                      onClick={() => { 
+                        setActiveTab('Bookkeeping'); 
+                        setAdminBookkeepingExpanded(!adminBookkeepingExpanded);
+                        if (sidebarCollapsed) setSidebarCollapsed(false);
+                      }} 
+                      title={sidebarCollapsed ? item.label : undefined}
+                      className={`w-full px-3 py-2.5 rounded-xl text-sm font-medium flex items-center justify-between transition ${
+                        active 
+                          ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-600/20' 
+                          : 'text-slate-700 hover:bg-indigo-50'
+                      } ${sidebarCollapsed ? 'justify-center' : ''}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={18} className="shrink-0" /> 
+                        {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                      </div>
+                      {!sidebarCollapsed && (
+                        <span className="text-slate-400">
+                          {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Nested Sub-Tabs under Bookkeeping in Sidebar */}
+                    {!sidebarCollapsed && isExpanded && (
+                      <div className="pl-4 pr-1 py-1 space-y-1 border-l-2 border-indigo-200 ml-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {adminBookkeepingSubItems.map(sub => {
+                          const SubIcon = sub.icon;
+                          const isSubActive = active && adminBookkeepingSubTab === sub.id;
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => {
+                                setActiveTab('Bookkeeping');
+                                setAdminBookkeepingSubTab(sub.id);
+                              }}
+                              className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                                isSubActive
+                                  ? 'bg-indigo-100 text-indigo-700 font-bold border-l-2 border-indigo-600 pl-2'
+                                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                              }`}
+                            >
+                              <SubIcon size={14} className={isSubActive ? 'text-indigo-600' : 'text-slate-400'} />
+                              <span className="truncate">{sub.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <button 
                   key={item.key} 

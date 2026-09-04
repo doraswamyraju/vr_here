@@ -15,8 +15,14 @@ import PartiesTab from './bookkeeping/PartiesTab';
 import ReportsTab from './bookkeeping/ReportsTab';
 import TransactionFormModal from './bookkeeping/TransactionFormModal';
 
-const BookkeepingView = ({ token }) => {
-    const [activeSubTab, setActiveSubTab] = useState('sales'); // 'sales' | 'purchases' | 'expenses' | 'bank' | 'parties' | 'reports'
+const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) => {
+    const [internalSubTab, setInternalSubTab] = useState('sales');
+    const activeSubTab = propSubTab || internalSubTab;
+    const setActiveSubTab = (tab) => {
+        if (onSubTabChange) onSubTabChange(tab);
+        setInternalSubTab(tab);
+    };
+
     const [transactions, setTransactions] = useState([]);
     const [company, setCompany] = useState(null);
     const [parties, setParties] = useState([]);
@@ -143,15 +149,19 @@ const BookkeepingView = ({ token }) => {
         window.open(url, '_blank');
     };
 
-    // Sub-tab definitions
-    const subTabs = [
-        { id: 'sales', label: 'Sales Invoices', icon: FileText, badge: transactions.filter(t => t.transactionType === 'Sales').length },
-        { id: 'purchases', label: 'Purchase Bills', icon: ShoppingCart, badge: transactions.filter(t => t.transactionType === 'Purchase').length },
-        { id: 'expenses', label: 'Income & Expenses', icon: ArrowDownRight },
-        { id: 'bank', label: 'Bank Statements', icon: Landmark },
-        { id: 'parties', label: 'Customers & Vendors', icon: Building2, badge: parties.length },
-        { id: 'reports', label: 'Reports & P&L', icon: BarChart3 }
-    ];
+    // Current Active Tab Title
+    const getSubTabInfo = () => {
+        switch(activeSubTab) {
+            case 'purchases': return { title: 'Purchase Bills & Inward Supplies', subtitle: 'Manage supplier bills, scanned proof attachments, and ITC entitlement.' };
+            case 'expenses': return { title: 'Income & Expense Ledgers', subtitle: 'Track operational overheads, salaries, rent, and non-trading income receipts.' };
+            case 'bank': return { title: 'Bank Statements & Payment Tagging', subtitle: 'Upload statements and manually tag credits/debits to invoices and ledgers.' };
+            case 'parties': return { title: 'Customers & Vendors Master Directory', subtitle: 'Maintain party billing details, GSTIN, PAN, and ledger statements.' };
+            case 'reports': return { title: 'Financial Reports & Profit & Loss (P&L)', subtitle: 'Real-time profit summary, turnover metrics, and net GST cash liability.' };
+            default: return { title: 'Sales Invoices & Billing Hub', subtitle: 'Generate GST-compliant tax invoices, track receivables, and share via WhatsApp.' };
+        }
+    };
+
+    const tabInfo = getSubTabInfo();
 
     // If Viewing a specific invoice in full page mode
     if (selectedInvoice) {
@@ -174,13 +184,13 @@ const BookkeepingView = ({ token }) => {
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <div className="flex items-center gap-2">
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Bookkeeping Hub</h2>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">{tabInfo.title}</h2>
                         <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-indigo-200">
-                            AaaS Suite
+                            Bookkeeping & AaaS
                         </span>
                     </div>
                     <p className="text-xs text-slate-500 font-medium mt-1">
-                        Manage sales invoices, purchase bills, bank statements, and party ledgers in one seamless workspace.
+                        {tabInfo.subtitle}
                     </p>
                 </div>
 
@@ -200,46 +210,17 @@ const BookkeepingView = ({ token }) => {
                     </button>
                     <button
                         onClick={() => {
-                            setFormTxType('Sales');
+                            setFormTxType(activeSubTab === 'purchases' ? 'Purchase' : activeSubTab === 'expenses' ? 'Expense' : 'Sales');
                             setShowFormModal(true);
                         }}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5 shadow-md shadow-emerald-200"
                     >
-                        <Plus size={16} /> Create Invoice
+                        <Plus size={16} /> {activeSubTab === 'purchases' ? 'Add Purchase Bill' : activeSubTab === 'expenses' ? 'Add Expense' : 'Create Invoice'}
                     </button>
                 </div>
             </div>
 
-            {/* Inner Sub-Navigation Bar */}
-            <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-1.5 overflow-x-auto">
-                {subTabs.map(tab => {
-                    const Icon = tab.icon;
-                    const isActive = activeSubTab === tab.id;
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveSubTab(tab.id)}
-                            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2 ${
-                                isActive 
-                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
-                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                            }`}
-                        >
-                            <Icon size={16} />
-                            <span>{tab.label}</span>
-                            {tab.badge !== undefined && (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                                    isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-                                }`}>
-                                    {tab.badge}
-                                </span>
-                            )}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Sub-Tab Views */}
+            {/* Sub-Tab Views directly rendered based on Sidebar Selection */}
             {loading ? (
                 <div className="flex justify-center py-20">
                     <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>

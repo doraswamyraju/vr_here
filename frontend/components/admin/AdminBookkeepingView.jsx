@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
     FileText, ShieldCheck, FileSpreadsheet, Users, 
-    ArrowLeft, Download, RefreshCw, Eye
+    ArrowLeft, Download, RefreshCw, Eye, Building2
 } from 'lucide-react';
 
 import ClientDirectoryTab from './bookkeeping/ClientDirectoryTab';
@@ -12,7 +12,14 @@ import TallyExportTab from './bookkeeping/TallyExportTab';
 import PayrollAuditTab from './bookkeeping/PayrollAuditTab';
 import GSTInvoiceView from '../customer/bookkeeping/GSTInvoiceView';
 
-const AdminBookkeepingView = ({ token }) => {
+const AdminBookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) => {
+    const [internalSubTab, setInternalSubTab] = useState('ledger');
+    const activeAdminTab = propSubTab || internalSubTab;
+    const setActiveAdminTab = (tab) => {
+        if (onSubTabChange) onSubTabChange(tab);
+        setInternalSubTab(tab);
+    };
+
     const [clients, setClients] = useState([]);
     const [selectedClient, setSelectedClient] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -21,7 +28,6 @@ const AdminBookkeepingView = ({ token }) => {
     const [payrollRecords, setPayrollRecords] = useState([]);
     const [gstr3bData, setGstr3bData] = useState(null);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
-    const [activeAdminTab, setActiveAdminTab] = useState('ledger'); // 'ledger' | 'gst' | 'tally' | 'payroll'
 
     const config = { headers: { Authorization: `Bearer ${token}` } };
 
@@ -32,6 +38,10 @@ const AdminBookkeepingView = ({ token }) => {
             const { data } = await axios.get('/api/auth/users', config);
             const clientUsers = data.filter(u => u.role === 'client');
             setClients(clientUsers);
+            // Default select the first client if available
+            if (clientUsers.length > 0 && !selectedClient) {
+                fetchClientData(clientUsers[0]);
+            }
         } catch (error) {
             console.error('Failed to fetch clients:', error);
         } finally {
@@ -108,13 +118,18 @@ const AdminBookkeepingView = ({ token }) => {
         }
     };
 
-    // Sub-tab definitions
-    const adminTabs = [
-        { id: 'ledger', label: 'Ledger Audit & Vouchers', icon: FileText, badge: transactions.length },
-        { id: 'gst', label: 'GST Returns & 3B Sheet', icon: ShieldCheck },
-        { id: 'tally', label: 'Tally Prime XML Exporter', icon: FileSpreadsheet },
-        { id: 'payroll', label: 'Payroll & Form 16 / TDS', icon: Users, badge: payrollRecords.length }
-    ];
+    // Sub-tab header info
+    const getAdminSubTabInfo = () => {
+        switch(activeAdminTab) {
+            case 'clients': return { title: 'Client Accounting Directory', subtitle: 'Browse and switch between client portfolios.' };
+            case 'gst': return { title: 'GST Statutory Returns & GSTR-3B Computation', subtitle: 'Export GSTR-1 portal JSON and compute 3B cash liabilities.' };
+            case 'tally': return { title: 'Tally Prime XML & ERP Exporter', subtitle: 'Export multi-voucher XML payloads for 1-click Tally Prime import.' };
+            case 'payroll': return { title: 'Payroll & Form 16 / TDS Register', subtitle: 'Manage employee salary registers and Section 192/194 TDS records.' };
+            default: return { title: 'Ledger Audit & Transaction Verification', subtitle: 'Audit client vouchers, verify proofs, and flag discrepancies.' };
+        }
+    };
+
+    const tabInfo = getAdminSubTabInfo();
 
     // If Viewing a specific invoice
     if (selectedInvoice) {
@@ -128,6 +143,22 @@ const AdminBookkeepingView = ({ token }) => {
         );
     }
 
+    // If Directory tab selected explicitly
+    if (activeAdminTab === 'clients') {
+        return (
+            <div className="space-y-6 pb-20 max-w-7xl mx-auto animate-in fade-in duration-300">
+                <ClientDirectoryTab 
+                    clients={clients}
+                    onSelectClient={(client) => {
+                        fetchClientData(client);
+                        setActiveAdminTab('ledger');
+                    }}
+                    loading={loading}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6 pb-20 max-w-7xl mx-auto animate-in fade-in duration-300">
             {selectedClient ? (
@@ -136,17 +167,24 @@ const AdminBookkeepingView = ({ token }) => {
                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 z-10">
                         <div className="flex items-center gap-3">
                             <button 
-                                onClick={() => { setSelectedClient(null); setTransactions([]); }}
+                                onClick={() => setActiveAdminTab('clients')}
                                 className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition font-bold text-xs flex items-center gap-1.5"
                             >
-                                <ArrowLeft size={16} /> All Clients
+                                <Building2 size={16} /> Switch Client
                             </button>
                             <div className="h-6 w-px bg-slate-200" />
                             <div>
-                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest block leading-none">Auditing Client:</span>
-                                <h3 className="text-lg font-black text-slate-900 leading-none mt-1">
-                                    {selectedClient.name} <span className="text-xs font-normal text-slate-400 font-mono">({selectedClient.email})</span>
-                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-black text-slate-900 leading-none">
+                                        {selectedClient.name}
+                                    </h3>
+                                    <span className="text-[10px] font-bold text-slate-400 font-mono bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                        {selectedClient.email}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-indigo-600 font-bold mt-1">
+                                    {tabInfo.title}
+                                </p>
                             </div>
                         </div>
 
@@ -161,41 +199,19 @@ const AdminBookkeepingView = ({ token }) => {
                                 onClick={handleDownloadGstr1}
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
                             >
-                                <Download size={14} /> GSTR-1 Portal JSON
+                                <Download size={14} /> GSTR-1 JSON
+                            </button>
+                            <button
+                                onClick={() => fetchClientData(selectedClient)}
+                                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition"
+                                title="Refresh"
+                            >
+                                <RefreshCw size={15} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Sub-Navigation Tabs */}
-                    <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-1.5 overflow-x-auto">
-                        {adminTabs.map(tab => {
-                            const Icon = tab.icon;
-                            const isActive = activeAdminTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveAdminTab(tab.id)}
-                                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2 ${
-                                        isActive 
-                                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
-                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                    }`}
-                                >
-                                    <Icon size={16} />
-                                    <span>{tab.label}</span>
-                                    {tab.badge !== undefined && (
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                                            isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-                                        }`}>
-                                            {tab.badge}
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Sub-Tab Views */}
+                    {/* Sub-Tab Views directly rendered based on Sidebar Selection */}
                     {clientDataLoading ? (
                         <div className="flex justify-center py-20">
                             <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -244,7 +260,10 @@ const AdminBookkeepingView = ({ token }) => {
                 /* Client Directory View */
                 <ClientDirectoryTab 
                     clients={clients}
-                    onSelectClient={fetchClientData}
+                    onSelectClient={(client) => {
+                        fetchClientData(client);
+                        setActiveAdminTab('ledger');
+                    }}
                     loading={loading}
                 />
             )}

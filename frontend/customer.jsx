@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
    LayoutDashboard, Briefcase, Package, FileText,
    Wallet, Headphones, User, Bell, LogOut,
-   Menu, MessageSquare, Plus, X, Phone, BookOpen
+   Menu, MessageSquare, Plus, X, Phone, BookOpen,
+   ChevronDown, ChevronRight, ShoppingCart, ArrowDownRight,
+   Landmark, Building2, BarChart3
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -209,14 +211,25 @@ export default function CustomerApp() {
                     />
                 );
             }
-            const q = serviceSearchQuery;
-            if (q) setServiceSearchQuery(''); // consume once
             return (
                 <ServicesView 
                     setActiveTab={setActiveTab} 
-                    initialQuery={q} 
-                    onSelectService={(serviceObj) => {
-                        setSelectedService(serviceObj);
+                    userInfo={userInfo} 
+                    onOrderSuccess={handleOrderPlacedSuccess} 
+                    preSelectedService={selectedService}
+                    initialSearchQuery={serviceSearchQuery}
+                />
+            );
+         }
+         case 'ServiceDetail': {
+            const serviceObj = SERVICE_CATALOG.find(s => s.title === selectedService?.title);
+            return (
+                <ServiceDetailView 
+                    service={serviceObj || selectedService}
+                    onBack={() => setActiveTab('Services')}
+                    onProceedToCheckout={() => {
+                        setSelectedService(serviceObj || selectedService);
+                        setActiveTab('Services');
                     }}
                 />
             );
@@ -235,7 +248,7 @@ export default function CustomerApp() {
          );
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
          case 'Invoices': return <CustomerFinanceView token={userInfo?.token} />;
-         case 'Bookkeeping': return <BookkeepingView token={userInfo?.token} />;
+         case 'Bookkeeping': return <BookkeepingView token={userInfo?.token} activeSubTab={bookkeepingSubTab} onSubTabChange={setBookkeepingSubTab} />;
          case 'Account': return <AccountsView orders={orders} payments={payments} userInfo={userInfo} token={userInfo?.token} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: 
@@ -257,7 +270,7 @@ export default function CustomerApp() {
          group: 'Compliance & Tools',
          items: [
             { id: 'Documents', icon: FileText, label: 'Document Vault' },
-            { id: 'Bookkeeping', icon: BookOpen, label: 'Bookkeeping & AaaS' },
+            { id: 'Bookkeeping', icon: BookOpen, label: 'Bookkeeping & AaaS', hasSubItems: true },
          ]
       },
       {
@@ -295,6 +308,61 @@ export default function CustomerApp() {
                      {group.items.map(item => {
                         const Icon = item.icon;
                         const isActive = activeTab === item.id;
+                        
+                        if (item.id === 'Bookkeeping') {
+                           const isExpanded = bookkeepingExpanded || isActive;
+                           return (
+                              <div key={item.id} className="space-y-1">
+                                 <button
+                                    onClick={() => {
+                                       setActiveTab('Bookkeeping');
+                                       setBookkeepingExpanded(!bookkeepingExpanded);
+                                    }}
+                                    className={`flex items-center justify-between w-full px-3.5 py-3 rounded-xl font-bold text-xs transition-all duration-200 group ${
+                                       isActive
+                                          ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30 font-black'
+                                          : 'text-slate-300 hover:text-white hover:bg-slate-900/90'
+                                    }`}
+                                 >
+                                    <div className="flex items-center gap-3">
+                                       <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-white group-hover:scale-110 transition-all'} />
+                                       <span>{item.label}</span>
+                                    </div>
+                                    <span className="text-slate-400 group-hover:text-white transition">
+                                       {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                    </span>
+                                 </button>
+
+                                 {/* Inner Sub-Tabs under Bookkeeping in Sidebar */}
+                                 {isExpanded && (
+                                    <div className="pl-4 pr-1 py-1 space-y-1 border-l-2 border-slate-800/80 ml-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                       {bookkeepingSubItems.map(sub => {
+                                          const SubIcon = sub.icon;
+                                          const isSubActive = isActive && bookkeepingSubTab === sub.id;
+                                          return (
+                                             <button
+                                                key={sub.id}
+                                                onClick={() => {
+                                                   setActiveTab('Bookkeeping');
+                                                   setBookkeepingSubTab(sub.id);
+                                                }}
+                                                className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[11px] font-bold transition-all ${
+                                                   isSubActive
+                                                      ? 'bg-red-500/20 text-red-400 font-black border-l-2 border-red-500 pl-2'
+                                                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                                                }`}
+                                             >
+                                                <SubIcon size={14} className={isSubActive ? 'text-red-400' : 'text-slate-500'} />
+                                                <span className="truncate">{sub.label}</span>
+                                             </button>
+                                          );
+                                       })}
+                                    </div>
+                                 )}
+                              </div>
+                           );
+                        }
+
                         return (
                            <button
                               key={item.id}
