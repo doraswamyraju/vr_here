@@ -347,7 +347,7 @@ gantt
 ## 6. Verification & Quality Assurance Plan
 
 1. **Invoice Formatting Accuracy**:
-   - Verify that generated invoices strictly match `SALES INVOICE TEMPLATE.xlsx` (Bill To, Ship To, HSN/SAC, Disc %, CGST/SGST/IGST, Round off, Amount in Words, Bank details, Terms, Signature).
+   - Verify that generated invoices strictly match `SALES INVOICE TEMPLATE.xlsx` (Bill To, Ship To, HSN/SAC, Disc %, GST %, Taxable, Total, Round off, Amount in Words, Bank details, Terms, Signature).
 2. **Tax Calculations**:
    - Verify automated split for Intra-state (CGST + SGST) vs Inter-state (IGST).
 3. **Manual Bank Tagging**:
@@ -356,3 +356,53 @@ gantt
    - Validate GSTR-1 generated JSON with the official GST Offline Tool schema.
 5. **Tally Prime Compatibility**:
    - Validate XML export file against Tally Prime 4.0+ XML Import Voucher format.
+
+---
+
+## 7. 🚀 Current Implementation Status (Completed Milestones)
+
+### ✅ Completed & Pushed to Main:
+
+1. **Database & API Layer**:
+   - Mongoose schemas created and verified: [Transaction.js](file:///d:/vr_here/backend/models/Transaction.js), [CompanyDetails.js](file:///d:/vr_here/backend/models/CompanyDetails.js), [Party.js](file:///d:/vr_here/backend/models/Party.js), [BankStatement.js](file:///d:/vr_here/backend/models/BankStatement.js), and [Payroll.js](file:///d:/vr_here/backend/models/Payroll.js).
+   - Controller endpoints implemented: [accountingController.js](file:///d:/vr_here/backend/controllers/accountingController.js) and [accountingRoutes.js](file:///d:/vr_here/backend/routes/accountingRoutes.js) covering CRUD operations, manual payment tagging, GSTR-1 JSON export, GSTR-3B summaries, Tally Prime XML generation, and Payroll/TDS.
+
+2. **Customer Suite (`Bookkeeping & AaaS`)**:
+   - Modular tab components in [frontend/components/customer/bookkeeping/](file:///d:/vr_here/frontend/components/customer/bookkeeping/):
+     - `SalesInvoicesTab.jsx`: Full sales invoice registry with KPI metrics, status filters, search, Create, View, Print/PDF, WhatsApp sharing, Edit, and Delete.
+     - `PurchaseBillsTab.jsx`: Vendor bills logging, ITC entitlement categorization, attachment upload, Edit, and Delete.
+     - `IncomeExpensesTab.jsx`: Operational expense and income voucher logging with ledger heads, Edit, and Delete.
+     - `BankStatementsTab.jsx`: Bank statement upload, manual tagging against open invoices/bills or direct ledger allocation.
+     - `PartiesTab.jsx`: Customers & Vendors master directory with GSTIN/PAN and addresses.
+     - `ReportsTab.jsx`: Real-time P&L, monthly turnover, and net GST tax liability breakdown.
+     - `GSTInvoiceView.jsx`: Print/PDF template featuring **compact 10-column line items** for Sales/Purchases and **industry-standard Indian Accounting Vouchers** (Receipt Voucher for Income, Payment Voucher for Expenses) with 4 authorization signature blocks.
+     - `TransactionFormModal.jsx`: Modal supporting live calculations and full **Edit Mode** for all transactions (`PUT /api/accounting/transactions/:id`).
+     - `CompanySettingsModal.jsx`: Settings for bank accounts, GSTIN, PAN, digital signatures, and terms.
+   - **Sidebar Accordion Behavior**: Inner sub-tabs now remain strictly collapsed by default and only expand when Bookkeeping is active or explicitly clicked.
+
+3. **Admin Studio (`Bookkeeping Audits`)**:
+   - Modular tab components in [frontend/components/admin/bookkeeping/](file:///d:/vr_here/frontend/components/admin/bookkeeping/):
+     - `AdminClientDirectoryTab.jsx`: Multi-client directory switcher.
+     - `AdminLedgerAuditTab.jsx`: Ledger audit, voucher verification, and review.
+     - `AdminGSTReturnsTab.jsx`: GSTR-1 Portal JSON export & GSTR-3B calculation sheets.
+     - `AdminTallyExporterTab.jsx`: Tally Prime multi-voucher XML exporter.
+     - `AdminPayrollTdsTab.jsx`: Salary registers, TDS computation, and Form 16 tracking.
+   - **Admin Sidebar Accordion**: Bookkeeping Audits sub-tabs collapse by default and toggle on click.
+
+4. **Service Catalog & Customer Suite Bug Fixes**:
+   - Fixed `ServicesView.jsx` `onSelectService` prop forwarding so clicking any service in the catalog opens its dedicated [ServiceDetailView.jsx](file:///d:/vr_here/frontend/components/customer/ServiceDetailView.jsx) package instead of falling through to tickets.
+   - Cleaned up orphaned `ConsultationPaymentModal` reference in [AccountingServicesView.jsx](file:///d:/vr_here/frontend/components/customer/AccountingServicesView.jsx).
+
+---
+
+## 8. 📋 Tomorrow's Continuation Roadmap
+
+1. **End-to-End Multi-Client Live Audit Testing**:
+   - Run audit verification tests on Admin Studio with real client data.
+2. **GSTR-2B ITC Matcher**:
+   - Build client-side / server-side reconciliation comparing uploaded 2B JSON against client purchase bills.
+3. **High-Resolution Direct PDF Download**:
+   - Add direct 1-click downloadable PDF files alongside browser print stylesheets.
+4. **Form 16 Certificate Formatter**:
+   - Implement printable Form 16 Part A & Part B certificates in the Payroll & TDS module.
+
