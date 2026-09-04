@@ -1,124 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
-    Plus, Settings, RefreshCw, X, Eye, 
-    Upload, Camera, Check, FileCheck, CheckCircle
+    FileText, ShoppingCart, ArrowDownRight, Building2, 
+    Landmark, BarChart3, Settings, Plus, RefreshCw, Eye
 } from 'lucide-react';
 
 import GSTInvoiceView from './bookkeeping/GSTInvoiceView';
 import CompanySettingsModal from './bookkeeping/CompanySettingsModal';
+import SalesInvoicesTab from './bookkeeping/SalesInvoicesTab';
+import PurchaseBillsTab from './bookkeeping/PurchaseBillsTab';
+import IncomeExpensesTab from './bookkeeping/IncomeExpensesTab';
+import BankStatementsTab from './bookkeeping/BankStatementsTab';
 import PartiesTab from './bookkeeping/PartiesTab';
-import TransactionListTab from './bookkeeping/TransactionListTab';
+import ReportsTab from './bookkeeping/ReportsTab';
 import TransactionFormModal from './bookkeeping/TransactionFormModal';
 
 const BookkeepingView = ({ token }) => {
+    const [activeSubTab, setActiveSubTab] = useState('sales'); // 'sales' | 'purchases' | 'expenses' | 'bank' | 'parties' | 'reports'
     const [transactions, setTransactions] = useState([]);
     const [company, setCompany] = useState(null);
+    const [parties, setParties] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [showSettings, setShowSettings] = useState(false);
+
+    // Modal triggers
+    const [showFormModal, setShowFormModal] = useState(false);
+    const [formTxType, setFormTxType] = useState('Sales');
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
-    
-    // Parties / Customers state
-    const [parties, setParties] = useState(() => {
-        const saved = localStorage.getItem('bookkeeping_parties');
-        return saved ? JSON.parse(saved) : [
-            { name: 'Lucky Constructions', gstin: '37AABCL9876E1Z2', address: '#38A, 1st Floor, TUDA Complex, Tirupati', phone: '9876543210' },
-            { name: 'SSV Traders', gstin: '37AABCS5432D1Z0', address: 'Bairagipatteda, Tirupati', phone: '9988776655' }
-        ];
-    });
-    const [showAddPartyModal, setShowAddPartyModal] = useState(false);
-    const [activeSubTab, setActiveSubTab] = useState('Transactions'); // 'Transactions' | 'Parties'
-
-    // Filtering states
-    const [filterType, setFilterType] = useState('All'); 
-    const [searchQuery, setSearchQuery] = useState('');
-
-    // Form states
-    const [txType, setTxType] = useState('Sales'); 
-    const [docNumber, setDocNumber] = useState('');
-    const [invoicePrefix, setInvoicePrefix] = useState('270326'); 
-    const [docDate, setDocDate] = useState(new Date().toISOString().split('T')[0]);
-    
-    const [partyName, setPartyName] = useState('');
-    const [partyGstin, setPartyGstin] = useState('');
-    const [partyAddress, setPartyAddress] = useState('');
-    const [placeOfSupply, setPlaceOfSupply] = useState('Andhra Pradesh');
-    const [isInterstate, setIsInterstate] = useState(false);
-    const [paymentType, setPaymentType] = useState('Cash');
-    const [notes, setNotes] = useState('');
-    
-    const [uploadingBill, setUploadingBill] = useState(false);
-
-    // Vyapar style table items
-    const [items, setItems] = useState([
-        { description: '', qty: 1, unit: 'NONE', rate: 0, discountPercent: 0, gstRate: 18 }
-    ]);
-    
-    // Available units
-    const [availableUnits, setAvailableUnits] = useState(['NONE', 'BOX', 'PCS', 'KGS', 'LTRS', 'MTRS']);
-    const [newUnitName, setNewUnitName] = useState('');
-    const [showAddUnitInline, setShowAddUnitInline] = useState(false);
-
-    // Company Settings
-    const [companyName, setCompanyName] = useState('');
-    const [tradeName, setTradeName] = useState('');
-    const [companyGstin, setCompanyGstin] = useState('');
-    const [companyAddress, setCompanyAddress] = useState('');
-    const [companyState, setCompanyState] = useState('Andhra Pradesh');
-    const [companyPhone, setCompanyPhone] = useState('');
-    const [companyEmail, setCompanyEmail] = useState('');
-    const [companyType, setCompanyType] = useState('Service');
-    const [companyCategory, setCompanyCategory] = useState('Consultancy');
-    const [companyPincode, setCompanyPincode] = useState('');
-
-    const [bankName, setBankName] = useState('');
-    const [bankAccount, setBankAccount] = useState('');
-    const [bankIfsc, setBankIfsc] = useState('');
-
-    const [logo, setLogo] = useState('');
-    const [signature, setSignature] = useState('');
-    const [upiId, setUpiId] = useState('');
-    const [qrCode, setQrCode] = useState('');
 
     const config = { headers: { Authorization: `Bearer ${token}` } };
 
-    // Save parties
-    useEffect(() => {
-        localStorage.setItem('bookkeeping_parties', JSON.stringify(parties));
-    }, [parties]);
-
+    // Fetch all core bookkeeping data
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [txRes, compRes] = await Promise.allSettled([
+            const [txRes, compRes, partyRes] = await Promise.allSettled([
                 axios.get('/api/accounting/transactions', config),
-                axios.get('/api/accounting/company', config)
+                axios.get('/api/accounting/company', config),
+                axios.get('/api/accounting/parties', config)
             ]);
 
             if (txRes.status === 'fulfilled') setTransactions(txRes.value.data);
-            if (compRes.status === 'fulfilled') {
-                const c = compRes.value.data;
-                setCompany(c);
-                setCompanyName(c.companyName || '');
-                setTradeName(c.tradeName || '');
-                setCompanyGstin(c.gstin || '');
-                setCompanyAddress(c.address || '');
-                setCompanyState(c.state || '');
-                setCompanyPhone(c.phone || '');
-                setCompanyEmail(c.email || '');
-                setCompanyType(c.businessType || 'Service');
-                setCompanyCategory(c.businessCategory || 'Consultancy');
-                setCompanyPincode(c.pincode || '');
-                setLogo(c.logo || '');
-                setSignature(c.signature || '');
-                setUpiId(c.upiId || '');
-                setQrCode(c.qrCode || '');
-                if (c.bankDetails) {
-                    setBankName(c.bankDetails.bankName || '');
-                    setBankAccount(c.bankDetails.accountNumber || '');
-                    setBankIfsc(c.bankDetails.ifscCode || '');
-                }
+            if (compRes.status === 'fulfilled') setCompany(compRes.value.data);
+            if (partyRes.status === 'fulfilled' && Array.isArray(partyRes.value.data)) {
+                setParties(partyRes.value.data);
+            } else {
+                // LocalStorage fallback
+                const saved = localStorage.getItem('bookkeeping_parties');
+                if (saved) setParties(JSON.parse(saved));
             }
         } catch (error) {
             console.error('Error fetching bookkeeping data:', error);
@@ -131,415 +60,287 @@ const BookkeepingView = ({ token }) => {
         fetchData();
     }, []);
 
-    // Interstate Auto-Detection
-    useEffect(() => {
-        if (companyState && placeOfSupply) {
-            setIsInterstate(companyState !== placeOfSupply);
-        }
-    }, [companyState, placeOfSupply]);
-
-    // Automatic invoice numbering
-    useEffect(() => {
-        if (showAddForm) {
-            const prefix = txType === 'Sales' ? invoicePrefix : txType === 'Purchase' ? 'BILL-' : txType === 'Income' ? 'INC-' : 'EXP-';
-            const count = transactions.filter(t => t.transactionType === txType).length + 1;
-            const paddedCount = String(count).padStart(4, '0');
-            setDocNumber(`${prefix}${paddedCount}`);
-        }
-    }, [showAddForm, txType, invoicePrefix, transactions]);
-
-    const handleSaveCompany = async (e) => {
-        e.preventDefault();
+    // Create Transaction
+    const handleCreateTransaction = async (formData) => {
         try {
-            const { data } = await axios.post('/api/accounting/company', {
-                companyName,
-                tradeName,
-                gstin: companyGstin,
-                address: companyAddress,
-                state: companyState,
-                phone: companyPhone,
-                email: companyEmail,
-                businessType: companyType,
-                businessCategory: companyCategory,
-                pincode: companyPincode,
-                logo,
-                signature,
-                upiId,
-                qrCode,
-                bankDetails: {
-                    bankName,
-                    accountNumber: bankAccount,
-                    ifscCode: bankIfsc
-                }
-            }, config);
-            setCompany(data);
-            setShowSettings(false);
-            alert('Business Details saved successfully!');
-        } catch (error) {
-            alert('Failed to save business settings: ' + (error.response?.data?.message || error.message));
-        }
-    };
-
-    const handleAddItem = () => {
-        setItems([...items, { description: '', qty: 1, unit: 'NONE', rate: 0, discountPercent: 0, gstRate: 18 }]);
-    };
-
-    const handleItemChange = (index, field, value) => {
-        const updated = [...items];
-        updated[index][field] = value;
-        setItems(updated);
-    };
-
-    const handleRemoveItem = (index) => {
-        if (items.length > 1) {
-            setItems(items.filter((_, i) => i !== index));
-        }
-    };
-
-    const handlePartySelect = (pName) => {
-        const party = parties.find(p => p.name === pName);
-        if (party) {
-            setPartyName(party.name);
-            setPartyGstin(party.gstin || '');
-            setPartyAddress(party.address || '');
-        } else {
-            setPartyName(pName);
-        }
-    };
-
-    const handleAddNewParty = (partyData) => {
-        const { index, name, gstin, address, phone } = partyData;
-        if (!name) return;
-
-        const newParty = { name, gstin, address, phone };
-        if (index !== null && index !== undefined) {
-            const updated = [...parties];
-            updated[index] = newParty;
-            setParties(updated);
-            alert('Customer details updated successfully!');
-        } else {
-            setParties([...parties, newParty]);
-            alert('Customer added successfully!');
-        }
-        setShowAddPartyModal(false);
-    };
-
-    const handleDeleteParty = (index) => {
-        if (window.confirm('Are you sure you want to delete this customer?')) {
-            setParties(parties.filter((_, i) => i !== index));
-        }
-    };
-
-    const handleAddUnit = () => {
-        if (newUnitName && !availableUnits.includes(newUnitName.toUpperCase())) {
-            setAvailableUnits([...availableUnits, newUnitName.toUpperCase()]);
-            setNewUnitName('');
-            setShowAddUnitInline(false);
-        }
-    };
-
-    const handleAddTransaction = async (e) => {
-        e.preventDefault();
-        try {
-            const isVoucher = txType === 'Income' || txType === 'Expense';
-            
-            // Map items payload
-            const mappedItems = isVoucher ? [
-                {
-                    description: partyName, // use category entered
-                    hsnSac: '9999',
-                    qty: 1,
-                    rate: items[0]?.rate || 0,
-                    gstRate: 0,
-                    discount: 0,
-                    cgst: 0,
-                    sgst: 0,
-                    igst: 0,
-                    amount: items[0]?.rate || 0
-                }
-            ] : items.map(item => {
-                const discountAmount = Number(item.qty * item.rate * (item.discountPercent / 100));
-                const taxableVal = Number((item.qty * item.rate) - discountAmount);
-                const gstAmt = Number(taxableVal * (item.gstRate / 100));
-                
-                return {
-                    description: item.description,
-                    hsnSac: '9999',
-                    qty: item.qty,
-                    rate: item.rate,
-                    gstRate: item.gstRate,
-                    discount: discountAmount,
-                    cgst: isInterstate ? 0 : gstAmt / 2,
-                    sgst: isInterstate ? 0 : gstAmt / 2,
-                    igst: isInterstate ? gstAmt : 0,
-                    amount: taxableVal + gstAmt
+            const { data } = await axios.post('/api/accounting/transactions', formData, config);
+            setTransactions([data, ...transactions]);
+            setShowFormModal(false);
+            // If new party not in directory, add it
+            if (formData.partyName && !parties.some(p => p.name.toLowerCase() === formData.partyName.toLowerCase())) {
+                const newParty = {
+                    name: formData.partyName,
+                    partyType: formData.transactionType === 'Sales' ? 'Customer' : 'Vendor',
+                    gstin: formData.partyGstin || '',
+                    pan: formData.partyPan || '',
+                    billingAddress: formData.partyAddress || '',
+                    state: formData.placeOfSupply || 'Andhra Pradesh',
+                    phone: formData.partyPhone || '',
+                    email: formData.partyEmail || ''
                 };
-            });
-
-            await axios.post('/api/accounting/transactions', {
-                transactionType: txType,
-                docNumber,
-                docDate,
-                partyName: isVoucher ? 'General Voucher Ledger' : partyName,
-                partyGstin: isVoucher ? 'N/A' : partyGstin,
-                placeOfSupply,
-                isInterstate,
-                notes,
-                items: mappedItems
-            }, config);
-
-            setPartyName('');
-            setPartyGstin('');
-            setNotes('');
-            setItems([{ description: '', qty: 1, unit: 'NONE', rate: 0, discountPercent: 0, gstRate: 18 }]);
-            setShowAddForm(false);
-            fetchData();
+                try {
+                    const partyRes = await axios.post('/api/accounting/parties', newParty, config);
+                    setParties([...parties, partyRes.data]);
+                } catch(e) {}
+            }
+            alert(`${formData.transactionType} recorded successfully!`);
         } catch (error) {
-            alert('Failed to add transaction: ' + (error.response?.data?.message || error.message));
+            alert('Failed to save voucher: ' + (error.response?.data?.message || error.message));
         }
     };
 
+    // Delete Transaction
     const handleDeleteTransaction = async (id) => {
-        if (window.confirm('Are you sure you want to delete this record?')) {
-            try {
-                await axios.delete(`/api/accounting/transactions/${id}`, config);
-                fetchData();
-            } catch (error) {
-                alert('Failed to delete transaction');
-            }
+        if (!window.confirm('Are you sure you want to delete this transaction voucher?')) return;
+        try {
+            await axios.delete(`/api/accounting/transactions/${id}`, config);
+            setTransactions(transactions.filter(t => t._id !== id));
+        } catch (error) {
+            alert('Failed to delete voucher');
         }
     };
 
-    const handleOCRUpload = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploadingBill(true);
-        setTimeout(() => {
-            if (txType === 'Expense') {
-                setPartyName('Office Utilities');
-                setItems([
-                    { description: 'Office Utilities', qty: 1, unit: 'NONE', rate: 4500, discountPercent: 0, gstRate: 0 }
-                ]);
-                setDocNumber('OCR-EXP-' + Math.floor(Math.random() * 10000));
-            } else {
-                setPartyName('HighTech Solutions Ltd');
-                setPartyGstin('36AABCH4567D1Z8');
-                setDocNumber('OCR-BILL-' + Math.floor(Math.random() * 10000));
-                setItems([
-                    { description: 'Equipment Purchases & Office Supplies', qty: 2, unit: 'PCS', rate: 12000, discountPercent: 5, gstRate: 18 }
-                ]);
-            }
-            setDocDate(new Date().toISOString().split('T')[0]);
-            setUploadingBill(false);
-            alert('Bill successfully scanned! OCR details populated.');
-        }, 1500);
-    };
-
-    const handleCopyShareLink = () => {
-        if (!selectedInvoice) return;
-        const mockLink = `${window.location.origin}/invoice/view/${selectedInvoice._id}`;
-        navigator.clipboard.writeText(mockLink);
-        alert('Invoice share link copied to clipboard!');
-    };
-
-    const filteredTransactions = transactions.filter(t => {
-        if (filterType !== 'All' && t.transactionType !== filterType) return false;
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            return (t.partyName?.toLowerCase() || '').includes(query) || (t.docNumber?.toLowerCase() || '').includes(query);
+    // Party CRUD
+    const handleAddParty = async (partyData) => {
+        try {
+            const { data } = await axios.post('/api/accounting/parties', partyData, config);
+            setParties([...parties, data]);
+        } catch (error) {
+            // Local fallback
+            setParties([...parties, partyData]);
+            localStorage.setItem('bookkeeping_parties', JSON.stringify([...parties, partyData]));
         }
-        return true;
-    });
+    };
 
-    // Safe totals calculation (using optional chaining to prevent crash if ledger returns corrupted/legacy formats)
-    const totalSales = transactions.filter(t => t?.transactionType === 'Sales').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
-    const totalPurchases = transactions.filter(t => t?.transactionType === 'Purchase').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
-    const totalExpenses = transactions.filter(t => t?.transactionType === 'Expense').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
-    const totalIncome = transactions.filter(t => t?.transactionType === 'Income').reduce((acc, c) => acc + (c?.summary?.totalAmount || 0), 0);
+    const handleEditParty = async (idOrName, updated) => {
+        try {
+            const { data } = await axios.put(`/api/accounting/parties/${idOrName}`, updated, config);
+            setParties(parties.map(p => (p._id === idOrName ? data : p)));
+        } catch (error) {
+            const updatedList = parties.map(p => ((p._id === idOrName || p.name === idOrName) ? { ...p, ...updated } : p));
+            setParties(updatedList);
+            localStorage.setItem('bookkeeping_parties', JSON.stringify(updatedList));
+        }
+    };
 
+    const handleDeleteParty = async (idOrName) => {
+        if (!window.confirm('Are you sure you want to remove this party?')) return;
+        try {
+            await axios.delete(`/api/accounting/parties/${idOrName}`, config);
+            setParties(parties.filter(p => p._id !== idOrName));
+        } catch (error) {
+            const updated = parties.filter(p => p._id !== idOrName && p.name !== idOrName);
+            setParties(updated);
+            localStorage.setItem('bookkeeping_parties', JSON.stringify(updated));
+        }
+    };
+
+    // WhatsApp Share
+    const handleWhatsAppShare = (inv) => {
+        const text = `*Tax Invoice from ${company?.companyName || 'VR Here Customer'}*%0AInvoice No: ${inv.docNumber}%0ADate: ${inv.docDate ? new Date(inv.docDate).toLocaleDateString('en-GB') : ''}%0ATotal Amount: ₹${(inv.summary?.totalAmount || 0).toLocaleString('en-IN')}`;
+        const phone = inv.partyPhone ? inv.partyPhone.replace(/[^0-9]/g, '') : '';
+        const url = phone ? `https://wa.me/91${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+        window.open(url, '_blank');
+    };
+
+    // Sub-tab definitions
+    const subTabs = [
+        { id: 'sales', label: 'Sales Invoices', icon: FileText, badge: transactions.filter(t => t.transactionType === 'Sales').length },
+        { id: 'purchases', label: 'Purchase Bills', icon: ShoppingCart, badge: transactions.filter(t => t.transactionType === 'Purchase').length },
+        { id: 'expenses', label: 'Income & Expenses', icon: ArrowDownRight },
+        { id: 'bank', label: 'Bank Statements', icon: Landmark },
+        { id: 'parties', label: 'Customers & Vendors', icon: Building2, badge: parties.length },
+        { id: 'reports', label: 'Reports & P&L', icon: BarChart3 }
+    ];
+
+    // If Viewing a specific invoice in full page mode
     if (selectedInvoice) {
         return (
             <GSTInvoiceView 
                 selectedInvoice={selectedInvoice}
                 company={company}
                 onBack={() => setSelectedInvoice(null)}
-                onCopyShareLink={handleCopyShareLink}
+                onCopyShareLink={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('Invoice link copied to clipboard!');
+                }}
             />
         );
     }
 
     return (
-        <div className="space-y-6 pb-24 px-4 md:px-8">
-            {/* Vyapar style sub tab/top navigation */}
-            <div className="flex justify-between items-center border-b border-slate-200 pb-4 flex-wrap gap-4">
-                <div className="flex items-center gap-6">
-                    <button 
-                        onClick={() => setActiveSubTab('Transactions')} 
-                        className={`text-sm font-bold pb-2 transition border-b-2 ${activeSubTab === 'Transactions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
-                    >
-                        Transactions
-                    </button>
-                    <button 
-                        onClick={() => setActiveSubTab('Parties')} 
-                        className={`text-sm font-bold pb-2 transition border-b-2 ${activeSubTab === 'Parties' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
-                    >
-                        Customers / Parties
-                    </button>
+        <div className="space-y-6 pb-20 max-w-7xl mx-auto animate-in fade-in duration-300">
+            {/* Top Workspace Header */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Bookkeeping Hub</h2>
+                        <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-indigo-200">
+                            AaaS Suite
+                        </span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium mt-1">
+                        Manage sales invoices, purchase bills, bank statements, and party ledgers in one seamless workspace.
+                    </p>
                 </div>
-                
-                <div className="flex gap-2">
-                    <button 
-                        onClick={() => setShowSettings(true)}
-                        className="bg-white text-slate-700 px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 transition flex items-center gap-1.5 font-bold text-xs"
+
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    <button
+                        onClick={fetchData}
+                        title="Refresh All Ledgers"
+                        className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition"
                     >
-                        <Settings size={14} /> Company Settings
+                        <RefreshCw size={16} />
                     </button>
-                    <button 
-                        onClick={() => { setTxType('Sales'); setShowAddForm(true); }}
-                        className="bg-red-500 text-white px-5 py-2.5 rounded-xl hover:bg-red-600 transition flex items-center gap-1 font-bold text-xs shadow-md shadow-red-100"
+                    <button
+                        onClick={() => setShowSettingsModal(true)}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-1.5"
                     >
-                        <Plus size={14} /> Add Sale
+                        <Settings size={15} /> Company Settings
                     </button>
-                    <button 
-                        onClick={() => { setTxType('Purchase'); setShowAddForm(true); }}
-                        className="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition flex items-center gap-1 font-bold text-xs shadow-md shadow-blue-100"
+                    <button
+                        onClick={() => {
+                            setFormTxType('Sales');
+                            setShowFormModal(true);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5 shadow-md shadow-emerald-200"
                     >
-                        <Plus size={14} /> Add Purchase
+                        <Plus size={16} /> Create Invoice
                     </button>
                 </div>
             </div>
 
-            {activeSubTab === 'Parties' ? (
-                <PartiesTab 
-                    parties={parties}
-                    showAddPartyModal={showAddPartyModal}
-                    onShowAddPartyModal={() => setShowAddPartyModal(true)}
-                    onCloseAddPartyModal={() => setShowAddPartyModal(false)}
-                    onSaveParty={handleAddNewParty}
-                    onDeleteParty={handleDeleteParty}
-                />
+            {/* Inner Sub-Navigation Bar */}
+            <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-1.5 overflow-x-auto">
+                {subTabs.map(tab => {
+                    const Icon = tab.icon;
+                    const isActive = activeSubTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveSubTab(tab.id)}
+                            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2 ${
+                                isActive 
+                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
+                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                            }`}
+                        >
+                            <Icon size={16} />
+                            <span>{tab.label}</span>
+                            {tab.badge !== undefined && (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                    isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                                }`}>
+                                    {tab.badge}
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Sub-Tab Views */}
+            {loading ? (
+                <div className="flex justify-center py-20">
+                    <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                </div>
             ) : (
-                <TransactionListTab 
-                    transactions={filteredTransactions}
-                    loading={loading}
-                    filterType={filterType}
-                    setFilterType={setFilterType}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    onRefresh={fetchData}
-                    totalSales={totalSales}
-                    totalPurchases={totalPurchases}
-                    totalExpenses={totalExpenses}
-                    totalIncome={totalIncome}
-                    onViewInvoice={setSelectedInvoice}
-                    onDeleteTransaction={handleDeleteTransaction}
-                />
+                <>
+                    {activeSubTab === 'sales' && (
+                        <SalesInvoicesTab 
+                            transactions={transactions}
+                            onAddNew={() => {
+                                setFormTxType('Sales');
+                                setShowFormModal(true);
+                            }}
+                            onViewInvoice={(inv) => setSelectedInvoice(inv)}
+                            onDeleteInvoice={handleDeleteTransaction}
+                            onWhatsAppShare={handleWhatsAppShare}
+                            company={company}
+                        />
+                    )}
+
+                    {activeSubTab === 'purchases' && (
+                        <PurchaseBillsTab 
+                            transactions={transactions}
+                            onAddNew={() => {
+                                setFormTxType('Purchase');
+                                setShowFormModal(true);
+                            }}
+                            onViewInvoice={(inv) => setSelectedInvoice(inv)}
+                            onDeleteInvoice={handleDeleteTransaction}
+                        />
+                    )}
+
+                    {activeSubTab === 'expenses' && (
+                        <IncomeExpensesTab 
+                            transactions={transactions}
+                            onAddNewIncome={() => {
+                                setFormTxType('Income');
+                                setShowFormModal(true);
+                            }}
+                            onAddNewExpense={() => {
+                                setFormTxType('Expense');
+                                setShowFormModal(true);
+                            }}
+                            onViewInvoice={(inv) => setSelectedInvoice(inv)}
+                            onDeleteInvoice={handleDeleteTransaction}
+                        />
+                    )}
+
+                    {activeSubTab === 'bank' && (
+                        <BankStatementsTab 
+                            token={token}
+                            transactions={transactions}
+                            company={company}
+                            onRefreshLedger={fetchData}
+                        />
+                    )}
+
+                    {activeSubTab === 'parties' && (
+                        <PartiesTab 
+                            parties={parties}
+                            onAddParty={handleAddParty}
+                            onEditParty={handleEditParty}
+                            onDeleteParty={handleDeleteParty}
+                        />
+                    )}
+
+                    {activeSubTab === 'reports' && (
+                        <ReportsTab 
+                            transactions={transactions}
+                            company={company}
+                        />
+                    )}
+                </>
             )}
 
-            {/* Transaction entry Modal */}
+            {/* Modal: Add/Edit Transaction */}
             <TransactionFormModal 
-                show={showAddForm}
-                onClose={() => setShowAddForm(false)}
-                onSubmit={handleAddTransaction}
-                txType={txType}
-                setTxType={setTxType}
-                docNumber={docNumber}
-                setDocNumber={setDocNumber}
-                docDate={docDate}
-                setDocDate={setDocDate}
-                placeOfSupply={placeOfSupply}
-                setPlaceOfSupply={setPlaceOfSupply}
-                isInterstate={isInterstate}
-                partyName={partyName}
-                setPartyName={setPartyName}
-                partyGstin={partyGstin}
-                setPartyGstin={setPartyGstin}
+                show={showFormModal}
+                onClose={() => setShowFormModal(false)}
+                txType={formTxType}
+                onSubmit={handleCreateTransaction}
                 parties={parties}
-                onShowAddPartyModal={() => setShowAddPartyModal(true)}
-                onPartySelect={handlePartySelect}
-                availableUnits={availableUnits}
-                onShowAddUnitInline={() => setShowAddUnitInline(true)}
-                items={items}
-                onAddItem={handleAddItem}
-                onRemoveItem={handleRemoveItem}
-                onItemChange={handleItemChange}
-                paymentType={paymentType}
-                setPaymentType={setPaymentType}
-                notes={notes}
-                setNotes={setNotes}
-                uploadingBill={uploadingBill}
-                onOCRUpload={handleOCRUpload}
+                companyState={company?.state || 'Andhra Pradesh'}
+                invoiceCount={transactions.filter(t => t.transactionType === formTxType).length + 1}
             />
 
-            {/* Custom Measurement Unit Modal */}
-            {showAddUnitInline && (
-                <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-xs rounded-2xl p-5 shadow-2xl relative">
-                        <button onClick={() => setShowAddUnitInline(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-                            <X size={16} />
-                        </button>
-                        <h4 className="font-bold text-slate-800 text-xs mb-3">Add Custom Measurement Unit</h4>
-                        <div className="space-y-3">
-                            <input 
-                                type="text" 
-                                placeholder="e.g. BAGS, DOZ, NOS"
-                                value={newUnitName}
-                                onChange={e => setNewUnitName(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:outline-none uppercase"
-                            />
-                            <button 
-                                onClick={handleAddUnit}
-                                className="w-full bg-indigo-600 text-white py-2 rounded-xl text-xs font-bold hover:bg-indigo-700 transition"
-                            >
-                                Add Unit
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Company profile settings Edit Modal */}
+            {/* Modal: Company Settings */}
             <CompanySettingsModal 
-                show={showSettings}
-                onClose={() => setShowSettings(false)}
-                onSave={handleSaveCompany}
-                companyName={companyName}
-                setCompanyName={setCompanyName}
-                tradeName={tradeName}
-                setTradeName={setTradeName}
-                companyGstin={companyGstin}
-                setCompanyGstin={setCompanyGstin}
-                companyAddress={companyAddress}
-                setCompanyAddress={setCompanyAddress}
-                companyState={companyState}
-                setCompanyState={setCompanyState}
-                companyPhone={companyPhone}
-                setCompanyPhone={setCompanyPhone}
-                companyEmail={companyEmail}
-                setCompanyEmail={setCompanyEmail}
-                companyType={companyType}
-                setCompanyType={setCompanyType}
-                companyCategory={companyCategory}
-                setCompanyCategory={setCompanyCategory}
-                companyPincode={companyPincode}
-                setCompanyPincode={setCompanyPincode}
-                invoicePrefix={invoicePrefix}
-                setInvoicePrefix={setInvoicePrefix}
-                bankName={bankName}
-                setBankName={setBankName}
-                bankAccount={bankAccount}
-                setBankAccount={setBankAccount}
-                bankIfsc={bankIfsc}
-                setBankIfsc={setBankIfsc}
-                logo={logo}
-                setLogo={setLogo}
-                signature={signature}
-                setSignature={setSignature}
-                upiId={upiId}
-                setUpiId={setUpiId}
-                qrCode={qrCode}
-                setQrCode={setQrCode}
+                show={showSettingsModal}
+                onClose={() => setShowSettingsModal(false)}
+                company={company}
+                onSave={async (compData) => {
+                    try {
+                        const { data } = await axios.post('/api/accounting/company', compData, config);
+                        setCompany(data);
+                        setShowSettingsModal(false);
+                        alert('Company profile & tax settings saved successfully!');
+                    } catch (error) {
+                        alert('Failed to save settings: ' + (error.response?.data?.message || error.message));
+                    }
+                }}
             />
         </div>
     );
