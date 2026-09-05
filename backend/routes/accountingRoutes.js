@@ -13,6 +13,9 @@ import {
     deleteParty,
     getBankStatements,
     createBankStatement,
+    deleteBankStatement,
+    deleteAllBankStatements,
+    clearBankStatementTransactions,
     tagBankTransaction,
     getPayrollRecords,
     createPayrollRecord,
@@ -48,7 +51,14 @@ router.route('/parties/:id')
 // Bank Statements & Manual Payment Tagging
 router.route('/bank-statements')
     .get(protect, getBankStatements)
-    .post(protect, createBankStatement);
+    .post(protect, createBankStatement)
+    .delete(protect, deleteAllBankStatements);
+
+router.route('/bank-statements/:id')
+    .delete(protect, deleteBankStatement);
+
+router.route('/bank-statements/:id/clear')
+    .post(protect, clearBankStatementTransactions);
 
 router.route('/bank-statements/:id/tag')
     .post(protect, tagBankTransaction);

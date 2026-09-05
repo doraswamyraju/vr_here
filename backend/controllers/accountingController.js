@@ -493,10 +493,10 @@ export const getBankStatements = asyncHandler(async (req, res) => {
     res.json(statements);
 });
 
-// @desc    Upload / Save bank statement with parsed transaction lines
+// @desc    Upload / Save bank statement with parsed transaction lines (smart merge by account)
 // @route   POST /api/accounting/bank-statements
 export const createBankStatement = asyncHandler(async (req, res) => {
-    const { clientId, bankName, accountNumber, statementTitle, fileName, fileUrl, isPasswordProtected, pdfPassword, transactions } = req.body;
+    const { clientId, bankName, accountNumber, statementTitle, fileName, fileUrl, isPasswordProtected, pdfPassword, transactions, replaceAll = false } = req.body;
     let targetUserId = req.user._id;
     if (clientId && (req.user.role === 'admin' || req.user.role === 'employee')) {
         targetUserId = clientId;
@@ -520,6 +520,39 @@ export const createBankStatement = asyncHandler(async (req, res) => {
         notes: t.notes || ''
     }));
 
+    // Check if account already exists for this client to prevent duplicate bank tabs
+    let existingStatement = await BankStatement.findOne({ clientUser: targetUserId, accountNumber });
+
+    if (existingStatement) {
+        if (replaceAll) {
+            existingStatement.transactions = formattedTxs;
+        } else {
+            // Append only new transactions that don't already exist (deduplicate by refNo or date+amount+desc)
+            const existingKeys = new Set(existingStatement.transactions.map(tx => 
+                tx.referenceNo ? tx.referenceNo : `${new Date(tx.date).toISOString().split('T')[0]}_${tx.amount}_${tx.description.slice(0, 30)}`
+            ));
+
+            const newUniqueTxs = formattedTxs.filter(tx => {
+                const key = tx.referenceNo ? tx.referenceNo : `${new Date(tx.date).toISOString().split('T')[0]}_${tx.amount}_${tx.description.slice(0, 30)}`;
+                return !existingKeys.has(key);
+            });
+
+            existingStatement.transactions.push(...newUniqueTxs);
+        }
+
+        existingStatement.bankName = bankName;
+        existingStatement.statementTitle = statementTitle || existingStatement.statementTitle;
+        existingStatement.fileName = fileName || existingStatement.fileName;
+        if (pdfPassword) {
+            existingStatement.pdfPassword = pdfPassword;
+            existingStatement.isPasswordProtected = true;
+        }
+
+        await existingStatement.save();
+        return res.json(existingStatement);
+    }
+
+    // Otherwise create fresh statement record
     const statement = await BankStatement.create({
         clientUser: targetUserId,
         bankName,
@@ -533,6 +566,51 @@ export const createBankStatement = asyncHandler(async (req, res) => {
     });
 
     res.status(201).json(statement);
+});
+
+// @desc    Delete a bank statement & all its transactions
+// @route   DELETE /api/accounting/bank-statements/:id
+export const deleteBankStatement = asyncHandler(async (req, res) => {
+    const statement = await BankStatement.findById(req.params.id);
+    if (!statement) {
+        res.status(404);
+        throw new Error('Bank statement not found');
+    }
+
+    if (statement.clientUser.toString() !== req.user._id.toString() && req.user.role !== 'admin' && req.user.role !== 'employee') {
+        res.status(401);
+        throw new Error('Not authorized to delete this statement');
+    }
+
+    await statement.deleteOne();
+    res.json({ message: 'Bank statement and all transactions removed successfully' });
+});
+
+// @desc    Delete all bank statements for user
+// @route   DELETE /api/accounting/bank-statements
+export const deleteAllBankStatements = asyncHandler(async (req, res) => {
+    const { clientId } = req.query;
+    let targetUserId = req.user._id;
+    if (clientId && (req.user.role === 'admin' || req.user.role === 'employee')) {
+        targetUserId = clientId;
+    }
+
+    await BankStatement.deleteMany({ clientUser: targetUserId });
+    res.json({ message: 'All bank statements and transaction ledgers removed' });
+});
+
+// @desc    Clear all transactions in a specific bank statement
+// @route   POST /api/accounting/bank-statements/:id/clear
+export const clearBankStatementTransactions = asyncHandler(async (req, res) => {
+    const statement = await BankStatement.findById(req.params.id);
+    if (!statement) {
+        res.status(404);
+        throw new Error('Bank statement not found');
+    }
+
+    statement.transactions = [];
+    await statement.save();
+    res.json({ message: 'All transactions cleared from statement', statement });
 });
 
 // @desc    Manually tag a bank transaction line to an Invoice/Bill or Category

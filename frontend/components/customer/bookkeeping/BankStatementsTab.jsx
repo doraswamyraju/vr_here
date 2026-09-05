@@ -3,11 +3,12 @@ import axios from 'axios';
 import { 
     Upload, Plus, Check, Search, FileText, ArrowDownLeft, ArrowUpRight, 
     Link2, X, RefreshCw, Lock, Unlock, Eye, EyeOff, ShieldCheck, HelpCircle, 
-    FileSpreadsheet, Sparkles, AlertCircle, CheckCircle2, Calendar, Landmark
+    FileSpreadsheet, Sparkles, AlertCircle, CheckCircle2, Calendar, Landmark, Trash2
 } from 'lucide-react';
 import { parseExcelStatement, parsePdfStatement, detectBankFromText } from '../../../utils/bankStatementParser';
 
 const BANK_PASSWORD_HINTS = {
+    'Union Bank of India': 'Password specified in your Union Bank statement email',
     'HDFC Bank': 'Customer ID (8-digits) OR First 4 letters of name (lowercase) + DOB (DDMM) e.g. dora1408',
     'State Bank of India (SBI)': 'Last 5 digits of registered mobile number + DOB (DDMM) e.g. 987651408',
     'ICICI Bank': 'First 4 letters of name in lowercase + DOB (DDMM) e.g. dora1408',
@@ -38,7 +39,7 @@ const BankStatementsTab = ({
     const [showPassword, setShowPassword] = useState(false);
     const [parsedData, setParsedData] = useState(null);
     const [parseError, setParseError] = useState('');
-    const [detectedBank, setDetectedBank] = useState('HDFC Bank');
+    const [detectedBank, setDetectedBank] = useState('Union Bank of India');
 
     // Tagging Modal State
     const [activeTagLine, setActiveTagLine] = useState(null);
@@ -55,8 +56,15 @@ const BankStatementsTab = ({
         try {
             const { data } = await axios.get('/api/accounting/bank-statements', config);
             setStatements(data);
-            if (data.length > 0 && !selectedStatement) {
-                setSelectedStatement(data[0]);
+            if (data.length > 0) {
+                if (!selectedStatement || !data.some(s => s._id === selectedStatement._id)) {
+                    setSelectedStatement(data[0]);
+                } else {
+                    const current = data.find(s => s._id === selectedStatement._id);
+                    if (current) setSelectedStatement(current);
+                }
+            } else {
+                setSelectedStatement(null);
             }
         } catch (error) {
             console.error('Failed to fetch bank statements:', error);
@@ -128,7 +136,7 @@ const BankStatementsTab = ({
         }
     };
 
-    // Save Parsed Statement & Transactions to Database
+    // Save Parsed Statement & Transactions to Database (with smart account upsert)
     const handleSaveParsedStatement = async () => {
         if (!parsedData || parsedData.transactions.length === 0) {
             alert('No transactions found to save.');
@@ -147,15 +155,42 @@ const BankStatementsTab = ({
             };
 
             const { data } = await axios.post('/api/accounting/bank-statements', payload, config);
-            setStatements([data, ...statements]);
+            await fetchStatements();
             setSelectedStatement(data);
             setShowUploadModal(false);
             setUploadedFile(null);
             setParsedData(null);
             setPdfPassword('');
-            alert(`Bank statement successfully parsed & saved! ${data.transactions.length} transactions are now ready for payment tagging.`);
+            alert(`Bank statement successfully parsed & saved! ${data.transactions?.length || parsedData.transactions.length} transactions are now ready in your ledger.`);
         } catch (error) {
             alert('Failed to save statement: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    // Delete single bank statement & all its transactions
+    const handleDeleteStatement = async (statementId) => {
+        if (!window.confirm('Are you sure you want to delete this bank statement and ALL its transactions?')) return;
+        try {
+            await axios.delete(`/api/accounting/bank-statements/${statementId}`, config);
+            const updated = statements.filter(s => s._id !== statementId);
+            setStatements(updated);
+            setSelectedStatement(updated.length > 0 ? updated[0] : null);
+            alert('Bank statement and all transactions removed successfully.');
+        } catch (err) {
+            alert('Failed to delete statement: ' + (err.response?.data?.message || err.message));
+        }
+    };
+
+    // Delete all bank statements at once
+    const handleDeleteAllStatements = async () => {
+        if (!window.confirm('Are you sure you want to DELETE ALL bank statements and clear all transactions? This action cannot be undone.')) return;
+        try {
+            await axios.delete('/api/accounting/bank-statements', config);
+            setStatements([]);
+            setSelectedStatement(null);
+            alert('All bank statements and transaction records deleted successfully.');
+        } catch (err) {
+            alert('Failed to delete statements: ' + (err.response?.data?.message || err.message));
         }
     };
 
@@ -337,27 +372,39 @@ const BankStatementsTab = ({
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {/* Bank Account Switcher Tabs */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                        {statements.map(stmt => (
+                    {/* Bank Account Switcher Tabs & Actions */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 overflow-x-auto pb-2">
+                        <div className="flex items-center gap-2 overflow-x-auto">
+                            {statements.map(stmt => (
+                                <button
+                                    key={stmt._id}
+                                    onClick={() => setSelectedStatement(stmt)}
+                                    className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition shrink-0 flex items-center gap-2 border ${
+                                        selectedStatement?._id === stmt._id 
+                                            ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
+                                            : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
+                                    }`}
+                                >
+                                    <span>🏦 {stmt.bankName}</span>
+                                    <span className="font-mono text-[10px] opacity-75">({stmt.accountNumber?.slice(-4) || 'Stmt'})</span>
+                                    {stmt.isPasswordProtected && (
+                                        <span title="Password protected & decrypted">
+                                            <Unlock size={11} className="text-emerald-400" />
+                                        </span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        {statements.length > 0 && (
                             <button
-                                key={stmt._id}
-                                onClick={() => setSelectedStatement(stmt)}
-                                className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition shrink-0 flex items-center gap-2 border ${
-                                    selectedStatement?._id === stmt._id 
-                                        ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
-                                        : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
-                                }`}
+                                onClick={handleDeleteAllStatements}
+                                className="text-rose-600 hover:text-white hover:bg-rose-600 px-3.5 py-2 rounded-2xl text-xs font-bold transition shrink-0 inline-flex items-center gap-1.5 border border-rose-200 bg-rose-50/50"
+                                title="Delete all uploaded statements and transactions"
                             >
-                                <span>🏦 {stmt.bankName}</span>
-                                <span className="font-mono text-[10px] opacity-75">({stmt.accountNumber?.slice(-4) || 'Stmt'})</span>
-                                {stmt.isPasswordProtected && (
-                                    <span title="Password protected & decrypted">
-                                        <Unlock size={11} className="text-emerald-400" />
-                                    </span>
-                                )}
+                                <Trash2 size={13} /> Delete All Statements
                             </button>
-                        ))}
+                        )}
                     </div>
 
                     {/* Statement Table */}
@@ -377,9 +424,19 @@ const BankStatementsTab = ({
                                         Account: <strong className="text-slate-800">{selectedStatement.accountNumber}</strong> ({selectedStatement.bankName})
                                     </p>
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full border border-indigo-200">
-                                    {filteredTransactions.length} Transactions {selectedMonth !== 'ALL' ? `(${selectedMonth})` : ''}
-                                </span>
+                                
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full border border-indigo-200">
+                                        {filteredTransactions.length} Transactions {selectedMonth !== 'ALL' ? `(${selectedMonth})` : ''}
+                                    </span>
+                                    <button
+                                        onClick={() => handleDeleteStatement(selectedStatement._id)}
+                                        className="bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 border border-rose-200 px-3 py-1.5 rounded-xl font-bold transition inline-flex items-center gap-1.5 text-xs shadow-xs"
+                                        title="Delete this statement and all its transactions"
+                                    >
+                                        <Trash2 size={13} /> Delete Statement
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="overflow-x-auto">
