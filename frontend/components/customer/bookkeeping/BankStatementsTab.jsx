@@ -124,29 +124,6 @@ const BankStatementsTab = ({
 
     return (
         <div className="space-y-6">
-            {/* Top Bar */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-3xl border border-slate-100 shadow-sm gap-4">
-                <div>
-                    <h3 className="font-black text-slate-900 text-lg">Bank Statement Hub & Payment Tagging</h3>
-                    <p className="text-xs text-slate-500 font-medium">Upload official bank statements and manually tag credits & debits to invoices and expense ledgers.</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <button 
-                        onClick={fetchStatements}
-                        className="p-2.5 bg-slate-100 text-slate-600 hover:text-slate-900 rounded-2xl transition"
-                        title="Refresh"
-                    >
-                        <RefreshCw size={16} />
-                    </button>
-                    <button 
-                        onClick={() => setShowUploadModal(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition shadow-md shadow-indigo-100"
-                    >
-                        <Upload size={16} /> Upload / Add Statement
-                    </button>
-                </div>
-            </div>
 
             {/* Statements List & Active Statement View */}
             {loading ? (
@@ -174,7 +151,7 @@ const BankStatementsTab = ({
             ) : (
                 <div className="space-y-4">
                     {/* Statement Switcher Tabs */}
-                    <div className="flex gap-2 overflow-x-auto pb-2">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2">
                         {statements.map(stmt => (
                             <button
                                 key={stmt._id}
@@ -189,6 +166,12 @@ const BankStatementsTab = ({
                                 <span className="font-mono text-[10px] opacity-75">({stmt.accountNumber.slice(-4)})</span>
                             </button>
                         ))}
+                        <button
+                            onClick={() => setShowUploadModal(true)}
+                            className="px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition shrink-0 flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-100"
+                        >
+                            <Plus size={14} /> Upload / Add Statement
+                        </button>
                     </div>
 
                     {/* Statement Table */}

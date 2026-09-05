@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
     FileText, ShoppingCart, ArrowDownRight, Building2, 
-    Landmark, BarChart3, Settings, Plus, RefreshCw, Eye
+    Landmark, BarChart3, Settings, Plus, RefreshCw, Eye, Users
 } from 'lucide-react';
 
 import GSTInvoiceView from './bookkeeping/GSTInvoiceView';
@@ -13,9 +13,10 @@ import IncomeExpensesTab from './bookkeeping/IncomeExpensesTab';
 import BankStatementsTab from './bookkeeping/BankStatementsTab';
 import PartiesTab from './bookkeeping/PartiesTab';
 import ReportsTab from './bookkeeping/ReportsTab';
+import CustomerPayrollTab from './bookkeeping/CustomerPayrollTab';
 import TransactionFormModal from './bookkeeping/TransactionFormModal';
 
-const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) => {
+const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabChange }) => {
     const [internalSubTab, setInternalSubTab] = useState('sales');
     const activeSubTab = propSubTab || internalSubTab;
     const setActiveSubTab = (tab) => {
@@ -172,6 +173,7 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
             case 'expenses': return { title: 'Income & Expense Ledgers', subtitle: 'Track operational overheads, salaries, rent, and non-trading income receipts.' };
             case 'bank': return { title: 'Bank Statements & Payment Tagging', subtitle: 'Upload statements and manually tag credits/debits to invoices and ledgers.' };
             case 'parties': return { title: 'Customers & Vendors Master Directory', subtitle: 'Maintain party billing details, GSTIN, PAN, and ledger statements.' };
+            case 'payroll': return { title: 'Staff Payroll, Time Sheets & Form 16', subtitle: 'Manage employee salary registers, VR HR time tracking, and statutory Form 16.' };
             case 'reports': return { title: 'Financial Reports & Profit & Loss (P&L)', subtitle: 'Real-time profit summary, turnover metrics, and net GST cash liability.' };
             default: return { title: 'Sales Invoices & Billing Hub', subtitle: 'Generate GST-compliant tax invoices, track receivables, and share via WhatsApp.' };
         }
@@ -224,15 +226,19 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
                     >
                         <Settings size={15} /> Company Settings
                     </button>
-                    <button
-                        onClick={() => {
-                            setFormTxType(activeSubTab === 'purchases' ? 'Purchase' : activeSubTab === 'expenses' ? 'Expense' : 'Sales');
-                            setShowFormModal(true);
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5 shadow-md shadow-emerald-200"
-                    >
-                        <Plus size={16} /> {activeSubTab === 'purchases' ? 'Add Purchase Bill' : activeSubTab === 'expenses' ? 'Add Expense' : 'Create Invoice'}
-                    </button>
+                    
+                    {/* Context-aware primary action button */}
+                    {(activeSubTab === 'sales' || activeSubTab === 'purchases' || activeSubTab === 'expenses') && (
+                        <button
+                            onClick={() => {
+                                setFormTxType(activeSubTab === 'purchases' ? 'Purchase' : activeSubTab === 'expenses' ? 'Expense' : 'Sales');
+                                setShowFormModal(true);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5 shadow-md shadow-emerald-200"
+                        >
+                            <Plus size={16} /> {activeSubTab === 'purchases' ? 'Add Purchase Bill' : activeSubTab === 'expenses' ? 'Add Expense' : 'Create Invoice'}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -310,6 +316,14 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
                         />
                     )}
 
+                    {activeSubTab === 'payroll' && (
+                        <CustomerPayrollTab 
+                            token={token}
+                            company={company}
+                            userInfo={userInfo}
+                        />
+                    )}
+
                     {activeSubTab === 'reports' && (
                         <ReportsTab 
                             transactions={transactions}
@@ -339,6 +353,7 @@ const BookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange }) =>
                 show={showSettingsModal}
                 onClose={() => setShowSettingsModal(false)}
                 company={company}
+                userInfo={userInfo}
                 onSave={async (compData) => {
                     try {
                         const { data } = await axios.post('/api/accounting/company', compData, config);

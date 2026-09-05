@@ -4,7 +4,7 @@ import {
    Wallet, Headphones, User, Bell, LogOut,
    Menu, MessageSquare, Plus, X, Phone, BookOpen,
    ChevronDown, ChevronRight, ShoppingCart, ArrowDownRight,
-   Landmark, Building2, BarChart3
+   Landmark, Building2, BarChart3, Users
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -56,6 +56,7 @@ export default function CustomerApp() {
       { id: 'expenses', label: 'Income & Expenses', icon: ArrowDownRight },
       { id: 'bank', label: 'Bank Statements', icon: Landmark },
       { id: 'parties', label: 'Customers & Vendors', icon: Building2 },
+      { id: 'payroll', label: 'Payroll & Timesheets', icon: Users },
       { id: 'reports', label: 'Reports & P&L', icon: BarChart3 }
    ];
    const [payments, setPayments] = useState([]);
@@ -260,7 +261,7 @@ export default function CustomerApp() {
          );
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
          case 'Invoices': return <CustomerFinanceView token={userInfo?.token} />;
-         case 'Bookkeeping': return <BookkeepingView token={userInfo?.token} activeSubTab={bookkeepingSubTab} onSubTabChange={setBookkeepingSubTab} />;
+         case 'Bookkeeping': return <BookkeepingView token={userInfo?.token} userInfo={userInfo} activeSubTab={bookkeepingSubTab} onSubTabChange={setBookkeepingSubTab} />;
          case 'Account': return <AccountsView orders={orders} payments={payments} userInfo={userInfo} token={userInfo?.token} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: 
