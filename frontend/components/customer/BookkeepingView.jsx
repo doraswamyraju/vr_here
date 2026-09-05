@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { 
     FileText, ShoppingCart, ArrowDownRight, Building2, 
-    Landmark, BarChart3, Settings, Plus, RefreshCw, Eye, Users, Calendar
+    Landmark, BarChart3, Settings, Plus, RefreshCw, Eye, Users, Calendar,
+    ChevronLeft, ChevronRight, Sparkles
 } from 'lucide-react';
 
 import GSTInvoiceView from './bookkeeping/GSTInvoiceView';
@@ -41,7 +42,16 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
         setInternalSubTab(tab);
     };
 
-    const [selectedMonth, setSelectedMonth] = useState('April 2026');
+    const currentMonthName = useMemo(() => {
+        return new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    }, []);
+
+    // By default show current month if present in financial year, else fallback to first month
+    const [selectedMonth, setSelectedMonth] = useState(() => {
+        const cur = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        const match = MONTHS_LIST.find(m => m.id.toLowerCase() === cur.toLowerCase());
+        return match ? match.id : 'September 2026';
+    });
     const [transactions, setTransactions] = useState([]);
     const [company, setCompany] = useState(null);
     const [parties, setParties] = useState([]);
@@ -288,27 +298,82 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 </div>
             </div>
 
-            {/* Monthly Period & FY Switcher Bar */}
-            <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-2 overflow-x-auto">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-xl text-xs font-black text-slate-800 shrink-0">
-                    <Calendar size={13} className="text-indigo-600" />
-                    <span>FY 2026-27</span>
-                </div>
-                <div className="h-5 w-px bg-slate-200 shrink-0" />
-                <div className="flex items-center gap-1 shrink-0">
-                    {MONTHS_LIST.map(m => (
+            {/* Simplified Modern Period & Month Switcher Bar */}
+            <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 rounded-xl text-xs font-black text-slate-800 shrink-0">
+                        <Calendar size={14} className="text-indigo-600" />
+                        <span>FY 2026-27</span>
+                    </div>
+
+                    {/* Month Stepper & Select */}
+                    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-0.5">
                         <button
-                            key={m.id}
-                            onClick={() => setSelectedMonth(m.id)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 ${
-                                selectedMonth === m.id
-                                    ? 'bg-slate-900 text-white shadow-xs font-black'
-                                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                            }`}
+                            onClick={() => {
+                                const idx = MONTHS_LIST.findIndex(m => m.id === selectedMonth);
+                                if (idx > 0) setSelectedMonth(MONTHS_LIST[idx - 1].id);
+                                else if (selectedMonth === 'ALL') setSelectedMonth(MONTHS_LIST[0].id);
+                            }}
+                            disabled={selectedMonth === MONTHS_LIST[0].id}
+                            title="Previous Month"
+                            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-white rounded-lg transition disabled:opacity-30 disabled:pointer-events-none"
                         >
-                            {m.label}
+                            <ChevronLeft size={15} />
                         </button>
-                    ))}
+
+                        <select
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            className="bg-transparent text-xs font-black text-slate-900 px-3 py-1.5 focus:outline-none cursor-pointer"
+                        >
+                            {MONTHS_LIST.map(m => (
+                                <option key={m.id} value={m.id}>
+                                    {m.id.toLowerCase() === currentMonthName.toLowerCase() ? `⭐ ${m.label} (Current)` : m.label}
+                                </option>
+                            ))}
+                        </select>
+
+                        <button
+                            onClick={() => {
+                                const idx = MONTHS_LIST.findIndex(m => m.id === selectedMonth);
+                                if (idx >= 0 && idx < MONTHS_LIST.length - 2) setSelectedMonth(MONTHS_LIST[idx + 1].id);
+                            }}
+                            disabled={selectedMonth === MONTHS_LIST[MONTHS_LIST.length - 2]?.id}
+                            title="Next Month"
+                            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-white rounded-lg transition disabled:opacity-30 disabled:pointer-events-none"
+                        >
+                            <ChevronRight size={15} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Quick Switcher Shortcuts */}
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button
+                        onClick={() => {
+                            const match = MONTHS_LIST.find(m => m.id.toLowerCase() === currentMonthName.toLowerCase());
+                            setSelectedMonth(match ? match.id : 'September 2026');
+                        }}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                            selectedMonth.toLowerCase() === currentMonthName.toLowerCase()
+                                ? 'bg-indigo-600 text-white shadow-xs font-black'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                    >
+                        <Sparkles size={13} />
+                        <span>Current Month</span>
+                    </button>
+
+                    <button
+                        onClick={() => setSelectedMonth('ALL')}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                            selectedMonth === 'ALL'
+                                ? 'bg-slate-900 text-white shadow-xs font-black'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                    >
+                        All Months (FY 26-27)
+                    </button>
                 </div>
             </div>
 

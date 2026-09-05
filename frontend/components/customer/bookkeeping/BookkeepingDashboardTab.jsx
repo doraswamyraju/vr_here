@@ -164,7 +164,7 @@ const BookkeepingDashboardTab = ({
                             <Plus size={14} /> New Invoice
                         </button>
                         <button
-                            onClick={() => onNavigateTab && onNavigateTab('statements')}
+                            onClick={() => onNavigateTab && onNavigateTab('bank')}
                             className="bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider transition backdrop-blur-md flex items-center gap-1.5"
                         >
                             <Landmark size={14} /> Import Statement
