@@ -33,9 +33,12 @@ app.use(
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
+                workerSrc: ["'self'", "blob:"],
                 scriptSrc: [
                     "'self'", 
                     "'unsafe-inline'", 
+                    "blob:",
+                    "https://cdnjs.cloudflare.com",
                     "https://cdn.tailwindcss.com", 
                     "https://checkout.razorpay.com", 
                     "https://cdn.razorpay.com",

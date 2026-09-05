@@ -1,9 +1,14 @@
 import * as XLSX from 'xlsx';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
-// Configure PDFjs worker
-if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Configure PDFjs worker via local bundled Vite URL
+if (typeof window !== 'undefined') {
+    try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+    } catch (e) {
+        console.warn('Could not set pdfjs workerSrc:', e);
+    }
 }
 
 /**
