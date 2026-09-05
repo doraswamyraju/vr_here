@@ -5,6 +5,8 @@ import CompanyDetails from '../models/CompanyDetails.js';
 import Party from '../models/Party.js';
 import BankStatement from '../models/BankStatement.js';
 import Payroll from '../models/Payroll.js';
+import MonthlyFiling from '../models/MonthlyFiling.js';
+import User from '../models/User.js';
 
 // Helper: Convert number to Indian words
 export const numberToWords = (num) => {
@@ -1054,3 +1056,207 @@ export const exportGstr3bData = asyncHandler(async (req, res) => {
 
     res.json(gstr3bSummary);
 });
+
+// ==================== ADMIN MONTHLY FILINGS & COMPLIANCE LIFECYCLE ====================
+
+// @desc    Get monthly filings matrix across all clients for a specific month
+// @route   GET /api/accounting/filings/matrix
+// @access  Admin, Employee
+export const getMonthlyFilingsMatrix = asyncHandler(async (req, res) => {
+    const { month = 'September 2026', financialYear = '2026-27' } = req.query;
+
+    // Fetch all clients
+    const clients = await User.find({ role: 'client' }).select('name email phone companyName avatar').lean();
+
+    // Fetch existing filing records for this month
+    const filings = await MonthlyFiling.find({ month, financialYear }).lean();
+    const filingsMap = new Map();
+    filings.forEach(f => filingsMap.set(f.clientId.toString(), f));
+
+    // Fetch companies
+    const companies = await CompanyDetails.find({}).lean();
+    const companyMap = new Map();
+    companies.forEach(c => companyMap.set(c.user.toString(), c));
+
+    // For each client, aggregate transaction counts and bank recon stats for this month
+    const clientMatrix = await Promise.all(clients.map(async (client) => {
+        const clientIdStr = client._id.toString();
+        const comp = companyMap.get(clientIdStr) || {};
+        const filing = filingsMap.get(clientIdStr) || {
+            bookkeepingStatus: 'Pending',
+            bankReconStatus: 'Pending',
+            gstr1Status: 'Pending',
+            gstr1Arn: '',
+            gstr3bStatus: 'Pending',
+            gstr3bArn: '',
+            tdsStatus: 'N/A',
+            tallyExportStatus: 'Pending',
+            auditorNotes: ''
+        };
+
+        // Month filter for transactions
+        const allClientTxs = await Transaction.find({ user: client._id }).lean();
+        const monthTxs = allClientTxs.filter(t => {
+            if (!t.docDate) return false;
+            const d = new Date(t.docDate);
+            const mStr = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            return mStr.toLowerCase() === month.toLowerCase();
+        });
+
+        const salesCount = monthTxs.filter(t => t.transactionType === 'Sales').length;
+        const purchaseCount = monthTxs.filter(t => t.transactionType === 'Purchase').length;
+        const expenseCount = monthTxs.filter(t => t.transactionType === 'Expense' || t.transactionType === 'Income').length;
+        const verifiedCount = monthTxs.filter(t => t.status === 'Verified').length;
+        const totalTaxableSales = monthTxs
+            .filter(t => t.transactionType === 'Sales')
+            .reduce((acc, t) => acc + (t.summary?.totalTaxableValue || 0), 0);
+        const totalSalesAmount = monthTxs
+            .filter(t => t.transactionType === 'Sales')
+            .reduce((acc, t) => acc + (t.summary?.totalAmount || 0), 0);
+        const totalPurchaseItc = monthTxs
+            .filter(t => t.transactionType === 'Purchase' && t.itcEligibility !== 'Ineligible')
+            .reduce((acc, t) => acc + (t.summary?.totalCgst || 0) + (t.summary?.totalSgst || 0) + (t.summary?.totalIgst || 0), 0);
+
+        // Bank stats
+        const bankStatements = await BankStatement.find({ user: client._id }).lean();
+        const allBankTxs = bankStatements.flatMap(s => s.transactions || []);
+        const totalBankTxCount = allBankTxs.length;
+        const taggedBankTxCount = allBankTxs.filter(tx => tx.reconciliationStatus === 'TAGGED').length;
+        const bankReconPercentage = totalBankTxCount > 0 ? Math.round((taggedBankTxCount / totalBankTxCount) * 100) : 100;
+
+        return {
+            client: {
+                _id: client._id,
+                name: client.name,
+                email: client.email,
+                phone: client.phone,
+                companyName: comp.companyName || comp.tradeName || client.companyName || client.name,
+                gstin: comp.gstin || '',
+                pan: comp.pan || ''
+            },
+            filing: {
+                ...filing,
+                _id: filing._id || null
+            },
+            metrics: {
+                salesCount,
+                purchaseCount,
+                expenseCount,
+                totalVouchers: monthTxs.length,
+                verifiedCount,
+                totalTaxableSales,
+                totalSalesAmount,
+                totalPurchaseItc,
+                totalBankTxCount,
+                taggedBankTxCount,
+                bankReconPercentage
+            }
+        };
+    }));
+
+    // Aggregate overall statistics
+    const totalClients = clientMatrix.length;
+    const gstr1FiledCount = clientMatrix.filter(c => c.filing.gstr1Status === 'Filed').length;
+    const gstr3bFiledCount = clientMatrix.filter(c => c.filing.gstr3bStatus === 'Filed').length;
+    const fullyReconciledBankCount = clientMatrix.filter(c => c.metrics.bankReconPercentage === 100 && c.metrics.totalBankTxCount > 0).length;
+
+    res.json({
+        month,
+        financialYear,
+        summary: {
+            totalClients,
+            gstr1FiledCount,
+            gstr1FiledPercentage: totalClients > 0 ? Math.round((gstr1FiledCount / totalClients) * 100) : 0,
+            gstr3bFiledCount,
+            gstr3bFiledPercentage: totalClients > 0 ? Math.round((gstr3bFiledCount / totalClients) * 100) : 0,
+            fullyReconciledBankCount
+        },
+        clients: clientMatrix
+    });
+});
+
+// @desc    Get monthly filing details for a single client & month
+// @route   GET /api/accounting/filings/:clientId/:month
+// @access  Admin, Employee
+export const getMonthlyFiling = asyncHandler(async (req, res) => {
+    const { clientId, month } = req.params;
+    const filing = await MonthlyFiling.findOne({ clientId, month }).lean();
+    if (!filing) {
+        return res.json({
+            clientId,
+            month,
+            bookkeepingStatus: 'Pending',
+            bankReconStatus: 'Pending',
+            gstr1Status: 'Pending',
+            gstr1Arn: '',
+            gstr3bStatus: 'Pending',
+            gstr3bArn: '',
+            tdsStatus: 'N/A',
+            tallyExportStatus: 'Pending',
+            auditorNotes: ''
+        });
+    }
+    res.json(filing);
+});
+
+// @desc    Create or update monthly filing compliance sign-off
+// @route   POST /api/accounting/filings
+// @access  Admin, Employee
+export const updateMonthlyFiling = asyncHandler(async (req, res) => {
+    const {
+        clientId,
+        month,
+        financialYear = '2026-27',
+        bookkeepingStatus,
+        bankReconStatus,
+        gstr1Status,
+        gstr1Arn,
+        gstr1FilingDate,
+        gstr3bStatus,
+        gstr3bArn,
+        gstr3bFilingDate,
+        tdsStatus,
+        tallyExportStatus,
+        auditorNotes
+    } = req.body;
+
+    if (!clientId || !month) {
+        res.status(400);
+        throw new Error('Client ID and Month are required');
+    }
+
+    const updated = await MonthlyFiling.findOneAndUpdate(
+        { clientId, month },
+        {
+            $set: {
+                financialYear,
+                ...(bookkeepingStatus && { bookkeepingStatus }),
+                ...(bankReconStatus && { bankReconStatus }),
+                ...(gstr1Status && { gstr1Status }),
+                ...(gstr1Arn !== undefined && { gstr1Arn }),
+                ...(gstr1FilingDate && { gstr1FilingDate }),
+                ...(gstr3bStatus && { gstr3bStatus }),
+                ...(gstr3bArn !== undefined && { gstr3bArn }),
+                ...(gstr3bFilingDate && { gstr3bFilingDate }),
+                ...(tdsStatus && { tdsStatus }),
+                ...(tallyExportStatus && { tallyExportStatus }),
+                ...(auditorNotes !== undefined && { auditorNotes }),
+                assignedStaff: req.user._id,
+                lastAuditedAt: new Date()
+            }
+        },
+        { new: true, upsert: true }
+    );
+
+    res.json(updated);
+});
+
+// @desc    Get bank statements for a client (Admin view)
+// @route   GET /api/accounting/bank-statements/admin/:clientId
+// @access  Admin, Employee
+export const getAdminClientBankStatements = asyncHandler(async (req, res) => {
+    const { clientId } = req.params;
+    const statements = await BankStatement.find({ user: clientId }).sort({ createdAt: -1 }).lean();
+    res.json(statements);
+});
+

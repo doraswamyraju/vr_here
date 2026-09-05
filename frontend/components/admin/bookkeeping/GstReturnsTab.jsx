@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
-import { Download, ShieldCheck, FileSpreadsheet, CheckCircle2, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { 
+    Download, ShieldCheck, FileSpreadsheet, CheckCircle2, 
+    AlertCircle, RefreshCw, Layers, Check, Calendar, Hash, Save
+} from 'lucide-react';
 import Gstr2bMatcherModal from './Gstr2bMatcherModal';
 
 const GstReturnsTab = ({
+    token,
     selectedClient,
+    selectedMonth = 'September 2026',
     transactions = [],
     gstr3bData,
     onDownloadGstr1,
@@ -11,6 +17,66 @@ const GstReturnsTab = ({
 }) => {
     const [show2bMatcher, setShow2bMatcher] = useState(false);
     const purchaseTransactions = transactions.filter(t => t.transactionType === 'Purchase');
+
+    // Filing sign-off state
+    const [gstr1Status, setGstr1Status] = useState('Pending');
+    const [gstr1Arn, setGstr1Arn] = useState('');
+    const [gstr1FilingDate, setGstr1FilingDate] = useState('');
+    const [gstr3bStatus, setGstr3bStatus] = useState('Pending');
+    const [gstr3bArn, setGstr3bArn] = useState('');
+    const [gstr3bFilingDate, setGstr3bFilingDate] = useState('');
+    const [auditorNotes, setAuditorNotes] = useState('');
+    const [savingFiling, setSavingFiling] = useState(false);
+
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+
+    // Fetch existing filing record for this client & month
+    useEffect(() => {
+        if (!selectedClient) return;
+        const fetchFiling = async () => {
+            try {
+                const { data } = await axios.get(`/api/accounting/filings/${selectedClient._id}/${selectedMonth}`, config);
+                if (data) {
+                    setGstr1Status(data.gstr1Status || 'Pending');
+                    setGstr1Arn(data.gstr1Arn || '');
+                    setGstr1FilingDate(data.gstr1FilingDate ? new Date(data.gstr1FilingDate).toISOString().slice(0, 10) : '');
+                    setGstr3bStatus(data.gstr3bStatus || 'Pending');
+                    setGstr3bArn(data.gstr3bArn || '');
+                    setGstr3bFilingDate(data.gstr3bFilingDate ? new Date(data.gstr3bFilingDate).toISOString().slice(0, 10) : '');
+                    setAuditorNotes(data.auditorNotes || '');
+                }
+            } catch (err) {
+                console.error('Error fetching filing sign-off:', err);
+            }
+        };
+        fetchFiling();
+    }, [selectedClient, selectedMonth]);
+
+    const handleSaveFiling = async () => {
+        if (!selectedClient) return;
+        setSavingFiling(true);
+        try {
+            await axios.post('/api/accounting/filings', {
+                clientId: selectedClient._id,
+                month: selectedMonth,
+                gstr1Status,
+                gstr1Arn,
+                gstr1FilingDate: gstr1FilingDate || undefined,
+                gstr3bStatus,
+                gstr3bArn,
+                gstr3bFilingDate: gstr3bFilingDate || undefined,
+                bookkeepingStatus: (gstr1Status === 'Filed' && gstr3bStatus === 'Filed') ? 'Completed' : 'In Progress',
+                auditorNotes
+            }, config);
+
+            alert('GST Filing Sign-Off recorded successfully!');
+            if (onRefresh) onRefresh();
+        } catch (error) {
+            alert('Failed to save filing details: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setSavingFiling(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -73,7 +139,7 @@ const GstReturnsTab = ({
                     <div className="flex justify-between items-center border-b border-slate-100 pb-4">
                         <div>
                             <h4 className="font-black text-slate-900 text-lg">GSTR-3B Computation Summary Sheet</h4>
-                            <p className="text-xs text-slate-500 font-medium">Auto-computed outward supplies, ITC entitlement, and net cash liability</p>
+                            <p className="text-xs text-slate-500 font-medium">Auto-computed outward supplies, ITC entitlement, and net cash liability for <strong className="text-slate-800">{selectedMonth}</strong></p>
                         </div>
                         <button 
                             onClick={onRefresh}
@@ -133,6 +199,122 @@ const GstReturnsTab = ({
                     </div>
                 </div>
             )}
+
+            {/* Monthly Filing Compliance Sign-Off Desk */}
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-6 space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                            <ShieldCheck size={18} />
+                        </div>
+                        <div>
+                            <h4 className="font-black text-slate-900 text-base">Monthly Statutory Filing Sign-Off Desk</h4>
+                            <p className="text-xs text-slate-500 font-medium">Record official GST Portal ARNs, filing dates, and sign-off verification for {selectedMonth}</p>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleSaveFiling}
+                        disabled={savingFiling}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-md shadow-indigo-200 disabled:opacity-50"
+                    >
+                        <Save size={14} />
+                        <span>{savingFiling ? 'Saving...' : 'Save Filing Sign-Off'}</span>
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                    {/* GSTR-1 Sign-Off */}
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                            <h5 className="font-black text-slate-900 uppercase tracking-wider">GSTR-1 Outward Return Sign-Off</h5>
+                            <select
+                                value={gstr1Status}
+                                onChange={(e) => setGstr1Status(e.target.value)}
+                                className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 font-bold text-xs focus:outline-none"
+                            >
+                                <option value="Pending">Pending Preparation</option>
+                                <option value="Prepared">JSON Prepared</option>
+                                <option value="Filed">Filed on Portal</option>
+                            </select>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">GSTR-1 ARN Reference Number</label>
+                                <input
+                                    type="text"
+                                    value={gstr1Arn}
+                                    onChange={(e) => setGstr1Arn(e.target.value)}
+                                    placeholder="e.g. AA3709260012345"
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-mono uppercase font-bold text-slate-900 focus:outline-none focus:border-indigo-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">GSTR-1 Filing Date</label>
+                                <input
+                                    type="date"
+                                    value={gstr1FilingDate}
+                                    onChange={(e) => setGstr1FilingDate(e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-indigo-500 font-bold"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* GSTR-3B Sign-Off */}
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                            <h5 className="font-black text-slate-900 uppercase tracking-wider">GSTR-3B Tax Return & PMT-06 Sign-Off</h5>
+                            <select
+                                value={gstr3bStatus}
+                                onChange={(e) => setGstr3bStatus(e.target.value)}
+                                className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 font-bold text-xs focus:outline-none"
+                            >
+                                <option value="Pending">Pending</option>
+                                <option value="Computed">Tax Computed</option>
+                                <option value="Challan Generated">Challan Generated</option>
+                                <option value="Filed">Filed on Portal</option>
+                            </select>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">GSTR-3B ARN / Challan Reference</label>
+                                <input
+                                    type="text"
+                                    value={gstr3bArn}
+                                    onChange={(e) => setGstr3bArn(e.target.value)}
+                                    placeholder="e.g. CP2609370098765"
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-mono uppercase font-bold text-slate-900 focus:outline-none focus:border-indigo-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">GSTR-3B Filing Date</label>
+                                <input
+                                    type="date"
+                                    value={gstr3bFilingDate}
+                                    onChange={(e) => setGstr3bFilingDate(e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-indigo-500 font-bold"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Auditor Monthly Review Notes</label>
+                    <textarea
+                        rows={2}
+                        value={auditorNotes}
+                        onChange={(e) => setAuditorNotes(e.target.value)}
+                        placeholder="Add internal notes on tax adjustments, ITC reversals under Rule 42/43, or client communications..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 font-medium"
+                    />
+                </div>
+            </div>
         </div>
     );
 };

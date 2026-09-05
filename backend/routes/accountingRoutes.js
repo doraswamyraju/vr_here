@@ -22,7 +22,11 @@ import {
     createPayrollRecord,
     exportTallyVouchers,
     exportGstr1Data,
-    exportGstr3bData
+    exportGstr3bData,
+    getMonthlyFilingsMatrix,
+    getMonthlyFiling,
+    updateMonthlyFiling,
+    getAdminClientBankStatements
 } from '../controllers/accountingController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -81,5 +85,18 @@ router.route('/export/gstr1')
 
 router.route('/export/gstr3b')
     .get(protect, exportGstr3bData);
+
+// Admin Monthly Filings Matrix & Sign-Off
+router.route('/filings/matrix')
+    .get(protect, getMonthlyFilingsMatrix);
+
+router.route('/filings/:clientId/:month')
+    .get(protect, getMonthlyFiling);
+
+router.route('/filings')
+    .post(protect, updateMonthlyFiling);
+
+router.route('/bank-statements/admin/:clientId')
+    .get(protect, getAdminClientBankStatements);
 
 export default router;

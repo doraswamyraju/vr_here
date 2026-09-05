@@ -119,7 +119,7 @@ function AdminApp() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [recurring, setRecurring] = useState([]);
   const [orderFilter, setOrderFilter] = useState('All');
-  const [adminBookkeepingSubTab, setAdminBookkeepingSubTab] = useState('ledger');
+  const [adminBookkeepingSubTab, setAdminBookkeepingSubTab] = useState('matrix');
   const [adminBookkeepingExpanded, setAdminBookkeepingExpanded] = useState(false);
 
   // Sync activeTab and selectedOrderId to URL & localStorage seamlessly
@@ -912,11 +912,12 @@ function AdminApp() {
   };
 
   const adminBookkeepingSubItems = [
-    { id: 'clients', label: 'Client Directory', icon: Building2 },
-    { id: 'ledger', label: 'Ledger Audit & Vouchers', icon: FileText },
-    { id: 'gst', label: 'GST Returns & 3B Sheet', icon: ShieldCheck },
+    { id: 'matrix', label: 'Monthly Filings Matrix', icon: ShieldCheck },
+    { id: 'bank', label: 'Bank Reconciliation', icon: Landmark },
+    { id: 'ledger', label: 'Vouchers Audit', icon: FileText },
+    { id: 'gst', label: 'GST Returns & 3B', icon: ShieldCheck },
     { id: 'tally', label: 'Tally XML Exporter', icon: FileSpreadsheet },
-    { id: 'payroll', label: 'Payroll & Form 16 / TDS', icon: Users },
+    { id: 'payroll', label: 'Payroll & TDS Register', icon: Users },
   ];
 
   if (!isLoggedIn) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-semibold">Verifying Access...</div>;
