@@ -26,6 +26,14 @@ const bankStatementSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    isPasswordProtected: {
+        type: Boolean,
+        default: false
+    },
+    pdfPassword: {
+        type: String,
+        default: ''
+    },
     transactions: [{
         date: {
             type: Date,

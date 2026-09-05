@@ -496,7 +496,7 @@ export const getBankStatements = asyncHandler(async (req, res) => {
 // @desc    Upload / Save bank statement with parsed transaction lines
 // @route   POST /api/accounting/bank-statements
 export const createBankStatement = asyncHandler(async (req, res) => {
-    const { clientId, bankName, accountNumber, statementTitle, fileName, fileUrl, transactions } = req.body;
+    const { clientId, bankName, accountNumber, statementTitle, fileName, fileUrl, isPasswordProtected, pdfPassword, transactions } = req.body;
     let targetUserId = req.user._id;
     if (clientId && (req.user.role === 'admin' || req.user.role === 'employee')) {
         targetUserId = clientId;
@@ -527,6 +527,8 @@ export const createBankStatement = asyncHandler(async (req, res) => {
         statementTitle: statementTitle || `${bankName} Statement`,
         fileName: fileName || '',
         fileUrl: fileUrl || '',
+        isPasswordProtected: Boolean(isPasswordProtected || pdfPassword),
+        pdfPassword: pdfPassword || '',
         transactions: formattedTxs
     });
 
