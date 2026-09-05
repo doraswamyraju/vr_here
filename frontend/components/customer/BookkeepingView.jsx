@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { 
     FileText, ShoppingCart, ArrowDownRight, Building2, 
-    Landmark, BarChart3, Settings, Plus, RefreshCw, Eye, Users
+    Landmark, BarChart3, Settings, Plus, RefreshCw, Eye, Users, Calendar
 } from 'lucide-react';
 
 import GSTInvoiceView from './bookkeeping/GSTInvoiceView';
@@ -16,6 +16,22 @@ import ReportsTab from './bookkeeping/ReportsTab';
 import CustomerPayrollTab from './bookkeeping/CustomerPayrollTab';
 import TransactionFormModal from './bookkeeping/TransactionFormModal';
 
+const MONTHS_LIST = [
+    { id: 'April 2026', label: 'Apr 2026' },
+    { id: 'May 2026', label: 'May 2026' },
+    { id: 'June 2026', label: 'Jun 2026' },
+    { id: 'July 2026', label: 'Jul 2026' },
+    { id: 'August 2026', label: 'Aug 2026' },
+    { id: 'September 2026', label: 'Sep 2026' },
+    { id: 'October 2026', label: 'Oct 2026' },
+    { id: 'November 2026', label: 'Nov 2026' },
+    { id: 'December 2026', label: 'Dec 2026' },
+    { id: 'January 2027', label: 'Jan 2027' },
+    { id: 'February 2027', label: 'Feb 2027' },
+    { id: 'March 2027', label: 'Mar 2027' },
+    { id: 'ALL', label: 'All Months (FY 26-27)' }
+];
+
 const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabChange }) => {
     const [internalSubTab, setInternalSubTab] = useState('sales');
     const activeSubTab = propSubTab || internalSubTab;
@@ -24,6 +40,7 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
         setInternalSubTab(tab);
     };
 
+    const [selectedMonth, setSelectedMonth] = useState('April 2026');
     const [transactions, setTransactions] = useState([]);
     const [company, setCompany] = useState(null);
     const [parties, setParties] = useState([]);
@@ -67,6 +84,17 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Filter transactions for the selected month
+    const filteredTransactions = useMemo(() => {
+        if (selectedMonth === 'ALL') return transactions;
+        return transactions.filter(t => {
+            if (!t.docDate) return false;
+            const d = new Date(t.docDate);
+            const mStr = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            return mStr.toLowerCase() === selectedMonth.toLowerCase();
+        });
+    }, [transactions, selectedMonth]);
 
     // Create or Update Transaction
     const handleSaveTransaction = async (formData, editId) => {
@@ -129,7 +157,6 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
             const { data } = await axios.post('/api/accounting/parties', partyData, config);
             setParties([...parties, data]);
         } catch (error) {
-            // Local fallback
             setParties([...parties, partyData]);
             localStorage.setItem('bookkeeping_parties', JSON.stringify([...parties, partyData]));
         }
@@ -197,7 +224,7 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
     }
 
     return (
-        <div className="space-y-6 pb-20 max-w-7xl mx-auto animate-in fade-in duration-300">
+        <div className="space-y-5 pb-20 max-w-7xl mx-auto animate-in fade-in duration-300">
             {/* Top Workspace Header */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -242,6 +269,30 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 </div>
             </div>
 
+            {/* Monthly Period & FY Switcher Bar */}
+            <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-2 overflow-x-auto">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-xl text-xs font-black text-slate-800 shrink-0">
+                    <Calendar size={13} className="text-indigo-600" />
+                    <span>FY 2026-27</span>
+                </div>
+                <div className="h-5 w-px bg-slate-200 shrink-0" />
+                <div className="flex items-center gap-1 shrink-0">
+                    {MONTHS_LIST.map(m => (
+                        <button
+                            key={m.id}
+                            onClick={() => setSelectedMonth(m.id)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 ${
+                                selectedMonth === m.id
+                                    ? 'bg-slate-900 text-white shadow-xs font-black'
+                                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                            }`}
+                        >
+                            {m.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {/* Sub-Tab Views directly rendered based on Sidebar Selection */}
             {loading ? (
                 <div className="flex justify-center py-20">
@@ -251,7 +302,7 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 <>
                     {activeSubTab === 'sales' && (
                         <SalesInvoicesTab 
-                            transactions={transactions}
+                            transactions={filteredTransactions}
                             onAddNew={() => {
                                 setEditingTransaction(null);
                                 setFormTxType('Sales');
@@ -267,7 +318,7 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
 
                     {activeSubTab === 'purchases' && (
                         <PurchaseBillsTab 
-                            transactions={transactions}
+                            transactions={filteredTransactions}
                             onAddNew={() => {
                                 setEditingTransaction(null);
                                 setFormTxType('Purchase');
@@ -281,7 +332,7 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
 
                     {activeSubTab === 'expenses' && (
                         <IncomeExpensesTab 
-                            transactions={transactions}
+                            transactions={filteredTransactions}
                             onAddNewIncome={() => {
                                 setEditingTransaction(null);
                                 setFormTxType('Income');
@@ -303,6 +354,7 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                             token={token}
                             transactions={transactions}
                             company={company}
+                            selectedMonth={selectedMonth}
                             onRefreshLedger={fetchData}
                         />
                     )}
@@ -321,12 +373,13 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                             token={token}
                             company={company}
                             userInfo={userInfo}
+                            selectedMonth={selectedMonth}
                         />
                     )}
 
                     {activeSubTab === 'reports' && (
                         <ReportsTab 
-                            transactions={transactions}
+                            transactions={filteredTransactions}
                             company={company}
                         />
                     )}

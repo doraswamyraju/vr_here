@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import Form16CertificateView from '../../admin/bookkeeping/Form16CertificateView';
 
-const CustomerPayrollTab = ({ token, company, userInfo }) => {
+const CustomerPayrollTab = ({ token, company, userInfo, selectedMonth = 'ALL' }) => {
     const [payrollRecords, setPayrollRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -14,7 +14,7 @@ const CustomerPayrollTab = ({ token, company, userInfo }) => {
     const [selectedForm16, setSelectedForm16] = useState(null);
 
     // Form State
-    const [month, setMonth] = useState('April 2026');
+    const [month, setMonth] = useState(selectedMonth !== 'ALL' ? selectedMonth : 'April 2026');
     const [employeeName, setEmployeeName] = useState('');
     const [employeePan, setEmployeePan] = useState('');
     const [designation, setDesignation] = useState('');
@@ -26,7 +26,7 @@ const CustomerPayrollTab = ({ token, company, userInfo }) => {
     const [tds, setTds] = useState(1500);
 
     // Timesheet upload state
-    const [timesheetMonth, setTimesheetMonth] = useState('April 2026');
+    const [timesheetMonth, setTimesheetMonth] = useState(selectedMonth !== 'ALL' ? selectedMonth : 'April 2026');
     const [timesheetFileName, setTimesheetFileName] = useState('');
     const [staffCount, setStaffCount] = useState(5);
     const [timesheetNotes, setTimesheetNotes] = useState('');
