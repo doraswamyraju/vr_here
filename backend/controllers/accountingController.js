@@ -1,4 +1,5 @@
 import asyncHandler from 'express-async-handler';
+import mongoose from 'mongoose';
 import Transaction from '../models/Transaction.js';
 import CompanyDetails from '../models/CompanyDetails.js';
 import Party from '../models/Party.js';
@@ -631,18 +632,22 @@ export const tagBankTransaction = asyncHandler(async (req, res) => {
     }
 
     line.reconciliationStatus = status || 'TAGGED';
-    line.taggedVoucher = taggedVoucherId || null;
     line.taggedCategory = taggedCategory || '';
     line.notes = notes || '';
 
-    // If tagged to a voucher, mark the voucher payment status
-    if (taggedVoucherId) {
+    // Safely assign taggedVoucher only if valid 24-char ObjectId
+    if (taggedVoucherId && mongoose.Types.ObjectId.isValid(taggedVoucherId)) {
+        line.taggedVoucher = new mongoose.Types.ObjectId(taggedVoucherId);
+        
+        // If tagged to a voucher, mark the voucher payment status
         const voucher = await Transaction.findById(taggedVoucherId);
         if (voucher) {
             voucher.paidAmount = Math.min(voucher.summary.totalAmount, (voucher.paidAmount || 0) + line.amount);
             voucher.paymentStatus = voucher.paidAmount >= voucher.summary.totalAmount ? 'Paid' : 'Partially Paid';
             await voucher.save();
         }
+    } else {
+        line.taggedVoucher = undefined;
     }
 
     await statement.save();
