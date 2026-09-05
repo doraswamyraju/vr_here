@@ -12,22 +12,60 @@ if (typeof window !== 'undefined') {
 }
 
 /**
+ * Parse standard Indian bank statement dates (DD/MM/YYYY, DD-MM-YYYY, DD-MMM-YYYY)
+ */
+export const parseIndianDate = (dateStr) => {
+    if (!dateStr) return new Date().toISOString().split('T')[0];
+    const clean = dateStr.trim();
+    
+    // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+    const dmy = clean.match(/^(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-](\d{2,4})$/);
+    if (dmy) {
+        let day = parseInt(dmy[1], 10);
+        let month = parseInt(dmy[2], 10);
+        let year = parseInt(dmy[3], 10);
+        if (year < 100) year += 2000;
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    
+    // DD-MMM-YYYY or DD MMM YYYY (e.g. 02-Mar-2025, 02 Mar 2025)
+    const monthNames = { 
+        jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, 
+        jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 
+    };
+    const dMy = clean.match(/^(\d{1,2})[\.\/\-\s]([A-Za-z]{3})[\.\/\-\s](\d{2,4})$/i);
+    if (dMy) {
+        let day = parseInt(dMy[1], 10);
+        let mName = dMy[2].toLowerCase();
+        let month = monthNames[mName] || 1;
+        let year = parseInt(dMy[3], 10);
+        if (year < 100) year += 2000;
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    
+    return new Date().toISOString().split('T')[0];
+};
+
+/**
  * Auto-detect bank name from extracted text content
  */
 export const detectBankFromText = (text) => {
     const upper = (text || '').toUpperCase();
-    if (upper.includes('HDFC BANK')) return 'HDFC Bank';
-    if (upper.includes('STATE BANK OF INDIA') || upper.includes('SBI')) return 'State Bank of India (SBI)';
-    if (upper.includes('ICICI BANK')) return 'ICICI Bank';
-    if (upper.includes('AXIS BANK')) return 'Axis Bank';
-    if (upper.includes('KOTAK MAHINDRA') || upper.includes('KOTAK BANK')) return 'Kotak Mahindra Bank';
-    if (upper.includes('PUNJAB NATIONAL') || upper.includes('PNB')) return 'Punjab National Bank (PNB)';
+    if (upper.includes('UNION BANK OF INDIA') || upper.includes('UNION BANK') || upper.includes('UBIN') || upper.includes('UNIONBANKOFINDIA')) return 'Union Bank of India';
+    if (upper.includes('STATE BANK OF INDIA') || /\bSBI\b/.test(upper) || upper.includes('ONLINESBI')) return 'State Bank of India (SBI)';
+    if (upper.includes('HDFC BANK') || /\bHDFC\b/.test(upper)) return 'HDFC Bank';
+    if (upper.includes('ICICI BANK') || /\bICICI\b/.test(upper)) return 'ICICI Bank';
+    if (upper.includes('AXIS BANK') || /\bAXIS\b/.test(upper)) return 'Axis Bank';
+    if (upper.includes('KOTAK MAHINDRA') || upper.includes('KOTAK BANK') || /\bKOTAK\b/.test(upper)) return 'Kotak Mahindra Bank';
+    if (upper.includes('PUNJAB NATIONAL') || /\bPNB\b/.test(upper)) return 'Punjab National Bank (PNB)';
     if (upper.includes('CANARA BANK')) return 'Canara Bank';
-    if (upper.includes('UNION BANK')) return 'Union Bank of India';
-    if (upper.includes('BANK OF BARODA')) return 'Bank of Baroda';
+    if (upper.includes('BANK OF BARODA') || /\bBOB\b/.test(upper)) return 'Bank of Baroda';
     if (upper.includes('FEDERAL BANK')) return 'Federal Bank';
     if (upper.includes('INDUSIND')) return 'IndusInd Bank';
     if (upper.includes('YES BANK')) return 'Yes Bank';
+    if (upper.includes('IDFC FIRST') || /\bIDFC\b/.test(upper)) return 'IDFC FIRST Bank';
+    if (upper.includes('INDIAN BANK')) return 'Indian Bank';
+    if (upper.includes('BANK OF INDIA')) return 'Bank of India';
     return 'Bank Account';
 };
 
@@ -36,8 +74,9 @@ export const detectBankFromText = (text) => {
  */
 export const detectAccountNumberFromText = (text) => {
     const patterns = [
-        /(?:A\/c(?:\s*No)?|Account(?:\s*No|\s*Number)?)\s*[:.-]?\s*([0-9Xx]{8,18})/i,
-        /(?:Account\s*ID)\s*[:.-]?\s*([0-9Xx]{8,18})/i
+        /(?:A\/c(?:\s*No|\s*Number)?|Account(?:\s*No|\s*Number|\s*#)?)\s*[:.-]?\s*([0-9Xx]{8,18})/i,
+        /(?:Account\s*ID|Customer\s*ID)\s*[:.-]?\s*([0-9Xx]{8,18})/i,
+        /\b(?:A\/c|Acc|Acct)\s*[:.-]?\s*([0-9Xx]{8,18})/i
     ];
     for (const p of patterns) {
         const match = text.match(p);
@@ -138,7 +177,7 @@ export const parseExcelStatement = async (file) => {
 };
 
 /**
- * Parse a PDF bank statement with optional password decryption
+ * Parse a multi-page PDF bank statement with spatial coordinate line reconstruction
  */
 export const parsePdfStatement = async (file, password = '') => {
     return new Promise((resolve, reject) => {
@@ -164,82 +203,176 @@ export const parsePdfStatement = async (file, password = '') => {
                     throw pdfErr;
                 }
 
-                // Extract full text from all pages
-                let fullText = '';
-                const lines = [];
+                let fullDocumentText = '';
+                const allSpatialRows = [];
 
+                // Iterate through EVERY page of the PDF document
                 for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                     const page = await pdfDoc.getPage(pageNum);
                     const textContent = await page.getTextContent();
                     
-                    let currentLine = '';
-                    let lastY = null;
+                    const pageItems = [];
+                    for (const it of textContent.items) {
+                        if (!it.str || !it.str.trim()) continue;
+                        pageItems.push({
+                            str: it.str.trim(),
+                            x: it.transform[4],
+                            y: it.transform[5],
+                            w: it.width || 0,
+                            h: it.height || 0
+                        });
+                    }
 
-                    textContent.items.forEach(item => {
-                        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
-                            if (currentLine.trim()) lines.push(currentLine.trim());
-                            currentLine = '';
+                    // Sort items: Y descending (top to bottom), then X ascending (left to right)
+                    pageItems.sort((a, b) => (b.y - a.y) || (a.x - b.x));
+
+                    // Cluster items into horizontal rows (tolerance 4.0 pt)
+                    let currentCluster = [];
+                    let clusterY = null;
+
+                    for (const it of pageItems) {
+                        if (clusterY === null || Math.abs(it.y - clusterY) > 4.5) {
+                            if (currentCluster.length > 0) {
+                                currentCluster.sort((a, b) => a.x - b.x);
+                                const rowText = currentCluster.map(c => c.str).join(' ');
+                                allSpatialRows.push({
+                                    text: rowText,
+                                    items: currentCluster,
+                                    pageNum
+                                });
+                                fullDocumentText += ' ' + rowText;
+                            }
+                            currentCluster = [it];
+                            clusterY = it.y;
+                        } else {
+                            currentCluster.push(it);
                         }
-                        currentLine += item.str + ' ';
-                        lastY = item.transform[5];
-                    });
-                    if (currentLine.trim()) lines.push(currentLine.trim());
+                    }
+                    if (currentCluster.length > 0) {
+                        currentCluster.sort((a, b) => a.x - b.x);
+                        const rowText = currentCluster.map(c => c.str).join(' ');
+                        allSpatialRows.push({
+                            text: rowText,
+                            items: currentCluster,
+                            pageNum
+                        });
+                        fullDocumentText += ' ' + rowText;
+                    }
                 }
 
-                fullText = lines.join('\n');
-                const bankName = detectBankFromText(fullText);
-                const accountNumber = detectAccountNumberFromText(fullText);
+                // Detect Bank & Account details across whole document
+                const bankName = detectBankFromText(fullDocumentText);
+                const accountNumber = detectAccountNumberFromText(fullDocumentText);
 
-                // Parse transaction lines from text lines
-                const dateRegex = /\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}-[A-Za-z]{3}-\d{2,4})\b/;
-                const amountRegex = /\b(\d{1,3}(?:,\d{3})*\.\d{2}|\d+\.\d{2})\b/g;
+                // Date matcher: DD/MM/YYYY, DD-MM-YYYY, DD-MMM-YYYY, DD/MM/YY
+                const dateRegex = /\b(\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2,4}|\d{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s]\d{2,4})\b/i;
+                
+                // Amount matcher with optional (Dr)/(Cr) suffix
+                // e.g. "130.00 (Dr)", "31810.01 (Cr)", "130.00", "1,250.00"
+                const amountTokenRegex = /\b(\d{1,3}(?:,\d{3})*(?:\.\d{2})?|\d+\.\d{2})\s*(?:\((?:Dr|Cr|DR|CR)\)|(?:Dr|Cr|DR|CR)\b)?/gi;
 
                 const transactions = [];
 
-                lines.forEach(line => {
-                    const dateMatch = line.match(dateRegex);
+                for (let i = 0; i < allSpatialRows.length; i++) {
+                    const row = allSpatialRows[i];
+                    const lineText = row.text;
+
+                    // Skip common headers and footers
+                    const lower = lineText.toLowerCase();
+                    if (lower.includes('details of statement') || 
+                        lower.includes('closing balance') || 
+                        lower.includes('opening balance') ||
+                        (lower.includes('date') && lower.includes('remarks') && lower.includes('amount')) ||
+                        (lower.includes('date') && lower.includes('narration') && lower.includes('balance'))) {
+                        continue;
+                    }
+
+                    const dateMatch = lineText.match(dateRegex);
                     if (dateMatch) {
-                        const amounts = line.match(amountRegex);
-                        if (amounts && amounts.length >= 1) {
-                            const rawDate = dateMatch[0];
-                            let formattedDate = new Date().toISOString().split('T')[0];
-                            try {
-                                const parsed = Date.parse(rawDate.replace(/-/g, '/'));
-                                if (!isNaN(parsed)) {
-                                    formattedDate = new Date(parsed).toISOString().split('T')[0];
-                                }
-                            } catch(e) {}
+                        const rawDateStr = dateMatch[0];
+                        const formattedDate = parseIndianDate(rawDateStr);
 
-                            // Extract description by removing date and amounts
-                            let desc = line.replace(rawDate, '').replace(amountRegex, '').replace(/[|\\/]/g, ' ').trim();
-                            desc = desc.replace(/\s+/g, ' ');
-
-                            const numAmounts = amounts.map(a => parseFloat(a.replace(/,/g, '')));
-                            const primaryAmount = numAmounts[0] || 0;
-
-                            const isCredit = line.toLowerCase().includes('cr') || line.toLowerCase().includes('deposit') || line.toLowerCase().includes('inward') || line.toLowerCase().includes('rec');
-
-                            if (primaryAmount > 0 && desc.length >= 2) {
-                                transactions.push({
-                                    date: formattedDate,
-                                    description: desc.slice(0, 120),
-                                    referenceNo: `REF${Math.floor(100000 + Math.random() * 900000)}`,
-                                    type: isCredit ? 'CREDIT' : 'DEBIT',
-                                    amount: primaryAmount,
-                                    balance: numAmounts[1] || 0,
-                                    reconciliationStatus: 'UNRECONCILED'
+                        // Find all amount candidates
+                        const amounts = [];
+                        let match;
+                        const amtRegexLocal = /(\d{1,3}(?:,\d{3})*\.\d{2}|\d+\.\d{2})\s*(?:\(((?:Dr|Cr|DR|CR))\)|((?:Dr|Cr|DR|CR)\b))?/gi;
+                        
+                        while ((match = amtRegexLocal.exec(lineText)) !== null) {
+                            const rawVal = match[1].replace(/,/g, '');
+                            const num = parseFloat(rawVal);
+                            const drcrTag = (match[2] || match[3] || '').toUpperCase();
+                            if (!isNaN(num) && num > 0) {
+                                amounts.push({
+                                    raw: match[0],
+                                    value: num,
+                                    tag: drcrTag
                                 });
                             }
                         }
-                    }
-                });
 
-                // Fallback demo rows if PDF had complex multi-column images
-                if (transactions.length === 0) {
-                    transactions.push(
-                        { date: new Date().toISOString().split('T')[0], description: 'NEFT INWARD - Client Invoiced Payment', referenceNo: 'HDFC9827101', type: 'CREDIT', amount: 59000, balance: 159000, reconciliationStatus: 'UNRECONCILED' },
-                        { date: new Date().toISOString().split('T')[0], description: 'UPI OUT - Monthly Office Utilities', referenceNo: 'UPI9920148', type: 'DEBIT', amount: 8500, balance: 150500, reconciliationStatus: 'UNRECONCILED' }
-                    );
+                        if (amounts.length >= 1) {
+                            // First amount is the transaction amount, second is running balance if present
+                            const txnAmountObj = amounts[0];
+                            const balanceAmountObj = amounts.length > 1 ? amounts[1] : null;
+
+                            // Determine Credit or Debit
+                            let isCredit = false;
+                            if (txnAmountObj.tag === 'CR') {
+                                isCredit = true;
+                            } else if (txnAmountObj.tag === 'DR') {
+                                isCredit = false;
+                            } else if (balanceAmountObj && balanceAmountObj.tag === 'CR' && txnAmountObj.tag === 'CR') {
+                                isCredit = true;
+                            } else {
+                                // Check line text indicators
+                                isCredit = /\b(CR|CREDIT|DEPOSIT|INWARD|RECEIVED)\b/i.test(lineText) && !/\b(DR|DEBIT)\b/i.test(lineText);
+                            }
+
+                            // Extract Transaction ID / Reference No
+                            let referenceNo = '';
+                            // Check for UPI/AR/ or 6-18 digit transaction ID in row
+                            const refMatch = lineText.match(/\b(?:UPI\/[A-Z0-9]+\/|REF\/|UTR\/)?([0-9]{8,18})\b/i);
+                            if (refMatch && refMatch[1]) {
+                                referenceNo = refMatch[1];
+                            } else {
+                                const idMatch = lineText.match(/\b([0-9]{6,12})\b/);
+                                if (idMatch && idMatch[1] && idMatch[1] !== rawDateStr.replace(/[^0-9]/g, '')) {
+                                    referenceNo = idMatch[1];
+                                }
+                            }
+
+                            // Build clean description / narration
+                            let desc = lineText;
+                            // Remove S.No, Date, amounts
+                            desc = desc.replace(rawDateStr, ' ');
+                            amounts.forEach(a => {
+                                desc = desc.replace(a.raw, ' ');
+                            });
+                            // Remove leading S.No if present (e.g. "169 ")
+                            desc = desc.replace(/^\s*\d{1,4}\s+/, '');
+                            desc = desc.replace(/\s+/g, ' ').trim();
+
+                            // If next row is a continuation line (no date, no amount), append it
+                            if (i + 1 < allSpatialRows.length) {
+                                const nextRow = allSpatialRows[i + 1];
+                                const nextDateMatch = nextRow.text.match(dateRegex);
+                                const nextAmtMatch = nextRow.text.match(amtRegexLocal);
+                                if (!nextDateMatch && !nextAmtMatch && nextRow.text.length > 3 && !nextRow.text.toLowerCase().includes('closing')) {
+                                    desc += ' ' + nextRow.text.trim();
+                                }
+                            }
+
+                            transactions.push({
+                                date: formattedDate,
+                                description: desc.slice(0, 150) || 'Bank Transaction',
+                                referenceNo: referenceNo || `TXN${Math.floor(100000 + Math.random() * 900000)}`,
+                                type: isCredit ? 'CREDIT' : 'DEBIT',
+                                amount: txnAmountObj.value,
+                                balance: balanceAmountObj ? balanceAmountObj.value : 0,
+                                reconciliationStatus: 'UNRECONCILED'
+                            });
+                        }
+                    }
                 }
 
                 resolve({
