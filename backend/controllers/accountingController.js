@@ -642,8 +642,9 @@ export const tagBankTransaction = asyncHandler(async (req, res) => {
         // If tagged to a voucher, mark the voucher payment status
         const voucher = await Transaction.findById(taggedVoucherId);
         if (voucher) {
-            voucher.paidAmount = Math.min(voucher.summary.totalAmount, (voucher.paidAmount || 0) + line.amount);
-            voucher.paymentStatus = voucher.paidAmount >= voucher.summary.totalAmount ? 'Paid' : 'Partially Paid';
+            const totalAmount = Number(voucher.summary?.totalAmount || voucher.totalAmount || 0);
+            voucher.paidAmount = Math.min(totalAmount, (Number(voucher.paidAmount) || 0) + Number(line.amount || 0));
+            voucher.paymentStatus = (totalAmount > 0 && voucher.paidAmount >= totalAmount) ? 'Paid' : 'Partially Paid';
             await voucher.save();
         }
     } else {
