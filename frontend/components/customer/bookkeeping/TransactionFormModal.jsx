@@ -9,7 +9,8 @@ const TransactionFormModal = ({
     parties = [],
     companyState = 'Andhra Pradesh',
     invoiceCount = 1,
-    editingTransaction = null
+    editingTransaction = null,
+    transactions = []
 }) => {
     if (!show) return null;
 
@@ -18,6 +19,7 @@ const TransactionFormModal = ({
     const isIncome = txType === 'Income';
     const isExpense = txType === 'Expense';
 
+    const [settleInvoiceId, setSettleInvoiceId] = useState('');
     const [docNumber, setDocNumber] = useState('');
     const [copyType, setCopyType] = useState('Original for Recipient');
     const [docDate, setDocDate] = useState(new Date().toISOString().split('T')[0]);
@@ -138,6 +140,39 @@ const TransactionFormModal = ({
         setIsInterstate(cleanCompany !== cleanPos);
     }, [companyState, placeOfSupply]);
 
+    const openInvoicesToSettle = (isIncome || isExpense) ? transactions.filter(t => {
+        if (isIncome) return t.transactionType === 'Sales' && t.paymentStatus !== 'Paid';
+        if (isExpense) return t.transactionType === 'Purchase' && t.paymentStatus !== 'Paid';
+        return false;
+    }) : [];
+
+    const handleInvoiceSelect = (e) => {
+        const invId = e.target.value;
+        setSettleInvoiceId(invId);
+        const inv = transactions.find(t => t._id === invId);
+        if (inv) {
+            setPartyName(inv.partyName || '');
+            setPartyGstin(inv.partyGstin || '');
+            setPartyPan(inv.partyPan || '');
+            setPartyAddress(inv.partyAddress || '');
+            setPartyState(inv.partyState || companyState);
+            setPartyPhone(inv.partyPhone || '');
+            setPartyEmail(inv.partyEmail || '');
+            setPlaceOfSupply(inv.placeOfSupply || companyState);
+            const remainingDue = Math.max(0, (inv.summary?.totalAmount || 0) - (inv.paidAmount || 0));
+            setItems([{
+                description: `Payment against ${inv.docNumber}`,
+                hsnSac: '',
+                qty: 1,
+                unit: 'NONE',
+                rate: remainingDue,
+                discPercent: 0,
+                gstRate: 0
+            }]);
+            setNotes(`Settlement against ${inv.transactionType === 'Sales' ? 'Sales Invoice' : 'Purchase Bill'} ${inv.docNumber}`);
+        }
+    };
+
     // Quick party select
     const handlePartySelect = (e) => {
         const selected = parties.find(p => p.name === e.target.value);
@@ -240,7 +275,8 @@ const TransactionFormModal = ({
             items,
             itcEligibility,
             notes,
-            attachmentUrl
+            attachmentUrl,
+            taggedVoucherId: settleInvoiceId || undefined
         }, editingTransaction?._id);
     };
 
@@ -317,9 +353,37 @@ const TransactionFormModal = ({
 
                     {/* Party / Bill To */}
                     <div className="border border-slate-200 rounded-2xl p-4 space-y-4">
+                        {openInvoicesToSettle.length > 0 && (
+                            <div className="p-3 bg-indigo-50/80 border border-indigo-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                <div>
+                                    <p className="text-[11px] font-black text-indigo-900">
+                                        🔗 Link / Settle against Open {isIncome ? 'Sales Invoice' : 'Purchase Bill'}
+                                    </p>
+                                    <p className="text-[10px] text-indigo-700 font-medium">
+                                        Auto-fills party details, due amount, and updates the invoice status upon saving.
+                                    </p>
+                                </div>
+                                <select 
+                                    value={settleInvoiceId} 
+                                    onChange={handleInvoiceSelect}
+                                    className="bg-white border border-indigo-300 text-indigo-900 font-bold text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto"
+                                >
+                                    <option value="">-- Select {isIncome ? 'Invoice' : 'Bill'} to Settle --</option>
+                                    {openInvoicesToSettle.map(inv => {
+                                        const due = Math.max(0, (inv.summary?.totalAmount || 0) - (inv.paidAmount || 0));
+                                        return (
+                                            <option key={inv._id} value={inv._id}>
+                                                {inv.docNumber} | {inv.partyName} (Due: ₹{due.toLocaleString('en-IN')})
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+                        )}
+
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <h3 className="font-black text-slate-900 text-sm uppercase tracking-wide">
-                                {isSales ? 'BILL TO (Customer Details)' : 'VENDOR (Supplier Details)'}
+                                {isSales ? 'BILL TO (Customer Details)' : isPurchase ? 'VENDOR (Supplier Details)' : 'PARTY / LEDGER DETAILS'}
                             </h3>
                             {parties.length > 0 && (
                                 <select onChange={handlePartySelect} className="bg-slate-100 border border-slate-200 rounded-xl px-3 py-1 font-bold text-indigo-700">

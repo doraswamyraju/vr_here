@@ -4,6 +4,7 @@ import {
     createTransaction,
     getTransactions,
     updateTransaction,
+    recordTransactionPayment,
     deleteTransaction,
     getCompanyDetails,
     upsertCompanyDetails,
@@ -33,6 +34,9 @@ router.route('/transactions')
 router.route('/transactions/:id')
     .put(protect, updateTransaction)
     .delete(protect, deleteTransaction);
+
+router.route('/transactions/:id/payment')
+    .post(protect, recordTransactionPayment);
 
 // Company Details
 router.route('/company')

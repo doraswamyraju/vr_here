@@ -306,6 +306,50 @@ export const updateTransaction = asyncHandler(async (req, res) => {
     res.json(updatedTransaction);
 });
 
+// @desc    Record direct Payment In / Payment Out on a transaction (Sales Invoice or Purchase Bill)
+// @route   POST /api/accounting/transactions/:id/payment
+export const recordTransactionPayment = asyncHandler(async (req, res) => {
+    const { amount, paymentDate, paymentMode, referenceNo, notes } = req.body;
+    
+    const transaction = await Transaction.findById(req.params.id);
+    if (!transaction) {
+        res.status(404);
+        throw new Error('Transaction invoice/bill not found');
+    }
+
+    if (transaction.clientUser.toString() !== req.user._id.toString() && req.user.role !== 'admin' && req.user.role !== 'employee') {
+        res.status(401);
+        throw new Error('Not authorized to record payment on this document');
+    }
+
+    const payAmount = Number(amount);
+    if (isNaN(payAmount) || payAmount <= 0) {
+        res.status(400);
+        throw new Error('Please enter a valid payment amount greater than 0');
+    }
+
+    const totalAmount = Number(transaction.summary?.totalAmount || transaction.totalAmount || 0);
+    const existingPaid = Number(transaction.paidAmount) || 0;
+    const newPaidAmount = Math.min(totalAmount, existingPaid + payAmount);
+    const newPaymentStatus = (totalAmount > 0 && newPaidAmount >= totalAmount) ? 'Paid' : 'Partially Paid';
+
+    const updated = await Transaction.findByIdAndUpdate(
+        req.params.id,
+        {
+            paidAmount: newPaidAmount,
+            paymentStatus: newPaymentStatus,
+            paymentMode: paymentMode || transaction.paymentMode
+        },
+        { new: true }
+    );
+
+    res.json({
+        success: true,
+        message: `Payment of ₹${payAmount.toLocaleString('en-IN')} recorded successfully!`,
+        transaction: updated
+    });
+});
+
 // @desc    Delete a transaction
 // @route   DELETE /api/accounting/transactions/:id
 export const deleteTransaction = asyncHandler(async (req, res) => {

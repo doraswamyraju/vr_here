@@ -7,6 +7,7 @@ import {
 
 import GSTInvoiceView from './bookkeeping/GSTInvoiceView';
 import CompanySettingsModal from './bookkeeping/CompanySettingsModal';
+import BookkeepingDashboardTab from './bookkeeping/BookkeepingDashboardTab';
 import SalesInvoicesTab from './bookkeeping/SalesInvoicesTab';
 import PurchaseBillsTab from './bookkeeping/PurchaseBillsTab';
 import IncomeExpensesTab from './bookkeeping/IncomeExpensesTab';
@@ -33,7 +34,7 @@ const MONTHS_LIST = [
 ];
 
 const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabChange }) => {
-    const [internalSubTab, setInternalSubTab] = useState('sales');
+    const [internalSubTab, setInternalSubTab] = useState('dashboard');
     const activeSubTab = propSubTab || internalSubTab;
     const setActiveSubTab = (tab) => {
         if (onSubTabChange) onSubTabChange(tab);
@@ -110,6 +111,22 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 setTransactions([data, ...transactions]);
                 setShowFormModal(false);
                 setEditingTransaction(null);
+                // If this entry was marked/settled against another invoice, update its payment status
+                if (formData.taggedVoucherId) {
+                    try {
+                        const paidTotal = formData.items?.reduce((acc, it) => acc + ((Number(it.qty) || 1) * (Number(it.rate) || 0)), 0) || 0;
+                        await axios.post(`/api/accounting/transactions/${formData.taggedVoucherId}/payment`, {
+                            amountPaid: paidTotal,
+                            paymentMode: formData.paymentMode || 'Bank Transfer',
+                            paymentDate: formData.docDate || new Date(),
+                            referenceNumber: formData.docNumber,
+                            notes: formData.notes || `Settled via ${formData.transactionType} voucher ${formData.docNumber}`
+                        }, config);
+                        await fetchData();
+                    } catch (err) {
+                        console.error('Error recording payment against referenced invoice:', err);
+                    }
+                }
                 // If new party not in directory, add it
                 if (formData.partyName && !parties.some(p => p.name.toLowerCase() === formData.partyName.toLowerCase())) {
                     const newParty = {
@@ -196,13 +213,15 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
     // Current Active Tab Title
     const getSubTabInfo = () => {
         switch(activeSubTab) {
+            case 'dashboard': return { title: 'Bookkeeping Executive Dashboard', subtitle: 'Command center for pending collections, vendor payables, GST tax liability, and bank health.' };
             case 'purchases': return { title: 'Purchase Bills & Inward Supplies', subtitle: 'Manage supplier bills, scanned proof attachments, and ITC entitlement.' };
             case 'expenses': return { title: 'Income & Expense Ledgers', subtitle: 'Track operational overheads, salaries, rent, and non-trading income receipts.' };
             case 'bank': return { title: 'Bank Statements & Payment Tagging', subtitle: 'Upload statements and manually tag credits/debits to invoices and ledgers.' };
             case 'parties': return { title: 'Customers & Vendors Master Directory', subtitle: 'Maintain party billing details, GSTIN, PAN, and ledger statements.' };
             case 'payroll': return { title: 'Staff Payroll, Time Sheets & Form 16', subtitle: 'Manage employee salary registers, VR HR time tracking, and statutory Form 16.' };
             case 'reports': return { title: 'Financial Reports & Profit & Loss (P&L)', subtitle: 'Real-time profit summary, turnover metrics, and net GST cash liability.' };
-            default: return { title: 'Sales Invoices & Billing Hub', subtitle: 'Generate GST-compliant tax invoices, track receivables, and share via WhatsApp.' };
+            case 'sales': return { title: 'Sales Invoices & Billing Hub', subtitle: 'Generate GST-compliant tax invoices, track receivables, and share via WhatsApp.' };
+            default: return { title: 'Bookkeeping Executive Dashboard', subtitle: 'Command center for pending collections, vendor payables, GST tax liability, and bank health.' };
         }
     };
 
@@ -300,9 +319,30 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 </div>
             ) : (
                 <>
+                    {activeSubTab === 'dashboard' && (
+                        <BookkeepingDashboardTab 
+                            transactions={transactions}
+                            filteredTransactions={filteredTransactions}
+                            selectedMonth={selectedMonth}
+                            company={company}
+                            parties={parties}
+                            token={token}
+                            onNavigateTab={(tab) => setActiveSubTab(tab)}
+                            onViewInvoice={(inv) => setSelectedInvoice(inv)}
+                            onRefresh={fetchData}
+                            onAddNew={(txType) => {
+                                setEditingTransaction(null);
+                                setFormTxType(txType || 'Sales');
+                                setShowFormModal(true);
+                            }}
+                        />
+                    )}
+
                     {activeSubTab === 'sales' && (
                         <SalesInvoicesTab 
                             transactions={filteredTransactions}
+                            token={token}
+                            onRefresh={fetchData}
                             onAddNew={() => {
                                 setEditingTransaction(null);
                                 setFormTxType('Sales');
@@ -319,6 +359,8 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                     {activeSubTab === 'purchases' && (
                         <PurchaseBillsTab 
                             transactions={filteredTransactions}
+                            token={token}
+                            onRefresh={fetchData}
                             onAddNew={() => {
                                 setEditingTransaction(null);
                                 setFormTxType('Purchase');
@@ -399,6 +441,7 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 companyState={company?.state || 'Andhra Pradesh'}
                 invoiceCount={transactions.filter(t => t.transactionType === formTxType).length + 1}
                 editingTransaction={editingTransaction}
+                transactions={transactions}
             />
 
             {/* Modal: Company Settings */}
