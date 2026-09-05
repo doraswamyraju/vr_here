@@ -226,21 +226,32 @@ export const parsePdfStatement = async (file, password = '') => {
                     // Sort items: Y descending (top to bottom), then X ascending (left to right)
                     pageItems.sort((a, b) => (b.y - a.y) || (a.x - b.x));
 
-                    // Cluster items into horizontal rows (tolerance 4.0 pt)
+                    // Cluster items into horizontal rows (tolerance 5.5 pt)
                     let currentCluster = [];
                     let clusterY = null;
 
                     for (const it of pageItems) {
-                        if (clusterY === null || Math.abs(it.y - clusterY) > 4.5) {
+                        if (clusterY === null || Math.abs(it.y - clusterY) > 5.5) {
                             if (currentCluster.length > 0) {
                                 currentCluster.sort((a, b) => a.x - b.x);
-                                const rowText = currentCluster.map(c => c.str).join(' ');
+                                let rowText = '';
+                                for (let k = 0; k < currentCluster.length; k++) {
+                                    const item = currentCluster[k];
+                                    if (k > 0) {
+                                        const prev = currentCluster[k - 1];
+                                        const gap = item.x - (prev.x + prev.w);
+                                        if (gap > 2.0 && !['/', '-', '.', ',', ')', ']', ':'].includes(item.str) && !['/', '-', '(', '[', ':', '₹'].includes(prev.str)) {
+                                            rowText += ' ';
+                                        }
+                                    }
+                                    rowText += item.str;
+                                }
                                 allSpatialRows.push({
-                                    text: rowText,
+                                    text: rowText.trim(),
                                     items: currentCluster,
                                     pageNum
                                 });
-                                fullDocumentText += ' ' + rowText;
+                                fullDocumentText += ' ' + rowText.trim();
                             }
                             currentCluster = [it];
                             clusterY = it.y;
@@ -250,13 +261,24 @@ export const parsePdfStatement = async (file, password = '') => {
                     }
                     if (currentCluster.length > 0) {
                         currentCluster.sort((a, b) => a.x - b.x);
-                        const rowText = currentCluster.map(c => c.str).join(' ');
+                        let rowText = '';
+                        for (let k = 0; k < currentCluster.length; k++) {
+                            const item = currentCluster[k];
+                            if (k > 0) {
+                                const prev = currentCluster[k - 1];
+                                const gap = item.x - (prev.x + prev.w);
+                                if (gap > 2.0 && !['/', '-', '.', ',', ')', ']', ':'].includes(item.str) && !['/', '-', '(', '[', ':', '₹'].includes(prev.str)) {
+                                    rowText += ' ';
+                                }
+                            }
+                            rowText += item.str;
+                        }
                         allSpatialRows.push({
-                            text: rowText,
+                            text: rowText.trim(),
                             items: currentCluster,
                             pageNum
                         });
-                        fullDocumentText += ' ' + rowText;
+                        fullDocumentText += ' ' + rowText.trim();
                     }
                 }
 
@@ -264,13 +286,9 @@ export const parsePdfStatement = async (file, password = '') => {
                 const bankName = detectBankFromText(fullDocumentText);
                 const accountNumber = detectAccountNumberFromText(fullDocumentText);
 
-                // Date matcher: DD/MM/YYYY, DD-MM-YYYY, DD-MMM-YYYY, DD/MM/YY
-                const dateRegex = /\b(\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2,4}|\d{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s]\d{2,4})\b/i;
+                // Date matcher: DD/MM/YYYY, DD-MM-YYYY, DD-MMM-YYYY, DD/MM/YY with optional whitespace around delimiters
+                const dateRegex = /\b(\d{1,2}\s*[\.\/\-]\s*\d{1,2}\s*[\.\/\-]\s*\d{2,4}|\d{1,2}\s*[\-\s]\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*[\-\s]\s*\d{2,4})\b/i;
                 
-                // Amount matcher with optional (Dr)/(Cr) suffix
-                // e.g. "130.00 (Dr)", "31810.01 (Cr)", "130.00", "1,250.00"
-                const amountTokenRegex = /\b(\d{1,3}(?:,\d{3})*(?:\.\d{2})?|\d+\.\d{2})\s*(?:\((?:Dr|Cr|DR|CR)\)|(?:Dr|Cr|DR|CR)\b)?/gi;
-
                 const transactions = [];
 
                 for (let i = 0; i < allSpatialRows.length; i++) {
@@ -295,10 +313,10 @@ export const parsePdfStatement = async (file, password = '') => {
                         // Find all amount candidates
                         const amounts = [];
                         let match;
-                        const amtRegexLocal = /(\d{1,3}(?:,\d{3})*\.\d{2}|\d+\.\d{2})\s*(?:\(((?:Dr|Cr|DR|CR))\)|((?:Dr|Cr|DR|CR)\b))?/gi;
+                        const amtRegexLocal = /(\d{1,3}(?:\s*,\s*\d{3})*\s*\.\s*\d{2}|\d+\s*\.\s*\d{2})\s*(?:\(\s*((?:Dr|Cr|DR|CR))\s*\)|((?:Dr|Cr|DR|CR)\b))?/gi;
                         
                         while ((match = amtRegexLocal.exec(lineText)) !== null) {
-                            const rawVal = match[1].replace(/,/g, '');
+                            const rawVal = match[1].replace(/[\s,]/g, '');
                             const num = parseFloat(rawVal);
                             const drcrTag = (match[2] || match[3] || '').toUpperCase();
                             if (!isNaN(num) && num > 0) {
@@ -330,7 +348,6 @@ export const parsePdfStatement = async (file, password = '') => {
 
                             // Extract Transaction ID / Reference No
                             let referenceNo = '';
-                            // Check for UPI/AR/ or 6-18 digit transaction ID in row
                             const refMatch = lineText.match(/\b(?:UPI\/[A-Z0-9]+\/|REF\/|UTR\/)?([0-9]{8,18})\b/i);
                             if (refMatch && refMatch[1]) {
                                 referenceNo = refMatch[1];
@@ -343,7 +360,6 @@ export const parsePdfStatement = async (file, password = '') => {
 
                             // Build clean description / narration
                             let desc = lineText;
-                            // Remove S.No, Date, amounts
                             desc = desc.replace(rawDateStr, ' ');
                             amounts.forEach(a => {
                                 desc = desc.replace(a.raw, ' ');
