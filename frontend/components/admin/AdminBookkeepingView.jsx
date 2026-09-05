@@ -231,6 +231,7 @@ const AdminBookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange 
                             {activeAdminTab === 'gst' && (
                                 <GstReturnsTab 
                                     selectedClient={selectedClient}
+                                    transactions={transactions}
                                     gstr3bData={gstr3bData}
                                     onDownloadGstr1={handleDownloadGstr1}
                                     onRefresh={() => fetchClientData(selectedClient)}

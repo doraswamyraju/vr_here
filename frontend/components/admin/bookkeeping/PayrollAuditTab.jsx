@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Users, Plus, Download, FileText, CheckCircle2, DollarSign } from 'lucide-react';
+import { Users, Plus, Download, FileText, CheckCircle2, DollarSign, Printer, Award } from 'lucide-react';
+import Form16CertificateView from './Form16CertificateView';
 
 const PayrollAuditTab = ({
     payrollRecords = [],
@@ -8,6 +9,7 @@ const PayrollAuditTab = ({
     onRefresh
 }) => {
     const [showAddModal, setShowAddModal] = useState(false);
+    const [selectedForm16Record, setSelectedForm16Record] = useState(null);
     const [month, setMonth] = useState('April 2026');
     const [employeeName, setEmployeeName] = useState('');
     const [employeePan, setEmployeePan] = useState('');
@@ -22,6 +24,17 @@ const PayrollAuditTab = ({
     const grossSalary = Number(basic) + Number(hra) + Number(allowances);
     const totalDeductions = Number(pf) + Number(pt) + Number(tds);
     const netPayable = grossSalary - totalDeductions;
+
+    // If Form 16 is currently active
+    if (selectedForm16Record) {
+        return (
+            <Form16CertificateView 
+                record={selectedForm16Record}
+                client={selectedClient}
+                onBack={() => setSelectedForm16Record(null)}
+            />
+        );
+    }
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -56,7 +69,7 @@ const PayrollAuditTab = ({
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
                     <div>
                         <h4 className="font-black text-slate-900 text-lg">Employee Salary & Form 16 / TDS Register</h4>
-                        <p className="text-xs text-slate-500 font-medium">Monthly payroll registers, salary slips, and TDS Sec 192/194 compliance</p>
+                        <p className="text-xs text-slate-500 font-medium">Monthly payroll registers, salary slips, and Section 192 Form 16 certificates</p>
                     </div>
 
                     <button 
@@ -85,6 +98,7 @@ const PayrollAuditTab = ({
                                     <th className="px-5 py-3.5">TDS u/s 192 (₹)</th>
                                     <th className="px-5 py-3.5">Net Salary (₹)</th>
                                     <th className="px-5 py-3.5">Status</th>
+                                    <th className="px-5 py-3.5 text-center">Compliance Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -101,6 +115,14 @@ const PayrollAuditTab = ({
                                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                 {pr.status || 'Processed'}
                                             </span>
+                                        </td>
+                                        <td className="px-5 py-3.5 text-center">
+                                            <button
+                                                onClick={() => setSelectedForm16Record(pr)}
+                                                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-xl text-[11px] font-bold transition flex items-center gap-1 mx-auto shadow-sm"
+                                            >
+                                                <Award size={13} /> Form 16 (Part A & B)
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}

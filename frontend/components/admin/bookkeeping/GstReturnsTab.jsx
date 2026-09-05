@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
-import { Download, ShieldCheck, FileSpreadsheet, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Download, ShieldCheck, FileSpreadsheet, CheckCircle2, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import Gstr2bMatcherModal from './Gstr2bMatcherModal';
 
 const GstReturnsTab = ({
     selectedClient,
+    transactions = [],
     gstr3bData,
     onDownloadGstr1,
     onRefresh
 }) => {
+    const [show2bMatcher, setShow2bMatcher] = useState(false);
+    const purchaseTransactions = transactions.filter(t => t.transactionType === 'Purchase');
+
     return (
         <div className="space-y-6">
             {/* Top Return Generators */}
@@ -41,15 +46,26 @@ const GstReturnsTab = ({
                             <h4 className="font-black text-slate-900 text-base">GSTR-2B vs Purchases Verification</h4>
                         </div>
                         <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                            Reconciles the client’s inward purchase register with supplier-filed returns to ensure maximum eligible ITC claims without interest or penalties.
+                            Reconciles the client’s inward purchase register ({purchaseTransactions.length} bills logged) with supplier-filed 2B returns to ensure 100% eligible ITC claims without notices or penalties.
                         </p>
                     </div>
 
-                    <div className="p-2.5 bg-slate-50 rounded-2xl border border-slate-200 text-center font-bold text-xs text-slate-600">
-                        ✨ Real-Time ITC Eligibility Engine Active
-                    </div>
+                    <button 
+                        onClick={() => setShow2bMatcher(true)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-md shadow-indigo-200"
+                    >
+                        <Layers size={15} /> Open GSTR-2B ITC Matcher Desk
+                    </button>
                 </div>
             </div>
+
+            {/* GSTR-2B Matcher Modal */}
+            <Gstr2bMatcherModal 
+                isOpen={show2bMatcher}
+                onClose={() => setShow2bMatcher(false)}
+                clientPurchases={purchaseTransactions}
+                clientName={selectedClient?.companyName || selectedClient?.name || 'Client'}
+            />
 
             {/* GSTR-3B Computation Sheet */}
             {gstr3bData && (
