@@ -643,9 +643,13 @@ export const tagBankTransaction = asyncHandler(async (req, res) => {
         const voucher = await Transaction.findById(taggedVoucherId);
         if (voucher) {
             const totalAmount = Number(voucher.summary?.totalAmount || voucher.totalAmount || 0);
-            voucher.paidAmount = Math.min(totalAmount, (Number(voucher.paidAmount) || 0) + Number(line.amount || 0));
-            voucher.paymentStatus = (totalAmount > 0 && voucher.paidAmount >= totalAmount) ? 'Paid' : 'Partially Paid';
-            await voucher.save();
+            const newPaidAmount = Math.min(totalAmount, (Number(voucher.paidAmount) || 0) + Number(line.amount || 0));
+            const newPaymentStatus = (totalAmount > 0 && newPaidAmount >= totalAmount) ? 'Paid' : 'Partially Paid';
+            
+            await Transaction.findByIdAndUpdate(taggedVoucherId, {
+                paidAmount: newPaidAmount,
+                paymentStatus: newPaymentStatus
+            });
         }
     } else {
         line.taggedVoucher = undefined;

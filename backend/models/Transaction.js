@@ -97,7 +97,7 @@ const transactionSchema = new mongoose.Schema({
         cgst: { type: Number, default: 0 },
         sgst: { type: Number, default: 0 },
         igst: { type: Number, default: 0 },
-        total: { type: Number, required: true }
+        total: { type: Number, default: 0 }
     }],
 
     // Totals & Summaries
