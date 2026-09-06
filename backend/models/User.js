@@ -136,6 +136,24 @@ const userSchema = mongoose.Schema({
         type: String,
         default: null
     },
+    referralCode: {
+        type: String,
+        sparse: true,
+        unique: true
+    },
+    referredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    walletBalance: {
+        type: Number,
+        default: 0
+    },
+    savedUpiId: {
+        type: String,
+        default: ''
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
 }, {

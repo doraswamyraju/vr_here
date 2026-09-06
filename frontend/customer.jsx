@@ -4,7 +4,7 @@ import {
    Wallet, Headphones, User, Bell, LogOut,
    Menu, MessageSquare, Plus, X, Phone, BookOpen,
    ChevronDown, ChevronRight, ShoppingCart, ArrowDownRight,
-   Landmark, Building2, BarChart3, Users
+   Landmark, Building2, BarChart3, Users, Gift
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,7 @@ import AccountingServicesView from './components/customer/AccountingServicesView
 import ServiceDetailView from './components/customer/ServiceDetailView';
 import CustomerFinanceView from './components/customer/CustomerFinanceView';
 import BookkeepingView from './components/customer/BookkeepingView';
+import ReferralView from './components/customer/ReferralView';
 import { SERVICE_CATALOG } from './data/serviceCatalog';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
 
@@ -262,6 +263,7 @@ export default function CustomerApp() {
          );
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
          case 'Invoices': return <CustomerFinanceView token={userInfo?.token} />;
+         case 'Referrals': return <ReferralView userInfo={userInfo} />;
          case 'Bookkeeping': return <BookkeepingView token={userInfo?.token} userInfo={userInfo} activeSubTab={bookkeepingSubTab} onSubTabChange={setBookkeepingSubTab} />;
          case 'Account': return <AccountsView orders={orders} payments={payments} userInfo={userInfo} token={userInfo?.token} />;
          case 'New': return <SupportView userInfo={userInfo} />;
@@ -277,6 +279,7 @@ export default function CustomerApp() {
             { id: 'Home', icon: LayoutDashboard, label: 'Overview' },
             { id: 'Services', icon: Briefcase, label: 'Service Catalog' },
             { id: 'Orders', icon: Package, label: 'Orders & Projects' },
+            { id: 'Referrals', icon: Gift, label: 'Refer & Earn', badge: '₹500' },
             { id: 'Invoices', icon: Wallet, label: 'Billing & Invoices' },
          ]
       },
@@ -398,6 +401,11 @@ export default function CustomerApp() {
                                  <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-white group-hover:scale-110 transition-all'} />
                                  <span>{item.label}</span>
                               </div>
+                              {item.badge && (
+                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 uppercase tracking-wider">
+                                    {item.badge}
+                                 </span>
+                              )}
                               {item.id === 'Orders' && orders.filter(o => o.status !== 'Completed').length > 0 && (
                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${isActive ? 'bg-white text-red-600' : 'bg-slate-800 text-slate-300'}`}>
                                     {orders.filter(o => o.status !== 'Completed').length}

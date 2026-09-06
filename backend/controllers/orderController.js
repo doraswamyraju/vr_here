@@ -714,6 +714,25 @@ const uploadDocument = asyncHandler(async (req, res) => {
         console.error('[OrderUpload] Fallback due to Google Drive upload error:', driveErr.message);
     }
 
+const syncOrderStatusOnClientSubmission = (order) => {
+    if (!order.customerRequirements || order.customerRequirements.length === 0) {
+        return false;
+    }
+    const allCompleted = order.customerRequirements.every(req => {
+        if (!req.required && req.required !== undefined) return true;
+        if (req.type === 'Document') {
+            return req.isClientCompleted || (req.documents && req.documents.length > 0) || Boolean(req.uploadedDocumentUrl) || req.status === 'Received' || req.status === 'Verified';
+        }
+        return req.isClientCompleted || Boolean(req.clientValue) || Boolean(req.value) || req.status === 'Received' || req.status === 'Verified';
+    });
+
+    if (allCompleted && (order.status === 'Pending Documents' || order.status === 'Waiting for Clarification')) {
+        order.status = 'Documents Verified';
+        return true;
+    }
+    return false;
+};
+
     if (req.user.role === 'client' || req.user.role === 'customer') {
         const docName = req.body.name || req.file.originalname;
         if (!order.clientDocuments) {
@@ -743,6 +762,9 @@ const uploadDocument = asyncHandler(async (req, res) => {
                 requirement.lastSavedAt = new Date();
             }
         }
+
+        // Auto-sync status if all requirements are submitted
+        syncOrderStatusOnClientSubmission(order);
     } else if (req.user.role === 'employee' || req.user.role === 'admin' || req.user.role === 'freelancer') {
         if (req.body.isFinalCertificate === 'true' || req.body.isFinalCertificate === true) {
             order.finalCertificateUrl = documentUrl;
@@ -1346,6 +1368,8 @@ const updateRequirement = asyncHandler(async (req, res) => {
         if (isClientCompleted !== undefined) requirement.isClientCompleted = Boolean(isClientCompleted);
         requirement.status = requirement.isClientCompleted ? 'Received' : requirement.status;
         requirement.lastSavedAt = new Date();
+        // Auto-transition to Documents Verified if all items submitted
+        syncOrderStatusOnClientSubmission(order);
     } else {
         if (status !== undefined) requirement.status = status;
         if (value !== undefined) {
@@ -1454,6 +1478,9 @@ const addRequirement = asyncHandler(async (req, res) => {
     };
 
     order.customerRequirements.push(newReq);
+    if (order.status !== 'Completed') {
+        order.status = 'Waiting for Clarification';
+    }
     await order.save();
 
     // Trigger Notification to client

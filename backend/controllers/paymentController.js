@@ -4,6 +4,7 @@ import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
 import Lead from '../models/Lead.js';
+import CustomerReferral from '../models/CustomerReferral.js';
 import generateToken from '../utils/generateToken.js';
 import sendEmail from '../utils/sendEmail.js';
 import { triggerNotification, notifyAdmins } from '../services/notificationService.js';
@@ -309,6 +310,96 @@ export const verifyPayment = async (req, res) => {
             referralPartner: referralPartnerId,
             partnerCommissionAmount
         });
+
+        // Customer Refer & Earn attribution
+        try {
+            const cleanPhone = (resolvedPhone || '').replace(/\D/g, '').slice(-10);
+            let customerReferrer = null;
+
+            if (referralCode) {
+                const upperCode = referralCode.trim().toUpperCase();
+                customerReferrer = await User.findOne({
+                    $or: [
+                        { referralCode: upperCode },
+                        { phone: referralCode.replace(/\D/g, '').slice(-10) }
+                    ],
+                    role: { $in: ['client', 'customer'] }
+                });
+            }
+
+            if (!customerReferrer && cleanPhone.length === 10) {
+                const lead = await CustomerReferral.findOne({
+                    refereePhone: cleanPhone,
+                    status: { $in: ['Invited', 'Registered'] }
+                });
+                if (lead) {
+                    customerReferrer = await User.findById(lead.referrer);
+                }
+            }
+
+            // Award ₹500 if referrer found and not self-referral
+            if (customerReferrer && String(customerReferrer._id) !== String(customerUser?._id || req.user?._id)) {
+                // Check if this is referee's first paid order
+                const prevPaidOrders = customerUser?._id ? await Order.countDocuments({
+                    user: customerUser._id,
+                    paymentStatus: 'Paid',
+                    _id: { $ne: createdOrder._id }
+                }) : 0;
+
+                if (prevPaidOrders === 0) {
+                    customerReferrer.walletBalance = (customerReferrer.walletBalance || 0) + 500;
+                    await customerReferrer.save();
+
+                    let referralRecord = await CustomerReferral.findOne({
+                        referrer: customerReferrer._id,
+                        refereePhone: cleanPhone
+                    });
+
+                    if (!referralRecord) {
+                        referralRecord = new CustomerReferral({
+                            referrer: customerReferrer._id,
+                            refereeName: resolvedCustomerName,
+                            refereePhone: cleanPhone
+                        });
+                    }
+
+                    referralRecord.referee = customerUser?._id || null;
+                    referralRecord.order = createdOrder._id;
+                    referralRecord.orderAmount = parsedAmount;
+                    referralRecord.status = 'Rewarded';
+                    referralRecord.rewardAmount = 500;
+                    referralRecord.rewardedAt = new Date();
+                    await referralRecord.save();
+
+                    // Notify referrer
+                    await triggerNotification({
+                        userId: customerReferrer._id,
+                        title: '🎉 You earned ₹500 Referral Reward!',
+                        message: `Great news! Your friend ${resolvedCustomerName} completed their first filing for "${serviceName}". ₹500 has been credited to your VR Wallet!`,
+                        type: 'Financial',
+                        emailOpts: {
+                            send: true,
+                            subject: 'Congratulations! ₹500 Referral Bonus Credited to your VR Wallet'
+                        }
+                    });
+                }
+            }
+        } catch (refErr) {
+            console.error('Customer Referral Attribution Error (Non-blocking):', refErr.message);
+        }
+
+        // Deduct applied wallet credit if used
+        if (req.body.appliedWalletCredit && Number(req.body.appliedWalletCredit) > 0 && customerUser) {
+            try {
+                const appliedCredit = Math.min(Number(req.body.appliedWalletCredit), customerUser.walletBalance || 0);
+                if (appliedCredit > 0) {
+                    customerUser.walletBalance = Math.max(0, (customerUser.walletBalance || 0) - appliedCredit);
+                    await customerUser.save();
+                }
+            } catch (wErr) {
+                console.error('Wallet deduction error:', wErr.message);
+            }
+        }
 
         // Generate paid invoice automatically
         try {

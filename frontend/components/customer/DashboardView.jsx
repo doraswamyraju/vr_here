@@ -37,7 +37,23 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
     const navigate = useNavigate();
     const activeOrders = orders.filter(o => o.status !== 'Completed');
     const completedOrders = orders.filter(o => o.status === 'Completed');
-    const pendingActions = orders.filter(o => o.status === 'Pending Documents' || o.status === 'Waiting for Clarification');
+    const pendingActions = orders.filter(o => {
+        if (o.status === 'Completed' || o.status === 'Documents Verified' || o.status === 'Processing at Portal') return false;
+        if (o.status === 'Waiting for Clarification') return true;
+        if (o.status === 'Pending Documents') {
+            if (o.customerRequirements && o.customerRequirements.length > 0) {
+                return o.customerRequirements.some(r => {
+                    if (r.required === false) return false;
+                    if (r.type === 'Document') {
+                        return !r.isClientCompleted && (!r.documents || r.documents.length === 0) && !r.uploadedDocumentUrl && r.status !== 'Received' && r.status !== 'Verified';
+                    }
+                    return !r.isClientCompleted && !r.clientValue && !r.value && r.status !== 'Received' && r.status !== 'Verified';
+                });
+            }
+            return true;
+        }
+        return false;
+    });
     const unreadNotifications = notifications.filter(n => !n.isRead);
 
     const topServices = [

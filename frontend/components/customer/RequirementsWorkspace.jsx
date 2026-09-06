@@ -150,8 +150,34 @@ const RequirementsWorkspace = ({ selectedOrder, userInfo, refreshOrders }) => {
     </div>
   );
 
+  const isAllCompleted = requirements.length > 0 && requirements.every(r => {
+    if (r.required === false) return true;
+    if (r.type === 'Document') {
+      return r.isClientCompleted || (r.documents && r.documents.length > 0) || Boolean(r.uploadedDocumentUrl) || r.status === 'Received' || r.status === 'Verified';
+    }
+    return r.isClientCompleted || Boolean(r.clientValue) || Boolean(r.value) || r.status === 'Received' || r.status === 'Verified';
+  });
+
   return (
     <div className="space-y-4">
+      {/* All completed celebratory banner */}
+      {isAllCompleted && (
+        <div className="bg-emerald-50/90 border border-emerald-200 text-emerald-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shrink-0">
+              <CheckCircle2 size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-black text-emerald-950">All Checklist Items & KYC Submitted 🎉</p>
+              <p className="text-[11px] text-emerald-700 font-medium">Your dedicated specialist is reviewing the files for portal filing.</p>
+            </div>
+          </div>
+          <span className="self-start sm:self-auto text-[10px] font-black uppercase px-3 py-1 bg-emerald-200/70 text-emerald-900 rounded-lg border border-emerald-300">
+            Documents Verified / Under Review
+          </span>
+        </div>
+      )}
+
       {/* Tab Navigation */}
       <div className="flex bg-slate-100/50 p-1.5 rounded-2xl gap-1 overflow-x-auto">
         <button

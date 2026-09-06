@@ -99,6 +99,7 @@ import accountingRoutes from './routes/accountingRoutes.js';
 import leadRoutes from './routes/leadRoutes.js';
 import renewalRoutes from './routes/renewalRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
+import customerReferralRoutes from './routes/customerReferralRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 
 // Routes
@@ -115,6 +116,7 @@ app.use('/api/recurring', recurringRoutes);
 app.use('/api/renewals', renewalRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/partner', partnerRoutes);
+app.use('/api/customer/referrals', customerReferralRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/webmail', webmailRoutes);
