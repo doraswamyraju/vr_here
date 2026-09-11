@@ -20,45 +20,91 @@ const WorkQueueModule = ({ orders, todos = [], onOpenOrder, onTodoStatusChange, 
   const [view, setView] = useState('orders'); // 'orders' or 'tasks'
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [quickStatus, setQuickStatus] = useState('all'); // 'all', 'active', 'completed'
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      const text = `${order.serviceName} ${order.packageName} ${getOrderClientLabel(order)}`.toLowerCase();
+      const text = `${order.serviceName} ${order.packageName || ''} ${getOrderClientLabel(order)}`.toLowerCase();
       const queryOk = text.includes(query.toLowerCase());
       const statusOk = statusFilter === 'All' || order.status === statusFilter;
-      return queryOk && statusOk;
+      
+      let quickOk = true;
+      if (quickStatus === 'active') {
+        quickOk = order.status !== 'Completed' && order.status !== 'Delivered';
+      } else if (quickStatus === 'completed') {
+        quickOk = order.status === 'Completed' || order.status === 'Delivered';
+      }
+
+      return queryOk && statusOk && quickOk;
     });
-  }, [orders, query, statusFilter]);
+  }, [orders, query, statusFilter, quickStatus]);
 
   const filteredTodos = useMemo(() => {
     return todos.filter((todo) => {
-      const text = `${todo.title} ${todo.description} ${todo.orderId?.serviceName || ''}`.toLowerCase();
+      const text = `${todo.title} ${todo.description || ''} ${todo.orderId?.serviceName || ''}`.toLowerCase();
       const queryOk = text.includes(query.toLowerCase());
       const statusOk = statusFilter === 'All' || todo.status === statusFilter;
-      return queryOk && statusOk;
+      
+      let quickOk = true;
+      if (quickStatus === 'active') {
+        quickOk = todo.status !== 'Completed';
+      } else if (quickStatus === 'completed') {
+        quickOk = todo.status === 'Completed';
+      }
+
+      return queryOk && statusOk && quickOk;
     });
-  }, [todos, query, statusFilter]);
+  }, [todos, query, statusFilter, quickStatus]);
 
   const statusOptions = useMemo(() => {
     const src = view === 'orders' ? orders.map(o => o.status) : todos.map(t => t.status);
     return ['All', ...new Set(src.filter(Boolean))];
   }, [view, orders, todos]);
 
+  const activeOrdersCount = useMemo(() => orders.filter(o => o.status !== 'Completed' && o.status !== 'Delivered').length, [orders]);
+  const completedOrdersCount = useMemo(() => orders.filter(o => o.status === 'Completed' || o.status === 'Delivered').length, [orders]);
+  const activeTodosCount = useMemo(() => todos.filter(t => t.status !== 'Completed').length, [todos]);
+  const completedTodosCount = useMemo(() => todos.filter(t => t.status === 'Completed').length, [todos]);
+
   return (
     <div className="space-y-5">
-      <div className="flex bg-white/50 backdrop-blur-sm p-1 rounded-2xl border border-white/70 w-fit shadow-sm">
-        <button 
-          onClick={() => { setView('orders'); setStatusFilter('All'); }}
-          className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${view === 'orders' ? 'bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-          Orders Queue ({orders.length})
-        </button>
-        <button 
-          onClick={() => { setView('tasks'); setStatusFilter('All'); }}
-          className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${view === 'tasks' ? 'bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-          Tasks & TODOs ({todos.length})
-        </button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex bg-white/50 backdrop-blur-sm p-1 rounded-2xl border border-white/70 w-fit shadow-sm">
+          <button 
+            onClick={() => { setView('orders'); setStatusFilter('All'); }}
+            className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${view === 'orders' ? 'bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-500 hover:text-slate-800'}`}
+          >
+            Orders Queue ({orders.length})
+          </button>
+          <button 
+            onClick={() => { setView('tasks'); setStatusFilter('All'); }}
+            className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${view === 'tasks' ? 'bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-500 hover:text-slate-800'}`}
+          >
+            Tasks & TODOs ({todos.length})
+          </button>
+        </div>
+
+        {/* Quick status filter pills */}
+        <div className="flex items-center gap-2 bg-slate-100/80 p-1 rounded-xl w-fit">
+          <button
+            onClick={() => setQuickStatus('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${quickStatus === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+          >
+            All ({view === 'orders' ? orders.length : todos.length})
+          </button>
+          <button
+            onClick={() => setQuickStatus('active')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${quickStatus === 'active' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+          >
+            In Progress ({view === 'orders' ? activeOrdersCount : activeTodosCount})
+          </button>
+          <button
+            onClick={() => setQuickStatus('completed')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${quickStatus === 'completed' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+          >
+            Completed ({view === 'orders' ? completedOrdersCount : completedTodosCount})
+          </button>
+        </div>
       </div>
 
       <div className="rounded-3xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-5 flex flex-col md:flex-row gap-4">

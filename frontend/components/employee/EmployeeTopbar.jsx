@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pause, Play, RefreshCw, Square, Coffee, ChevronDown, Check, Menu } from 'lucide-react';
+import { Pause, Play, RefreshCw, Square, Coffee, ChevronDown, Check, Menu, Bell } from 'lucide-react';
 import { EMPLOYEE_TABS } from './constants';
 
 const BREAK_OPTIONS = [
@@ -14,6 +14,9 @@ const EmployeeTopbar = ({
   userInfo,
   onRefresh,
   onToggleMobileSidebar,
+  unreadNotificationsCount = 0,
+  onOpenNotifications,
+  onOpenAccountSettings,
   isClockedIn,
   shiftElapsedLabel,
   onClockIn,
@@ -49,7 +52,7 @@ const EmployeeTopbar = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Shift & Break Controls */}
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-xs text-xs text-slate-600">
             <span className="text-slate-500 font-medium">Shift:</span>
@@ -122,17 +125,36 @@ const EmployeeTopbar = ({
             )}
           </div>
 
+          {/* Notifications Bell Button */}
+          <button
+            onClick={onOpenNotifications}
+            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all relative group"
+            title="Notification Center"
+          >
+            <Bell size={18} />
+            {unreadNotificationsCount > 0 && (
+              <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 rounded-full text-[9px] font-black text-white flex items-center justify-center border border-white">
+                {unreadNotificationsCount}
+              </div>
+            )}
+          </button>
+
           <button
             onClick={onRefresh}
             className="inline-flex items-center px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs sm:text-sm font-medium transition shadow-xs"
+            title="Refresh Data"
           >
             <RefreshCw size={14} className="mr-1.5" />
             Refresh
           </button>
 
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+          <button
+            onClick={onOpenAccountSettings}
+            title="Account Settings"
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 text-white flex items-center justify-center font-bold text-xs shadow-xs transition active:scale-95 shrink-0"
+          >
             {userInfo?.name?.charAt(0) || 'E'}
-          </div>
+          </button>
         </div>
       </div>
 

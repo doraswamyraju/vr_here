@@ -453,18 +453,34 @@ const getOrders = asyncHandler(async (req, res) => {
     if (req.user.role === 'admin') {
         orderQuery = Order.find({});
     } else if (req.user.role === 'employee' || req.user.role === 'freelancer') {
+        const uid = req.user._id;
+        const uidStr = uid.toString();
         orderQuery = Order.find({
             $or: [
-                { assignedEmployee: req.user._id },
-                { assignedProjectManager: req.user._id },
-                { assignedFreelancer: req.user._id },
-                { assignedMaker: req.user._id },
-                { assignedChecker: req.user._id },
-                { 'tasks.assignedTo': req.user._id },
-                { 'tasks.assignedMaker': req.user._id },
-                { 'tasks.assignedChecker': req.user._id },
-                { 'tasks.subtasks.assignedToMaker': req.user._id },
-                { 'tasks.subtasks.assignedToChecker': req.user._id }
+                { assignedEmployee: uid },
+                { assignedEmployee: uidStr },
+                { assignedProjectManager: uid },
+                { assignedProjectManager: uidStr },
+                { assignedFreelancer: uid },
+                { assignedFreelancer: uidStr },
+                { assignedMaker: uid },
+                { assignedMaker: uidStr },
+                { assignedChecker: uid },
+                { assignedChecker: uidStr },
+                { 'tasks.assignedTo': uid },
+                { 'tasks.assignedTo': uidStr },
+                { 'tasks.assignedMaker': uid },
+                { 'tasks.assignedMaker': uidStr },
+                { 'tasks.assignedChecker': uid },
+                { 'tasks.assignedChecker': uidStr },
+                { 'tasks.subtasks.assignedToMaker': uid },
+                { 'tasks.subtasks.assignedToMaker': uidStr },
+                { 'tasks.subtasks.assignedToChecker': uid },
+                { 'tasks.subtasks.assignedToChecker': uidStr },
+                { 'tasks.timeLogs.employee': uid },
+                { 'tasks.timeLogs.employee': uidStr },
+                { 'auditHistory.auditedBy': uid },
+                { 'auditHistory.auditedBy': uidStr }
             ]
         });
     } else {

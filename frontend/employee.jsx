@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { Bell, X } from 'lucide-react';
 
 import EmployeeSidebar from './components/employee/EmployeeSidebar';
 import EmployeeTopbar from './components/employee/EmployeeTopbar';
@@ -10,12 +11,9 @@ import OrderProcessingModule from './components/employee/OrderProcessingModule';
 import { TaskManagementModule } from './modules/orders/v1.1';
 import TimeTrackingModule from './components/employee/TimeTrackingModule';
 import DocumentsModule from './components/employee/DocumentsModule';
-import RequirementsModule from './components/employee/RequirementsModule';
 import SupportModule from './components/employee/SupportModule';
 import TicketCenter from './components/tickets/TicketCenter';
 import CommercialsModule from './components/employee/CommercialsModule';
-import NotificationsModule from './components/employee/NotificationsModule';
-import SecurityModule from './components/employee/SecurityModule';
 import FinanceModule from './components/admin/finance/FinanceModule';
 import { dummyTickets } from './components/employee/mockData';
 import { useNotifications, NotificationsFeed, InAppBanner } from './modules/notifications/v1.1';
@@ -23,6 +21,7 @@ import HRMSModule from './modules/hrms/v1.1/index.jsx';
 import ServicesMasterView from './components/admin/ServicesMasterView';
 import AdminBookkeepingView from './components/admin/AdminBookkeepingView';
 import LeadsManagerView from './components/admin/LeadsManagerView';
+import AccountSettingsModal from './components/employee/AccountSettingsModal';
 
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
 
@@ -40,6 +39,8 @@ const EmployeeApp = () => {
     return localStorage.getItem('employee_sidebar_collapsed') === 'true';
   });
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [orders, setOrders] = useState([]);
   const [todos, setTodos] = useState([]);
@@ -537,15 +538,6 @@ const EmployeeApp = () => {
         );
       case 'documents':
         return <DocumentsModule selectedOrder={selectedOrder} />;
-      case 'requirements':
-        return (
-          <RequirementsModule
-            selectedOrder={selectedOrder}
-            onUpdateRequirementStatus={handleUpdateRequirementStatus}
-            onRaiseRequirement={handleRaiseRequirement}
-            isClockedIn={isClockedIn}
-          />
-        );
       case 'support':
         return <TicketCenter userInfo={userInfo} userRole="employee" />;
       case 'commercials':
@@ -554,23 +546,6 @@ const EmployeeApp = () => {
         return <FinanceModule token={userInfo?.token} />;
       case 'bookkeeping':
         return <AdminBookkeepingView token={userInfo?.token} />;
-      case 'notifications':
-        return (
-          <NotificationsFeed 
-            notifications={notifications}
-            onMarkRead={markRead}
-            onMarkAllRead={markAllRead}
-            onClickAction={(notif) => {
-              if (notif.type === 'Ticket') {
-                setActiveTab('support');
-              } else {
-                setActiveTab('queue');
-              }
-            }}
-          />
-        );
-      case 'security':
-        return <SecurityModule />;
       case 'hrms':
         return <HRMSModule role={userInfo?.role} />;
       case 'services':
@@ -611,13 +586,69 @@ const EmployeeApp = () => {
           activeTaskElapsedLabel={formatDuration(activeTaskElapsedSeconds)}
           onPauseTask={pauseTaskSession}
           onCompleteTask={completeTaskSession}
+          unreadNotificationsCount={unreadCount}
+          onOpenNotifications={() => setIsNotificationsModalOpen(true)}
+          onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
         />
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">{renderActiveModule()}</div>
       </main>
+
+      {/* Notifications Modal */}
+      {isNotificationsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-4xl max-h-[85vh] rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
+            <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Notification Center</h3>
+                  <p className="text-xs text-slate-500 font-medium">Updates, order assignments & system alerts</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsNotificationsModalOpen(false)}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <NotificationsFeed
+                notifications={notifications}
+                onMarkRead={markRead}
+                onMarkAllRead={markAllRead}
+                onClickAction={(notif) => {
+                  setIsNotificationsModalOpen(false);
+                  if (notif.type === 'Ticket') {
+                    setActiveTab('support');
+                  } else {
+                    setActiveTab('queue');
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Account Settings Modal */}
+      <AccountSettingsModal
+        isOpen={isAccountSettingsOpen}
+        onClose={() => setIsAccountSettingsOpen(false)}
+        userInfo={userInfo}
+        onUpdateProfile={(updated) => {
+          const merged = { ...userInfo, ...updated };
+          setUserInfo(merged);
+          localStorage.setItem('userInfo', JSON.stringify(merged));
+        }}
+      />
+
       <InAppBanner 
         activeNotification={activeBannerNotification}
         onDismiss={() => setActiveBannerNotification(null)}
-        onClickAction={() => setActiveTab('notifications')}
+        onClickAction={() => setIsNotificationsModalOpen(true)}
       />
     </div>
   );
