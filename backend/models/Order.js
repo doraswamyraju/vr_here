@@ -70,6 +70,11 @@ const orderSchema = mongoose.Schema({
         ref: 'User',
         default: null
     },
+    assignedProjectManager: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
     assignedMaker: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -85,6 +90,46 @@ const orderSchema = mongoose.Schema({
         ref: 'User',
         default: null
     },
+    auditStatus: {
+        type: String,
+        enum: ['Not Submitted', 'Submitted for Review', 'Changes Requested', 'Approved by Checker'],
+        default: 'Not Submitted'
+    },
+    auditNotes: {
+        type: String,
+        default: ''
+    },
+    makerSubmittedAt: {
+        type: Date,
+        default: null
+    },
+    checkerAuditedAt: {
+        type: Date,
+        default: null
+    },
+    auditHistory: [{
+        auditedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        auditedByName: {
+            type: String,
+            default: ''
+        },
+        decision: {
+            type: String,
+            enum: ['Approved', 'Changes Requested', 'Submitted', 'Override Approved'],
+            default: 'Submitted'
+        },
+        notes: {
+            type: String,
+            default: ''
+        },
+        timestamp: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     freelancerPayout: {
         type: Number,
         default: 0
@@ -363,9 +408,11 @@ const orderSchema = mongoose.Schema({
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ user: 1 });
 orderSchema.index({ assignedEmployee: 1 });
+orderSchema.index({ assignedProjectManager: 1 });
 orderSchema.index({ assignedMaker: 1 });
 orderSchema.index({ assignedChecker: 1 });
 orderSchema.index({ assignedFreelancer: 1 });
+orderSchema.index({ auditStatus: 1 });
 orderSchema.index({ status: 1 });
 
 const Order = mongoose.model('Order', orderSchema);

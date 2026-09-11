@@ -193,21 +193,21 @@ const OrdersModule = ({
               </div>
               <div>
                 <label className="text-xs text-slate-500 font-semibold">Project Manager</label>
-                <select value={selectedOrder.assignedEmployee?._id || selectedOrder.assignedEmployee || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { employeeId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white">
+                <select value={selectedOrder.assignedProjectManager?._id || selectedOrder.assignedProjectManager || selectedOrder.assignedEmployee?._id || selectedOrder.assignedEmployee || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { projectManagerId: event.target.value || null, employeeId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium">
                   <option value="">Unassigned</option>
                   {employees.map((employee) => <option key={employee._id} value={employee._id}>{employee.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs text-slate-500">Maker</label>
-                <select value={selectedOrder.assignedMaker?._id || selectedOrder.assignedMaker || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { makerId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white">
+                <label className="text-xs text-slate-500 font-semibold">Maker</label>
+                <select value={selectedOrder.assignedMaker?._id || selectedOrder.assignedMaker || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { makerId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium">
                   <option value="">Unassigned</option>
                   {employees.map((employee) => <option key={employee._id} value={employee._id}>{employee.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs text-slate-500">Checker</label>
-                <select value={selectedOrder.assignedChecker?._id || selectedOrder.assignedChecker || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { checkerId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white">
+                <label className="text-xs text-slate-500 font-semibold">Checker</label>
+                <select value={selectedOrder.assignedChecker?._id || selectedOrder.assignedChecker || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { checkerId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium">
                   <option value="">Unassigned</option>
                   {employees.map((employee) => <option key={employee._id} value={employee._id}>{employee.name}</option>)}
                 </select>

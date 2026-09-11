@@ -27,7 +27,9 @@ import {
     updateRequirement,
     addRequirement,
     deleteRequirement,
-    resetRequirements
+    resetRequirements,
+    submitOrderToChecker,
+    checkerAuditOrder
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -53,7 +55,13 @@ router.route('/:id/status')
     .put(protect, updateOrderStatus);
 
 router.route('/:id/assign')
-    .put(protect, admin, assignOrder);
+    .put(protect, assignOrder);
+
+router.route('/:id/submit-to-checker')
+    .post(protect, submitOrderToChecker);
+
+router.route('/:id/checker-audit')
+    .post(protect, checkerAuditOrder);
 
 router.route('/:id/commercials')
     .put(protect, admin, updateOrderCommercials);

@@ -17,6 +17,7 @@ import { uploadBufferToDrive, getCustomerDriveFolder } from '../services/googleD
 const ORDER_POPULATE = [
     { path: 'user', select: 'name email phone' },
     { path: 'assignedEmployee', select: 'name email phone profilePhoto role' },
+    { path: 'assignedProjectManager', select: 'name email phone profilePhoto role' },
     { path: 'assignedMaker', select: 'name email role' },
     { path: 'assignedChecker', select: 'name email role' },
     { path: 'assignedFreelancer', select: 'name email phone isClockedIn lastClockInTime' },
@@ -25,8 +26,37 @@ const ORDER_POPULATE = [
     { path: 'tasks.assignedChecker', select: 'name email role' },
     { path: 'tasks.subtasks.assignedToMaker', select: 'name email role' },
     { path: 'tasks.subtasks.assignedToChecker', select: 'name email role' },
-    { path: 'tasks.timeLogs.employee', select: 'name email role' }
+    { path: 'tasks.timeLogs.employee', select: 'name email role' },
+    { path: 'auditHistory.auditedBy', select: 'name email role' }
 ];
+
+const sanitizeOrderForRole = (orderDoc, user) => {
+    if (!orderDoc || !user) return orderDoc;
+    if (user.role === 'admin' || user.role === 'client') return orderDoc;
+
+    const orderObj = typeof orderDoc.toObject === 'function' ? orderDoc.toObject() : { ...orderDoc };
+    const userIdStr = String(user._id || user);
+
+    const isPM = (orderObj.assignedEmployee && String(orderObj.assignedEmployee._id || orderObj.assignedEmployee) === userIdStr) ||
+                 (orderObj.assignedProjectManager && String(orderObj.assignedProjectManager._id || orderObj.assignedProjectManager) === userIdStr);
+
+    const isMaker = orderObj.assignedMaker && String(orderObj.assignedMaker._id || orderObj.assignedMaker) === userIdStr;
+    const isChecker = orderObj.assignedChecker && String(orderObj.assignedChecker._id || orderObj.assignedChecker) === userIdStr;
+
+    // If user is Maker or Checker AND NOT Project Manager:
+    if ((isMaker || isChecker) && !isPM) {
+        orderObj.price = undefined;
+        orderObj.partnerCommissionAmount = undefined;
+        orderObj.freelancerPayout = undefined;
+        orderObj.paymentId = undefined;
+        orderObj.razorpayOrderId = undefined;
+        orderObj.paymentSignature = undefined;
+        orderObj.invoices = [];
+        orderObj.isFinancialsHidden = true; // flag for frontend UI guards
+    }
+
+    return orderObj;
+};
 
 const populateOrderQuery = (query) => {
     let enriched = query;
@@ -422,6 +452,7 @@ const getOrders = asyncHandler(async (req, res) => {
         orderQuery = Order.find({
             $or: [
                 { assignedEmployee: req.user._id },
+                { assignedProjectManager: req.user._id },
                 { assignedFreelancer: req.user._id },
                 { assignedMaker: req.user._id },
                 { assignedChecker: req.user._id },
@@ -456,7 +487,7 @@ const getOrders = asyncHandler(async (req, res) => {
     const ordersWithTodos = orders.map((order) => {
         const orderObj = order.toObject ? order.toObject() : order;
         orderObj.linkedTodos = todoMap[orderObj._id.toString()] || [];
-        return orderObj;
+        return sanitizeOrderForRole(orderObj, req.user);
     });
 
     res.json(ordersWithTodos);
@@ -483,7 +514,7 @@ const getOrderById = asyncHandler(async (req, res) => {
     const orderObj = order.toObject();
     orderObj.linkedTodos = linkedTodos;
 
-    res.json(orderObj);
+    res.json(sanitizeOrderForRole(orderObj, req.user));
 });
 
 // @desc    Update order status (Employee/Admin)
@@ -586,11 +617,11 @@ const deleteOrder = asyncHandler(async (req, res) => {
     res.json({ message: 'Order deleted successfully' });
 });
 
-// @desc    Assign order to employee / maker / checker (Admin only)
+// @desc    Assign order to Project Manager / maker / checker (Admin & PM)
 // @route   PUT /api/orders/:id/assign
-// @access  Private/Admin
+// @access  Private (Admin / PM)
 const assignOrder = asyncHandler(async (req, res) => {
-    const { employeeId, makerId, checkerId } = req.body;
+    const { employeeId, projectManagerId, makerId, checkerId } = req.body;
     const order = await Order.findById(req.params.id);
 
     if (!order) {
@@ -598,22 +629,45 @@ const assignOrder = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
+    const userIdStr = String(req.user._id);
+    const isAdmin = req.user.role === 'admin';
+    const isPM = (order.assignedEmployee && String(order.assignedEmployee) === userIdStr) ||
+                 (order.assignedProjectManager && String(order.assignedProjectManager) === userIdStr);
+
+    if (!isAdmin && !isPM) {
+        res.status(403);
+        throw new Error('Only the Admin or assigned Project Manager can assign roles for this order');
+    }
+
+    const effectivePmId = projectManagerId !== undefined ? projectManagerId : employeeId;
+
     const oldEmployee = order.assignedEmployee?.toString();
     const oldMaker = order.assignedMaker?.toString();
     const oldChecker = order.assignedChecker?.toString();
 
-    if (employeeId !== undefined) order.assignedEmployee = employeeId || null;
+    if (effectivePmId !== undefined) {
+        order.assignedEmployee = effectivePmId || null;
+        order.assignedProjectManager = effectivePmId || null;
+    }
     if (makerId !== undefined) order.assignedMaker = makerId || null;
     if (checkerId !== undefined) order.assignedChecker = checkerId || null;
 
     const updatedOrder = await order.save();
 
+    await logOrderActivity(
+        order._id,
+        req.user._id,
+        'ROLE_ASSIGNMENT',
+        `Updated role assignments: PM: ${order.assignedProjectManager || 'None'}, Maker: ${order.assignedMaker || 'None'}, Checker: ${order.assignedChecker || 'None'} by ${req.user.name}`,
+        { assignedProjectManager: order.assignedProjectManager, assignedMaker: order.assignedMaker, assignedChecker: order.assignedChecker }
+    );
+
     // Trigger notifications if assignments changed
-    if (employeeId && oldEmployee !== employeeId) {
+    if (effectivePmId && oldEmployee !== effectivePmId) {
         await notifyEmployee({
-            employeeId,
-            title: 'New Order Assigned',
-            message: `You have been assigned to client ${order.clientName}'s compliance project: ${order.serviceName} (${order.packageName}).`,
+            employeeId: effectivePmId,
+            title: 'New Order Assigned (Project Manager)',
+            message: `You have been assigned as Project Manager for client ${order.clientName}'s project: ${order.serviceName} (${order.packageName}).`,
             type: 'Order',
             email: true
         });
@@ -639,7 +693,135 @@ const assignOrder = asyncHandler(async (req, res) => {
         });
     }
 
-    res.json(updatedOrder);
+    const populated = await populateOrderQuery(Order.findById(updatedOrder._id));
+    res.json(sanitizeOrderForRole(populated, req.user));
+});
+
+// @desc    Maker / PM submits order work to Checker for quality review
+// @route   POST /api/orders/:id/submit-to-checker
+// @access  Private (Employee/Freelancer/Admin)
+const submitOrderToChecker = asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const userIdStr = String(req.user._id);
+    const isAdmin = req.user.role === 'admin';
+    const isPM = (order.assignedEmployee && String(order.assignedEmployee) === userIdStr) ||
+                 (order.assignedProjectManager && String(order.assignedProjectManager) === userIdStr);
+    const isMaker = order.assignedMaker && String(order.assignedMaker) === userIdStr;
+
+    if (!isAdmin && !isPM && !isMaker) {
+        res.status(403);
+        throw new Error('Only the assigned Maker, Project Manager, or Admin can submit work for review');
+    }
+
+    order.auditStatus = 'Submitted for Review';
+    order.makerSubmittedAt = new Date();
+    order.auditNotes = req.body.notes || 'Work submitted for quality review.';
+    
+    order.auditHistory.push({
+        auditedBy: req.user._id,
+        auditedByName: req.user.name,
+        decision: 'Submitted',
+        notes: req.body.notes || 'Work submitted for quality review by Maker.',
+        timestamp: new Date()
+    });
+
+    const updatedOrder = await order.save();
+
+    await logOrderActivity(
+        order._id,
+        req.user._id,
+        'AUDIT_SUBMIT',
+        `Work submitted to Checker for audit by ${req.user.name}. Notes: ${req.body.notes || 'None'}`,
+        { auditStatus: 'Submitted for Review', notes: req.body.notes }
+    );
+
+    // Notify Checker and PM
+    if (order.assignedChecker) {
+        await notifyEmployee({
+            employeeId: order.assignedChecker,
+            title: 'Audit Review Requested',
+            message: `Maker ${req.user.name} has submitted "${order.serviceName}" (${order.clientName}) for your quality review.`,
+            type: 'Order',
+            email: true
+        });
+    }
+
+    const populated = await populateOrderQuery(Order.findById(updatedOrder._id));
+    res.json(sanitizeOrderForRole(populated, req.user));
+});
+
+// @desc    Checker / PM / Admin performs quality audit on order
+// @route   POST /api/orders/:id/checker-audit
+// @access  Private (Employee/Freelancer/Admin)
+const checkerAuditOrder = asyncHandler(async (req, res) => {
+    const { decision, notes = '' } = req.body; // 'Approved' | 'Changes Requested'
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    const userIdStr = String(req.user._id);
+    const isAdmin = req.user.role === 'admin';
+    const isPM = (order.assignedEmployee && String(order.assignedEmployee) === userIdStr) ||
+                 (order.assignedProjectManager && String(order.assignedProjectManager) === userIdStr);
+    const isChecker = order.assignedChecker && String(order.assignedChecker) === userIdStr;
+
+    if (!isAdmin && !isPM && !isChecker) {
+        res.status(403);
+        throw new Error('Only the assigned Checker, Project Manager (Override), or Admin can perform audit');
+    }
+
+    if (decision !== 'Approved' && decision !== 'Changes Requested') {
+        res.status(400);
+        throw new Error('Decision must be either "Approved" or "Changes Requested"');
+    }
+
+    const newAuditStatus = decision === 'Approved' ? 'Approved by Checker' : 'Changes Requested';
+    order.auditStatus = newAuditStatus;
+    order.auditNotes = notes;
+    order.checkerAuditedAt = new Date();
+
+    order.auditHistory.push({
+        auditedBy: req.user._id,
+        auditedByName: req.user.name,
+        decision: (isPM && !isChecker) ? 'Override Approved' : decision,
+        notes: notes || (decision === 'Approved' ? 'Audit verified and approved for final filing.' : 'Changes requested.'),
+        timestamp: new Date()
+    });
+
+    const updatedOrder = await order.save();
+
+    await logOrderActivity(
+        order._id,
+        req.user._id,
+        'AUDIT_DECISION',
+        `Audit decision: ${newAuditStatus} by ${req.user.name}. Notes: ${notes}`,
+        { auditStatus: newAuditStatus, decision, notes }
+    );
+
+    // Notify Maker & PM
+    if (order.assignedMaker) {
+        await notifyEmployee({
+            employeeId: order.assignedMaker,
+            title: decision === 'Approved' ? 'Audit Approved 🎉' : 'Changes Requested on Order ⚠️',
+            message: decision === 'Approved' 
+                ? `Checker ${req.user.name} has APPROVED your work for "${order.serviceName}". Ready for final delivery.`
+                : `Checker ${req.user.name} requested changes on "${order.serviceName}". Notes: ${notes}`,
+            type: 'Order',
+            email: true
+        });
+    }
+
+    const populated = await populateOrderQuery(Order.findById(updatedOrder._id));
+    res.json(sanitizeOrderForRole(populated, req.user));
 });
 
 // @desc    Update order package/commercial details (Admin)
@@ -1712,6 +1894,8 @@ export {
     addRequirement,
     deleteRequirement,
     resetRequirements,
+    submitOrderToChecker,
+    checkerAuditOrder,
     // Export utilities for reuse in Recurring Services
     parseTasksFromText,
     parseRequirementsFromText,
