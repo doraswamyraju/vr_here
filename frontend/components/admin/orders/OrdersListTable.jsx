@@ -26,9 +26,14 @@ const OrdersListTable = ({ orders, onOpen, onQuickUpdate, onDelete }) => (
             const checkerName = order.assignedChecker?.name || 'Unassigned';
 
             return (
-              <tr key={order._id} className="hover:bg-indigo-50/60 transition">
+              <tr 
+                key={order._id} 
+                onClick={() => onOpen(order)}
+                className="hover:bg-indigo-50/70 transition cursor-pointer group"
+                title="Click to view order details"
+              >
                 <td className="px-5 py-3.5">
-                  <p className="font-bold text-slate-800">{order.serviceName}</p>
+                  <p className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{order.serviceName}</p>
                   <p className="text-[11px] text-slate-400 font-semibold uppercase">{order.packageName || 'Standard'}</p>
                 </td>
                 <td className="px-5 py-3.5">
@@ -68,13 +73,31 @@ const OrdersListTable = ({ orders, onOpen, onQuickUpdate, onDelete }) => (
                 <td className="px-5 py-3.5 font-black text-slate-800">{rupees(order.price)}</td>
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => onOpen(order)} className="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1 shadow-sm transition">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpen(order);
+                      }} 
+                      className="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1 shadow-sm transition"
+                    >
                       <Pencil size={12} /> Manage
                     </button>
-                    <button onClick={() => onQuickUpdate(order)} className="px-2.5 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-700 text-xs font-bold inline-flex items-center gap-1 transition">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onQuickUpdate(order);
+                      }} 
+                      className="px-2.5 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-700 text-xs font-bold inline-flex items-center gap-1 transition"
+                    >
                       <RefreshCw size={12} /> Status
                     </button>
-                    <button onClick={() => onDelete(order)} className="px-2.5 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold inline-flex items-center gap-1 transition">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(order);
+                      }} 
+                      className="px-2.5 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold inline-flex items-center gap-1 transition"
+                    >
                       <Trash2 size={12} />
                     </button>
                   </div>

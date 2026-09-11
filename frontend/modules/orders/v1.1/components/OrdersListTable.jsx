@@ -19,24 +19,47 @@ const OrdersListTable = ({ orders, onOpen, onQuickUpdate, onDelete }) => (
         </thead>
         <tbody className="divide-y divide-slate-100">
           {orders.map((order) => (
-            <tr key={order._id} className="hover:bg-indigo-50/60 transition">
-              <td className="px-5 py-3">
-                <p className="font-semibold text-slate-800">{order.serviceName}</p>
+            <tr 
+              key={order._id} 
+              onClick={() => onOpen(order)}
+              className="hover:bg-indigo-50/70 transition cursor-pointer group"
+              title="Click to view order details"
+            >
+              <td className="px-5 py-3.5">
+                <p className="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{order.serviceName}</p>
                 <p className="text-xs text-slate-500">{order.packageName}</p>
               </td>
-              <td className="px-5 py-3">{getOrderClientLabel(order)}</td>
-              <td className="px-5 py-3">{order.assignedEmployee?.name || 'Unassigned'}</td>
-              <td className="px-5 py-3"><StatusBadge status={order.status} /></td>
-              <td className="px-5 py-3 font-semibold">{rupees(order.price)}</td>
-              <td className="px-5 py-3">
+              <td className="px-5 py-3.5">{getOrderClientLabel(order)}</td>
+              <td className="px-5 py-3.5">{order.assignedProjectManager?.name || order.assignedEmployee?.name || order.assignedMaker?.name || 'Unassigned'}</td>
+              <td className="px-5 py-3.5"><StatusBadge status={order.status} /></td>
+              <td className="px-5 py-3.5 font-semibold text-slate-800">{rupees(order.price)}</td>
+              <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2">
-                  <button onClick={() => onOpen(order)} className="px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold inline-flex items-center gap-1">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpen(order);
+                    }} 
+                    className="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold inline-flex items-center gap-1 shadow-sm transition"
+                  >
                     <Pencil size={12} /> Edit
                   </button>
-                  <button onClick={() => onQuickUpdate(order)} className="px-2.5 py-1.5 rounded-lg bg-sky-100 text-sky-700 text-xs font-semibold inline-flex items-center gap-1">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onQuickUpdate(order);
+                    }} 
+                    className="px-2.5 py-1.5 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-700 text-xs font-semibold inline-flex items-center gap-1 transition"
+                  >
                     <RefreshCw size={12} /> Update
                   </button>
-                  <button onClick={() => onDelete(order)} className="px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-700 text-xs font-semibold inline-flex items-center gap-1">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(order);
+                    }} 
+                    className="px-2.5 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-semibold inline-flex items-center gap-1 transition"
+                  >
                     <Trash2 size={12} /> Delete
                   </button>
                 </div>
