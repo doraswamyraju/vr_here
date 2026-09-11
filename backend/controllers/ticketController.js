@@ -180,8 +180,6 @@ const getTicketById = asyncHandler(async (req, res) => {
             throw new Error('Not authorized to access tickets from this category');
         }
     }
-        }
-    }
 
     res.json(ticket);
 });
