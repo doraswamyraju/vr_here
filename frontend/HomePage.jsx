@@ -198,19 +198,8 @@ const HomePage = () => {
   const [suggestions, setSuggestions] = useState([]); // Search Suggestions
   const [activeAccordion, setActiveAccordion] = useState(null); // For FAQs
   const [capsules, setCapsules] = useState([]);
-  const [isItrPopupOpen, setIsItrPopupOpen] = useState(false);
 
   // --- EFFECTS ---
-  useEffect(() => {
-    const shown = sessionStorage.getItem('itrPromoShown');
-    if (!shown) {
-      const timer = setTimeout(() => {
-        setIsItrPopupOpen(true);
-        sessionStorage.setItem('itrPromoShown', 'true');
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -516,61 +505,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 🎁 ITR EARLY BIRD PROMO POPUP MODAL */}
-      {isItrPopupOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-700/60 rounded-3xl p-8 max-w-lg w-full relative shadow-2xl text-white overflow-hidden transform transition-all duration-300">
-            {/* Visual background accents */}
-            <div className="absolute -top-12 -right-12 w-32 h-32 bg-red-600/30 rounded-full blur-2xl"></div>
-            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-orange-500/20 rounded-full blur-2xl"></div>
-
-            {/* Close button */}
-            <button 
-              onClick={() => setIsItrPopupOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Content */}
-            <div className="text-center relative z-10">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600/20 text-red-400 border border-red-500/30 rounded-full text-[10px] font-black uppercase tracking-wider mb-4">
-                <Clock className="w-3.5 h-3.5" /> Early Bird filing LIVE
-              </div>
-
-              <h3 className="text-2xl sm:text-3xl font-black mb-3">
-                Early Bird Offer: Flat 10% Off on ITR Filings!
-              </h3>
-              
-              <p className="text-slate-300 text-sm leading-relaxed mb-6">
-                Avoid last-minute rush and notice discrepancies. File your Income Tax Return accurately with certified CAs for maximum savings.
-              </p>
-
-              <div className="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4 mb-6">
-                <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Apply Code at Checkout</div>
-                <div className="text-2xl font-black text-orange-400 tracking-wider mt-1 select-all">ITR10</div>
-                <div className="text-xs text-slate-400 mt-1 font-semibold">Valid for first 250 users • AY 2026-27 (FY 2025-26)</div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button 
-                  onClick={() => setIsItrPopupOpen(false)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 font-bold py-3.5 rounded-xl transition text-sm"
-                >
-                  Maybe Later
-                </button>
-                <a 
-                  href="/income-tax-return"
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-red-600/30"
-                >
-                  <span>Start Filing Now</span>
-                  <ArrowRight className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 1. SERVICE CATEGORIES BENTO GRID */}
       <section id="services" className="py-24 bg-gradient-to-b from-white via-slate-50 to-slate-100/60 relative overflow-hidden">
