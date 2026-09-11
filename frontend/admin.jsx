@@ -104,6 +104,7 @@ function AdminApp() {
   const [ordersViewMode, setOrdersViewMode] = useState('list');
   const [orderDetailTab, setOrderDetailTab] = useState('Overview');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
   const [orders, setOrders] = useState(() => {
     try {
       const cached = sessionStorage.getItem('cached_admin_orders');
