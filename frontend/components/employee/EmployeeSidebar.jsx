@@ -10,10 +10,15 @@ const EmployeeSidebar = ({
   onLogout,
   userInfo
 }) => {
+  const isPMOrAdmin = userInfo?.role === 'admin' || userInfo?.role === 'Admin' || userInfo?.designation?.toLowerCase()?.includes('project manager') || userInfo?.role === 'Project Manager';
+
   const visibleTabs = EMPLOYEE_TABS.filter(item => {
     if (item.id === 'support') {
       const hasCategories = userInfo?.assignedTicketCategories && userInfo.assignedTicketCategories.length > 0;
       return userInfo?.role === 'admin' || hasCategories;
+    }
+    if (item.id === 'commercials' || item.id === 'finance') {
+      return isPMOrAdmin;
     }
     return true;
   });

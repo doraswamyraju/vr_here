@@ -37,14 +37,18 @@ const sanitizeOrderForRole = (orderDoc, user) => {
     const orderObj = typeof orderDoc.toObject === 'function' ? orderDoc.toObject() : { ...orderDoc };
     const userIdStr = String(user._id || user);
 
-    const isPM = (orderObj.assignedEmployee && String(orderObj.assignedEmployee._id || orderObj.assignedEmployee) === userIdStr) ||
-                 (orderObj.assignedProjectManager && String(orderObj.assignedProjectManager._id || orderObj.assignedProjectManager) === userIdStr);
+    const pmId = orderObj.assignedProjectManager ? String(orderObj.assignedProjectManager._id || orderObj.assignedProjectManager) : null;
+    const makerId = orderObj.assignedMaker ? String(orderObj.assignedMaker._id || orderObj.assignedMaker) : null;
+    const checkerId = orderObj.assignedChecker ? String(orderObj.assignedChecker._id || orderObj.assignedChecker) : null;
+    const legacyEmpId = orderObj.assignedEmployee ? String(orderObj.assignedEmployee._id || orderObj.assignedEmployee) : null;
 
-    const isMaker = orderObj.assignedMaker && String(orderObj.assignedMaker._id || orderObj.assignedMaker) === userIdStr;
-    const isChecker = orderObj.assignedChecker && String(orderObj.assignedChecker._id || orderObj.assignedChecker) === userIdStr;
+    // Explicit PM check: strictly assignedProjectManager, or legacy assignedEmployee IF not assigned as Maker/Checker
+    const isPM = (pmId && pmId === userIdStr) || (!pmId && legacyEmpId === userIdStr && makerId !== userIdStr && checkerId !== userIdStr);
+    const isMaker = Boolean(makerId && makerId === userIdStr);
+    const isChecker = Boolean(checkerId && checkerId === userIdStr);
 
-    // If user is Maker or Checker AND NOT Project Manager:
-    if ((isMaker || isChecker) && !isPM) {
+    // If user is Maker or Checker AND NOT explicitly PM:
+    if ((isMaker || isChecker || !isPM)) {
         orderObj.price = undefined;
         orderObj.partnerCommissionAmount = undefined;
         orderObj.freelancerPayout = undefined;

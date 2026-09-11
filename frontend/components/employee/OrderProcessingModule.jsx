@@ -100,11 +100,15 @@ const OrderProcessingModule = ({
   const isPM = useMemo(() => {
     if (isAdmin) return true;
     if (!selectedOrder) return false;
-    const pmId = normalizeId(selectedOrder.assignedProjectManager || selectedOrder.assignedEmployee);
+    const pmId = normalizeId(selectedOrder.assignedProjectManager);
+    const legacyEmpId = normalizeId(selectedOrder.assignedEmployee);
+    const makerId = normalizeId(selectedOrder.assignedMaker);
+    const checkerId = normalizeId(selectedOrder.assignedChecker);
+
     if (pmId && pmId === employeeId) return true;
-    if (userInfo?.designation?.toLowerCase()?.includes('project manager') || userRoleLower === 'project manager') return true;
+    if (!pmId && legacyEmpId === employeeId && makerId !== employeeId && checkerId !== employeeId) return true;
     return false;
-  }, [isAdmin, selectedOrder, normalizeId, employeeId, userInfo, userRoleLower]);
+  }, [isAdmin, selectedOrder, normalizeId, employeeId]);
 
   const isMaker = useMemo(() => {
     if (!selectedOrder) return false;
@@ -120,10 +124,11 @@ const OrderProcessingModule = ({
 
   // Determine if financial information should be completely hidden
   const isFinancialsHidden = useMemo(() => {
-    if (selectedOrder?.isFinancialsHidden) return true;
-    if (isAdmin || isPM) return false;
-    return isMaker || isChecker || userRoleLower === 'employee' || userRoleLower === 'freelancer';
-  }, [selectedOrder, isAdmin, isPM, isMaker, isChecker, userRoleLower]);
+    if (isAdmin) return false;
+    if (isPM) return false;
+    // Always hide financials for Maker, Checker, or general employee/freelancer
+    return true;
+  }, [isAdmin, isPM]);
 
   // Current user's tier role badge label
   const currentUserRoleLabel = useMemo(() => {
