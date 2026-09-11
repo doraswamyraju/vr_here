@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { FileSpreadsheet, Kanban, List, RefreshCcw } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { FileSpreadsheet, Kanban, List, RefreshCcw, Pencil, Check, X, Loader2, CheckCircle } from 'lucide-react';
 import {
   INVOICE_STATUSES,
   ORDER_STATUSES,
@@ -93,6 +93,46 @@ const OrdersModule = ({
 
   const selectedOrder = useMemo(() => orders.find((order) => order._id === selectedOrderId) || null, [orders, selectedOrderId]);
 
+  // Inline order name editing & save feedback
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState('');
+  const [savingNameLoading, setSavingNameLoading] = useState(false);
+  const [isSavingCommercials, setIsSavingCommercials] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+
+  const handleSaveOrderName = async () => {
+    if (!editNameValue.trim() || !selectedOrder) return;
+    setSavingNameLoading(true);
+    try {
+      if (onQuickUpdateOrder) {
+        await onQuickUpdateOrder(selectedOrder._id, { serviceName: editNameValue.trim() });
+      }
+      setSaveSuccessMsg('Order name updated successfully!');
+      setTimeout(() => setSaveSuccessMsg(''), 4500);
+      setIsEditingName(false);
+    } catch (err) {
+      console.error('Error updating order name:', err);
+      alert(err.response?.data?.message || 'Failed to update order name');
+    } finally {
+      setSavingNameLoading(false);
+    }
+  };
+
+  const handleSaveAssignments = async () => {
+    setIsSavingCommercials(true);
+    try {
+      if (onSaveCommercials) {
+        await onSaveCommercials();
+      }
+      setSaveSuccessMsg('Assignments and pricing saved successfully!');
+      setTimeout(() => setSaveSuccessMsg(''), 4500);
+    } catch (err) {
+      console.error('Error saving assignments:', err);
+    } finally {
+      setIsSavingCommercials(false);
+    }
+  };
+
   const openOrder = (order) => {
     setSelectedOrderId(order._id);
     setOrderDetailTab('Overview');
@@ -154,7 +194,54 @@ const OrdersModule = ({
           <Card className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-black text-slate-900">{selectedOrder.serviceName}</h2>
+                {isEditingName ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      value={editNameValue}
+                      onChange={(e) => setEditNameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveOrderName();
+                        if (e.key === 'Escape') setIsEditingName(false);
+                      }}
+                      autoFocus
+                      className="text-lg font-bold text-slate-900 border-2 border-indigo-500 rounded-lg px-2.5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      placeholder="Enter order name"
+                    />
+                    <button
+                      onClick={handleSaveOrderName}
+                      disabled={savingNameLoading || !editNameValue.trim()}
+                      className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition disabled:opacity-50 flex items-center justify-center"
+                      title="Save Order Name"
+                    >
+                      {savingNameLoading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingName(false);
+                        setEditNameValue(selectedOrder.serviceName || '');
+                      }}
+                      className="p-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg shadow-sm transition flex items-center justify-center"
+                      title="Cancel"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 group">
+                    <h2 className="text-xl font-black text-slate-900">{selectedOrder.serviceName}</h2>
+                    <button
+                      onClick={() => {
+                        setEditNameValue(selectedOrder.serviceName || '');
+                        setIsEditingName(true);
+                      }}
+                      className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                      title="Edit Order Name"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                  </div>
+                )}
                 <p className="text-sm text-slate-500 mt-1">{getOrderClientLabel(selectedOrder)} | {rupees(selectedOrder.price)}</p>
                 <div className="mt-1 flex flex-wrap gap-3 text-xs">
                   {(selectedOrder.phone || selectedOrder?.user?.phone) ? (
@@ -184,49 +271,64 @@ const OrdersModule = ({
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-              <div className="xl:col-span-2">
-                <label className="text-xs text-slate-500">Status</label>
-                <select value={selectedOrder.status} onChange={(event) => onUpdateOrderStatus(selectedOrder._id, event.target.value)} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+              <div>
+                <label className="text-xs text-slate-500 font-semibold">Status</label>
+                <select value={selectedOrder.status} onChange={(event) => onUpdateOrderStatus(selectedOrder._id, event.target.value)} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium text-sm">
                   {ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-xs text-slate-500 font-semibold">Project Manager</label>
-                <select value={selectedOrder.assignedProjectManager?._id || selectedOrder.assignedProjectManager || selectedOrder.assignedEmployee?._id || selectedOrder.assignedEmployee || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { projectManagerId: event.target.value || null, employeeId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium">
+                <select value={selectedOrder.assignedProjectManager?._id || selectedOrder.assignedProjectManager || selectedOrder.assignedEmployee?._id || selectedOrder.assignedEmployee || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { projectManagerId: event.target.value || null, employeeId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium text-sm">
                   <option value="">Unassigned</option>
                   {employees.map((employee) => <option key={employee._id} value={employee._id}>{employee.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-xs text-slate-500 font-semibold">Maker</label>
-                <select value={selectedOrder.assignedMaker?._id || selectedOrder.assignedMaker || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { makerId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium">
+                <select value={selectedOrder.assignedMaker?._id || selectedOrder.assignedMaker || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { makerId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium text-sm">
                   <option value="">Unassigned</option>
                   {employees.map((employee) => <option key={employee._id} value={employee._id}>{employee.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-xs text-slate-500 font-semibold">Checker</label>
-                <select value={selectedOrder.assignedChecker?._id || selectedOrder.assignedChecker || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { checkerId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium">
+                <select value={selectedOrder.assignedChecker?._id || selectedOrder.assignedChecker || ''} onChange={(event) => onAssignOrder(selectedOrder._id, { checkerId: event.target.value || null })} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium text-sm">
                   <option value="">Unassigned</option>
                   {employees.map((employee) => <option key={employee._id} value={employee._id}>{employee.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs text-slate-500">Package</label>
-                <select value={commercialDraft.packageName} onChange={(event) => setCommercialDraft((prev) => ({ ...prev, packageName: event.target.value }))} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white">
-                  <option value="">Select Package</option>
-                  {PACKAGE_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">Price</label>
-                <input value={commercialDraft.price} onChange={(event) => setCommercialDraft((prev) => ({ ...prev, price: event.target.value }))} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300" />
+                <label className="text-xs text-slate-500 font-semibold">Price</label>
+                <input value={commercialDraft.price} onChange={(event) => setCommercialDraft((prev) => ({ ...prev, price: event.target.value }))} className="w-full mt-1 p-2.5 border rounded-lg border-slate-300 bg-white font-medium text-sm" placeholder="Price" />
               </div>
             </div>
 
-            <div className="mt-3">
-              <button onClick={onSaveCommercials} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700">Save Package Assignment</button>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button 
+                onClick={handleSaveAssignments} 
+                disabled={isSavingCommercials}
+                className="px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition flex items-center gap-2 shadow-sm"
+              >
+                {isSavingCommercials ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={16} />
+                    Save Package Assignment
+                  </>
+                )}
+              </button>
+              {saveSuccessMsg && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold animate-in fade-in">
+                  <CheckCircle size={14} className="text-emerald-600" />
+                  <span>{saveSuccessMsg}</span>
+                </div>
+              )}
             </div>
           </Card>
 

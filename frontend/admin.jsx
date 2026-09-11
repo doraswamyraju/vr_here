@@ -242,9 +242,21 @@ function AdminApp() {
     fetchData();
   };
 
-  const quickUpdateOrder = async (order) => {
-    const status = nextStatus(order.status, ORDER_STATUSES);
-    await updateOrderStatus(order._id, status);
+  const quickUpdateOrder = async (orderOrId, payload) => {
+    try {
+      if (typeof orderOrId === 'string' && payload) {
+        await axios.put(`/api/orders/${orderOrId}/commercials`, payload, config);
+      } else {
+        const order = orderOrId;
+        const status = nextStatus(order.status, ORDER_STATUSES);
+        await updateOrderStatus(order._id, status);
+      }
+      await fetchData();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || 'Failed to update order');
+      throw error;
+    }
   };
 
   const deleteOrder = async (order) => {
@@ -263,12 +275,19 @@ function AdminApp() {
 
   const saveCommercials = async () => {
     if (!selectedOrder) return;
-    await axios.put(`/api/orders/${selectedOrder._id}/commercials`, {
-      packageName: commercialDraft.packageName,
-      price: Number(commercialDraft.price || 0),
-      serviceName: commercialDraft.serviceName
-    }, config);
-    fetchData();
+    try {
+      await axios.put(`/api/orders/${selectedOrder._id}/commercials`, {
+        packageName: commercialDraft.packageName || selectedOrder.packageName,
+        price: Number(commercialDraft.price || 0),
+        serviceName: commercialDraft.serviceName || selectedOrder.serviceName
+      }, config);
+      await fetchData();
+      alert('Order details and assignments saved successfully!');
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || 'Failed to save order details');
+      throw error;
+    }
   };
 
   const importTaskWorkbook = async (orderId, file, replaceExisting) => {
