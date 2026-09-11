@@ -1,23 +1,20 @@
 # Cache-Safe Deployment Guide
 
-## Standard deploy (VPS)
+## Standard Deploy (VPS)
 Run these commands on the server:
 
 ```bash
 cd /var/www/vrhere
 
-# 1. Discard previous local build diffs (dist/ and modified templates)
-git checkout -- .
-git clean -fd dist/
+# 1. Discard any local modifications and untracked files on the server (avoids merge blocks)
+git reset --hard HEAD
+git checkout .
+git clean -fd
 
 # 2. Pull the latest code cleanly
 git pull origin main
 
-# 3. Clean install and compile frontend
-npm install
-npm run build
-
-# 4. Update and restart the backend
+# 3. Update backend and restart the process
 cd backend
 npm install
 pm2 restart vrhere-api --update-env
@@ -26,7 +23,7 @@ pm2 save
 
 ### Quick One-Liner (Copy-Paste Safe):
 ```bash
-cd /var/www/vrhere && git checkout -- . && git clean -fd dist/ && git pull origin main && npm install && npm run build && cd backend && npm install && pm2 restart vrhere-api --update-env && pm2 save
+cd /var/www/vrhere && git reset --hard HEAD && git checkout . && git clean -fd && git pull origin main && cd backend && npm install && pm2 restart vrhere-api --update-env && pm2 save
 ```
 
 > [!IMPORTANT]

@@ -1,37 +1,27 @@
-# Order Processing Flow
+# 3-Tier Role-Based Order Processing & Quality Audit Flow
 
-## 1. Order Intake
-- Customer selects one of three service packages, or selects `Consultation @ 499` when unsure.
-- System creates order with initial package/commercial details.
+## 1. 3-Tier Role Hierarchy & Permissions
+1. **Project Manager (PM)**:
+   - Primary operational contact for the order.
+   - Imports and sets up checklists, documents, and customer requirements.
+   - Assigns/reassigns Maker & Checker.
+   - Has full visibility into invoices, financials, and has override capabilities.
+2. **Maker (Work Execution)**:
+   - Executes workflow tasks and sub-tasks once requirements & checklists are ready.
+   - Submits completed work to the Checker for quality audit.
+   - **Financial Isolation**: Has NO access to `Invoices`, `Transactions`, financial pricing, or payment/invoice logs under `Activities`.
+3. **Checker (Quality Audit & Compliance)**:
+   - Reviews and audits Maker's submission (`Approved` or `Changes Requested`).
+   - If changes are requested, provides actionable notes for Maker to revise and re-submit.
+   - **Financial Isolation**: Has NO access to `Invoices`, `Transactions`, financial pricing, or payment/invoice logs under `Activities`.
+4. **Admin (Master Oversight)**:
+   - Full access to assign PM/Maker/Checker, manage pricing/invoicing, review audit history, and perform overrides.
 
-## 2. Consultation Conversion (Admin)
-- If consultation is selected, admin team contacts customer.
-- Admin finalizes and assigns the right package and price.
-- Admin assigns order owner and updates service status.
+## 2. Order Processing Stages
+1. **Intake & Conversion**: Order created with service package and assigned to PM.
+2. **Setup (PM)**: PM imports customer requirements, checklists, and assigns Maker & Checker.
+3. **Customer Submission**: Customer uploads requested documents into vault.
+4. **Execution (Maker)**: Maker completes tasks and submits work for quality review.
+5. **Quality Audit (Checker)**: Checker reviews deliverables $\rightarrow$ Marks `Approved` or `Changes Requested`.
+6. **Finish & Deliver (Maker / PM)**: Once audit is `Approved by Checker` (or PM override), final certificate is uploaded and order moves to `Completed`.
 
-## 3. Project Setup (Admin)
-- Import tasks and subtasks into the order workspace.
-- Import required customer details/documents checklist.
-- Raise additional invoice(s) when needed.
-
-## 4. Customer Submission
-- Customer uploads documents and submits required details.
-- Submission appears in order records for processing.
-
-## 5. Employee Validation
-- Employee reviews each requirement and document.
-- If insufficient/incomplete, employee/admin raises additional requirement request.
-- Customer re-submits until validation is complete.
-
-## 6. Execution and Billing
-- Team executes tasks, logs time, updates task statuses.
-- Invoice statuses are tracked (`Draft`, `Sent`, `Paid`, `Overdue`).
-
-## 7. Completion
-- Final deliverables/certificates are uploaded.
-- Order status is moved to `Completed`.
-
-## Notes
-- Consultation orders must be converted to a package before full execution.
-- Additional requirements can be raised multiple times during validation.
-- Order-level and task-level assignment visibility must remain available for employee dashboards.
