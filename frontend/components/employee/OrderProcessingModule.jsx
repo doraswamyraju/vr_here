@@ -634,23 +634,23 @@ const OrderProcessingModule = ({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <button 
               onClick={() => setIsWorkflowModalOpen(true)} 
-              className="px-3 py-2 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm"
-              title="Raise Internal Workflow Ticket"
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-rose-200 transition active:scale-95"
+              title="Raise Internal Workflow Ticket (Staff & Admin Only)"
             >
-              <ShieldAlert size={14} /> Report Issue
+              <ShieldAlert size={15} /> Raise Workflow Ticket
             </button>
             {(isAdmin || isPM) && (
               <button 
-                onClick={() => setAssignModalOpen(true)}
-                className="px-3 py-2 bg-slate-900 hover:bg-indigo-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm"
+                onClick={() => setAssignModalOpen(true)} 
+                className="px-3.5 py-2 bg-slate-900 hover:bg-indigo-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm"
               >
                 <Users size={14} /> Assign Team
               </button>
             )}
-            <button onClick={() => setSelectedOrder(null)} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+            <button onClick={() => setSelectedOrder(null)} className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
               Back to List
             </button>
           </div>
@@ -1073,8 +1073,13 @@ const OrderProcessingModule = ({
             <button
               key={tab}
               onClick={() => setDetailTab(tab)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition ${detailTab === tab ? 'border-indigo-600 text-indigo-700 font-bold' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition flex items-center gap-1.5 ${
+                detailTab === tab 
+                  ? tab === 'Workflow Tickets' ? 'border-rose-600 text-rose-700 font-bold' : 'border-indigo-600 text-indigo-700 font-bold'
+                  : tab === 'Workflow Tickets' ? 'border-transparent text-rose-600 hover:text-rose-800 font-semibold' : 'border-transparent text-slate-500 hover:text-indigo-600'
+              }`}
             >
+              {tab === 'Workflow Tickets' && <ShieldAlert size={14} className="text-rose-600" />}
               {tab}
             </button>
           ))}
