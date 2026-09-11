@@ -18,12 +18,14 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  ShieldAlert
 } from 'lucide-react';
 import { ORDER_STATUSES } from './constants';
 import { getOrderClientLabel, StatusBadge } from './helpers';
 import { rupees } from '../admin/orders/helpers';
 import RequirementsModule from './RequirementsModule';
+import OrderWorkflowTicketsTab, { CreateWorkflowTicketModal } from '../orders/OrderWorkflowTicketsTab';
 
 const OrderProcessingModule = ({
   orders,
@@ -55,6 +57,7 @@ const OrderProcessingModule = ({
   const [detailTab, setDetailTab] = useState('Tasks');
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
+  const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
 
   const [adminDocFiles, setAdminDocFiles] = useState([]);
   const [adminDocName, setAdminDocName] = useState('');
@@ -464,9 +467,9 @@ const OrderProcessingModule = ({
 
   // Tabs configuration based on financial masking
   const availableTabs = useMemo(() => {
-    const baseTabs = ['Tasks', 'Requirements', 'Audit & Review', 'ToDo', 'Docs', 'Activities'];
+    const baseTabs = ['Tasks', 'Requirements', 'Workflow Tickets', 'Audit & Review', 'ToDo', 'Docs', 'Activities'];
     if (!isFinancialsHidden) {
-      baseTabs.splice(3, 0, 'Invoices', 'Transactions');
+      baseTabs.splice(4, 0, 'Invoices', 'Transactions');
     }
     return baseTabs;
   }, [isFinancialsHidden]);
@@ -631,7 +634,14 @@ const OrderProcessingModule = ({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button 
+              onClick={() => setIsWorkflowModalOpen(true)} 
+              className="px-3 py-2 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm"
+              title="Raise Internal Workflow Ticket"
+            >
+              <ShieldAlert size={14} /> Report Issue
+            </button>
             {(isAdmin || isPM) && (
               <button 
                 onClick={() => setAssignModalOpen(true)}
@@ -1155,6 +1165,15 @@ const OrderProcessingModule = ({
               onUpdateRequirementStatus={onUpdateRequirementStatus}
               onRaiseRequirement={onRaiseRequirement}
               isClockedIn={isClockedIn}
+            />
+          )}
+
+          {/* Workflow Tickets Tab */}
+          {detailTab === 'Workflow Tickets' && (
+            <OrderWorkflowTicketsTab
+              order={selectedOrder}
+              token={userInfo?.token}
+              employees={staffList}
             />
           )}
 
@@ -1732,6 +1751,19 @@ const OrderProcessingModule = ({
           </div>
         </div>
       )}
+
+      {/* Create Workflow Ticket Modal */}
+      <CreateWorkflowTicketModal
+        isOpen={isWorkflowModalOpen}
+        onClose={() => setIsWorkflowModalOpen(false)}
+        order={selectedOrder}
+        token={userInfo?.token}
+        employees={staffList}
+        onTicketCreated={() => {
+          setDetailTab('Workflow Tickets');
+          if (onRefresh) onRefresh();
+        }}
+      />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   FileSpreadsheet, Kanban, List, RefreshCcw, Eye, Download, Upload,
   CheckCircle, Plus, CheckSquare, Clock, User, FileText, Send,
-  Pencil, Check, X, Loader2, Search
+  Pencil, Check, X, Loader2, Search, ShieldAlert
 } from 'lucide-react';
 import {
   INVOICE_STATUSES,
@@ -18,6 +18,7 @@ import OrderFlowSnapshot from './OrderFlowSnapshot';
 import OrderOverviewTab from './OrderOverviewTab';
 import OrderTasksTab from './OrderTasksTab';
 import OrderRequirementsTab from './OrderRequirementsTab';
+import OrderWorkflowTicketsTab, { CreateWorkflowTicketModal } from '../../../../components/orders/OrderWorkflowTicketsTab';
 import GSTInvoiceTemplate from '../../../../components/admin/finance/GSTInvoiceTemplate';
 import { InvoiceAdjustments } from '../../../invoices/v1.1';
 
@@ -157,6 +158,7 @@ const OrdersModule = ({
   const [editNameValue, setEditNameValue] = useState('');
   const [savingNameLoading, setSavingNameLoading] = useState(false);
   const [isSavingCommercials, setIsSavingCommercials] = useState(false);
+  const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
   const handleSaveOrderName = async () => {
@@ -651,7 +653,14 @@ const OrdersModule = ({
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <button 
+                  onClick={() => setIsWorkflowModalOpen(true)} 
+                  className="px-3 py-2 rounded-lg bg-rose-50 text-rose-700 text-sm font-bold hover:bg-rose-600 hover:text-white transition-all flex items-center gap-1.5 shadow-sm shadow-rose-100 border border-rose-200/60"
+                  title="Raise Internal Issue / Ticket"
+                >
+                  <ShieldAlert size={14} /> Raise Workflow Ticket
+                </button>
                 <button 
                   onClick={onOpenRecurringModal} 
                   className="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-bold hover:bg-slate-900 hover:text-white transition-all flex items-center gap-1.5 shadow-sm shadow-indigo-100"
@@ -725,11 +734,11 @@ const OrdersModule = ({
 
           <Card>
             <div className="px-4 border-b border-slate-100 flex flex-wrap gap-2">
-              {['Overview', 'Tasks', 'Requirements', 'Invoices', 'ToDo', 'Transactions', 'Activities', 'Docs'].map((tab) => (
+              {['Overview', 'Tasks', 'Requirements', 'Workflow Tickets', 'Invoices', 'ToDo', 'Transactions', 'Activities', 'Docs'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setOrderDetailTab(tab)}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition ${orderDetailTab === tab ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition ${orderDetailTab === tab ? 'border-indigo-600 text-indigo-700 font-bold' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
                 >
                   {tab}
                 </button>
@@ -757,6 +766,13 @@ const OrdersModule = ({
                   onUpdateRequirementStatus={(requirementId, status) => onUpdateRequirementStatus(selectedOrder._id, requirementId, status)}
                   onDeleteRequirement={(requirementId) => onDeleteRequirement(selectedOrder._id, requirementId)}
                   onResetRequirements={(type) => onResetRequirements && onResetRequirements(selectedOrder._id, type)}
+                />
+              )}
+              {orderDetailTab === 'Workflow Tickets' && (
+                <OrderWorkflowTicketsTab
+                  order={selectedOrder}
+                  token={token}
+                  employees={employees}
                 />
               )}
               {orderDetailTab === 'Invoices' && (
@@ -1070,6 +1086,19 @@ const OrdersModule = ({
           </div>
         </div>
       )}
+
+      {/* Create Workflow Ticket Modal */}
+      <CreateWorkflowTicketModal
+        isOpen={isWorkflowModalOpen}
+        onClose={() => setIsWorkflowModalOpen(false)}
+        order={selectedOrder}
+        token={token}
+        employees={employees}
+        onTicketCreated={() => {
+          setOrderDetailTab('Workflow Tickets');
+          if (onRefresh) onRefresh();
+        }}
+      />
     </div>
   );
 };

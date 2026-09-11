@@ -21,10 +21,19 @@ import {
   Wrench,
   Briefcase,
   Headphones,
-  CheckCheck
+  CheckCheck,
+  ShieldAlert,
+  Lock
 } from 'lucide-react';
 
 const CATEGORY_CONFIG = {
+  Workflow: {
+    label: 'Workflow Issue',
+    desc: 'Internal blocker, quality audit flag, or client document gap',
+    icon: ShieldAlert,
+    badgeBg: 'bg-rose-50 text-rose-700 border-rose-200',
+    headerGrad: 'from-rose-600 to-red-700'
+  },
   Technical: {
     label: 'Technical',
     desc: 'Website issues, login, file uploads, or gateway errors',
@@ -243,7 +252,7 @@ export default function TicketCenter({ userInfo, userRole = 'client' }) {
 
             {/* Category Tabs */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {['All', 'Technical', 'Service', 'Support'].map(cat => (
+              {(isStaffOrAdmin ? ['All', 'Workflow', 'Technical', 'Service', 'Support'] : ['All', 'Technical', 'Service', 'Support']).map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -306,11 +315,16 @@ export default function TicketCenter({ userInfo, userRole = 'client' }) {
                         : 'hover:bg-slate-50 border border-transparent'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex items-start justify-between gap-2 mb-1.5 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border ${catConfig.badgeBg}`}>
                           <CatIcon size={10} /> {ticket.category}
                         </span>
+                        {ticket.isInternal && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-slate-900 text-white flex items-center gap-0.5">
+                            <Lock size={9} /> Internal
+                          </span>
+                        )}
                         <span className="text-[10px] font-mono font-bold text-slate-400">
                           {ticket.ticketNumber || 'VR-TCK'}
                         </span>
@@ -325,6 +339,14 @@ export default function TicketCenter({ userInfo, userRole = 'client' }) {
                       {ticket.subject}
                     </h4>
 
+                    {ticket.orderId && (
+                      <div className="mb-1.5 inline-block">
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100">
+                          📦 {ticket.orderId?.serviceName || 'Order'}
+                        </span>
+                      </div>
+                    )}
+
                     <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed mb-2">
                       {ticket.messages && ticket.messages.length > 0
                         ? ticket.messages[ticket.messages.length - 1].message
@@ -332,7 +354,7 @@ export default function TicketCenter({ userInfo, userRole = 'client' }) {
                     </p>
 
                     <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                      <span>{isStaffOrAdmin ? ticket.user?.name || 'Client' : 'Priority: ' + ticket.priority}</span>
+                      <span>{isStaffOrAdmin ? ticket.user?.name || 'Staff' : 'Priority: ' + ticket.priority}</span>
                       <span>{new Date(ticket.updatedAt || ticket.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
                     </div>
                   </div>

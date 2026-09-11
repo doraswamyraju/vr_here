@@ -4,62 +4,85 @@ import User from '../models/User.js';
 import { triggerNotification, notifyAdmins } from '../services/notificationService.js';
 import { getTicketMessageTemplate } from '../utils/emailTemplates.js';
 
-// @desc    Create a new support ticket
+// @desc    Create a new support or internal workflow ticket
 // @route   POST /api/tickets
 // @access  Private
 const createTicket = asyncHandler(async (req, res) => {
-    const { category, subject, description, priority, attachments } = req.body;
+    const { 
+        category, 
+        subject, 
+        description, 
+        priority, 
+        attachments,
+        orderId,
+        isInternal = false,
+        issueType = 'Workflow Blocked',
+        assignedTo
+    } = req.body;
 
-    const validCategories = ['Technical', 'Service', 'Support'];
-    const cleanCategory = validCategories.includes(category) ? category : 'Support';
+    const validCategories = ['Technical', 'Service', 'Support', 'Workflow', 'Operations', 'Quality', 'Billing'];
+    const defaultCat = isInternal ? 'Workflow' : 'Support';
+    const cleanCategory = validCategories.includes(category) ? category : defaultCat;
 
     const ticket = new Ticket({
         user: req.user._id,
+        orderId: orderId || null,
+        isInternal: Boolean(isInternal),
+        issueType: issueType || 'Workflow Blocked',
         category: cleanCategory,
         subject,
         description,
         priority: priority || 'Medium',
+        assignedTo: assignedTo || null,
         attachments: attachments || []
     });
 
     const createdTicket = await ticket.save();
 
-    // 1. Notify the client who opened the ticket
-    await triggerNotification({
-        userId: req.user._id,
-        title: `Ticket Created: ${createdTicket.ticketNumber || cleanCategory}`,
-        message: `Your ${cleanCategory} ticket "${subject}" has been successfully opened. Our specialized team will assist you shortly.`,
-        type: 'Ticket',
-        emailOpts: {
-            send: true,
-            subject: `[${createdTicket.ticketNumber || 'Ticket'}] ${subject}`
-        }
-    });
+    // If NOT an internal ticket, notify client
+    if (!isInternal) {
+        await triggerNotification({
+            userId: req.user._id,
+            title: `Ticket Created: ${createdTicket.ticketNumber || cleanCategory}`,
+            message: `Your ${cleanCategory} ticket "${subject}" has been successfully opened. Our specialized team will assist you shortly.`,
+            type: 'Ticket',
+            emailOpts: {
+                send: true,
+                subject: `[${createdTicket.ticketNumber || 'Ticket'}] ${subject}`
+            }
+        });
+    }
 
-    // 2. Notify all Super Admins
+    // 2. Notify Admins
     await notifyAdmins({
-        title: `New ${cleanCategory} Ticket (${createdTicket.ticketNumber || 'VR-TCK'})`,
-        message: `Client ${req.user.name} opened a ${cleanCategory} ticket: "${subject}" [Priority: ${priority || 'Medium'}].`,
+        title: isInternal 
+            ? `⚠️ Internal Workflow Ticket: ${createdTicket.ticketNumber || 'VR-TCK'}`
+            : `New ${cleanCategory} Ticket (${createdTicket.ticketNumber || 'VR-TCK'})`,
+        message: `${req.user.name} raised ${isInternal ? 'an internal workflow issue' : cleanCategory + ' ticket'}: "${subject}" [Priority: ${priority || 'Medium'}].`,
         type: 'Ticket',
         email: true
     });
 
-    // 3. Notify ONLY Employees assigned to this specific ticket category
+    // 3. Notify Employees assigned to this category or directly assigned
     try {
         const assignedEmployees = await User.find({
             role: 'employee',
-            assignedTicketCategories: cleanCategory
+            $or: [
+                { assignedTicketCategories: cleanCategory },
+                ...(assignedTo ? [{ _id: assignedTo }] : [])
+            ]
         }).select('_id name email');
 
         for (const emp of assignedEmployees) {
+            if (String(emp._id) === String(req.user._id)) continue;
             await triggerNotification({
                 userId: emp._id,
-                title: `New Assigned ${cleanCategory} Ticket`,
-                message: `New ticket ${createdTicket.ticketNumber || ''} (${subject}) is pending in your ${cleanCategory} queue.`,
+                title: isInternal ? `Internal Workflow Issue Assigned: ${createdTicket.ticketNumber || ''}` : `New Assigned ${cleanCategory} Ticket`,
+                message: `Ticket ${createdTicket.ticketNumber || ''} (${subject}) is pending in your queue.`,
                 type: 'Ticket',
                 emailOpts: {
                     send: true,
-                    subject: `[${cleanCategory} Queue] New Ticket: ${subject}`
+                    subject: `[${cleanCategory} Queue] ${subject}`
                 }
             });
         }
@@ -69,7 +92,8 @@ const createTicket = asyncHandler(async (req, res) => {
 
     const populatedTicket = await Ticket.findById(createdTicket._id)
         .populate('user', 'name email phone')
-        .populate('assignedTo', 'name email');
+        .populate('assignedTo', 'name email')
+        .populate('orderId', 'serviceName packageName clientName');
 
     res.status(201).json(populatedTicket);
 });
@@ -80,31 +104,44 @@ const createTicket = asyncHandler(async (req, res) => {
 const getTickets = asyncHandler(async (req, res) => {
     let query = {};
 
+    // Filter by linked order if specified
+    if (req.query.orderId) {
+        query.orderId = req.query.orderId;
+    }
+
     if (req.user.role === 'admin') {
-        // Admin sees all tickets
-        query = {};
+        // Admin sees all tickets (including internal)
     } else if (req.user.role === 'employee') {
-        // Employee ONLY sees tickets matching their assigned categories OR directly assigned to them
         const assignedCategories = req.user.assignedTicketCategories || [];
-        if (assignedCategories.length === 0) {
-            // Unassigned employee sees only directly assigned tickets
-            query = { assignedTo: req.user._id };
+        if (req.query.orderId) {
+            // Viewing tickets of a specific order in employee workplace
+            query.orderId = req.query.orderId;
         } else {
-            query = {
-                $or: [
+            if (assignedCategories.length === 0) {
+                query.$or = [
+                    { assignedTo: req.user._id },
+                    { user: req.user._id },
+                    { isInternal: true }
+                ];
+            } else {
+                query.$or = [
                     { category: { $in: assignedCategories } },
-                    { assignedTo: req.user._id }
-                ]
-            };
+                    { assignedTo: req.user._id },
+                    { user: req.user._id },
+                    { isInternal: true }
+                ];
+            }
         }
     } else {
-        // Client sees only their own tickets
-        query = { user: req.user._id };
+        // Customer sees ONLY their own tickets AND NEVER internal workflow tickets
+        query.user = req.user._id;
+        query.isInternal = { $ne: true };
     }
 
     const tickets = await Ticket.find(query)
         .populate('user', 'name email phone')
         .populate('assignedTo', 'name email')
+        .populate('orderId', 'serviceName packageName clientName')
         .sort({ updatedAt: -1 });
 
     res.json(tickets);
@@ -117,6 +154,7 @@ const getTicketById = asyncHandler(async (req, res) => {
     const ticket = await Ticket.findById(req.params.id)
         .populate('user', 'name email phone')
         .populate('assignedTo', 'name email')
+        .populate('orderId', 'serviceName packageName clientName')
         .populate('messages.sender', 'name role');
 
     if (!ticket) {
@@ -126,7 +164,7 @@ const getTicketById = asyncHandler(async (req, res) => {
 
     // Access control checks
     if (req.user.role === 'client') {
-        if (String(ticket.user._id) !== String(req.user._id)) {
+        if (ticket.isInternal || String(ticket.user._id) !== String(req.user._id)) {
             res.status(403);
             throw new Error('Not authorized to view this ticket');
         }
@@ -134,10 +172,14 @@ const getTicketById = asyncHandler(async (req, res) => {
         const assignedCategories = req.user.assignedTicketCategories || [];
         const isAssignedCategory = assignedCategories.includes(ticket.category);
         const isDirectlyAssigned = ticket.assignedTo && String(ticket.assignedTo._id) === String(req.user._id);
+        const isCreator = ticket.user && String(ticket.user._id) === String(req.user._id);
+        const isInternalWorkflow = ticket.isInternal;
 
-        if (!isAssignedCategory && !isDirectlyAssigned) {
+        if (!isAssignedCategory && !isDirectlyAssigned && !isCreator && !isInternalWorkflow) {
             res.status(403);
             throw new Error('Not authorized to access tickets from this category');
+        }
+    }
         }
     }
 

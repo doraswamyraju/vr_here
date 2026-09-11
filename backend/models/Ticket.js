@@ -11,9 +11,22 @@ const ticketSchema = mongoose.Schema({
         required: true,
         ref: 'User'
     },
+    orderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order',
+        default: null
+    },
+    isInternal: {
+        type: Boolean,
+        default: false
+    },
+    issueType: {
+        type: String,
+        default: 'Workflow Blocked'
+    },
     category: {
         type: String,
-        enum: ['Technical', 'Service', 'Support'],
+        enum: ['Technical', 'Service', 'Support', 'Workflow', 'Operations', 'Quality', 'Billing'],
         required: true,
         default: 'Support'
     },
