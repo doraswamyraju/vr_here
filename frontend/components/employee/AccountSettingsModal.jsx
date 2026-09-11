@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { 
   X, User, Phone, Mail, Lock, Shield, Building, CreditCard, 
-  Clock, Check, AlertCircle, Award, KeyRound
+  Clock, Check, AlertCircle, Award, KeyRound, Camera, Upload, Trash2
 } from 'lucide-react';
 
-const AccountSettingsModal = ({ isOpen, onClose, userInfo, onProfileUpdated }) => {
+const AccountSettingsModal = ({ isOpen, onClose, userInfo, onUpdateProfile, onProfileUpdated }) => {
   if (!isOpen) return null;
 
+  const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     name: userInfo?.name || '',
@@ -23,11 +24,79 @@ const AccountSettingsModal = ({ isOpen, onClose, userInfo, onProfileUpdated }) =
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   const token = userInfo?.token;
   const config = {
     headers: { Authorization: `Bearer ${token}` }
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Please select an image file (PNG, JPG, JPEG, WebP).' });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Image size must be less than 5MB.' });
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', file);
+      uploadFormData.append('type', 'profilePhoto');
+
+      const { data } = await axios.post('/api/auth/upload-avatar', uploadFormData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      const photoUrl = data.url || data.profilePhoto;
+      setFormData(prev => ({ ...prev, profilePhoto: photoUrl }));
+
+      const updatedUser = {
+        ...userInfo,
+        profilePhoto: photoUrl
+      };
+      localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+      if (onUpdateProfile) onUpdateProfile(updatedUser);
+      if (onProfileUpdated) onProfileUpdated(updatedUser);
+
+      setMessage({ type: 'success', text: 'Profile photo updated successfully!' });
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'Failed to upload profile photo.'
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    setFormData(prev => ({ ...prev, profilePhoto: '' }));
+    try {
+      const { data } = await axios.put('/api/auth/profile', { profilePhoto: '' }, config);
+      const updatedUser = { ...userInfo, profilePhoto: '' };
+      localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+      if (onUpdateProfile) onUpdateProfile(updatedUser);
+      if (onProfileUpdated) onProfileUpdated(updatedUser);
+      setMessage({ type: 'success', text: 'Profile photo removed.' });
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleSaveProfile = async (e) => {
@@ -68,6 +137,7 @@ const AccountSettingsModal = ({ isOpen, onClose, userInfo, onProfileUpdated }) =
       };
 
       localStorage.setItem('userInfo', JSON.stringify(updated));
+      if (onUpdateProfile) onUpdateProfile(updated);
       if (onProfileUpdated) onProfileUpdated(updated);
 
       setMessage({ type: 'success', text: 'Account settings updated successfully!' });
@@ -90,8 +160,23 @@ const AccountSettingsModal = ({ isOpen, onClose, userInfo, onProfileUpdated }) =
         {/* Header */}
         <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-white/10">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-blue-500 text-white flex items-center justify-center font-black text-lg shadow-md shrink-0">
-              {userInfo?.name?.charAt(0) || 'E'}
+            <div className="relative group">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-indigo-500 to-blue-500 text-white flex items-center justify-center font-black text-lg shadow-md shrink-0 overflow-hidden border-2 border-white/20">
+                {formData.profilePhoto ? (
+                  <img src={formData.profilePhoto} alt={formData.name} className="w-full h-full object-cover" />
+                ) : (
+                  userInfo?.name?.charAt(0) || 'E'
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPhoto}
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg border border-white transition"
+                title="Change Photo"
+              >
+                <Camera size={12} />
+              </button>
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -110,6 +195,15 @@ const AccountSettingsModal = ({ isOpen, onClose, userInfo, onProfileUpdated }) =
             <X size={18} />
           </button>
         </div>
+
+        {/* Hidden File Input for Avatar Upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
 
         {/* Tab Navigation */}
         <div className="flex border-b border-slate-200/80 bg-slate-50/70 px-6 gap-2 overflow-x-auto">
@@ -152,6 +246,45 @@ const AccountSettingsModal = ({ isOpen, onClose, userInfo, onProfileUpdated }) =
 
           {activeTab === 'profile' && (
             <form onSubmit={handleSaveProfile} className="space-y-4">
+              {/* Photo Upload & Preview Card */}
+              <div className="p-4 bg-slate-50 border border-slate-200/70 rounded-2xl flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-blue-500 text-white flex items-center justify-center font-black text-xl shadow-md overflow-hidden border border-slate-200 shrink-0">
+                    {formData.profilePhoto ? (
+                      <img src={formData.profilePhoto} alt={formData.name} className="w-full h-full object-cover" />
+                    ) : (
+                      userInfo?.name?.charAt(0) || 'E'
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">Profile Photo</p>
+                    <p className="text-[11px] text-slate-500">Supports JPG, PNG, WebP up to 5MB</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingPhoto}
+                    className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition disabled:opacity-50"
+                  >
+                    <Upload size={14} />
+                    {isUploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                  </button>
+                  {formData.profilePhoto && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
+                      title="Remove Photo"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-600">Full Name</label>

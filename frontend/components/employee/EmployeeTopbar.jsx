@@ -151,9 +151,13 @@ const EmployeeTopbar = ({
           <button
             onClick={onOpenAccountSettings}
             title="Account Settings"
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 text-white flex items-center justify-center font-bold text-xs shadow-xs transition active:scale-95 shrink-0"
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 text-white flex items-center justify-center font-bold text-xs shadow-xs transition active:scale-95 shrink-0 overflow-hidden border border-slate-200"
           >
-            {userInfo?.name?.charAt(0) || 'E'}
+            {userInfo?.profilePhoto ? (
+              <img src={userInfo.profilePhoto} alt={userInfo?.name || 'User'} className="w-full h-full object-cover" />
+            ) : (
+              userInfo?.name?.charAt(0) || 'E'
+            )}
           </button>
         </div>
       </div>
