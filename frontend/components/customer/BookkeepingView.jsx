@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
     FileText, ShoppingCart, ArrowDownRight, Building2, 
     Landmark, BarChart3, Settings, Plus, RefreshCw, Eye, Users, Calendar,
-    ChevronLeft, ChevronRight, Sparkles
+    ChevronLeft, ChevronRight, Sparkles, LayoutDashboard, ArrowLeft
 } from 'lucide-react';
 
 import GSTInvoiceView from './bookkeeping/GSTInvoiceView';
@@ -244,6 +244,10 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 selectedInvoice={selectedInvoice}
                 company={company}
                 onBack={() => setSelectedInvoice(null)}
+                onBackToDashboard={() => {
+                    setSelectedInvoice(null);
+                    setActiveSubTab('dashboard');
+                }}
                 onCopyShareLink={() => {
                     navigator.clipboard.writeText(window.location.href);
                     alert('Invoice link copied to clipboard!');
@@ -257,6 +261,15 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
             {/* Top Workspace Header */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
+                    {activeSubTab !== 'dashboard' && (
+                        <button
+                            onClick={() => setActiveSubTab('dashboard')}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition mb-1.5 group bg-indigo-50/70 hover:bg-indigo-100/80 px-3 py-1 rounded-xl"
+                        >
+                            <LayoutDashboard size={13} className="text-indigo-600 group-hover:scale-110 transition-transform" />
+                            <span>&larr; Back to Executive Dashboard</span>
+                        </button>
+                    )}
                     <div className="flex items-center gap-2">
                         <h2 className="text-2xl font-black text-slate-900 tracking-tight">{tabInfo.title}</h2>
                         <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-indigo-200">
@@ -269,6 +282,20 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 </div>
 
                 <div className="flex items-center gap-2.5 flex-wrap">
+                    {/* Always-Accessible Executive Dashboard Button */}
+                    <button
+                        onClick={() => setActiveSubTab('dashboard')}
+                        title="Go to Bookkeeping Executive Dashboard"
+                        className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-sm ${
+                            activeSubTab === 'dashboard'
+                                ? 'bg-indigo-600 text-white shadow-indigo-200'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900'
+                        }`}
+                    >
+                        <LayoutDashboard size={16} className={activeSubTab === 'dashboard' ? 'text-white' : 'text-indigo-600'} />
+                        <span>Executive Dashboard</span>
+                    </button>
+
                     <button
                         onClick={fetchData}
                         title="Refresh All Ledgers"

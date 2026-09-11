@@ -1,7 +1,7 @@
 import React from 'react';
-import { Printer, Share2, ArrowLeft, Download, MessageCircle, FileCheck, CheckCircle2 } from 'lucide-react';
+import { Printer, Share2, ArrowLeft, Download, MessageCircle, FileCheck, CheckCircle2, LayoutDashboard } from 'lucide-react';
 
-const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) => {
+const GSTInvoiceView = ({ selectedInvoice, company, onBack, onBackToDashboard, onCopyShareLink }) => {
     if (!selectedInvoice) return null;
     
     const isSales = selectedInvoice.transactionType === 'Sales';
@@ -122,12 +122,23 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onCopyShareLink }) =
 
             {/* Actions Bar */}
             <div className="flex flex-wrap justify-between items-center bg-white p-4 rounded-3xl border border-slate-200/80 sticky top-0 z-10 shadow-sm no-print text-xs gap-3">
-                <button 
-                    onClick={onBack} 
-                    className="flex items-center gap-2 text-slate-700 font-bold hover:text-slate-900 transition px-3 py-2 rounded-xl hover:bg-slate-100"
-                >
-                    <ArrowLeft size={16} /> Back to List
-                </button>
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={onBack} 
+                        className="flex items-center gap-2 text-slate-700 font-bold hover:text-slate-900 transition px-3 py-2 rounded-xl hover:bg-slate-100"
+                    >
+                        <ArrowLeft size={16} /> Back to List
+                    </button>
+                    {onBackToDashboard && (
+                        <button 
+                            onClick={onBackToDashboard} 
+                            className="flex items-center gap-1.5 text-indigo-700 font-bold bg-indigo-50 hover:bg-indigo-100 transition px-3 py-2 rounded-xl"
+                            title="Back to Bookkeeping Executive Dashboard"
+                        >
+                            <LayoutDashboard size={15} /> Executive Dashboard
+                        </button>
+                    )}
+                </div>
                 <div className="flex items-center gap-2 flex-wrap">
                     <button 
                         onClick={handleWhatsAppShare}
