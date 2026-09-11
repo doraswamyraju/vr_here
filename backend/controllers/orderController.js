@@ -471,11 +471,12 @@ const getOrders = asyncHandler(async (req, res) => {
         orderQuery = Order.find({ user: req.user._id });
     }
 
-    const orders = await populateOrderQuery(orderQuery.sort({ createdAt: -1 }));
+    const orders = await populateOrderQuery(orderQuery.sort({ createdAt: -1 }).lean());
 
     // Batch fetch all linked todos in ONE single database query instead of N individual queries
     const orderIds = orders.map((o) => o._id);
     const allLinkedTodos = await Todo.find({ orderId: { $in: orderIds } })
+        .select('title status priority dueDate assignedTo orderId')
         .populate('assignedTo', 'name email role')
         .lean();
 
@@ -489,7 +490,7 @@ const getOrders = asyncHandler(async (req, res) => {
     });
 
     const ordersWithTodos = orders.map((order) => {
-        const orderObj = order.toObject ? order.toObject() : order;
+        const orderObj = order.toObject ? order.toObject() : { ...order };
         orderObj.linkedTodos = todoMap[orderObj._id.toString()] || [];
         return sanitizeOrderForRole(orderObj, req.user);
     });

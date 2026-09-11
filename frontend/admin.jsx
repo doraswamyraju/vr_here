@@ -104,8 +104,14 @@ function AdminApp() {
   const [ordersViewMode, setOrdersViewMode] = useState('list');
   const [orderDetailTab, setOrderDetailTab] = useState('Overview');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('cached_admin_orders');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [employees, setEmployees] = useState([]);
   const [users, setUsers] = useState([]);
   const [freelancers, setFreelancers] = useState([]);
@@ -180,7 +186,14 @@ function AdminApp() {
     
     // Fetch and populate state progressively for instant UI responsiveness
     const pOrders = axios.get('/api/orders', config)
-      .then((res) => { setOrders(res.data || []); setDataLoaded(true); })
+      .then((res) => {
+        const data = res.data || [];
+        setOrders(data);
+        setDataLoaded(true);
+        try {
+          sessionStorage.setItem('cached_admin_orders', JSON.stringify(data));
+        } catch (e) {}
+      })
       .catch((err) => console.error('Failed to load orders:', err));
 
     const pEmployees = axios.get('/api/auth/employees', config)

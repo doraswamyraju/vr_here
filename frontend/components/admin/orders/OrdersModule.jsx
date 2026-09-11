@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FileSpreadsheet, Kanban, List, RefreshCcw, Pencil, Check, X, Loader2, CheckCircle } from 'lucide-react';
+import { FileSpreadsheet, Kanban, List, RefreshCcw, Pencil, Check, X, Loader2, CheckCircle, Search } from 'lucide-react';
 import {
   INVOICE_STATUSES,
   ORDER_STATUSES,
@@ -84,12 +84,36 @@ const OrdersModule = ({
   orderFilter = 'All',
   setOrderFilter
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
   const filteredOrders = useMemo(() => {
-    if (orderFilter === 'All') return orders;
-    if (orderFilter === 'Pending') return orders.filter(o => o.status !== 'Completed');
-    if (orderFilter === 'Completed') return orders.filter(o => o.status === 'Completed');
-    return orders.filter(o => o.status === orderFilter);
-  }, [orders, orderFilter]);
+    let result = orders;
+    if (orderFilter === 'Pending') result = result.filter(o => o.status !== 'Completed');
+    else if (orderFilter === 'Completed') result = result.filter(o => o.status === 'Completed');
+    else if (orderFilter !== 'All') result = result.filter(o => o.status === orderFilter);
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      result = result.filter(o => {
+        const service = (o.serviceName || '').toLowerCase();
+        const client = (o.clientName || o.user?.name || '').toLowerCase();
+        const email = (o.email || o.user?.email || '').toLowerCase();
+        const phone = (o.phone || o.user?.phone || '').toLowerCase();
+        const pkg = (o.packageName || '').toLowerCase();
+        const pm = (o.assignedProjectManager?.name || o.assignedEmployee?.name || '').toLowerCase();
+        const maker = (o.assignedMaker?.name || '').toLowerCase();
+        const checker = (o.assignedChecker?.name || '').toLowerCase();
+        const status = (o.status || '').toLowerCase();
+        const id = (o._id || '').toLowerCase();
+        
+        return service.includes(q) || client.includes(q) || email.includes(q) || 
+               phone.includes(q) || pkg.includes(q) || pm.includes(q) || 
+               maker.includes(q) || checker.includes(q) || status.includes(q) || id.includes(q);
+      });
+    }
+
+    return result;
+  }, [orders, orderFilter, searchTerm]);
 
   const selectedOrder = useMemo(() => orders.find((order) => order._id === selectedOrderId) || null, [orders, selectedOrderId]);
 
@@ -139,11 +163,30 @@ const OrdersModule = ({
   };
 
   const topActions = (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2.5">
+      <div className="relative min-w-[240px] sm:w-64 flex-1 sm:flex-initial">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search orders, clients, PM..."
+          className="w-full pl-9 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-sm"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded"
+            title="Clear search"
+          >
+            <X size={13} />
+          </button>
+        )}
+      </div>
       <select 
         value={orderFilter} 
         onChange={(e) => setOrderFilter(e.target.value)}
-        className="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white font-medium text-slate-600 focus:ring-2 focus:ring-indigo-500/20"
+        className="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white font-medium text-slate-600 focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
       >
         <option value="All">All Statuses</option>
         <option value="Pending">All Pending</option>
