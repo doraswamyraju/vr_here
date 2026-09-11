@@ -66,7 +66,14 @@ app.use(
                     "https://oauth2.googleapis.com",
                     "https://www.googleapis.com"
                 ],
-                frameSrc: ["'self'", "https://api.razorpay.com", "https://accounts.google.com"],
+                frameSrc: [
+                    "'self'", 
+                    "https://api.razorpay.com", 
+                    "https://accounts.google.com", 
+                    "https://drive.google.com", 
+                    "https://docs.google.com", 
+                    "https://view.officeapps.live.com"
+                ],
                 upgradeInsecureRequests: null, // Disable HTTPS upgrade for successful HTTP load
             },
         },

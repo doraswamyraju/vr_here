@@ -22,9 +22,10 @@ import {
   X,
   Sparkles,
   Layers,
-  ArrowRight,
-  Shield,
-  FileCode
+  FileSpreadsheet,
+  FileCode,
+  FileArchive,
+  Maximize2
 } from 'lucide-react';
 import axios from 'axios';
 import RequirementsWorkspace from './RequirementsWorkspace';
@@ -52,6 +53,44 @@ const DOC_TYPE_KEYWORDS = {
   'MOA & AOA': ['moa', 'aoa', 'deed', 'bylaws']
 };
 
+// Helper to determine format & embeddable URL
+const parseDocInfo = (url, name = '') => {
+  if (!url) return { type: 'unknown', embedUrl: '', rawUrl: '' };
+  
+  const rawUrl = url;
+  const fileName = (name || url).toLowerCase();
+  let embedUrl = url;
+
+  // Convert Google Drive view links to preview links
+  if (url.includes('drive.google.com')) {
+    embedUrl = url.replace(/\/view(\?.*)?$/, '/preview');
+    if (!embedUrl.includes('/preview')) {
+      embedUrl = `${embedUrl.split('?')[0]}/preview`;
+    }
+  }
+
+  if (/\.(jpeg|jpg|png|webp|gif|svg)(\?.*)?$/i.test(fileName)) {
+    return { type: 'image', embedUrl, rawUrl, ext: 'IMG' };
+  }
+  if (/\.pdf(\?.*)?$/i.test(fileName)) {
+    return { type: 'pdf', embedUrl, rawUrl, ext: 'PDF' };
+  }
+  if (/\.(xlsx|xls|csv)(\?.*)?$/i.test(fileName)) {
+    return { type: 'spreadsheet', embedUrl, rawUrl, ext: 'XLSX' };
+  }
+  if (/\.(docx|doc|rtf)(\?.*)?$/i.test(fileName)) {
+    return { type: 'word', embedUrl, rawUrl, ext: 'DOCX' };
+  }
+  if (/\.(zip|rar|7z|tar|gz)(\?.*)?$/i.test(fileName)) {
+    return { type: 'archive', embedUrl, rawUrl, ext: 'ZIP' };
+  }
+  if (url.includes('drive.google.com')) {
+    return { type: 'gdrive', embedUrl, rawUrl, ext: 'GDRIVE' };
+  }
+
+  return { type: 'generic', embedUrl, rawUrl, ext: 'FILE' };
+};
+
 const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
   const [activeTab, setActiveTab] = useState('provided'); // 'provided', 'master_kyc', 'workspaces', 'explorer'
   const [selectedOrderId, setSelectedOrderId] = useState(orders[0]?._id || '');
@@ -69,7 +108,7 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
   const [orderUploadStatus, setOrderUploadStatus] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
-  // Preview Modal
+  // Preview Modal state
   const [previewDoc, setPreviewDoc] = useState(null);
 
   const token = userInfo?.token;
@@ -99,7 +138,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
     fetchMasterVault();
   }, [token]);
 
-  // If activeOrder is not set and orders load, set first
   useEffect(() => {
     if (!selectedOrderId && orders.length > 0) {
       setSelectedOrderId(orders[0]._id);
@@ -236,7 +274,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
     const totalMasterKyc = vaultDocuments.length;
     const totalClientDocs = allFlattenedFiles.filter(f => f.category === 'Client Upload' || f.category === 'Checklist Upload').length;
     
-    // Pending requirements count across all orders
     let pendingReqs = 0;
     orders.forEach(order => {
       (order.customerRequirements || []).forEach(r => {
@@ -340,9 +377,8 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
   return (
     <div className="space-y-6 pb-24 lg:pb-12 animate-in fade-in duration-300">
       
-      {/* 1. Hero Banner: Bank-Grade Secured Document Vault */}
+      {/* 1. Hero Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/90 text-white p-6 sm:p-8 shadow-2xl border border-slate-800">
-        {/* Subtle decorative glow */}
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-72 h-72 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 -mb-12 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -465,9 +501,7 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
 
         {/* Stat 4: Pending Actions */}
         <div 
-          onClick={() => {
-            setActiveTab('workspaces');
-          }}
+          onClick={() => setActiveTab('workspaces')}
           className={`cursor-pointer rounded-2xl p-5 border transition-all transform hover:-translate-y-0.5 ${
             stats.pendingRequirements > 0
               ? 'bg-amber-50/60 border-amber-300 shadow-2xs hover:border-amber-400'
@@ -551,18 +585,14 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
       {/* ========================================================================= */}
       {activeTab === 'provided' && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          
-          {/* Spotlight on Final Approved Certificates */}
           {orders.some(o => o.finalCertificateUrl) ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                    <Sparkles size={18} className="text-amber-500" />
-                    Official Incorporation & Government Certificates
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium">Verified by Ministry of Corporate Affairs / Respective Government Authorities</p>
-                </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <Sparkles size={18} className="text-amber-500" />
+                  Official Incorporation & Government Certificates
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">Verified by Ministry of Corporate Affairs / Respective Government Authorities</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -700,8 +730,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
       {/* ========================================================================= */}
       {activeTab === 'master_kyc' && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          
-          {/* Informational Hero Card */}
           <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 text-white border border-blue-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="space-y-1.5">
               <span className="px-3 py-0.5 bg-white/10 text-blue-200 text-[10px] font-black rounded-full uppercase tracking-wider">
@@ -747,7 +775,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
                   }`}
                 >
                   <div className="space-y-3">
-                    {/* Header */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
@@ -770,7 +797,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
                       </div>
                     </div>
 
-                    {/* Status badge & File Name */}
                     <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
                       <div className="min-w-0 pr-2">
                         <p className="text-xs font-bold text-slate-800 truncate">
@@ -801,7 +827,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
                     </div>
                   </div>
 
-                  {/* Actions footer */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                     {fileUrl ? (
                       <div className="flex items-center gap-2 w-full justify-between">
@@ -869,8 +894,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
       {/* ========================================================================= */}
       {activeTab === 'workspaces' && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          
-          {/* Workspace Selector Bar */}
           {orders.length > 0 ? (
             <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -919,7 +942,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
           {/* Active Workspace View */}
           {selectedOrder ? (
             <div className="space-y-6">
-              {/* Specialized ITR Assessment Check */}
               {selectedOrder.serviceName?.toLowerCase().includes('income tax') || selectedOrder.packageName?.toLowerCase().includes('itr') ? (
                 <ITRAssessmentCustomerView selectedOrder={selectedOrder} userInfo={userInfo} />
               ) : (
@@ -945,7 +967,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
                       </div>
                     </div>
 
-                    {/* Drag and Drop Zone */}
                     <div
                       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                       onDragLeave={() => setIsDragging(false)}
@@ -983,7 +1004,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
                         <span>Select Files</span>
                       </label>
 
-                      {/* Staged files upload tray */}
                       {stagedFiles.length > 0 && (
                         <div className="mt-5 pt-4 border-t border-slate-200 space-y-3">
                           <div className="flex items-center justify-between">
@@ -1018,7 +1038,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
                       )}
                     </div>
 
-                    {/* List of Client Uploaded Files for this project */}
                     {(selectedOrder.clientDocuments || []).length > 0 ? (
                       <div className="space-y-3">
                         <h5 className="text-xs font-black uppercase tracking-wider text-slate-400">
@@ -1078,10 +1097,7 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
       {/* ========================================================================= */}
       {activeTab === 'explorer' && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          
-          {/* Search & Filter Tool bar */}
           <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs flex flex-col md:flex-row gap-4 justify-between items-center">
-            {/* Search Input */}
             <div className="relative w-full md:w-96">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -1093,7 +1109,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
               />
             </div>
 
-            {/* Category Filter Pills */}
             <div className="flex gap-1.5 overflow-x-auto w-full md:w-auto pb-1 sm:pb-0">
               {[
                 { key: 'ALL', label: 'All Files' },
@@ -1117,7 +1132,6 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
             </div>
           </div>
 
-          {/* Master Table / Grid of Files */}
           <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
             {explorerFilteredFiles.length > 0 ? (
               <div className="divide-y divide-slate-100">
@@ -1196,67 +1210,184 @@ const DocumentsView = ({ orders = [], refreshOrders, userInfo }) => {
       )}
 
       {/* ========================================================================= */}
-      {/* UNIVERSAL DOCUMENT PREVIEW MODAL */}
+      {/* UNIVERSAL ENHANCED DOCUMENT PREVIEW MODAL */}
       {/* ========================================================================= */}
-      {previewDoc && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setPreviewDoc(null)}
-        >
+      {previewDoc && (() => {
+        const docInfo = parseDocInfo(previewDoc.url, previewDoc.name);
+        return (
           <div 
-            className="w-full max-w-4xl h-[85vh] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setPreviewDoc(null)}
           >
-            {/* Modal Header */}
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3 min-w-0 pr-4">
-                <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold shrink-0">
-                  <FileText size={18} />
+            <div 
+              className="w-full max-w-4xl h-[85vh] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3 min-w-0 pr-4">
+                  <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold shrink-0">
+                    {docInfo.type === 'spreadsheet' ? <FileSpreadsheet size={18} /> : <FileText size={18} />}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-black text-sm text-white truncate">{previewDoc.name}</h4>
+                    <p className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                      <span>Secure Document Viewer</span>
+                      <span className="px-1.5 py-0.2 bg-white/10 text-slate-300 rounded text-[9px] font-bold uppercase">{docInfo.ext}</span>
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <h4 className="font-black text-sm text-white truncate">{previewDoc.name}</h4>
-                  <p className="text-[10px] text-slate-400">Secure Document Viewer</p>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={docInfo.rawUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                  >
+                    <ExternalLink size={12} />
+                    <span>Open in New Tab</span>
+                  </a>
+                  <a
+                    href={docInfo.rawUrl}
+                    download
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                  >
+                    <Download size={12} />
+                    <span>Download</span>
+                  </a>
+                  <button
+                    onClick={() => setPreviewDoc(null)}
+                    className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition ml-1"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <a
-                  href={previewDoc.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-                >
-                  <ExternalLink size={12} />
-                  <span>Full Screen</span>
-                </a>
-                <button
-                  onClick={() => setPreviewDoc(null)}
-                  className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
+              {/* Modal Viewer Content */}
+              <div className="flex-1 bg-slate-100 overflow-hidden relative flex flex-col items-center justify-center">
+                {/* 1. Image Viewer */}
+                {docInfo.type === 'image' ? (
+                  <div className="w-full h-full p-4 flex items-center justify-center overflow-auto bg-slate-900/10">
+                    <img 
+                      src={docInfo.rawUrl} 
+                      alt={previewDoc.name} 
+                      className="max-h-full max-w-full object-contain rounded-xl shadow-lg border border-white"
+                    />
+                  </div>
+                ) : docInfo.type === 'spreadsheet' ? (
+                  /* 2. Spreadsheet Showcase Card */
+                  <div className="p-8 max-w-md w-full mx-auto text-center space-y-5 bg-white rounded-3xl border border-slate-200 shadow-xl m-4 animate-in zoom-in-95">
+                    <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-inner">
+                      <FileSpreadsheet size={32} />
+                    </div>
+                    <div>
+                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        Microsoft Excel / Spreadsheet
+                      </span>
+                      <h4 className="text-base font-black text-slate-900 mt-2 truncate max-w-xs mx-auto">
+                        {previewDoc.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 font-medium mt-1">
+                        Spreadsheets (.xlsx, .csv) are secured and ready for download or opening in Google Sheets / Excel.
+                      </p>
+                    </div>
 
-            {/* Modal Viewer Content */}
-            <div className="flex-1 bg-slate-100 overflow-hidden relative flex items-center justify-center">
-              {previewDoc.url?.match(/\.(jpeg|jpg|png|webp|gif)$/i) ? (
-                <img 
-                  src={previewDoc.url} 
-                  alt={previewDoc.name} 
-                  className="max-h-full max-w-full object-contain p-4 shadow-lg rounded-xl"
-                />
-              ) : (
-                <iframe
-                  src={previewDoc.url}
-                  title={previewDoc.name}
-                  className="w-full h-full border-none"
-                />
-              )}
+                    <div className="flex flex-col gap-2.5 pt-2">
+                      <a
+                        href={docInfo.rawUrl}
+                        download
+                        className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25"
+                      >
+                        <Download size={14} />
+                        <span>Download Spreadsheet (.xlsx)</span>
+                      </a>
+                      <a
+                        href={docInfo.rawUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                      >
+                        <ExternalLink size={13} />
+                        <span>Open / Preview in Google Sheets</span>
+                      </a>
+                    </div>
+                  </div>
+                ) : docInfo.type === 'word' ? (
+                  /* 3. Word Document Card */
+                  <div className="p-8 max-w-md w-full mx-auto text-center space-y-5 bg-white rounded-3xl border border-slate-200 shadow-xl m-4 animate-in zoom-in-95">
+                    <div className="w-16 h-16 rounded-3xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center mx-auto shadow-inner">
+                      <FileText size={32} />
+                    </div>
+                    <div>
+                      <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        Word Document
+                      </span>
+                      <h4 className="text-base font-black text-slate-900 mt-2 truncate max-w-xs mx-auto">
+                        {previewDoc.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 font-medium mt-1">
+                        Word documents (.docx) can be downloaded or viewed in your local Office suite.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5 pt-2">
+                      <a
+                        href={docInfo.rawUrl}
+                        download
+                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-600/25"
+                      >
+                        <Download size={14} />
+                        <span>Download Document (.docx)</span>
+                      </a>
+                      <a
+                        href={docInfo.rawUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                      >
+                        <ExternalLink size={13} />
+                        <span>Open in New Window</span>
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  /* 4. PDF / Google Drive / Generic Embeddable Frame with Fallback Bar */
+                  <div className="w-full h-full relative flex flex-col">
+                    <iframe
+                      src={docInfo.embedUrl}
+                      title={previewDoc.name}
+                      className="w-full flex-1 border-none bg-white"
+                      allow="autoplay; encrypted-media"
+                    />
+                    <div className="bg-slate-900/90 backdrop-blur-md px-4 py-2 flex items-center justify-between text-xs text-slate-300 border-t border-slate-800">
+                      <span>Document not rendering directly?</span>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={docInfo.rawUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg font-bold flex items-center gap-1"
+                        >
+                          <ExternalLink size={12} /> Open in New Tab
+                        </a>
+                        <a
+                          href={docInfo.rawUrl}
+                          download
+                          className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold flex items-center gap-1"
+                        >
+                          <Download size={12} /> Direct Download
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );
