@@ -4,6 +4,7 @@ import LeaveApprovals from './components/LeaveApprovals';
 import HolidayNoticeManager from './components/HolidayNoticeManager';
 import NoticeBoard from './components/NoticeBoard';
 import LiveStatusDashboard from './components/LiveStatusDashboard';
+import TimesheetManagementView from './components/TimesheetManagementView';
 
 /**
  * HRMS Module Entrypoint
@@ -13,15 +14,17 @@ import LiveStatusDashboard from './components/LiveStatusDashboard';
  */
 const HRMSModule = ({ role = 'employee' }) => {
     const isAdmin = role === 'admin';
-    const [activeTab, setActiveTab] = useState(isAdmin ? 'live' : 'bulletin');
+    const [activeTab, setActiveTab] = useState(isAdmin ? 'timesheets' : 'timesheets');
 
     const adminTabs = [
+        { id: 'timesheets', label: 'Timesheet & Shifts Desk', icon: '⏱️' },
         { id: 'live', label: 'Workforce Live Tracker', icon: '🟢' },
         { id: 'approvals', label: 'Leave Approvals', icon: '📝' },
         { id: 'bulletin-mgmt', label: 'Bulletin Board Manager', icon: '📢' }
     ];
 
     const employeeTabs = [
+        { id: 'timesheets', label: 'My Timesheet & Breaks', icon: '⏱️' },
         { id: 'bulletin', label: 'Notice Board & Calendar', icon: '📅' },
         { id: 'leave', label: 'Apply for Leaves', icon: '✉️' }
     ];
@@ -63,12 +66,14 @@ const HRMSModule = ({ role = 'employee' }) => {
             <div className="mt-8">
                 {isAdmin ? (
                     <>
+                        {activeTab === 'timesheets' && <TimesheetManagementView role="admin" />}
                         {activeTab === 'live' && <LiveStatusDashboard />}
                         {activeTab === 'approvals' && <LeaveApprovals />}
                         {activeTab === 'bulletin-mgmt' && <HolidayNoticeManager />}
                     </>
                 ) : (
                     <>
+                        {activeTab === 'timesheets' && <TimesheetManagementView role="employee" />}
                         {activeTab === 'bulletin' && <NoticeBoard />}
                         {activeTab === 'leave' && <LeaveForm />}
                     </>

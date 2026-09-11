@@ -1,13 +1,17 @@
 import React, { useMemo, useState } from 'react';
+import { Clock, Calendar, CheckSquare, BarChart3 } from 'lucide-react';
+import TimesheetManagementView from '../../modules/hrms/v1.1/components/TimesheetManagementView';
 
 const TimeTrackingModule = ({
   orders,
   selectedOrder,
   setSelectedOrder,
   onLogTime,
+  userInfo,
   activeTaskSession,
   activeTaskElapsedSeconds
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState('timesheets');
   const [selectedOrderId, setSelectedOrderId] = useState(selectedOrder?._id || '');
   const [selectedTaskId, setSelectedTaskId] = useState('');
   const [manualMinutes, setManualMinutes] = useState('');
@@ -72,107 +76,139 @@ const TimeTrackingModule = ({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
-        <h3 className="font-bold text-slate-800 mb-2">Live Task Tracker</h3>
-        {activeTaskSession ? (
-          <p className="text-sm text-indigo-700 font-semibold">
-            Running timer is controlled from Task Management. Elapsed: {activeTimerLabel}
-          </p>
-        ) : (
-          <p className="text-sm text-slate-500">No active running task timer. Start one from Task Management tab.</p>
-        )}
+      {/* Sub-tab Navigation */}
+      <div className="flex items-center gap-2 bg-slate-200/60 p-1.5 rounded-2xl w-fit">
+        <button
+          onClick={() => setActiveSubTab('timesheets')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${
+            activeSubTab === 'timesheets'
+              ? 'bg-white text-indigo-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Calendar size={14} />
+          Weekly Timesheets & Shifts
+        </button>
+        <button
+          onClick={() => setActiveSubTab('task_logs')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${
+            activeSubTab === 'task_logs'
+              ? 'bg-white text-indigo-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Clock size={14} />
+          Project Task Logs
+        </button>
       </div>
 
-      <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
-        <h3 className="font-bold text-slate-800 mb-3">Manual Time Log (Optional)</h3>
-        <form onSubmit={submitManualLog} className="grid grid-cols-1 lg:grid-cols-4 gap-3">
-          <select
-            value={selectedOrderId}
-            onChange={(e) => {
-              const nextOrderId = e.target.value;
-              setSelectedOrderId(nextOrderId);
-              setSelectedTaskId('');
-              const order = orders.find((item) => item._id === nextOrderId);
-              if (order) setSelectedOrder(order);
-            }}
-            className="p-3 border border-slate-200 rounded-lg text-sm"
-            required
-          >
-            <option value="">Project/service</option>
-            {orders.map((order) => (
-              <option key={order._id} value={order._id}>{order.serviceName}</option>
-            ))}
-          </select>
-
-          <select
-            value={selectedTaskId}
-            onChange={(e) => setSelectedTaskId(e.target.value)}
-            className="p-3 border border-slate-200 rounded-lg text-sm"
-            required
-          >
-            <option value="">Task</option>
-            {currentTasks.map((task) => (
-              <option key={task._id} value={task._id}>{task.title}</option>
-            ))}
-          </select>
-
-          <input
-            type="number"
-            min="1"
-            value={manualMinutes}
-            onChange={(e) => setManualMinutes(e.target.value)}
-            placeholder="Minutes"
-            className="p-3 border border-slate-200 rounded-lg text-sm"
-            required
-          />
-
-          <button className="px-4 py-2.5 rounded-lg bg-slate-900 text-white font-bold text-sm">Add Log</button>
-
-          <textarea
-            value={manualNotes}
-            onChange={(e) => setManualNotes(e.target.value)}
-            rows={2}
-            placeholder="Optional note"
-            className="lg:col-span-4 p-3 border border-slate-200 rounded-lg text-sm"
-          />
-        </form>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
-          <h3 className="font-bold text-slate-800 mb-1">Project-wise Hours</h3>
-          <p className="text-sm text-slate-500 mb-4">Total hours spent per project/service.</p>
-          <div className="space-y-2">
-            {projectSummary.map((row) => (
-              <div key={row.orderId} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg text-sm">
-                <span className="text-slate-700 font-medium">{row.serviceName}</span>
-                <span className="font-bold text-indigo-700">{row.hours} h</span>
-              </div>
-            ))}
-            {projectSummary.length === 0 && <p className="text-sm text-slate-500">No tracked hours yet.</p>}
+      {activeSubTab === 'timesheets' ? (
+        <TimesheetManagementView role={userInfo?.role || 'employee'} token={userInfo?.token} />
+      ) : (
+        <>
+          <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
+            <h3 className="font-bold text-slate-800 mb-2">Live Task Tracker</h3>
+            {activeTaskSession ? (
+              <p className="text-sm text-indigo-700 font-semibold">
+                Running timer is controlled from Task Management. Elapsed: {activeTimerLabel}
+              </p>
+            ) : (
+              <p className="text-sm text-slate-500">No active running task timer. Start one from Task Management tab.</p>
+            )}
           </div>
-        </div>
 
-        <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
-          <h3 className="font-bold text-slate-800 mb-1">Task-wise Hours</h3>
-          <p className="text-sm text-slate-500 mb-4">Detailed breakdown by task.</p>
-          <div className="space-y-2 max-h-[340px] overflow-auto pr-1">
-            {taskSummary.map((row) => (
-              <div key={row.key} className="p-2.5 bg-slate-50 rounded-lg text-sm">
-                <p className="font-semibold text-slate-800">{row.taskTitle}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-slate-500 text-xs">{row.serviceName}</span>
-                  <span className="font-bold text-indigo-700">{row.hours} h</span>
-                </div>
-              </div>
-            ))}
-            {taskSummary.length === 0 && <p className="text-sm text-slate-500">No task-level time logs yet.</p>}
+          <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
+            <h3 className="font-bold text-slate-800 mb-3">Manual Time Log (Optional)</h3>
+            <form onSubmit={submitManualLog} className="grid grid-cols-1 lg:grid-cols-4 gap-3">
+              <select
+                value={selectedOrderId}
+                onChange={(e) => {
+                  const nextOrderId = e.target.value;
+                  setSelectedOrderId(nextOrderId);
+                  setSelectedTaskId('');
+                  const order = orders.find((item) => item._id === nextOrderId);
+                  if (order) setSelectedOrder(order);
+                }}
+                className="p-3 border border-slate-200 rounded-lg text-sm"
+                required
+              >
+                <option value="">Project/service</option>
+                {orders.map((order) => (
+                  <option key={order._id} value={order._id}>{order.serviceName}</option>
+                ))}
+              </select>
+
+              <select
+                value={selectedTaskId}
+                onChange={(e) => setSelectedTaskId(e.target.value)}
+                className="p-3 border border-slate-200 rounded-lg text-sm"
+                required
+              >
+                <option value="">Task</option>
+                {currentTasks.map((task) => (
+                  <option key={task._id} value={task._id}>{task.title}</option>
+                ))}
+              </select>
+
+              <input
+                type="number"
+                min="1"
+                value={manualMinutes}
+                onChange={(e) => setManualMinutes(e.target.value)}
+                placeholder="Minutes"
+                className="p-3 border border-slate-200 rounded-lg text-sm"
+                required
+              />
+
+              <button className="px-4 py-2.5 rounded-lg bg-slate-900 text-white font-bold text-sm">Add Log</button>
+
+              <textarea
+                value={manualNotes}
+                onChange={(e) => setManualNotes(e.target.value)}
+                rows={2}
+                placeholder="Optional note"
+                className="lg:col-span-4 p-3 border border-slate-200 rounded-lg text-sm"
+              />
+            </form>
           </div>
-          <p className="mt-3 text-sm font-semibold text-slate-700">
-            Total tracked: <span className="text-indigo-700">{(totalTrackedMinutes / 60).toFixed(2)} h</span>
-          </p>
-        </div>
-      </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
+              <h3 className="font-bold text-slate-800 mb-1">Project-wise Hours</h3>
+              <p className="text-sm text-slate-500 mb-4">Total hours spent per project/service.</p>
+              <div className="space-y-2">
+                {projectSummary.map((row) => (
+                  <div key={row.orderId} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg text-sm">
+                    <span className="text-slate-700 font-medium">{row.serviceName}</span>
+                    <span className="font-bold text-indigo-700">{row.hours} h</span>
+                  </div>
+                ))}
+                {projectSummary.length === 0 && <p className="text-sm text-slate-500">No tracked hours yet.</p>}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
+              <h3 className="font-bold text-slate-800 mb-1">Task-wise Hours</h3>
+              <p className="text-sm text-slate-500 mb-4">Detailed breakdown by task.</p>
+              <div className="space-y-2 max-h-[340px] overflow-auto pr-1">
+                {taskSummary.map((row) => (
+                  <div key={row.key} className="p-2.5 bg-slate-50 rounded-lg text-sm">
+                    <p className="font-semibold text-slate-800">{row.taskTitle}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-slate-500 text-xs">{row.serviceName}</span>
+                      <span className="font-bold text-indigo-700">{row.hours} h</span>
+                    </div>
+                  </div>
+                ))}
+                {taskSummary.length === 0 && <p className="text-sm text-slate-500">No task-level time logs yet.</p>}
+              </div>
+              <p className="mt-3 text-sm font-semibold text-slate-700">
+                Total tracked: <span className="text-indigo-700">{(totalTrackedMinutes / 60).toFixed(2)} h</span>
+              </p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

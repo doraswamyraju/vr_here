@@ -910,7 +910,20 @@ const FreelancerApp = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isClockedIn && authConfig) {
+      try {
+        const targetOrderId = selectedOrderId || orders[0]?._id;
+        if (targetOrderId) {
+          await axios.post(`/api/freelancer/clock-out/${targetOrderId}`, {
+            source: 'auto-logout',
+            clockOutReason: 'auto-logout'
+          }, authConfig);
+        }
+      } catch (err) {
+        console.warn('Auto clock-out failed during logout', err);
+      }
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('userInfo');
     navigate('/login');

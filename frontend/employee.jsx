@@ -56,11 +56,14 @@ const EmployeeApp = () => {
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [shiftStartedAt, setShiftStartedAt] = useState(null);
   const [shiftElapsedSeconds, setShiftElapsedSeconds] = useState(0);
+  const [activeBreak, setActiveBreak] = useState(null);
+  const [breakElapsedSeconds, setBreakElapsedSeconds] = useState(0);
   const [activeTaskSession, setActiveTaskSession] = useState(null);
   const [activeTaskElapsedSeconds, setActiveTaskElapsedSeconds] = useState(0);
 
   const navigate = useNavigate();
   const shiftIntervalRef = useRef(null);
+  const breakIntervalRef = useRef(null);
   const activeTaskIntervalRef = useRef(null);
 
   const authConfig = useMemo(() => (
@@ -116,10 +119,23 @@ const EmployeeApp = () => {
         setShiftStartedAt(openSession.clockInAt);
         const elapsed = Math.floor((Date.now() - new Date(openSession.clockInAt).getTime()) / 1000);
         setShiftElapsedSeconds(Math.max(0, elapsed));
+
+        // Check active break
+        const currentBreak = data?.activeBreak || (openSession?.breaks || []).find(b => !b.endedAt) || null;
+        if (currentBreak) {
+          setActiveBreak(currentBreak);
+          const bElapsed = Math.floor((Date.now() - new Date(currentBreak.startedAt).getTime()) / 1000);
+          setBreakElapsedSeconds(Math.max(0, bElapsed));
+        } else {
+          setActiveBreak(null);
+          setBreakElapsedSeconds(0);
+        }
       } else {
         setIsClockedIn(false);
         setShiftStartedAt(null);
         setShiftElapsedSeconds(0);
+        setActiveBreak(null);
+        setBreakElapsedSeconds(0);
       }
     } catch (error) {
       console.error('Failed to fetch attendance status:', error);
@@ -194,6 +210,23 @@ const EmployeeApp = () => {
   }, [isClockedIn, shiftStartedAt]);
 
   useEffect(() => {
+    if (activeBreak?.startedAt) {
+      breakIntervalRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - new Date(activeBreak.startedAt).getTime()) / 1000);
+        setBreakElapsedSeconds(Math.max(0, elapsed));
+      }, 1000);
+    } else {
+      setBreakElapsedSeconds(0);
+    }
+    return () => {
+      if (breakIntervalRef.current) {
+        clearInterval(breakIntervalRef.current);
+        breakIntervalRef.current = null;
+      }
+    };
+  }, [activeBreak]);
+
+  useEffect(() => {
     if (activeTaskSession?.startedAt) {
       activeTaskIntervalRef.current = setInterval(() => {
         const elapsed = Math.floor((Date.now() - new Date(activeTaskSession.startedAt).getTime()) / 1000);
@@ -223,6 +256,7 @@ const EmployeeApp = () => {
       setIsClockedIn(true);
       setShiftStartedAt(startedAt);
       setShiftElapsedSeconds(0);
+      setActiveBreak(null);
     } catch (error) {
       alert(error?.response?.data?.message || 'Unable to clock in.');
     }
@@ -231,12 +265,36 @@ const EmployeeApp = () => {
   const clockOut = async () => {
     if (!authConfig) return;
     try {
-      await axios.post('/api/attendance/clock-out', {}, authConfig);
+      await axios.post('/api/attendance/clock-out', { source: 'employee-dashboard', clockOutReason: 'manual' }, authConfig);
       setIsClockedIn(false);
       setShiftStartedAt(null);
       setShiftElapsedSeconds(0);
+      setActiveBreak(null);
+      setBreakElapsedSeconds(0);
     } catch (error) {
       alert(error?.response?.data?.message || 'Unable to clock out.');
+    }
+  };
+
+  const handleStartBreak = async (breakType = 'Lunch', notes = '') => {
+    if (!authConfig || !isClockedIn) return;
+    try {
+      const { data } = await axios.post('/api/attendance/break-start', { breakType, notes }, authConfig);
+      setActiveBreak(data?.activeBreak || { breakType, startedAt: new Date().toISOString() });
+      setBreakElapsedSeconds(0);
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to start break.');
+    }
+  };
+
+  const handleEndBreak = async () => {
+    if (!authConfig || !isClockedIn) return;
+    try {
+      await axios.post('/api/attendance/break-end', {}, authConfig);
+      setActiveBreak(null);
+      setBreakElapsedSeconds(0);
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to end break.');
     }
   };
 
@@ -394,7 +452,17 @@ const EmployeeApp = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isClockedIn && authConfig) {
+      try {
+        await axios.post('/api/attendance/clock-out', {
+          source: 'auto-logout',
+          clockOutReason: 'auto-logout'
+        }, authConfig);
+      } catch (err) {
+        console.warn('Auto clock-out failed during logout', err);
+      }
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('userInfo');
     navigate('/login');
@@ -523,6 +591,10 @@ const EmployeeApp = () => {
           shiftElapsedLabel={formatDuration(shiftElapsedSeconds)}
           onClockIn={clockIn}
           onClockOut={clockOut}
+          activeBreak={activeBreak}
+          breakElapsedLabel={formatDuration(breakElapsedSeconds)}
+          onStartBreak={handleStartBreak}
+          onEndBreak={handleEndBreak}
           activeTaskDetails={activeTaskDetails}
           activeTaskElapsedLabel={formatDuration(activeTaskElapsedSeconds)}
           onPauseTask={pauseTaskSession}
