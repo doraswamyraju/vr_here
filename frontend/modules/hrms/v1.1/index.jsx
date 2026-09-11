@@ -32,7 +32,7 @@ const HRMSModule = ({ role = 'employee' }) => {
     const tabs = isAdmin ? adminTabs : employeeTabs;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in space-y-6">
+        <div className="w-full pb-12 animate-fade-in space-y-6">
             
             {/* Header branding */}
             <div className="flex justify-between items-center border-b border-slate-100 pb-5">

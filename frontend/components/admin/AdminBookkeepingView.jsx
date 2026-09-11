@@ -191,7 +191,7 @@ const AdminBookkeepingView = ({ token, activeSubTab: propSubTab, onSubTabChange 
     ];
 
     return (
-        <div className="space-y-6 pb-20 max-w-7xl mx-auto animate-in fade-in duration-300">
+        <div className="space-y-6 pb-20 w-full animate-in fade-in duration-300">
             {/* Top Period & Month Switcher Bar */}
             <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 w-full sm:w-auto">
