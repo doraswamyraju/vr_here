@@ -647,185 +647,289 @@ const OrderProcessingModule = ({
         </div>
       </div>
 
-      {/* 3-Tier Visual Workflow Execution Pipeline */}
-      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-blue-50/80 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[11px] font-black uppercase text-indigo-900 tracking-wider flex items-center gap-1.5">
-            <Sparkles size={14} className="text-indigo-600" /> 3-Tier Work Execution & Quality Assurance Pipeline
-          </p>
-          <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1 ${
-            isAuditApproved ? 'bg-emerald-100 text-emerald-800' :
-            isAuditPending ? 'bg-amber-100 text-amber-800 animate-pulse' :
-            isChangesRequested ? 'bg-rose-100 text-rose-800' :
-            'bg-slate-200 text-slate-700'
-          }`}>
-            {isAuditApproved && <ShieldCheck size={14} />}
-            {isAuditPending && <Clock size={14} />}
-            {isChangesRequested && <AlertTriangle size={14} />}
-            Stage: {currentAuditStatus}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          {/* Stage 1: Project Manager */}
-          <div className="p-3.5 rounded-xl border border-indigo-100 bg-white/90 shadow-sm flex flex-col justify-between">
-            <div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-indigo-500">Tier 1 • Project Manager</span>
-              <p className="font-bold text-slate-800 text-sm mt-0.5 truncate">
-                {selectedOrder.assignedProjectManager?.name || selectedOrder.assignedEmployee?.name || 'Unassigned'}
-              </p>
-              <p className="text-[10px] text-slate-500 mt-1">
-                {(selectedOrder.customerRequirements || []).length} Checklist Requirements
-              </p>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-              <span className="text-slate-400 font-bold">Setup & Docs</span>
-              <span className="text-emerald-600 font-black flex items-center gap-0.5">
-                <CheckCircle2 size={12} /> Ready
-              </span>
-            </div>
+      {/* 3-Tier Pipeline Banner - Tailored based on User Role */}
+      {(isAdmin || isPM) ? (
+        /* Full 4-Stage Pipeline for Project Manager & Admin */
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-blue-50/80 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] font-black uppercase text-indigo-900 tracking-wider flex items-center gap-1.5">
+              <Sparkles size={14} className="text-indigo-600" /> 3-Tier Work Execution & Quality Assurance Pipeline
+            </p>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1 ${
+              isAuditApproved ? 'bg-emerald-100 text-emerald-800' :
+              isAuditPending ? 'bg-amber-100 text-amber-800 animate-pulse' :
+              isChangesRequested ? 'bg-rose-100 text-rose-800' :
+              'bg-slate-200 text-slate-700'
+            }`}>
+              {isAuditApproved && <ShieldCheck size={14} />}
+              {isAuditPending && <Clock size={14} />}
+              {isChangesRequested && <AlertTriangle size={14} />}
+              Stage: {currentAuditStatus}
+            </span>
           </div>
 
-          {/* Stage 2: Maker (Execution) */}
-          <div className={`p-3.5 rounded-xl border bg-white/90 shadow-sm flex flex-col justify-between ${
-            isMaker ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-slate-200'
-          }`}>
-            <div>
-              <div className="flex items-center justify-between">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            {/* Stage 1: Project Manager */}
+            <div className="p-3.5 rounded-xl border border-indigo-100 bg-white/90 shadow-sm flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-widest text-indigo-500">Tier 1 • Project Manager</span>
+                <p className="font-bold text-slate-800 text-sm mt-0.5 truncate">
+                  {selectedOrder.assignedProjectManager?.name || selectedOrder.assignedEmployee?.name || 'Unassigned'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  {(selectedOrder.customerRequirements || []).length} Checklist Requirements
+                </p>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                <span className="text-slate-400 font-bold">Setup & Docs</span>
+                <span className="text-emerald-600 font-black flex items-center gap-0.5">
+                  <CheckCircle2 size={12} /> Ready
+                </span>
+              </div>
+            </div>
+
+            {/* Stage 2: Maker (Execution) */}
+            <div className="p-3.5 rounded-xl border border-slate-200 bg-white/90 shadow-sm flex flex-col justify-between">
+              <div>
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Tier 2 • Maker (Execution)</span>
-                {isMaker && <span className="px-1.5 py-0.2 bg-indigo-600 text-white rounded text-[8px] font-black uppercase">You</span>}
+                <p className="font-bold text-slate-800 text-sm mt-0.5 truncate">
+                  {selectedOrder.assignedMaker?.name || 'Unassigned'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  {(selectedOrder.tasks || []).length} Workflow Tasks Assigned
+                </p>
               </div>
-              <p className="font-bold text-slate-800 text-sm mt-0.5 truncate">
-                {selectedOrder.assignedMaker?.name || 'Unassigned'}
-              </p>
-              <p className="text-[10px] text-slate-500 mt-1">
-                {(selectedOrder.tasks || []).length} Workflow Tasks Assigned
-              </p>
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                <span className="text-slate-400 font-bold">Execution</span>
+                <span className="font-bold text-indigo-600">
+                  {isAuditPending || isAuditApproved ? 'Completed' : 'In Progress'}
+                </span>
+              </div>
             </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-              <span className="text-slate-400 font-bold">Execution</span>
-              <span className="font-bold text-indigo-600">
-                {isAuditPending || isAuditApproved ? 'Completed' : 'In Progress'}
-              </span>
-            </div>
-          </div>
 
-          {/* Stage 3: Checker (Audit) */}
-          <div className={`p-3.5 rounded-xl border bg-white/90 shadow-sm flex flex-col justify-between ${
-            isChecker ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-slate-200'
-          }`}>
-            <div>
-              <div className="flex items-center justify-between">
+            {/* Stage 3: Checker (Audit) */}
+            <div className="p-3.5 rounded-xl border border-slate-200 bg-white/90 shadow-sm flex flex-col justify-between">
+              <div>
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Tier 3 • Checker (Audit)</span>
-                {isChecker && <span className="px-1.5 py-0.2 bg-indigo-600 text-white rounded text-[8px] font-black uppercase">You</span>}
+                <p className="font-bold text-slate-800 text-sm mt-0.5 truncate">
+                  {selectedOrder.assignedChecker?.name || 'Unassigned'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-1 truncate">
+                  {selectedOrder.auditNotes ? `"${selectedOrder.auditNotes}"` : 'Audit review'}
+                </p>
               </div>
-              <p className="font-bold text-slate-800 text-sm mt-0.5 truncate">
-                {selectedOrder.assignedChecker?.name || 'Unassigned'}
-              </p>
-              <p className="text-[10px] text-slate-500 mt-1 truncate">
-                {selectedOrder.auditNotes ? `"${selectedOrder.auditNotes}"` : 'Audit pending maker submit'}
-              </p>
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                <span className="text-slate-400 font-bold">Quality Audit</span>
+                <span className={`font-black ${
+                  isAuditApproved ? 'text-emerald-600' :
+                  isAuditPending ? 'text-amber-600' :
+                  isChangesRequested ? 'text-rose-600' : 'text-slate-400'
+                }`}>
+                  {currentAuditStatus}
+                </span>
+              </div>
             </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-              <span className="text-slate-400 font-bold">Quality Audit</span>
-              <span className={`font-black ${
-                isAuditApproved ? 'text-emerald-600' :
-                isAuditPending ? 'text-amber-600' :
-                isChangesRequested ? 'text-rose-600' : 'text-slate-400'
-              }`}>
-                {currentAuditStatus}
-              </span>
+
+            {/* Stage 4: Delivery & Close */}
+            <div className="p-3.5 rounded-xl border border-slate-200 bg-white/90 shadow-sm flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Final Deliverable</span>
+                <p className="font-bold text-slate-800 text-sm mt-0.5">
+                  {selectedOrder.finalCertificateUrl ? 'Certificate Issued 🎉' : 'Pending Completion'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  {selectedOrder.status === 'Completed' ? 'Project Closed' : 'Requires Audit Approval'}
+                </p>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                <span className="text-slate-400 font-bold">Status</span>
+                <span className={`font-black ${selectedOrder.status === 'Completed' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                  {selectedOrder.status}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Stage 4: Delivery & Close */}
-          <div className="p-3.5 rounded-xl border border-slate-200 bg-white/90 shadow-sm flex flex-col justify-between">
-            <div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Final Deliverable</span>
-              <p className="font-bold text-slate-800 text-sm mt-0.5">
-                {selectedOrder.finalCertificateUrl ? 'Certificate Issued 🎉' : 'Pending Completion'}
-              </p>
-              <p className="text-[10px] text-slate-500 mt-1">
-                {selectedOrder.status === 'Completed' ? 'Project Closed' : 'Requires Audit Approval'}
-              </p>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-              <span className="text-slate-400 font-bold">Status</span>
-              <span className={`font-black ${selectedOrder.status === 'Completed' ? 'text-emerald-600' : 'text-slate-500'}`}>
-                {selectedOrder.status}
-              </span>
-            </div>
+          {/* PM Action & Override Controls */}
+          <div className="mt-4 pt-3 border-t border-indigo-100 flex flex-wrap items-center justify-between gap-3">
+            {isChangesRequested && (
+              <div className="w-full bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start gap-2.5">
+                <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={18} />
+                <div className="text-xs">
+                  <p className="font-black text-rose-900 uppercase tracking-tight">Changes Requested by Checker</p>
+                  <p className="text-rose-700 mt-0.5 font-medium">{selectedOrder.auditNotes || 'Revisions required before delivery.'}</p>
+                </div>
+              </div>
+            )}
+
+            {!isAuditApproved && !isAuditPending && (
+              <button
+                onClick={() => {
+                  if (!isClockedIn) return alert('Please clock in before submitting work.');
+                  setSubmitAuditModalOpen(true);
+                }}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md shadow-indigo-200 transition"
+              >
+                <Send size={14} /> Submit Work for Checker Quality Audit
+              </button>
+            )}
+
+            {isAuditPending && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-slate-700 mr-2">PM / Audit Action:</span>
+                <button
+                  onClick={() => {
+                    if (!isClockedIn) return alert('Please clock in before auditing.');
+                    setAuditDecision('Approved');
+                    setCheckerDecisionModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition"
+                >
+                  <CheckCircle size={14} /> Approve Work (Override)
+                </button>
+                <button
+                  onClick={() => {
+                    if (!isClockedIn) return alert('Please clock in before auditing.');
+                    setAuditDecision('Changes Requested');
+                    setCheckerDecisionModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition"
+                >
+                  <AlertCircle size={14} /> Request Changes
+                </button>
+              </div>
+            )}
+
+            {isAuditApproved && (
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
+                <ShieldCheck size={18} className="text-emerald-600" /> Quality Audit Approved! Ready for final certificate upload.
+              </div>
+            )}
           </div>
         </div>
+      ) : isChecker ? (
+        /* Focused Checker Quality Audit Action Card */
+        <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50/90 via-white to-indigo-50/70 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <p className="text-[11px] font-black uppercase text-indigo-900 tracking-wider flex items-center gap-1.5">
+                <ShieldCheck size={16} className="text-indigo-600" /> Your Role: Checker (Quality Assurance & Audit)
+              </p>
+              <p className="text-xs text-slate-600 mt-1">
+                Maker: <strong>{selectedOrder.assignedMaker?.name || 'Unassigned'}</strong> • Review work and provide approval or change requests.
+              </p>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
+              isAuditApproved ? 'bg-emerald-100 text-emerald-800' :
+              isAuditPending ? 'bg-amber-100 text-amber-800 animate-pulse' :
+              isChangesRequested ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-700'
+            }`}>
+              {isAuditApproved && <ShieldCheck size={14} />}
+              {isAuditPending && <Clock size={14} />}
+              {isChangesRequested && <AlertTriangle size={14} />}
+              Audit Status: {currentAuditStatus}
+            </span>
+          </div>
 
-        {/* Interactive Action Ribbon based on Role */}
-        <div className="mt-4 pt-3 border-t border-indigo-100 flex flex-wrap items-center justify-between gap-3">
-          {/* Changes Requested Banner */}
+          {selectedOrder.auditNotes && (
+            <div className="mt-3 bg-white p-3 rounded-xl border border-slate-200 text-xs text-slate-700">
+              <span className="font-bold text-slate-900">Handover Notes:</span> {selectedOrder.auditNotes}
+            </div>
+          )}
+
+          <div className="mt-4 pt-3 border-t border-indigo-100 flex flex-wrap items-center justify-between gap-3">
+            {isAuditPending ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-slate-700 mr-2">Audit Decision:</span>
+                <button
+                  onClick={() => {
+                    if (!isClockedIn) return alert('Please clock in before auditing.');
+                    setAuditDecision('Approved');
+                    setCheckerDecisionModalOpen(true);
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition"
+                >
+                  <CheckCircle size={14} /> Approve Work
+                </button>
+                <button
+                  onClick={() => {
+                    if (!isClockedIn) return alert('Please clock in before auditing.');
+                    setAuditDecision('Changes Requested');
+                    setCheckerDecisionModalOpen(true);
+                  }}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition"
+                >
+                  <AlertCircle size={14} /> Request Changes
+                </button>
+              </div>
+            ) : isAuditApproved ? (
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
+                <ShieldCheck size={18} className="text-emerald-600" /> You have APPROVED this work submission. Deliverable can now be issued.
+              </div>
+            ) : (
+              <div className="text-xs text-slate-500 font-medium italic">
+                Awaiting Maker submission for quality audit.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : isMaker ? (
+        /* Focused Maker Execution Action Card */
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/90 via-white to-blue-50/70 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <p className="text-[11px] font-black uppercase text-indigo-900 tracking-wider flex items-center gap-1.5">
+                <Send size={16} className="text-indigo-600" /> Your Role: Maker (Work Execution)
+              </p>
+              <p className="text-xs text-slate-600 mt-1">
+                Audited By: <strong>{selectedOrder.assignedChecker?.name || 'Assigned Checker'}</strong>
+              </p>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
+              isAuditApproved ? 'bg-emerald-100 text-emerald-800' :
+              isAuditPending ? 'bg-amber-100 text-amber-800 animate-pulse' :
+              isChangesRequested ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-700'
+            }`}>
+              {isAuditApproved && <ShieldCheck size={14} />}
+              {isAuditPending && <Clock size={14} />}
+              {isChangesRequested && <AlertTriangle size={14} />}
+              Audit Status: {currentAuditStatus}
+            </span>
+          </div>
+
           {isChangesRequested && (
-            <div className="w-full bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start gap-2.5">
+            <div className="mt-3 bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start gap-2.5">
               <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={18} />
               <div className="text-xs">
                 <p className="font-black text-rose-900 uppercase tracking-tight">Changes Requested by Checker</p>
-                <p className="text-rose-700 mt-0.5 font-medium">{selectedOrder.auditNotes || 'Please review and update the deliverables before resubmitting.'}</p>
+                <p className="text-rose-700 mt-0.5 font-medium">{selectedOrder.auditNotes || 'Please review deliverables and update.'}</p>
               </div>
             </div>
           )}
 
-          {/* Maker / PM Submission Button */}
-          {(isMaker || isPM || isAdmin) && !isAuditApproved && !isAuditPending && (
-            <button
-              onClick={() => {
-                if (!isClockedIn) return alert('Please clock in before submitting work.');
-                setSubmitAuditModalOpen(true);
-              }}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md shadow-indigo-200 transition"
-            >
-              <Send size={14} /> Submit Work for Checker Quality Audit
-            </button>
-          )}
-
-          {/* Pending Audit Notice for Maker */}
-          {isAuditPending && isMaker && !isChecker && !isPM && (
-            <div className="flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200">
-              <Clock size={16} className="animate-spin text-amber-600" /> Work submitted to Checker ({selectedOrder.assignedChecker?.name || 'Assigned Checker'}). Waiting for audit review.
-            </div>
-          )}
-
-          {/* Checker / PM Override Decision Buttons */}
-          {(isChecker || isPM || isAdmin) && isAuditPending && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold text-slate-700 mr-2">Audit Decision:</span>
+          <div className="mt-4 pt-3 border-t border-indigo-100 flex flex-wrap items-center justify-between gap-3">
+            {!isAuditApproved && !isAuditPending ? (
               <button
                 onClick={() => {
-                  if (!isClockedIn) return alert('Please clock in before auditing.');
-                  setAuditDecision('Approved');
-                  setCheckerDecisionModalOpen(true);
+                  if (!isClockedIn) return alert('Please clock in before submitting work.');
+                  setSubmitAuditModalOpen(true);
                 }}
-                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition"
+                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md shadow-indigo-200 transition"
               >
-                <CheckCircle size={14} /> Approve Work
+                <Send size={14} /> Submit Work for Checker Quality Audit
               </button>
-              <button
-                onClick={() => {
-                  if (!isClockedIn) return alert('Please clock in before auditing.');
-                  setAuditDecision('Changes Requested');
-                  setCheckerDecisionModalOpen(true);
-                }}
-                className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition"
-              >
-                <AlertCircle size={14} /> Request Changes
-              </button>
-            </div>
-          )}
-
-          {/* Approved Celebration */}
-          {isAuditApproved && (
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
-              <ShieldCheck size={18} className="text-emerald-600" /> Quality Audit Approved! Ready for final certificate upload and project closing.
-            </div>
-          )}
+            ) : isAuditPending ? (
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200">
+                <Clock size={16} className="animate-spin text-amber-600" /> Work submitted to Checker ({selectedOrder.assignedChecker?.name || 'Assigned Checker'}). Waiting for review.
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
+                <ShieldCheck size={18} className="text-emerald-600" /> Quality Audit Approved! Ready for final certificate upload.
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* KPI Tiles */}
       <div className="rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] p-6">
