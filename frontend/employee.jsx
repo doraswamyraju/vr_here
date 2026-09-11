@@ -36,11 +36,20 @@ const formatDuration = (totalSeconds) => {
 
 const EmployeeApp = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('employee_sidebar_collapsed') === 'true';
+  });
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [orders, setOrders] = useState([]);
   const [todos, setTodos] = useState([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  const handleToggleSidebar = (nextVal) => {
+    const val = typeof nextVal === 'boolean' ? nextVal : !sidebarCollapsed;
+    setSidebarCollapsed(val);
+    localStorage.setItem('employee_sidebar_collapsed', String(val));
+  };
   
   const {
     notifications,
@@ -577,9 +586,11 @@ const EmployeeApp = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         collapsed={sidebarCollapsed}
-        setCollapsed={setSidebarCollapsed}
+        setCollapsed={handleToggleSidebar}
         onLogout={handleLogout}
         userInfo={userInfo}
+        mobileOpen={mobileSidebarOpen}
+        setMobileOpen={setMobileSidebarOpen}
       />
 
       <main className="flex-1 flex flex-col h-full overflow-hidden">
@@ -587,6 +598,7 @@ const EmployeeApp = () => {
           activeTab={activeTab}
           userInfo={userInfo}
           onRefresh={refreshAll}
+          onToggleMobileSidebar={() => setMobileSidebarOpen(true)}
           isClockedIn={isClockedIn}
           shiftElapsedLabel={formatDuration(shiftElapsedSeconds)}
           onClockIn={clockIn}

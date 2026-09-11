@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pause, Play, RefreshCw, Square, Coffee, ChevronDown, Check } from 'lucide-react';
+import { Pause, Play, RefreshCw, Square, Coffee, ChevronDown, Check, Menu } from 'lucide-react';
 import { EMPLOYEE_TABS } from './constants';
 
 const BREAK_OPTIONS = [
@@ -13,6 +13,7 @@ const EmployeeTopbar = ({
   activeTab,
   userInfo,
   onRefresh,
+  onToggleMobileSidebar,
   isClockedIn,
   shiftElapsedLabel,
   onClockIn,
@@ -32,9 +33,20 @@ const EmployeeTopbar = ({
   return (
     <header className="px-4 sm:px-6 py-3 border-b border-slate-200/70 bg-white/70 backdrop-blur-md sticky top-0 z-20 transition-all">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs text-slate-500 font-medium">VR Here Staff Workplace</p>
-          <h1 className="font-extrabold text-xl sm:text-2xl text-slate-900">{active?.label || 'Employee Dashboard'}</h1>
+        <div className="flex items-center gap-2.5">
+          {onToggleMobileSidebar && (
+            <button
+              onClick={onToggleMobileSidebar}
+              className="lg:hidden p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition"
+              title="Open Navigation"
+            >
+              <Menu size={18} />
+            </button>
+          )}
+          <div>
+            <p className="text-xs text-slate-500 font-medium">VR Here Staff Workplace</p>
+            <h1 className="font-extrabold text-xl sm:text-2xl text-slate-900">{active?.label || 'Employee Dashboard'}</h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
