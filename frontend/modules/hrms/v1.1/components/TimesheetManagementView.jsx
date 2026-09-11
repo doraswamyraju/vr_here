@@ -74,8 +74,10 @@ const TimesheetManagementView = ({ role = 'employee', token, employees = [] }) =
   const [isBreakModalOpen, setIsBreakModalOpen] = useState(false);
   const [breakLoading, setBreakLoading] = useState(false);
 
-  // Expanded details row
+  // Expanded details row & Day Modal
   const [expandedDate, setExpandedDate] = useState(null);
+  const [selectedDayModal, setSelectedDayModal] = useState(null);
+  const [focusedDayDate, setFocusedDayDate] = useState('all');
 
   // 1. Fetch My Timesheet
   const fetchMyTimesheet = useCallback(async () => {
@@ -491,8 +493,8 @@ const TimesheetManagementView = ({ role = 'employee', token, employees = [] }) =
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">Weekly Timesheet Breakdown</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Individual daily shifts, breaks, and order tasks reconciliation</p>
+                <h3 className="font-bold text-slate-900 text-lg">Weekly Timesheet & Daily Breakdown</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Click any day or "View Day Breakdown" to inspect exact project tasks, breaks, and idle time</p>
               </div>
               {timesheetData && (
                 <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
@@ -504,6 +506,43 @@ const TimesheetManagementView = ({ role = 'employee', token, employees = [] }) =
                   Status: {timesheetData.status}
                 </span>
               )}
+            </div>
+
+            {/* Quick Day Selector Chips */}
+            <div className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2 overflow-x-auto">
+              <button
+                onClick={() => setFocusedDayDate('all')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
+                  focusedDayDate === 'all'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                🗓️ Full Week (All 7 Days)
+              </button>
+              {timesheetData?.entries?.map((entry) => (
+                <button
+                  key={entry.date}
+                  onClick={() => setFocusedDayDate(entry.date)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    focusedDayDate === entry.date
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${
+                    entry.status === 'Present' ? 'bg-emerald-500' :
+                    entry.status === 'Half Day' ? 'bg-amber-500' :
+                    entry.status === 'Weekend' ? 'bg-slate-300' : 'bg-rose-400'
+                  }`} />
+                  <span>{entry.dayName.slice(0, 3)} {entry.date.slice(5)}</span>
+                  {entry.netWorkedSeconds > 0 && (
+                    <span className={`text-[10px] ml-0.5 font-extrabold ${focusedDayDate === entry.date ? 'text-indigo-100' : 'text-indigo-600'}`}>
+                      ({formatSecondsToHoursMins(entry.netWorkedSeconds)})
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
 
             <div className="overflow-x-auto">
@@ -522,84 +561,110 @@ const TimesheetManagementView = ({ role = 'employee', token, employees = [] }) =
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
-                  {timesheetData?.entries?.map((entry) => {
-                    const isExpanded = expandedDate === entry.date;
-                    const hasTasks = entry.ordersWorked && entry.ordersWorked.length > 0;
+                  {timesheetData?.entries
+                    ?.filter((entry) => focusedDayDate === 'all' || entry.date === focusedDayDate)
+                    ?.map((entry) => {
+                      const isExpanded = expandedDate === entry.date;
+                      const hasTasks = entry.ordersWorked && entry.ordersWorked.length > 0;
 
-                    return (
-                      <React.Fragment key={entry.date}>
-                        <tr className="hover:bg-slate-50/80 transition">
-                          <td className="px-5 py-3.5">
-                            <p className="font-bold text-slate-900">{entry.dayName}</p>
-                            <p className="text-xs text-slate-400">{entry.date}</p>
-                          </td>
-                          <td className="px-5 py-3.5 text-xs">
-                            <p className="text-emerald-700 font-semibold">In: {formatTimeOnly(entry.clockInAt)}</p>
-                            <p className="text-slate-500">Out: {formatTimeOnly(entry.clockOutAt)}</p>
-                          </td>
-                          <td className="px-5 py-3.5 font-semibold text-slate-800">
-                            {formatSecondsToHoursMins(entry.grossShiftSeconds)}
-                          </td>
-                          <td className="px-5 py-3.5 text-amber-700 font-semibold">
-                            {formatSecondsToHoursMins(entry.breakSeconds)}
-                          </td>
-                          <td className="px-5 py-3.5 font-bold text-indigo-700">
-                            {formatSecondsToHoursMins(entry.netWorkedSeconds)}
-                          </td>
-                          <td className="px-5 py-3.5 font-bold text-emerald-700">
-                            {formatSecondsToHoursMins(entry.taskWorkedSeconds)}
-                          </td>
-                          <td className="px-5 py-3.5 text-slate-500 font-semibold">
-                            {formatSecondsToHoursMins(entry.idleSeconds)}
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
-                              entry.status === 'Present' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                              entry.status === 'Half Day' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                              entry.status === 'Weekend' ? 'bg-slate-100 text-slate-500' :
-                              'bg-rose-50 text-rose-700 border border-rose-200'
-                            }`}>
-                              {entry.status}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            {hasTasks ? (
-                              <button
-                                onClick={() => setExpandedDate(isExpanded ? null : entry.date)}
-                                className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition"
-                              >
-                                {isExpanded ? 'Hide' : `${entry.ordersWorked.length} Tasks`}
-                              </button>
-                            ) : (
-                              <span className="text-slate-300 text-xs italic">No tasks</span>
-                            )}
-                          </td>
-                        </tr>
-
-                        {/* Expanded Task Logs for the day */}
-                        {isExpanded && (
-                          <tr className="bg-indigo-50/40">
-                            <td colSpan={9} className="p-4 border-y border-indigo-100">
-                              <p className="text-xs font-bold text-indigo-900 mb-2">
-                                📋 Detailed Tasks Worked on {entry.date}:
+                      return (
+                        <React.Fragment key={entry.date}>
+                          <tr
+                            onClick={() => setSelectedDayModal(entry)}
+                            className="hover:bg-indigo-50/40 cursor-pointer transition"
+                            title="Click to view full Day Time Sheet and breakdown"
+                          >
+                            <td className="px-5 py-3.5">
+                              <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                                {entry.dayName}
+                                {entry.date === new Date().toISOString().slice(0, 10) && (
+                                  <span className="text-[9px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-black uppercase">Today</span>
+                                )}
                               </p>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                                {entry.ordersWorked.map((t, idx) => (
-                                  <div key={idx} className="bg-white p-2.5 rounded-xl border border-indigo-100 shadow-sm text-xs">
-                                    <p className="font-bold text-slate-800">{t.serviceName}</p>
-                                    <p className="text-slate-500 text-[11px] truncate">{t.taskTitle}</p>
-                                    <span className="inline-block mt-1 font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                                      {t.minutes} mins
-                                    </span>
-                                  </div>
-                                ))}
+                              <p className="text-xs text-slate-400">{entry.date}</p>
+                            </td>
+                            <td className="px-5 py-3.5 text-xs">
+                              <p className="text-emerald-700 font-semibold">In: {formatTimeOnly(entry.clockInAt)}</p>
+                              <p className="text-slate-500">Out: {formatTimeOnly(entry.clockOutAt)}</p>
+                            </td>
+                            <td className="px-5 py-3.5 font-semibold text-slate-800">
+                              {formatSecondsToHoursMins(entry.grossShiftSeconds)}
+                            </td>
+                            <td className="px-5 py-3.5 text-amber-700 font-semibold">
+                              {formatSecondsToHoursMins(entry.breakSeconds)}
+                            </td>
+                            <td className="px-5 py-3.5 font-bold text-indigo-700">
+                              {formatSecondsToHoursMins(entry.netWorkedSeconds)}
+                            </td>
+                            <td className="px-5 py-3.5 font-bold text-emerald-700">
+                              {formatSecondsToHoursMins(entry.taskWorkedSeconds)}
+                            </td>
+                            <td className="px-5 py-3.5 text-slate-500 font-semibold">
+                              {formatSecondsToHoursMins(entry.idleSeconds)}
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                                entry.status === 'Present' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                entry.status === 'Half Day' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                entry.status === 'Weekend' ? 'bg-slate-100 text-slate-500' :
+                                'bg-rose-50 text-rose-700 border border-rose-200'
+                              }`}>
+                                {entry.status}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => setSelectedDayModal(entry)}
+                                  className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition flex items-center gap-1 shadow-xs"
+                                >
+                                  <span>🔍</span> View Day Breakdown
+                                </button>
+                                {hasTasks && (
+                                  <button
+                                    onClick={() => setExpandedDate(isExpanded ? null : entry.date)}
+                                    className="px-2 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
+                                    title="Toggle quick tasks dropdown"
+                                  >
+                                    {isExpanded ? '▲' : '▼'}
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
+
+                          {/* Expanded Task Logs quick dropdown */}
+                          {isExpanded && (
+                            <tr className="bg-indigo-50/40">
+                              <td colSpan={9} className="p-4 border-y border-indigo-100">
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-xs font-bold text-indigo-900">
+                                    📋 Tasks Worked on {entry.date}:
+                                  </p>
+                                  <button
+                                    onClick={() => setSelectedDayModal(entry)}
+                                    className="text-xs font-bold text-indigo-600 hover:underline"
+                                  >
+                                    Open Full Audit Modal →
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                  {entry.ordersWorked.map((t, idx) => (
+                                    <div key={idx} className="bg-white p-2.5 rounded-xl border border-indigo-100 shadow-sm text-xs">
+                                      <p className="font-bold text-slate-800">{t.serviceName}</p>
+                                      <p className="text-slate-500 text-[11px] truncate">{t.taskTitle}</p>
+                                      <span className="inline-block mt-1 font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                                        {t.minutes} mins
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -868,6 +933,254 @@ const TimesheetManagementView = ({ role = 'employee', token, employees = [] }) =
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* DETAILED SINGLE-DAY BREAKDOWN MODAL */}
+      {selectedDayModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-3xl w-full shadow-2xl border border-slate-100 animate-in zoom-in-95 max-h-[92vh] overflow-y-auto space-y-6">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-black text-lg">
+                  📅
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-black text-slate-900">
+                      {selectedDayModal.dayName}, {selectedDayModal.date}
+                    </h3>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                      selectedDayModal.status === 'Present' ? 'bg-emerald-100 text-emerald-800' :
+                      selectedDayModal.status === 'Half Day' ? 'bg-amber-100 text-amber-800' :
+                      selectedDayModal.status === 'Weekend' ? 'bg-slate-100 text-slate-600' :
+                      'bg-rose-100 text-rose-800'
+                    }`}>
+                      {selectedDayModal.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Clock In: <span className="text-emerald-700 font-bold">{formatTimeOnly(selectedDayModal.clockInAt)}</span> • Clock Out: <span className="text-slate-700 font-bold">{formatTimeOnly(selectedDayModal.clockOutAt)}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedDayModal(null)}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Daily KPI Metrics Summary */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                <p className="text-[10px] font-extrabold uppercase text-slate-400">Gross Shift</p>
+                <p className="text-base font-black text-slate-900 mt-0.5">
+                  {formatSecondsToHoursMins(selectedDayModal.grossShiftSeconds)}
+                </p>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100 text-center">
+                <p className="text-[10px] font-extrabold uppercase text-amber-700">Breaks</p>
+                <p className="text-base font-black text-amber-800 mt-0.5">
+                  {formatSecondsToHoursMins(selectedDayModal.breakSeconds)}
+                </p>
+              </div>
+              <div className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 text-center">
+                <p className="text-[10px] font-extrabold uppercase text-indigo-700">Net Worked</p>
+                <p className="text-base font-black text-indigo-900 mt-0.5">
+                  {formatSecondsToHoursMins(selectedDayModal.netWorkedSeconds)}
+                </p>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+                <p className="text-[10px] font-extrabold uppercase text-emerald-700">Order Tasks</p>
+                <p className="text-base font-black text-emerald-800 mt-0.5">
+                  {formatSecondsToHoursMins(selectedDayModal.taskWorkedSeconds)}
+                </p>
+              </div>
+              <div className="p-3 bg-slate-100 rounded-2xl border border-slate-200 text-center">
+                <p className="text-[10px] font-extrabold uppercase text-slate-600">Idle / Prep</p>
+                <p className="text-base font-black text-slate-800 mt-0.5">
+                  {formatSecondsToHoursMins(selectedDayModal.idleSeconds)}
+                </p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-2xl border border-purple-100 text-center">
+                <p className="text-[10px] font-extrabold uppercase text-purple-700">Productivity</p>
+                <p className="text-base font-black text-purple-900 mt-0.5">
+                  {selectedDayModal.netWorkedSeconds > 0
+                    ? `${Math.min(100, Math.round((selectedDayModal.taskWorkedSeconds / selectedDayModal.netWorkedSeconds) * 100))}%`
+                    : '0%'}
+                </p>
+              </div>
+            </div>
+
+            {/* Visual Time Composition Bar */}
+            {selectedDayModal.grossShiftSeconds > 0 && (
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                  <span>Shift Time Composition</span>
+                  <span>100% of {formatSecondsToHoursMins(selectedDayModal.grossShiftSeconds)}</span>
+                </div>
+                <div className="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden flex">
+                  {selectedDayModal.taskWorkedSeconds > 0 && (
+                    <div
+                      className="bg-emerald-500 h-full"
+                      style={{ width: `${(selectedDayModal.taskWorkedSeconds / selectedDayModal.grossShiftSeconds) * 100}%` }}
+                      title={`Order Tasks: ${formatSecondsToHoursMins(selectedDayModal.taskWorkedSeconds)}`}
+                    />
+                  )}
+                  {selectedDayModal.breakSeconds > 0 && (
+                    <div
+                      className="bg-amber-400 h-full"
+                      style={{ width: `${(selectedDayModal.breakSeconds / selectedDayModal.grossShiftSeconds) * 100}%` }}
+                      title={`Breaks: ${formatSecondsToHoursMins(selectedDayModal.breakSeconds)}`}
+                    />
+                  )}
+                  {selectedDayModal.idleSeconds > 0 && (
+                    <div
+                      className="bg-slate-400 h-full"
+                      style={{ width: `${(selectedDayModal.idleSeconds / selectedDayModal.grossShiftSeconds) * 100}%` }}
+                      title={`Idle / Unallocated Prep: ${formatSecondsToHoursMins(selectedDayModal.idleSeconds)}`}
+                    />
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-4 text-[11px] font-semibold text-slate-600 pt-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Tasks ({formatSecondsToHoursMins(selectedDayModal.taskWorkedSeconds)})
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Breaks ({formatSecondsToHoursMins(selectedDayModal.breakSeconds)})
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Idle / Prep ({formatSecondsToHoursMins(selectedDayModal.idleSeconds)})
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 1: Projects & Tasks Logged */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <span>💼</span> Projects & Tasks Worked ({selectedDayModal.ordersWorked?.length || 0})
+                </h4>
+                <span className="text-xs font-bold text-emerald-700">
+                  Total: {formatSecondsToHoursMins(selectedDayModal.taskWorkedSeconds)}
+                </span>
+              </div>
+
+              {selectedDayModal.ordersWorked && selectedDayModal.ordersWorked.length > 0 ? (
+                <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+                  {selectedDayModal.ordersWorked.map((task, idx) => (
+                    <div key={idx} className="p-3.5 bg-white hover:bg-slate-50 transition flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-xs text-slate-900">{task.serviceName}</p>
+                        <p className="text-xs text-slate-500">{task.taskTitle}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-black text-xs">
+                          {task.minutes} mins ({(task.minutes / 60).toFixed(2)}h)
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                  <p className="text-xs font-bold text-slate-600">No project tasks logged on this date</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    All worked shift time was spent on preparation, standups, or unallocated tasks ({formatSecondsToHoursMins(selectedDayModal.idleSeconds)}).
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* SECTION 2: Breaks Logged */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <span>☕</span> Breaks & Downtime Logged ({selectedDayModal.breaks?.length || 0})
+                </h4>
+                <span className="text-xs font-bold text-amber-700">
+                  Total: {formatSecondsToHoursMins(selectedDayModal.breakSeconds)}
+                </span>
+              </div>
+
+              {selectedDayModal.breaks && selectedDayModal.breaks.length > 0 ? (
+                <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+                  {selectedDayModal.breaks.map((brk, idx) => (
+                    <div key={idx} className="p-3.5 bg-white hover:bg-slate-50 transition flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-xs text-amber-900 flex items-center gap-1.5">
+                          <span>{brk.breakType === 'Lunch' ? '🍱' : brk.breakType === 'Meeting' ? '👥' : '☕'}</span>
+                          {brk.breakType} Break
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                          {formatTimeOnly(brk.startedAt)} - {formatTimeOnly(brk.endedAt)} {brk.notes && `• ${brk.notes}`}
+                        </p>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-black text-xs">
+                        {formatSecondsToHoursMins(brk.durationSeconds)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                  <p className="text-xs text-slate-500 font-medium">No breaks recorded for this day.</p>
+                </div>
+              )}
+            </div>
+
+            {/* SECTION 3: Shift & Attendance Sessions */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <span>⏱️</span> Shift & Clock-In Sessions ({selectedDayModal.sessions?.length || 0})
+              </h4>
+              {selectedDayModal.sessions && selectedDayModal.sessions.length > 0 ? (
+                <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+                  {selectedDayModal.sessions.map((sess, idx) => (
+                    <div key={idx} className="p-3.5 bg-white hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-xs text-slate-800">
+                          Session #{idx + 1}: {formatTimeOnly(sess.clockInAt)} → {formatTimeOnly(sess.clockOutAt)}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Clock-out Reason: <span className="font-bold text-slate-600 uppercase">{sess.clockOutReason || 'manual'}</span>
+                          {sess.accomplishments && ` • Notes: ${sess.accomplishments}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-black text-xs">
+                          Gross: {formatSecondsToHoursMins(sess.totalSeconds)}
+                        </span>
+                        <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-black text-xs">
+                          Net: {formatSecondsToHoursMins(sess.netWorkedSeconds)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                  <p className="text-xs text-slate-500 font-medium">No clock-in records found for this date.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Close */}
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setSelectedDayModal(null)}
+                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow transition"
+              >
+                Close Day Breakdown
+              </button>
+            </div>
+
+          </div>
         </div>
       )}
     </div>

@@ -125,6 +125,20 @@ const getMyTimesheet = asyncHandler(async (req, res) => {
         else if (dayNetSecs > 0) status = 'Half Day';
         else if (dayName === 'Sunday') status = 'Weekend';
 
+        const allDayBreaks = dayAttendance.flatMap(a => a.breaks || []);
+        const allDaySessions = dayAttendance.map(a => ({
+            _id: a._id,
+            clockInAt: a.clockInAt,
+            clockOutAt: a.clockOutAt,
+            totalSeconds: a.totalSeconds || 0,
+            totalBreakSeconds: a.totalBreakSeconds || 0,
+            netWorkedSeconds: a.netWorkedSeconds || 0,
+            clockOutReason: a.clockOutReason,
+            accomplishments: a.accomplishments || '',
+            notes: a.notes || '',
+            breaks: a.breaks || []
+        }));
+
         entries.push({
             date: dKey,
             dayName,
@@ -137,6 +151,8 @@ const getMyTimesheet = asyncHandler(async (req, res) => {
             idleSeconds: dayIdleSecs,
             overtimeSeconds: dayOvertimeSecs,
             ordersWorked: dayTaskLogs,
+            breaks: allDayBreaks,
+            sessions: allDaySessions,
             status,
             notes: dayAttendance.map(a => a.notes).filter(Boolean).join(' | ')
         });
