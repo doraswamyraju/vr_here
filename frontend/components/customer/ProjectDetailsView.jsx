@@ -9,19 +9,9 @@ import {
     Save, HelpCircle, FileX, Plus
 } from 'lucide-react';
 import { launchRazorpayCheckout } from '../../utils/razorpayCheckout';
+import { ORDER_PHASES, getOrderStatusProgress, getPhaseStepIndex } from '../../utils/orderProgress';
 
-const PHASES = [
-    { label: 'Documents Pending', key: 'Pending Documents', step: 1 },
-    { label: 'Under Review', key: 'Documents Verified', step: 2 },
-    { label: 'Portal Processing', key: 'Processing at Portal', step: 3 },
-    { label: 'Department Action', key: 'Waiting for Clarification', step: 4 },
-    { label: 'Completed', key: 'Completed', step: 5 }
-];
-
-const getPhaseStepIndex = (status) => {
-    const found = PHASES.findIndex((p) => p.key === status || p.label === status);
-    return found !== -1 ? found + 1 : 1;
-};
+const PHASES = ORDER_PHASES;
 
 const ProjectDetailsView = ({ 
     order, 

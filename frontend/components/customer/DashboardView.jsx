@@ -6,17 +6,9 @@ import {
     ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink, ArrowRight,
     User as UsersIcon, CheckCircle2, Phone, Calendar, Clock, Sparkles, FileText, CheckCircle
 } from 'lucide-react';
+import { getOrderStatusProgress } from '../../utils/orderProgress';
 
-const getStatusProgress = (status) => {
-    switch (status) {
-        case 'Pending Documents': return 25;
-        case 'Documents Verified': return 50;
-        case 'Processing at Portal': return 75;
-        case 'Waiting for Clarification': return 60;
-        case 'Completed': return 100;
-        default: return 15;
-    }
-};
+const getStatusProgress = getOrderStatusProgress;
 
 const StatusBadge = ({ status }) => {
     const styles = {

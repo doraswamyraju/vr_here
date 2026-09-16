@@ -1,20 +1,11 @@
-import React from 'react';
 import {
     CheckSquare, Clock, Package, CheckCircle2,
     AlertCircle, ChevronRight, FileText, Search
 } from 'lucide-react';
 import ProjectDetailsView from './ProjectDetailsView';
+import { getOrderStatusProgress } from '../../utils/orderProgress';
 
-const getStatusProgress = (status) => {
-    switch (status) {
-        case 'Pending Documents': return 20;
-        case 'Documents Verified': return 40;
-        case 'Processing at Portal': return 60;
-        case 'Waiting for Clarification': return 70;
-        case 'Completed': return 100;
-        default: return 0;
-    }
-};
+const getStatusProgress = getOrderStatusProgress;
 
 const StatusBadge = ({ status }) => {
     const styles = {
