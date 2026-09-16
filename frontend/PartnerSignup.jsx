@@ -4,7 +4,7 @@ import axios from 'axios';
 import { 
     User, Phone, Mail, Lock, ShieldCheck, 
     ArrowRight, CheckCircle2, AlertCircle, Loader2,
-    Users, Briefcase, TrendingUp
+    Users, Briefcase, TrendingUp, Eye, EyeOff
 } from 'lucide-react';
 import { SharedHeader, SharedFooter } from './components/SharedComponents';
 
@@ -18,6 +18,8 @@ const PartnerSignup = () => {
         password: '',
         confirmPassword: ''
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
@@ -201,9 +203,18 @@ const PartnerSignup = () => {
                                         <div className="relative group">
                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
                                             <input 
-                                                name="password" type="password" required placeholder="••••••••" value={formData.password} onChange={handleChange}
-                                                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all font-semibold"
+                                                name="password" type={showPassword ? "text" : "password"} required placeholder="••••••••" value={formData.password} onChange={handleChange}
+                                                className="w-full pl-11 pr-11 py-4 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all font-semibold"
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                                                title={showPassword ? "Hide password" : "Show password"}
+                                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
@@ -211,9 +222,18 @@ const PartnerSignup = () => {
                                         <div className="relative group">
                                             <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
                                             <input 
-                                                name="confirmPassword" type="password" required placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange}
-                                                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all font-semibold"
+                                                name="confirmPassword" type={showConfirmPassword ? "text" : "password"} required placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange}
+                                                className="w-full pl-11 pr-11 py-4 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all font-semibold"
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                                                title={showConfirmPassword ? "Hide password" : "Show password"}
+                                                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

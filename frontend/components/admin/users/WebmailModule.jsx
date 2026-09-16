@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Key, RefreshCw, AlertCircle, Shield, Copy, Check, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Key, RefreshCw, AlertCircle, Shield, Copy, Check, ExternalLink, Eye, EyeOff } from 'lucide-react';
 
 const WebmailModule = ({ token }) => {
   const [webmails, setWebmails] = useState([]);
@@ -13,6 +13,8 @@ const WebmailModule = ({ token }) => {
   const [customDomain, setCustomDomain] = useState('');
   const [forwardTo, setForwardTo] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [showCustomDomainInput, setShowCustomDomainInput] = useState(false);
 
   // Edit / Password Update States
@@ -283,14 +285,24 @@ const WebmailModule = ({ token }) => {
 
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">SMTP Authentication Password</label>
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Secure password for Gmail SMTP" 
-                  required
-                  className="w-full p-2.5 border rounded-xl border-slate-300 bg-white text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none"
-                />
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Secure password for Gmail SMTP" 
+                    required
+                    className="w-full p-2.5 pr-10 border rounded-xl border-slate-300 bg-white text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <button 
@@ -389,13 +401,23 @@ const WebmailModule = ({ token }) => {
                         <td className="py-3.5 text-right">
                           {isChangingPassword ? (
                             <div className="inline-flex gap-1.5 items-center">
-                              <input 
-                                type="password" 
-                                placeholder="New password"
-                                value={newPassword} 
-                                onChange={(e) => setNewPassword(e.target.value)} 
-                                className="p-1 border rounded border-slate-300 text-xs bg-white w-32 outline-none focus:ring-1 focus:ring-indigo-500"
-                              />
+                              <div className="relative">
+                                <input 
+                                  type={showNewPassword ? "text" : "password"} 
+                                  placeholder="New password"
+                                  value={newPassword} 
+                                  onChange={(e) => setNewPassword(e.target.value)} 
+                                  className="p-1 pr-6 border rounded border-slate-300 text-xs bg-white w-32 outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowNewPassword(!showNewPassword)}
+                                  className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                  title={showNewPassword ? "Hide password" : "Show password"}
+                                >
+                                  {showNewPassword ? <EyeOff size={12} /> : <Eye size={12} />}
+                                </button>
+                              </div>
                               <button onClick={() => handleSavePassword(wm._id)} className="px-2 py-0.5 bg-indigo-600 text-white rounded text-[10px] font-black uppercase">Apply</button>
                               <button onClick={() => setChangingPasswordId('')} className="px-2 py-0.5 bg-slate-200 text-slate-700 rounded text-[10px] font-black uppercase">Cancel</button>
                             </div>
