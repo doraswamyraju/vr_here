@@ -259,6 +259,8 @@ export default function CustomerApp() {
                payments={payments}
                onOpenVault={() => setActiveTab('Documents')}
                setActiveTab={setActiveTab}
+               userInfo={userInfo}
+               refreshOrders={fetchData}
             />
          );
          case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;

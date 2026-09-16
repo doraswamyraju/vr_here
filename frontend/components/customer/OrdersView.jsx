@@ -31,7 +31,7 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId, onOpenVault, payments, setActiveTab }) => {
+const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId, onOpenVault, payments, setActiveTab, userInfo, refreshOrders }) => {
     if (selectedOrderId) {
         const order = orders.find(o => o._id === selectedOrderId);
         if (order) {
@@ -41,6 +41,9 @@ const OrdersView = ({ orders, notifications, selectedOrderId, setSelectedOrderId
                     payments={payments} 
                     onBack={() => setSelectedOrderId(null)} 
                     onOpenVault={onOpenVault}
+                    setActiveTab={setActiveTab}
+                    userInfo={userInfo}
+                    refreshOrders={refreshOrders}
                 />
             );
         }
