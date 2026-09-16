@@ -5,56 +5,21 @@ import {
     CheckCircle2, Circle, AlertCircle, FileCheck, IndianRupee,
     Download, ExternalLink, ShieldCheck, ChevronDown, ChevronUp,
     MessageSquare, Send, Loader2, Sparkles, CreditCard, Lock,
-    CheckCircle, ListOrdered, FolderOpen, Layers, Shield
+    CheckCircle, ListOrdered, FolderOpen, Layers, Shield, Upload,
+    Save, HelpCircle, FileX, Plus
 } from 'lucide-react';
-import RequirementsWorkspace from './RequirementsWorkspace';
 import { launchRazorpayCheckout } from '../../utils/razorpayCheckout';
 
-const getStatusProgress = (status, tasks = []) => {
-    // If tasks exist, calculate dynamic weighted progress
-    if (tasks && tasks.length > 0) {
-        let totalItems = 0;
-        let completedItems = 0;
-
-        tasks.forEach((t) => {
-            totalItems += 1;
-            if (t.status === 'Completed') completedItems += 1;
-
-            if (t.subtasks && t.subtasks.length > 0) {
-                t.subtasks.forEach((st) => {
-                    totalItems += 1;
-                    if (st.status === 'Completed' || st.isCompleted) completedItems += 1;
-                });
-            }
-        });
-
-        if (totalItems > 0) {
-            const calculated = Math.round((completedItems / totalItems) * 100);
-            if (status === 'Completed') return 100;
-            return Math.max(15, Math.min(95, calculated));
-        }
-    }
-
-    switch (status) {
-        case 'Pending Documents': return 20;
-        case 'Documents Verified': return 40;
-        case 'Processing at Portal': return 65;
-        case 'Waiting for Clarification': return 75;
-        case 'Completed': return 100;
-        default: return 10;
-    }
-};
-
 const PHASES = [
-    { label: 'Pending Documents', step: 1 },
-    { label: 'Documents Verified', step: 2 },
-    { label: 'Processing at Portal', step: 3 },
-    { label: 'Waiting for Clarification', step: 4 },
-    { label: 'Completed', step: 5 }
+    { label: 'Documents Pending', key: 'Pending Documents', step: 1 },
+    { label: 'Under Review', key: 'Documents Verified', step: 2 },
+    { label: 'Portal Processing', key: 'Processing at Portal', step: 3 },
+    { label: 'Department Action', key: 'Waiting for Clarification', step: 4 },
+    { label: 'Completed', key: 'Completed', step: 5 }
 ];
 
 const getPhaseStepIndex = (status) => {
-    const found = PHASES.findIndex((p) => p.label === status);
+    const found = PHASES.findIndex((p) => p.key === status || p.label === status);
     return found !== -1 ? found + 1 : 1;
 };
 
@@ -67,18 +32,25 @@ const ProjectDetailsView = ({
     userInfo, 
     refreshOrders 
 }) => {
-    const [currentTab, setCurrentTab] = useState('overview'); // 'overview' | 'requirements' | 'documents' | 'financials'
-    const [expandedTasks, setExpandedTasks] = useState({});
+    const [currentTab, setCurrentTab] = useState('requirements'); // 'requirements' | 'documents' | 'financials'
+    const [reqFilter, setReqFilter] = useState('pending'); // 'all' | 'pending' | 'completed'
     const [isPaying, setIsPaying] = useState(false);
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketData, setTicketData] = useState({
-        title: `Query regarding Order ${order?._id?.slice(-8)?.toUpperCase() || ''}: ${order?.serviceName || ''}`,
+        title: `Query regarding Order #${order?._id?.slice(-8)?.toUpperCase() || ''}: ${order?.serviceName || ''}`,
         category: 'Order',
         priority: 'Medium',
         description: ''
     });
     const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
     const [ticketSuccessMsg, setTicketSuccessMsg] = useState('');
+
+    // Dynamic Draft Inputs & Upload Loading States
+    const [drafts, setDrafts] = useState({});
+    const [uploadingId, setUploadingId] = useState('');
+    const [savingId, setSavingId] = useState('');
+
+    const requirements = order?.customerRequirements || [];
 
     // Filter payments for this order
     const orderPayments = useMemo(() => {
@@ -101,11 +73,81 @@ const ProjectDetailsView = ({
         ? 'Project Manager' 
         : (order?.assignedMaker ? 'Lead Operations Specialist' : (order?.assignedEmployee?.role || 'Relationship Manager'));
 
-    const toggleTaskExpand = (taskId) => {
-        setExpandedTasks((prev) => ({
-            ...prev,
-            [taskId]: !prev[taskId]
-        }));
+    // Categorized Requirements
+    const pendingRequirements = useMemo(() => {
+        return requirements.filter((item) => {
+            const isCompleted = item.status === 'Received' || item.status === 'Verified' || item.isClientCompleted || item.documentUrl || item.clientValue;
+            return !isCompleted;
+        });
+    }, [requirements]);
+
+    const completedRequirements = useMemo(() => {
+        return requirements.filter((item) => {
+            return item.status === 'Received' || item.status === 'Verified' || item.isClientCompleted || item.documentUrl || item.clientValue;
+        });
+    }, [requirements]);
+
+    const filteredRequirements = useMemo(() => {
+        if (reqFilter === 'pending') return pendingRequirements;
+        if (reqFilter === 'completed') return completedRequirements;
+        return requirements;
+    }, [reqFilter, pendingRequirements, completedRequirements, requirements]);
+
+    const reqProgressPercentage = useMemo(() => {
+        if (!requirements.length) return order?.status === 'Completed' ? 100 : 25;
+        const comp = completedRequirements.length;
+        const total = requirements.length;
+        return Math.round((comp / total) * 100);
+    }, [requirements, completedRequirements, order?.status]);
+
+    // Save Text / Form Detail Requirement
+    const handleSaveDetail = async (requirementId) => {
+        const value = drafts[requirementId]?.value ?? '';
+        const notes = drafts[requirementId]?.notes ?? '';
+        setSavingId(requirementId);
+        try {
+            const config = { headers: { Authorization: `Bearer ${userInfo?.token}` } };
+            await axios.put(
+                `/api/orders/${order._id}/requirements/${requirementId}`,
+                {
+                    clientValue: value,
+                    clientNotes: notes,
+                    isClientCompleted: Boolean(value.trim())
+                },
+                config
+            );
+            if (refreshOrders) await refreshOrders();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to save detail');
+        } finally {
+            setSavingId('');
+        }
+    };
+
+    // Upload Document for Requirement
+    const handleUploadForRequirement = async (requirementId, filesList) => {
+        if (!filesList || filesList.length === 0) return;
+        setUploadingId(requirementId);
+        try {
+            for (let i = 0; i < filesList.length; i++) {
+                const formData = new FormData();
+                formData.append('document', filesList[i]);
+                formData.append('requirementId', requirementId);
+
+                await axios.post(`/api/orders/${order._id}/documents`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${userInfo?.token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+            }
+            if (refreshOrders) await refreshOrders();
+        } catch (error) {
+            console.error('Document Upload Error:', error);
+            alert(error?.response?.data?.message || 'Error uploading file(s).');
+        } finally {
+            setUploadingId('');
+        }
     };
 
     const handlePayBalance = async () => {
@@ -169,10 +211,7 @@ const ProjectDetailsView = ({
         }
     };
 
-    const progressPercentage = getStatusProgress(order?.status, order?.tasks);
     const currentStepIndex = getPhaseStepIndex(order?.status);
-
-    const hasRequirements = order?.customerRequirements && order.customerRequirements.length > 0;
     const finalCertificateUrl = order?.finalCertificate || (order?.adminDocuments && order.adminDocuments.length > 0 ? order.adminDocuments[order.adminDocuments.length - 1]?.url : null);
 
     return (
@@ -222,18 +261,18 @@ const ProjectDetailsView = ({
                 </div>
             </div>
 
-            {/* Completion / Final Deliverables Banner (If order completed or has final certificate) */}
+            {/* Completion / Deliverables Ready Banner */}
             {(order?.status === 'Completed' || finalCertificateUrl) && (
                 <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white shadow-xl shadow-emerald-500/15 relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="space-y-1.5 max-w-xl">
                             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-[11px] font-black uppercase tracking-wider backdrop-blur-md">
-                                <Sparkles size={13} className="text-amber-300" /> Official Deliverables Ready
+                                <Sparkles size={13} className="text-amber-300" /> Statutory Deliverables Ready
                             </div>
                             <h2 className="text-xl font-black tracking-tight">Project Completed Successfully!</h2>
                             <p className="text-emerald-100 text-xs font-medium leading-relaxed">
-                                All statutory filings and government formalities for <strong className="text-white">{order?.serviceName}</strong> have been finalized and verified by our audit team.
+                                All government filings and certifications for <strong className="text-white">{order?.serviceName}</strong> have been finalized. You can download the official documents below.
                             </p>
                         </div>
                         {finalCertificateUrl && (
@@ -251,19 +290,50 @@ const ProjectDetailsView = ({
                 </div>
             )}
 
+            {/* High-Level Milestone Stepper Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6">
+                <div className="flex flex-wrap justify-between items-center gap-4 mb-5">
+                    <div>
+                        <h3 className="text-sm font-black text-slate-900">Project Progress Overview</h3>
+                        <p className="text-xs text-slate-400 font-medium">Live statutory lifecycle tracked by our compliance department</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Phase: <strong className="text-red-600">{order?.status}</strong>
+                        </span>
+                    </div>
+                </div>
+
+                {/* Phase Stepper */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-slate-100">
+                    {PHASES.map((phase, idx) => {
+                        const isDone = idx + 1 < currentStepIndex || order?.status === 'Completed';
+                        const isCurrent = idx + 1 === currentStepIndex && order?.status !== 'Completed';
+
+                        return (
+                            <div key={phase.key} className="text-center p-2 rounded-2xl transition-all">
+                                <div className={`w-8 h-8 mx-auto mb-1.5 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                                    isDone 
+                                        ? 'bg-emerald-500 text-white' 
+                                        : isCurrent 
+                                            ? 'bg-red-600 text-white ring-4 ring-red-100' 
+                                            : 'bg-slate-100 text-slate-400'
+                                }`}>
+                                    {isDone ? <CheckCircle size={15} /> : idx + 1}
+                                </div>
+                                <p className={`text-[10px] font-black uppercase tracking-tight leading-tight line-clamp-2 ${
+                                    isCurrent ? 'text-red-600 font-bold' : isDone ? 'text-slate-800' : 'text-slate-400'
+                                }`}>
+                                    {phase.label}
+                                </p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Navigation Tabs */}
             <div className="flex border-b border-slate-200 overflow-x-auto gap-2 scrollbar-none">
-                <button
-                    onClick={() => setCurrentTab('overview')}
-                    className={`px-4 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-                        currentTab === 'overview'
-                            ? 'border-red-600 text-red-600'
-                            : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <ListOrdered size={15} /> Overview & Milestones
-                </button>
-
                 <button
                     onClick={() => setCurrentTab('requirements')}
                     className={`px-4 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
@@ -272,10 +342,14 @@ const ProjectDetailsView = ({
                             : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                 >
-                    <FileCheck size={15} /> Checklist & Requirements
-                    {hasRequirements && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
-                            {order.customerRequirements.length}
+                    <FileCheck size={15} /> Customer Action Items & Requirements
+                    {pendingRequirements.length > 0 ? (
+                        <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black animate-pulse">
+                            {pendingRequirements.length} Pending
+                        </span>
+                    ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black">
+                            ✓ Complete
                         </span>
                     )}
                 </button>
@@ -288,7 +362,7 @@ const ProjectDetailsView = ({
                             : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                 >
-                    <FolderOpen size={15} /> Vault & Documents
+                    <FolderOpen size={15} /> Vault & Deliverables ({(order?.adminDocuments?.length || 0) + (order?.clientDocuments?.length || 0)})
                 </button>
 
                 <button
@@ -303,174 +377,227 @@ const ProjectDetailsView = ({
                 </button>
             </div>
 
-            {/* Tab 1: Overview & Milestones */}
-            {currentTab === 'overview' && (
+            {/* Tab 1: Customer Action Items & Requirements (Primary View) */}
+            {currentTab === 'requirements' && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column (2/3) */}
                     <div className="lg:col-span-2 space-y-6">
-                        {/* Overall Progress Card */}
-                        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-900">Project Completion Status</h3>
-                                    <p className="text-xs text-slate-400 font-medium">Real-time status tracking & milestone progress</p>
+                        {/* Dynamic Action Required Header Card */}
+                        <div className={`rounded-3xl border p-6 transition-all ${
+                            pendingRequirements.length > 0 
+                                ? 'bg-amber-50/70 border-amber-200' 
+                                : 'bg-emerald-50/70 border-emerald-200'
+                        }`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        {pendingRequirements.length > 0 ? (
+                                            <span className="p-1.5 rounded-xl bg-amber-500 text-white">
+                                                <AlertCircle size={18} />
+                                            </span>
+                                        ) : (
+                                            <span className="p-1.5 rounded-xl bg-emerald-500 text-white">
+                                                <CheckCircle2 size={18} />
+                                            </span>
+                                        )}
+                                        <h3 className="text-sm font-black text-slate-900">
+                                            {pendingRequirements.length > 0 
+                                                ? `Action Required: ${pendingRequirements.length} Pending Requirement${pendingRequirements.length > 1 ? 's' : ''}`
+                                                : 'All Customer Requirements Completed!'}
+                                        </h3>
+                                    </div>
+                                    <p className="text-xs text-slate-600 font-medium pl-8">
+                                        {pendingRequirements.length > 0 
+                                            ? 'Please upload the requested files and enter details below so our team can submit your application without delay.' 
+                                            : 'Everything requested from your side has been received and verified. Our team is actively executing portal processing.'}
+                                    </p>
                                 </div>
-                                <div className="text-right">
-                                    <span className="text-2xl font-black text-red-600">{progressPercentage}%</span>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Complete</p>
+
+                                <div className="shrink-0 text-right pl-8 sm:pl-0">
+                                    <span className="text-xl font-black text-slate-900">{reqProgressPercentage}%</span>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Requirements Done</p>
                                 </div>
-                            </div>
-
-                            <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-6">
-                                <div
-                                    className="h-full bg-gradient-to-r from-red-600 via-rose-500 to-red-500 rounded-full transition-all duration-1000 ease-out"
-                                    style={{ width: `${progressPercentage}%` }}
-                                />
-                            </div>
-
-                            {/* Phase Stepper */}
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-slate-100">
-                                {PHASES.map((phase, idx) => {
-                                    const isDone = idx + 1 < currentStepIndex || order?.status === 'Completed';
-                                    const isCurrent = idx + 1 === currentStepIndex && order?.status !== 'Completed';
-
-                                    return (
-                                        <div key={phase.label} className="text-center p-2 rounded-2xl transition-all">
-                                            <div className={`w-7 h-7 mx-auto mb-1.5 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                                                isDone 
-                                                    ? 'bg-emerald-500 text-white' 
-                                                    : isCurrent 
-                                                        ? 'bg-red-600 text-white ring-4 ring-red-100' 
-                                                        : 'bg-slate-100 text-slate-400'
-                                            }`}>
-                                                {isDone ? <CheckCircle size={14} /> : idx + 1}
-                                            </div>
-                                            <p className={`text-[10px] font-black uppercase tracking-tight leading-tight line-clamp-2 ${
-                                                isCurrent ? 'text-red-600 font-bold' : isDone ? 'text-slate-800' : 'text-slate-400'
-                                            }`}>
-                                                {phase.label}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
                             </div>
                         </div>
 
-                        {/* Workflow Tasks Breakdown */}
-                        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6">
-                            <div className="flex items-center justify-between mb-5">
+                        {/* Requirements List & Upload Hub */}
+                        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-5">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                                 <div>
-                                    <h3 className="text-sm font-black text-slate-900">Execution Stages & Milestones</h3>
-                                    <p className="text-xs text-slate-400 font-medium">Step-by-step statutory process managed by our specialists</p>
+                                    <h3 className="text-sm font-black text-slate-900">Required Documents & Information</h3>
+                                    <p className="text-xs text-slate-400 font-medium">Official checklist required for government filing</p>
                                 </div>
-                                <span className="text-xs font-bold text-slate-400">
-                                    {(order?.tasks || []).length} Main Tasks
-                                </span>
+
+                                {/* Filter Tags */}
+                                <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+                                    <button
+                                        onClick={() => setReqFilter('pending')}
+                                        className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                                            reqFilter === 'pending'
+                                                ? 'bg-white text-slate-900 shadow-2xs'
+                                                : 'text-slate-500 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        Pending ({pendingRequirements.length})
+                                    </button>
+                                    <button
+                                        onClick={() => setReqFilter('completed')}
+                                        className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                                            reqFilter === 'completed'
+                                                ? 'bg-white text-slate-900 shadow-2xs'
+                                                : 'text-slate-500 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        Submitted ({completedRequirements.length})
+                                    </button>
+                                    <button
+                                        onClick={() => setReqFilter('all')}
+                                        className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                                            reqFilter === 'all'
+                                                ? 'bg-white text-slate-900 shadow-2xs'
+                                                : 'text-slate-500 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        All ({requirements.length})
+                                    </button>
+                                </div>
                             </div>
 
-                            {order?.tasks && order.tasks.length > 0 ? (
-                                <div className="space-y-3">
-                                    {order.tasks.map((task, idx) => {
-                                        const isExpanded = expandedTasks[task._id];
-                                        const hasSubtasks = task.subtasks && task.subtasks.length > 0;
-                                        const completedSubtasks = (task.subtasks || []).filter(st => st.status === 'Completed' || st.isCompleted).length;
+                            {/* Checklist Items */}
+                            {filteredRequirements.length > 0 ? (
+                                <div className="space-y-4">
+                                    {filteredRequirements.map((item, idx) => {
+                                        const isDone = item.status === 'Received' || item.status === 'Verified' || item.isClientCompleted || item.documentUrl || item.clientValue;
+                                        const isDocument = item.type === 'Document';
+                                        const draft = drafts[item._id] || { value: item.clientValue || item.value || '', notes: item.clientNotes || '' };
 
                                         return (
-                                            <div key={task._id || idx} className="border border-slate-200/80 rounded-2xl p-4 bg-slate-50/50 hover:bg-white transition-all">
-                                                <div 
-                                                    onClick={() => hasSubtasks && toggleTaskExpand(task._id)}
-                                                    className={`flex items-start justify-between gap-3 ${hasSubtasks ? 'cursor-pointer' : ''}`}
-                                                >
+                                            <div 
+                                                key={item._id || idx} 
+                                                className={`rounded-2xl border p-4 transition-all ${
+                                                    isDone 
+                                                        ? 'bg-slate-50/50 border-slate-200' 
+                                                        : 'bg-white border-amber-200 shadow-xs'
+                                                }`}
+                                            >
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                                     <div className="flex items-start gap-3">
                                                         <div className="mt-0.5">
-                                                            {task.status === 'Completed' ? (
+                                                            {isDone ? (
                                                                 <CheckCircle2 size={18} className="text-emerald-500" />
-                                                            ) : task.status === 'In Progress' ? (
-                                                                <Clock size={18} className="text-indigo-600 animate-pulse" />
                                                             ) : (
-                                                                <Circle size={18} className="text-slate-300" />
+                                                                <Circle size={18} className="text-amber-500" />
                                                             )}
                                                         </div>
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <p className={`text-xs font-black ${task.status === 'Completed' ? 'text-slate-800' : 'text-slate-900'}`}>
-                                                                    {task.taskCode ? `${task.taskCode}: ` : ''}{task.title}
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <p className="text-xs font-black text-slate-900">
+                                                                    {item.itemCode ? `${item.itemCode}: ` : ''}{item.title}
                                                                 </p>
                                                                 <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                                                                    task.status === 'Completed'
-                                                                        ? 'bg-emerald-100 text-emerald-800'
-                                                                        : task.status === 'In Progress'
-                                                                            ? 'bg-blue-100 text-blue-800'
-                                                                            : 'bg-slate-200 text-slate-600'
+                                                                    item.status === 'Verified' 
+                                                                        ? 'bg-emerald-100 text-emerald-800' 
+                                                                        : isDone 
+                                                                            ? 'bg-blue-100 text-blue-800' 
+                                                                            : 'bg-amber-100 text-amber-800'
                                                                 }`}>
-                                                                    {task.status || 'Pending'}
+                                                                    {item.status === 'Verified' ? 'Verified by CA' : isDone ? 'Submitted' : 'Pending Upload'}
                                                                 </span>
+                                                                {item.required && (
+                                                                    <span className="text-[10px] font-bold text-rose-500 uppercase">
+                                                                        *Required
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                            {task.description && (
-                                                                <p className="text-[11px] text-slate-500 mt-0.5">{task.description}</p>
+                                                            {item.description && (
+                                                                <p className="text-[11px] text-slate-500">{item.description}</p>
                                                             )}
-                                                            {hasSubtasks && (
-                                                                <p className="text-[10px] text-slate-400 font-bold mt-1">
-                                                                    {completedSubtasks} of {task.subtasks.length} steps completed
-                                                                </p>
+                                                            {item.sheetName && (
+                                                                <p className="text-[10px] text-slate-400 font-semibold">Category: {item.sheetName}</p>
                                                             )}
                                                         </div>
                                                     </div>
 
-                                                    {hasSubtasks && (
-                                                        <button 
-                                                            type="button" 
-                                                            className="text-slate-400 hover:text-slate-600 p-1"
-                                                            aria-label="Toggle subtasks"
-                                                        >
-                                                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {/* Subtasks Accordion */}
-                                                {hasSubtasks && isExpanded && (
-                                                    <div className="mt-3 pt-3 border-t border-slate-200/60 pl-7 space-y-2">
-                                                        {task.subtasks.map((st, sIdx) => (
-                                                            <div key={st._id || sIdx} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={`w-2 h-2 rounded-full ${st.status === 'Completed' || st.isCompleted ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                                                                    <span className="font-semibold text-slate-700">
-                                                                        {st.subTaskCode ? `${st.subTaskCode} • ` : ''}{st.title}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex items-center gap-3">
-                                                                    {st.duration && <span className="text-[10px] text-slate-400 font-medium">Est: {st.duration}</span>}
-                                                                    <span className={`text-[10px] font-bold uppercase ${
-                                                                        st.status === 'Completed' || st.isCompleted ? 'text-emerald-600' : 'text-slate-400'
-                                                                    }`}>
-                                                                        {st.status || (st.isCompleted ? 'Completed' : 'Pending')}
-                                                                    </span>
-                                                                </div>
+                                                    {/* Upload Action / Form Input */}
+                                                    <div className="shrink-0 pl-7 sm:pl-0">
+                                                        {isDocument ? (
+                                                            <div className="flex items-center gap-2">
+                                                                {item.documentUrl && (
+                                                                    <a
+                                                                        href={item.documentUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+                                                                    >
+                                                                        <FileText size={13} className="text-indigo-600" /> View Uploaded
+                                                                    </a>
+                                                                )}
+                                                                <label className="cursor-pointer px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+                                                                    {uploadingId === item._id ? (
+                                                                        <Loader2 size={13} className="animate-spin" />
+                                                                    ) : (
+                                                                        <Upload size={13} />
+                                                                    )}
+                                                                    <span>{item.documentUrl ? 'Re-upload' : 'Upload File'}</span>
+                                                                    <input
+                                                                        type="file"
+                                                                        className="hidden"
+                                                                        disabled={uploadingId === item._id}
+                                                                        onChange={(e) => handleUploadForRequirement(item._id, e.target.files)}
+                                                                    />
+                                                                </label>
                                                             </div>
-                                                        ))}
+                                                        ) : (
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type={item.inputType || 'text'}
+                                                                    value={draft.value}
+                                                                    placeholder={item.placeholder || 'Enter value...'}
+                                                                    onChange={(e) => setDrafts({
+                                                                        ...drafts,
+                                                                        [item._id]: { ...draft, value: e.target.value }
+                                                                    })}
+                                                                    className="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 w-44"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSaveDetail(item._id)}
+                                                                    disabled={savingId === item._id}
+                                                                    className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black flex items-center gap-1 shadow-sm disabled:opacity-50"
+                                                                >
+                                                                    {savingId === item._id ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                                                                    <span>Save</span>
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <div className="text-center py-8 text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                                    <Clock size={28} className="mx-auto mb-2 opacity-50" />
-                                    <p className="text-xs font-bold text-slate-600">Tasks are being initialized by your Project Manager.</p>
-                                    <p className="text-[11px] text-slate-400 mt-0.5">Workflow stages will update live as progress is made.</p>
+                                <div className="text-center py-10 text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                    <CheckCircle size={32} className="mx-auto mb-2 opacity-40 text-emerald-600" />
+                                    <p className="text-xs font-bold text-slate-700">
+                                        {reqFilter === 'pending'
+                                            ? 'No pending requirements!'
+                                            : 'No requirements found in this category.'}
+                                    </p>
+                                    <p className="text-[11px] text-slate-400 mt-0.5">
+                                        We will notify you immediately if any additional clarifications are requested.
+                                    </p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Right Sidebar (1/3) */}
+                    {/* Right Column (1/3) */}
                     <div className="space-y-6">
                         {/* Assigned Expert / Team Card */}
                         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 relative overflow-hidden">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-black text-slate-900">Dedicated Expert</h3>
+                                <h3 className="text-sm font-black text-slate-900">Assigned Lead Expert</h3>
                                 <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase">
                                     Verified
                                 </span>
@@ -525,7 +652,7 @@ const ProjectDetailsView = ({
                                         onClick={() => setIsTicketModalOpen(true)}
                                         className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
                                     >
-                                        <MessageSquare size={13} /> Contact Manager
+                                        <MessageSquare size={13} /> Message Expert
                                     </button>
                                 </div>
                             ) : (
@@ -537,7 +664,7 @@ const ProjectDetailsView = ({
                             )}
                         </div>
 
-                        {/* Financial Card */}
+                        {/* Financial Overview Card */}
                         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6">
                             <h3 className="text-sm font-black text-slate-900 mb-4 flex items-center gap-2">
                                 <IndianRupee size={16} className="text-red-600" /> Financial Overview
@@ -579,21 +706,47 @@ const ProjectDetailsView = ({
                 </div>
             )}
 
-            {/* Tab 2: Requirements & Checklist */}
-            {currentTab === 'requirements' && (
-                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6">
-                    <RequirementsWorkspace 
-                        selectedOrder={order} 
-                        userInfo={userInfo} 
-                        refreshOrders={refreshOrders} 
-                    />
-                </div>
-            )}
-
-            {/* Tab 3: Vault & Documents */}
+            {/* Tab 2: Vault & Documents */}
             {currentTab === 'documents' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Client Documents */}
+                    {/* Official Admin / Government Issued Deliverables */}
+                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                            <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                                <ShieldCheck size={16} className="text-emerald-600" /> Government & Statutory Deliverables ({order?.adminDocuments?.length || 0})
+                            </h3>
+                        </div>
+
+                        {order?.adminDocuments && order.adminDocuments.length > 0 ? (
+                            <div className="space-y-2.5">
+                                {order.adminDocuments.map((doc) => (
+                                    <div key={doc._id} className="p-3 bg-emerald-50/60 rounded-2xl flex items-center justify-between gap-3 border border-emerald-100">
+                                        <div className="flex items-center gap-3 truncate">
+                                            <FileCheck size={16} className="text-emerald-600 shrink-0" />
+                                            <div className="truncate">
+                                                <p className="text-xs font-bold text-slate-900 truncate">{doc.name}</p>
+                                                <p className="text-[10px] text-emerald-700 font-medium">Issued {new Date(doc.uploadedAt || Date.now()).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                        {doc.url && (
+                                            <a
+                                                href={doc.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+                                            >
+                                                <Download size={12} /> Download
+                                            </a>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-slate-400 italic py-6 text-center">Official filings and certificates will appear here once processed by government portals.</p>
+                        )}
+                    </div>
+
+                    {/* Client Uploaded Documents */}
                     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
@@ -636,47 +789,10 @@ const ProjectDetailsView = ({
                             <p className="text-xs text-slate-400 italic py-6 text-center">No documents uploaded yet for this order.</p>
                         )}
                     </div>
-
-                    {/* Admin / Official Issued Documents */}
-                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4">
-                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                            <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                                <ShieldCheck size={16} className="text-emerald-600" /> Government & Statutory Deliverables ({order?.adminDocuments?.length || 0})
-                            </h3>
-                        </div>
-
-                        {order?.adminDocuments && order.adminDocuments.length > 0 ? (
-                            <div className="space-y-2.5">
-                                {order.adminDocuments.map((doc) => (
-                                    <div key={doc._id} className="p-3 bg-emerald-50/60 rounded-2xl flex items-center justify-between gap-3 border border-emerald-100">
-                                        <div className="flex items-center gap-3 truncate">
-                                            <FileCheck size={16} className="text-emerald-600 shrink-0" />
-                                            <div className="truncate">
-                                                <p className="text-xs font-bold text-slate-900 truncate">{doc.name}</p>
-                                                <p className="text-[10px] text-emerald-700 font-medium">Issued {new Date(doc.uploadedAt || Date.now()).toLocaleDateString()}</p>
-                                            </div>
-                                        </div>
-                                        {doc.url && (
-                                            <a
-                                                href={doc.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs"
-                                            >
-                                                <Download size={12} /> Download
-                                            </a>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-slate-400 italic py-6 text-center">Official filings and certificates will appear here once processed by government portals.</p>
-                        )}
-                    </div>
                 </div>
             )}
 
-            {/* Tab 4: Invoices & Payments */}
+            {/* Tab 3: Invoices & Payments */}
             {currentTab === 'financials' && (
                 <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-6">
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
