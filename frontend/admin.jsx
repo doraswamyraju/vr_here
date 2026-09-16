@@ -293,7 +293,10 @@ function AdminApp() {
       await axios.put(`/api/orders/${selectedOrder._id}/commercials`, {
         packageName: commercialDraft.packageName || selectedOrder.packageName,
         price: Number(commercialDraft.price || 0),
-        serviceName: commercialDraft.serviceName || selectedOrder.serviceName
+        serviceName: commercialDraft.serviceName || selectedOrder.serviceName,
+        makerId: selectedOrder.assignedMaker?._id || selectedOrder.assignedMaker || null,
+        checkerId: selectedOrder.assignedChecker?._id || selectedOrder.assignedChecker || null,
+        projectManagerId: selectedOrder.assignedProjectManager?._id || selectedOrder.assignedProjectManager || selectedOrder.assignedEmployee?._id || selectedOrder.assignedEmployee || null
       }, config);
       await fetchData();
       alert('Order details and assignments saved successfully!');

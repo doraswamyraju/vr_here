@@ -673,6 +673,31 @@ const assignOrder = asyncHandler(async (req, res) => {
     if (makerId !== undefined) order.assignedMaker = makerId || null;
     if (checkerId !== undefined) order.assignedChecker = checkerId || null;
 
+    // Auto-propagate Maker, Checker, and Project Manager assignments to all existing tasks & subtasks
+    if (Array.isArray(order.tasks) && order.tasks.length > 0) {
+        order.tasks.forEach((task) => {
+            if (makerId !== undefined) {
+                task.assignedMaker = makerId || null;
+            }
+            if (checkerId !== undefined) {
+                task.assignedChecker = checkerId || null;
+            }
+            if (effectivePmId !== undefined) {
+                task.assignedTo = effectivePmId || null;
+            }
+            if (Array.isArray(task.subtasks) && task.subtasks.length > 0) {
+                task.subtasks.forEach((subtask) => {
+                    if (makerId !== undefined) {
+                        subtask.assignedToMaker = makerId || null;
+                    }
+                    if (checkerId !== undefined) {
+                        subtask.assignedToChecker = checkerId || null;
+                    }
+                });
+            }
+        });
+    }
+
     const updatedOrder = await order.save();
 
     await logOrderActivity(
@@ -849,7 +874,7 @@ const checkerAuditOrder = asyncHandler(async (req, res) => {
 // @route   PUT /api/orders/:id/commercials
 // @access  Private/Admin
 const updateOrderCommercials = asyncHandler(async (req, res) => {
-    const { packageName, price, serviceName, makerId, checkerId } = req.body;
+    const { packageName, price, serviceName, makerId, checkerId, projectManagerId, employeeId } = req.body;
     const order = await Order.findById(req.params.id);
 
     if (!order) {
@@ -857,14 +882,46 @@ const updateOrderCommercials = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
+    const effectivePmId = projectManagerId !== undefined ? projectManagerId : employeeId;
+
     if (packageName !== undefined) order.packageName = packageName;
     if (serviceName !== undefined) order.serviceName = serviceName;
     if (price !== undefined) order.price = Number(price);
+    if (effectivePmId !== undefined) {
+        order.assignedEmployee = effectivePmId || null;
+        order.assignedProjectManager = effectivePmId || null;
+    }
     if (makerId !== undefined) order.assignedMaker = makerId || null;
     if (checkerId !== undefined) order.assignedChecker = checkerId || null;
 
+    // Auto-propagate Maker, Checker, and Project Manager assignments to all existing tasks & subtasks
+    if (Array.isArray(order.tasks) && order.tasks.length > 0) {
+        order.tasks.forEach((task) => {
+            if (makerId !== undefined) {
+                task.assignedMaker = makerId || null;
+            }
+            if (checkerId !== undefined) {
+                task.assignedChecker = checkerId || null;
+            }
+            if (effectivePmId !== undefined) {
+                task.assignedTo = effectivePmId || null;
+            }
+            if (Array.isArray(task.subtasks) && task.subtasks.length > 0) {
+                task.subtasks.forEach((subtask) => {
+                    if (makerId !== undefined) {
+                        subtask.assignedToMaker = makerId || null;
+                    }
+                    if (checkerId !== undefined) {
+                        subtask.assignedToChecker = checkerId || null;
+                    }
+                });
+            }
+        });
+    }
+
     const updatedOrder = await order.save();
-    res.json(updatedOrder);
+    const populated = await populateOrderQuery(Order.findById(updatedOrder._id));
+    res.json(sanitizeOrderForRole(populated, req.user));
 });
 
 // @desc    Upload documents for an order
@@ -1184,11 +1241,26 @@ const assignTask = asyncHandler(async (req, res) => {
     }
 
     if (employeeId !== undefined) task.assignedTo = employeeId || null;
-    if (makerId !== undefined) task.assignedMaker = makerId || null;
-    if (checkerId !== undefined) task.assignedChecker = checkerId || null;
+    if (makerId !== undefined) {
+        task.assignedMaker = makerId || null;
+        if (Array.isArray(task.subtasks)) {
+            task.subtasks.forEach((st) => {
+                st.assignedToMaker = makerId || null;
+            });
+        }
+    }
+    if (checkerId !== undefined) {
+        task.assignedChecker = checkerId || null;
+        if (Array.isArray(task.subtasks)) {
+            task.subtasks.forEach((st) => {
+                st.assignedToChecker = checkerId || null;
+            });
+        }
+    }
 
     await order.save();
-    res.json(order);
+    const populated = await populateOrderQuery(Order.findById(order._id));
+    res.json(sanitizeOrderForRole(populated, req.user));
 });
 
 // @desc    Add subtask to a task
