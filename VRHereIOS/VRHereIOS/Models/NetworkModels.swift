@@ -1125,4 +1125,75 @@ struct GeneralResponse: Codable {
     let message: String?
 }
 
+// --- CUSTOMER REFERRAL MODELS ---
+
+struct CustomerReferralItem: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let refereeName: String
+    let refereePhone: String
+    let refereeEmail: String?
+    let interestedService: String?
+    let status: String
+    let rewardAmount: Double?
+    let payoutStatus: String?
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case refereeName, refereePhone, refereeEmail, interestedService, status, rewardAmount, payoutStatus, createdAt
+    }
+}
+
+struct CustomerReferralStatsResponse: Codable {
+    let success: Bool?
+    let referralCode: String
+    let referralLink: String
+    let walletBalance: Double
+    let savedUpiId: String?
+    let totalInvited: Int
+    let successfulConversions: Int
+    let totalEarned: Double
+    let rewardPerReferral: Double?
+    let referrals: [CustomerReferralItem]?
+}
+
+struct AddReferralLeadRequest: Codable {
+    let name: String
+    let phone: String
+    let email: String?
+    let interestedService: String?
+}
+
+struct UpiPayoutRequest: Codable {
+    let amount: Double
+    let upiId: String
+}
+
+// --- USER VAULT DOCUMENT MODELS ---
+
+struct UserVaultDocument: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let docType: String
+    let fileName: String
+    let gdriveWebViewLink: String?
+    let verificationStatus: String?
+    let notes: String?
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case docType, fileName, gdriveWebViewLink, verificationStatus, notes, createdAt
+    }
+}
+
+struct UserVaultDocumentsResponse: Codable {
+    let success: Bool?
+    let count: Int?
+    let data: [UserVaultDocument]
+}
+
+
+
 

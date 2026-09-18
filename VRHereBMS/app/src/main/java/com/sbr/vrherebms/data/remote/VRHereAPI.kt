@@ -42,6 +42,22 @@ interface VRHereAPI {
         @Body body: Map<String, String>
     ): Response<OrderResponse>
 
+    @PUT("api/orders/{id}/requirements/{reqId}")
+    suspend fun updateOrderRequirement(
+        @Path("id") id: String,
+        @Path("reqId") reqId: String,
+        @Body body: Map<String, Any>
+    ): Response<OrderResponse>
+
+    @Multipart
+    @POST("api/orders/{id}/documents")
+    suspend fun uploadRequirementDocument(
+        @Path("id") id: String,
+        @Part document: okhttp3.MultipartBody.Part,
+        @Part("requirementId") requirementId: okhttp3.RequestBody
+    ): Response<OrderResponse>
+
+
     // --- PAYMENTS ---
     @GET("api/payments")
     suspend fun getPayments(): Response<List<PaymentResponse>>
@@ -204,6 +220,31 @@ interface VRHereAPI {
 
     @POST("api/leads/telemetry")
     suspend fun sendLeadTelemetry(@Body request: com.sbr.vrherebms.data.model.LeadTelemetryRequest): Response<Map<String, Any>>
+
+    // --- CUSTOMER REFERRAL ENDPOINTS ---
+    @GET("api/customer/referrals/stats")
+    suspend fun getCustomerReferralStats(): Response<CustomerReferralStatsResponse>
+
+    @POST("api/customer/referrals/lead")
+    suspend fun addCustomerReferralLead(@Body request: AddReferralLeadRequest): Response<GeneralApiResponse>
+
+    @POST("api/customer/referrals/payout-request")
+    suspend fun requestCustomerUpiPayout(@Body request: UpiPayoutRequest): Response<GeneralApiResponse>
+
+    // --- USER VAULT DOCUMENT ENDPOINTS ---
+    @GET("api/documents")
+    suspend fun getUserVaultDocuments(): Response<UserVaultDocumentsResponse>
+
+    @Multipart
+    @POST("api/documents/upload")
+    suspend fun uploadUserVaultDocument(
+        @Part document: okhttp3.MultipartBody.Part,
+        @Part("docType") docType: okhttp3.RequestBody
+    ): Response<GeneralApiResponse>
+
+    @DELETE("api/documents/{id}")
+    suspend fun deleteUserVaultDocument(@Path("id") id: String): Response<GeneralApiResponse>
+
 
 
     companion object {

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sbr.vrherebms.ui.screens.customer.*
+import com.sbr.vrherebms.ui.components.*
+import com.sbr.vrherebms.ui.theme.*
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
 import com.sbr.vrherebms.data.remote.VRHereAPI
 import kotlinx.coroutines.launch
@@ -44,6 +47,8 @@ fun CustomerDashboardScreen(
     var activeTab by remember { mutableStateOf("Home") }
     var selectedOrderId by remember { mutableStateOf("") }
     var searchQuery by remember { mutableStateOf("") }
+    var isShowingNotifications by remember { mutableStateOf(false) }
+    var isShowingMenuSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Webview overlay states for live service mapping
@@ -98,6 +103,10 @@ fun CustomerDashboardScreen(
             CustomerSidebarContent(
                 userName = userName,
                 activeTab = activeTab,
+                profilePhoto = viewModel.profilePhoto,
+                companyName = viewModel.companyName,
+                activeOrdersCount = viewModel.orders.filter { it.status != "Completed" }.size,
+                unreadNotificationsCount = viewModel.notifications.filter { !it.isRead }.size,
                 onTabSelected = {
                     activeTab = it
                     // Reset order drilldown when switching tabs
@@ -115,286 +124,40 @@ fun CustomerDashboardScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             Scaffold(
                 topBar = {
-                    // Exact replication of the React mobile header
-                    Column {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(64.dp)
-                                .background(Color.White)
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        if (drawerState.isClosed) drawerState.open() else drawerState.close()
-                                    }
-                                },
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .scaleOnPress()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Menu,
-                                    contentDescription = "Menu",
-                                    tint = Color(0xFF475569),
-                                    modifier = Modifier.size(24.dp)
-                                )
+                    VRHeader(
+                        title = "DASHBOARD",
+                        showMenu = true,
+                        onMenuClick = {
+                            scope.launch {
+                                if (drawerState.isClosed) drawerState.open() else drawerState.close()
                             }
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .background(Color(0xFF6366F1), RoundedCornerShape(8.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "VR",
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 12.sp
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "DASHBOARD",
-                                    color = Color(0xFF1E293B),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = (-0.2).sp
-                                )
-                            }
-
-                            IconButton(
-                                onClick = onLogout,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .scaleOnPress()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ExitToApp,
-                                    contentDescription = "Logout",
-                                    tint = Color(0xFFEF4444),
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                        }
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = Color(0xFFF1F5F9)
-                        )
-                    }
+                        },
+                        showBack = activeTab != "Home",
+                        onBackClick = { activeTab = "Home" },
+                        showNotifications = true,
+                        hasUnreadNotifications = viewModel.notifications.any { !it.isRead },
+                        onNotificationsClick = { isShowingNotifications = true },
+                        showLogout = true,
+                        onLogoutClick = onLogout,
+                        userProfilePhoto = viewModel.profilePhoto,
+                        userName = userName,
+                        onProfileClick = { activeTab = "Account" }
+                    )
                 },
                 bottomBar = {
                     if (activeServiceKey == null) {
-                        // Dribbble-style Floating Glow Island Dock Navigation Bar
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFF8FAFC))
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(78.dp)
-                                    .shadow(
-                                        elevation = 16.dp,
-                                        shape = RoundedCornerShape(28.dp),
-                                        clip = false,
-                                        ambientColor = Color(0xFF6366F1).copy(alpha = 0.25f),
-                                        spotColor = Color(0xFF6366F1).copy(alpha = 0.5f)
-                                    )
-                                    .background(Color(0xFF0F172A), RoundedCornerShape(28.dp))
-                                    .border(
-                                        width = 1.dp,
-                                        brush = Brush.horizontalGradient(
-                                            colors = listOf(
-                                                Color(0xFF6366F1).copy(alpha = 0.4f),
-                                                Color(0xFF8B5CF6).copy(alpha = 0.4f),
-                                                Color(0xFFEC4899).copy(alpha = 0.15f)
-                                            )
-                                        ),
-                                        shape = RoundedCornerShape(28.dp)
-                                    )
-                                    .padding(horizontal = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                val navItems = listOf(
-                                    Triple("Home", Icons.Default.Dashboard, "Me"),
-                                    Triple("Services", Icons.Default.Work, "Services"),
-                                    Triple("Orders", Icons.Default.ShoppingBag, "Orders"),
-                                    Triple("Invoices", Icons.Default.ReceiptLong, "Invoices"),
-                                    Triple("Vault", Icons.Default.Folder, "Docs"),
-                                    Triple("Account", Icons.Default.Person, "Account")
-                                )
-
-                                navItems.forEach { (tabId, icon, label) ->
-                                    val isSelected = activeTab == tabId
-
-                                    val interactionSource = remember { MutableInteractionSource() }
-                                    val isPressed by interactionSource.collectIsPressedAsState()
-
-                                    // Dynamic scale springs active tab exactly 30% larger (1.3f)
-                                    val scale by animateFloatAsState(
-                                        targetValue = if (isSelected) 1.3f else 1.0f,
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioLowBouncy,
-                                            stiffness = Spring.StiffnessMediumLow
-                                        ),
-                                        label = "NavTabScale"
-                                    )
-
-                                    // Translates upwards slightly for a floating physics feel
-                                    val translationY by animateFloatAsState(
-                                        targetValue = if (isSelected) -6f else 0f,
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioLowBouncy,
-                                            stiffness = Spring.StiffnessMediumLow
-                                        ),
-                                        label = "NavTabFloat"
-                                    )
-
-                                    // Premium hardware-accelerated pressure feedback (shrinks slightly on press)
-                                    val pressScale by animateFloatAsState(
-                                        targetValue = if (isPressed) 0.92f else 1.0f,
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioNoBouncy,
-                                            stiffness = Spring.StiffnessHigh
-                                        ),
-                                        label = "NavTabPressScale"
-                                    )
-
-                                    // Soft fade transitions between active/inactive item transparency
-                                    val alpha by animateFloatAsState(
-                                        targetValue = if (isSelected) 1.0f else 0.55f,
-                                        animationSpec = tween(durationMillis = 200, easing = LinearOutSlowInEasing),
-                                        label = "NavTabAlpha"
-                                    )
-
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .fillMaxHeight()
-                                            .clickable(
-                                                interactionSource = interactionSource,
-                                                indication = null
-                                            ) {
-                                                activeTab = tabId
-                                                // Reset order drilldown when switching tabs
-                                                if (tabId != "Orders") {
-                                                    selectedOrderId = ""
-                                                }
-                                            }
-                                            .graphicsLayer {
-                                                scaleX = scale * pressScale
-                                                scaleY = scale * pressScale
-                                                this.translationY = translationY.dp.toPx()
-                                                this.alpha = alpha
-                                            },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            Box(
-                                                contentAlignment = Alignment.Center,
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                // Blooming radial glow aura in the background of the active tab
-                                                androidx.compose.animation.AnimatedVisibility(
-                                                    visible = isSelected,
-                                                    enter = fadeIn(animationSpec = tween(200)) + scaleIn(
-                                                        animationSpec = spring(
-                                                            dampingRatio = Spring.DampingRatioLowBouncy,
-                                                            stiffness = Spring.StiffnessMediumLow
-                                                        )
-                                                    ),
-                                                    exit = fadeOut(animationSpec = tween(150)) + scaleOut()
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(28.dp)
-                                                            .background(
-                                                                brush = Brush.radialGradient(
-                                                                    colors = listOf(
-                                                                        Color(0xFF6366F1).copy(alpha = 0.5f),
-                                                                        Color(0xFF8B5CF6).copy(alpha = 0.2f),
-                                                                        Color.Transparent
-                                                                    )
-                                                                ),
-                                                                shape = CircleShape
-                                                            )
-                                                    )
-                                                }
-
-                                                Icon(
-                                                    imageVector = icon,
-                                                    contentDescription = label,
-                                                    tint = if (isSelected) Color.White else Color(0xFF94A3B8),
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
-
-                                            // Text name expands vertically with slide-in transition
-                                            androidx.compose.animation.AnimatedVisibility(
-                                                visible = isSelected,
-                                                enter = expandVertically(
-                                                    expandFrom = Alignment.Top,
-                                                    animationSpec = spring(
-                                                        dampingRatio = Spring.DampingRatioLowBouncy,
-                                                        stiffness = Spring.StiffnessMediumLow
-                                                    )
-                                                ) + fadeIn(animationSpec = tween(150)),
-                                                exit = shrinkVertically(
-                                                    shrinkTowards = Alignment.Top,
-                                                    animationSpec = spring(
-                                                        dampingRatio = Spring.DampingRatioNoBouncy,
-                                                        stiffness = Spring.StiffnessMedium
-                                                    )
-                                                ) + fadeOut(animationSpec = tween(100))
-                                            ) {
-                                                Column(
-                                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                                    modifier = Modifier.padding(top = 1.dp)
-                                                ) {
-                                                    Text(
-                                                        text = label,
-                                                        color = Color.White,
-                                                        fontSize = 8.5.sp, // scaled up by 1.3 becomes ~11.sp
-                                                        fontWeight = FontWeight.Black,
-                                                        letterSpacing = 0.3.sp,
-                                                        maxLines = 1
-                                                    )
-                                                    Spacer(modifier = Modifier.height(3.dp))
-                                                    // Neon dot/capsule indicator at the bottom of the active tab
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .width(10.dp)
-                                                            .height(3.dp)
-                                                            .background(
-                                                                brush = Brush.horizontalGradient(
-                                                                    colors = listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
-                                                                ),
-                                                                shape = RoundedCornerShape(1.5.dp)
-                                                            )
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
+                        BMSAppBottomNavBar(
+                            activeTab = activeTab,
+                            onTabSelected = { tabId ->
+                                activeTab = tabId
+                                if (tabId != "Orders") {
+                                    selectedOrderId = ""
                                 }
+                            },
+                            onOpenMenuSheet = {
+                                isShowingMenuSheet = true
                             }
-                        }
+                        )
                     }
                 }
             ) { paddingValues ->
@@ -451,6 +214,7 @@ fun CustomerDashboardScreen(
                                 onSelectOrderId = { selectedOrderId = it },
                                 onSelectTab = { activeTab = it }
                             )
+                            "Referrals" -> CustomerReferralTab()
                             "Invoices" -> CustomerInvoicesTab(viewModel)
                             "Vault" -> CustomerVaultTab(viewModel)
                             "Bookkeeping" -> BookkeepingScreen(viewModel)
@@ -462,20 +226,20 @@ fun CustomerDashboardScreen(
                         }
                     }
 
-                    // Persistence of WhatsApp & Support Ticket floating triggers exactly like the React page
+                    // Persistence of WhatsApp & Direct Call floating triggers
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(end = 20.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                            .padding(end = 16.dp, bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalAlignment = Alignment.End
                     ) {
                         // WhatsApp Launcher
                         Box(
                             modifier = Modifier
-                                .size(52.dp)
-                                .background(Color(0xFF10B981), CircleShape)
-                                .shadow(8.dp, CircleShape)
+                                .size(48.dp)
+                                .background(Color(0xFF22C55E), CircleShape)
+                                .shadow(6.dp, CircleShape, ambientColor = Color(0xFF22C55E).copy(alpha = 0.3f))
                                 .scaleOnPress()
                                 .clickable {
                                     try {
@@ -493,29 +257,70 @@ fun CustomerDashboardScreen(
                                 imageVector = Icons.Default.Chat,
                                 contentDescription = "WhatsApp Chat",
                                 tint = Color.White,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
 
-                        // Support Ticket Launcher
+                        // Direct Phone Call Launcher
                         Box(
                             modifier = Modifier
-                                .size(52.dp)
-                                .background(Color(0xFF6366F1), CircleShape)
-                                .shadow(8.dp, CircleShape)
+                                .size(48.dp)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(Indigo500, Indigo600)
+                                    ),
+                                    CircleShape
+                                )
+                                .shadow(6.dp, CircleShape, ambientColor = Indigo500.copy(alpha = 0.4f))
                                 .scaleOnPress()
-                                .clickable { activeTab = "Support" },
+                                .clickable {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:918008530606"))
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Dialer not available", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.HeadsetMic,
-                                contentDescription = "Support",
+                                imageVector = Icons.Default.Phone,
+                                contentDescription = "Direct Call",
                                 tint = Color.White,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                 }
+            }
+
+            // Notifications Sheet Modal
+            if (isShowingNotifications) {
+                NotificationsSheet(
+                    notifications = viewModel.notifications,
+                    onMarkAsRead = { notificationId ->
+                        viewModel.markNotificationAsRead(notificationId)
+                    },
+                    onDismiss = { isShowingNotifications = false }
+                )
+            }
+
+            // Workspace Hub Bottom Sheet Menu (opened via swipe up or Hub center button)
+            if (isShowingMenuSheet) {
+                BMSBottomSheetMenuView(
+                    userName = userName,
+                    activeTab = activeTab,
+                    profilePhoto = viewModel.profilePhoto,
+                    companyName = viewModel.companyName,
+                    onDismissRequest = { isShowingMenuSheet = false },
+                    onSelectTab = { tabId ->
+                        activeTab = tabId
+                        if (tabId != "Orders") {
+                            selectedOrderId = ""
+                        }
+                    },
+                    onLogout = onLogout
+                )
             }
 
             // High-fidelity webview overlay for secure in-app checkout payments (Razorpay)

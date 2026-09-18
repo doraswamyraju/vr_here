@@ -42,6 +42,17 @@ struct CustomerAccountTab: View {
                     }
                     
                     HStack {
+                        Text("Phone:")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.textMuted)
+                        Spacer()
+                        let ph = SessionManager.shared.getPhone()
+                        Text(ph.isEmpty ? "Not configured" : ph)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(ph.isEmpty ? .orange : .textDark)
+                    }
+                    
+                    HStack {
                         Text("Role:")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.textMuted)
@@ -49,6 +60,34 @@ struct CustomerAccountTab: View {
                         Text(SessionManager.shared.getUserRole().capitalized)
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.textDark)
+                    }
+                }
+                .padding(16)
+                .glassCard()
+                .padding(.horizontal, 20)
+                
+                // Business Profile & Support
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Support & Business Helpline")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.textDark)
+                    
+                    HStack {
+                        Image(systemName: "phone.fill")
+                            .foregroundColor(.green)
+                        Text("Helpline: +91 8008530606")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.textDark)
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Image(systemName: "envelope.fill")
+                            .foregroundColor(.blue)
+                        Text("Official: support@vrhere.in")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.textDark)
+                        Spacer()
                     }
                 }
                 .padding(16)

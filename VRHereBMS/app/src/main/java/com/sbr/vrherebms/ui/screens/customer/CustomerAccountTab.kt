@@ -15,7 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -26,6 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sbr.vrherebms.data.local.SessionManager
+import com.sbr.vrherebms.ui.components.VRAvatarView
+import com.sbr.vrherebms.ui.components.scaleOnPress
+import com.sbr.vrherebms.ui.theme.*
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,21 +49,97 @@ fun CustomerAccountTab(
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
+        // User Profile Summary Card
+        item {
+            val sessionManager = remember { SessionManager(context) }
+            val userName = sessionManager.getUserName() ?: "Client"
+            val userEmail = sessionManager.getUserEmail() ?: ""
+            val userPhone = sessionManager.getPhone()
+            val rawComp = viewModel.companyName?.takeIf { it.isNotBlank() } ?: sessionManager.getCompanyName()?.takeIf { it.isNotBlank() }
+            val compName: String? = rawComp
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, BorderLight),
+                shadowElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    VRAvatarView(
+                        photoUrl = viewModel.profilePhoto,
+                        name = userName,
+                        size = 54.dp,
+                        borderWidth = 1.5.dp,
+                        borderColor = BorderLight,
+                        fontSize = 18.sp
+                    )
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = userName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Black,
+                                color = TextDark,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Verified",
+                                tint = Emerald500,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+
+                        if (!compName.isNullOrBlank()) {
+                            Text(
+                                text = compName,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryRed,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        Text(
+                            text = if (userEmail.isNotBlank()) userEmail else if (userPhone.isNotBlank()) userPhone else "Verified Account",
+                            fontSize = 11.5.sp,
+                            color = TextMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+
         // Accounts Heading Section
         item {
             Column {
                 Text(
-                    text = "Accounts",
-                    fontSize = 24.sp,
+                    text = "Billing & Investments",
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Black,
                     color = Color(0xFF1E293B),
                     letterSpacing = (-0.5).sp
                 )
                 Text(
-                    text = "Past payment details & invoices.",
-                    fontSize = 13.sp,
+                    text = "Past payment details & tax invoices.",
+                    fontSize = 12.sp,
                     color = Color(0xFF64748B)
                 )
             }

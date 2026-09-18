@@ -38,7 +38,9 @@ import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
 import android.net.Uri
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerOrdersTab(
     viewModel: CustomerDashboardViewModel,
@@ -47,6 +49,13 @@ fun CustomerOrdersTab(
     onSelectTab: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var activeReq by remember { mutableStateOf<com.sbr.vrherebms.data.model.CustomerRequirement?>(null) }
+    var showDetailSheet by remember { mutableStateOf(false) }
+    var detailText by remember { mutableStateOf("") }
+    var notesText by remember { mutableStateOf("") }
+    var isSavingReq by remember { mutableStateOf(false) }
+
     if (selectedOrderId.isNotEmpty()) {
         val order = viewModel.orders.find { it.id == selectedOrderId }
         if (order != null) {
@@ -233,46 +242,120 @@ fun CustomerOrdersTab(
                     }
                 }
 
-                // 3. Vault Requirements (Custom requirements)
+                // 3. Vault Requirements Workspace (Interactive Document & Detail Submissions)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text("Vault Requirements", fontSize = 15.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
-                        Spacer(modifier = Modifier.height(10.dp))
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Requirements Workspace", fontSize = 15.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
+                            val totalReqs = order.customerRequirements.size
+                            val doneReqs = order.customerRequirements.count { it.status == "Verified" || it.isClientCompleted }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFEEF2FF)
+                            ) {
+                                Text(
+                                    text = "$doneReqs/$totalReqs Done",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF4F46E5),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
 
                         if (order.customerRequirements.isEmpty()) {
                             Text("No custom requirements requested for this order.", fontSize = 12.sp, color = Color(0xFF64748B))
                         } else {
                             order.customerRequirements.forEach { req ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                Card(
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(req.title, fontWeight = FontWeight.Black, fontSize = 12.sp, color = Color(0xFF334155))
-                                        Text(req.description, fontSize = 10.sp, color = Color(0xFF64748B))
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .background(
-                                                color = if (req.status == "Verified") Color(0xFFD1FAE5) else Color(0xFFFEF3C7),
-                                                shape = RoundedCornerShape(6.dp)
-                                            )
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text(
-                                            text = req.status,
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Black,
-                                            color = if (req.status == "Verified") Color(0xFF065F46) else Color(0xFF92400E)
-                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.Top
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(req.title, fontWeight = FontWeight.Black, fontSize = 13.sp, color = Color(0xFF0F172A))
+                                                Text(req.description, fontSize = 11.sp, color = Color(0xFF64748B))
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            val isVerified = req.status == "Verified"
+                                            val isSubmitted = req.status == "Received" || req.status == "Submitted"
+                                            Surface(
+                                                color = if (isVerified) Color(0xFFD1FAE5) else if (isSubmitted) Color(0xFFDBEAFE) else Color(0xFFFEF3C7),
+                                                shape = RoundedCornerShape(6.dp)
+                                            ) {
+                                                Text(
+                                                    text = if (isVerified) "VERIFIED" else if (isSubmitted) "SUBMITTED" else req.status.uppercase(),
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Black,
+                                                    color = if (isVerified) Color(0xFF065F46) else if (isSubmitted) Color(0xFF1E40AF) else Color(0xFF92400E),
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                )
+                                            }
+                                        }
+
+                                        if (!req.value.isNullOrEmpty()) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = Color(0xFFF1F5F9),
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text(
+                                                    text = "Submitted: ${req.value}",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF475569),
+                                                    modifier = Modifier.padding(8.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            if (req.type == "Detail") {
+                                                Button(
+                                                    onClick = {
+                                                        activeReq = req
+                                                        detailText = req.value ?: ""
+                                                        notesText = req.clientNotes ?: ""
+                                                        showDetailSheet = true
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                                ) {
+                                                    Text(if (req.value.isNullOrEmpty()) "Provide Details" else "Edit Details", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                }
+                                            } else {
+                                                Button(
+                                                    onClick = {
+                                                        onSelectTab("Vault")
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F172A)),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                                ) {
+                                                    Text(if (req.status == "Verified") "Replace in Vault" else "Upload in Vault", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -697,4 +780,86 @@ fun CustomerOrdersTab(
             }
         }
     }
+
+    if (showDetailSheet && activeReq != null) {
+        ModalBottomSheet(
+            onDismissRequest = { showDetailSheet = false }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    text = activeReq!!.title,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 17.sp,
+                    color = Color(0xFF0F172A)
+                )
+                Text(
+                    text = activeReq!!.description,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+
+                OutlinedTextField(
+                    value = detailText,
+                    onValueChange = { detailText = it },
+                    label = { Text("Your Input / Value") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = notesText,
+                    onValueChange = { notesText = it },
+                    label = { Text("Notes for CA / Accountant (Optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Button(
+                    onClick = {
+                        isSavingReq = true
+                        scope.launch {
+                            try {
+                                val api = com.sbr.vrherebms.data.remote.VRHereAPI.getInstance(context)
+                                val body = mapOf(
+                                    "clientValue" to detailText,
+                                    "clientNotes" to notesText,
+                                    "isClientCompleted" to true
+                                )
+                                val res = api.updateOrderRequirement(selectedOrderId, activeReq!!.id ?: "", body)
+                                if (res.isSuccessful) {
+                                    android.widget.Toast.makeText(context, "Details submitted successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                                    showDetailSheet = false
+                                    viewModel.refreshAllData(silent = true)
+                                } else {
+                                    android.widget.Toast.makeText(context, "Failed: ${res.message()}", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            } finally {
+                                isSavingReq = false
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    enabled = !isSavingReq
+                ) {
+                    if (isSavingReq) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                    } else {
+                        Text("Submit Details for Verification", fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+    }
 }
+

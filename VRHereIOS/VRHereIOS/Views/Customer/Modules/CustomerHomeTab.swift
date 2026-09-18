@@ -127,11 +127,17 @@ struct CustomerHomeTab: View {
                     // Quick Action Micro Pills
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
+                            QuickActionChip(icon: "gift.fill", label: "Refer & Earn ₹500", color: Color(red: 236/255, green: 72/255, blue: 153/255)) {
+                                onSelectTab("Referrals")
+                            }
                             QuickActionChip(icon: "phone.fill", label: "₹499 CA Call", color: Color(red: 239/255, green: 68/255, blue: 68/255)) {
                                 onOpenLiveService("Private Limited Consultation", "https://vrhere.in/pvt-ltd-registration")
                             }
                             QuickActionChip(icon: "archivebox.fill", label: "Doc Vault", color: Color(red: 99/255, green: 102/255, blue: 241/255)) {
                                 onSelectTab("Vault")
+                            }
+                            QuickActionChip(icon: "book.fill", label: "Bookkeeping", color: Color(red: 14/255, green: 165/255, blue: 233/255)) {
+                                onSelectTab("Bookkeeping")
                             }
                             QuickActionChip(icon: "doc.text.fill", label: "Invoices", color: Color(red: 16/255, green: 185/255, blue: 129/255)) {
                                 onSelectTab("Invoices")

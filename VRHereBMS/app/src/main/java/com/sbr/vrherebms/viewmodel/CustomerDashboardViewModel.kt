@@ -21,8 +21,15 @@ sealed class DashboardState {
 
 class CustomerDashboardViewModel(application: Application) : AndroidViewModel(application) {
     private val api = VRHereAPI.getInstance(application)
+    private val sessionManager = com.sbr.vrherebms.data.local.SessionManager(application)
 
     var dashboardState by mutableStateOf<DashboardState>(DashboardState.Idle)
+        private set
+
+    var profilePhoto by mutableStateOf(sessionManager.getAvatarUrl())
+        private set
+
+    var companyName by mutableStateOf(sessionManager.getCompanyName())
         private set
 
     // Cached lists
@@ -136,6 +143,21 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
                 }
             } catch (e: Exception) {
                 android.util.Log.e("CustomerDashboard", "Failed to sync notifications", e)
+            }
+
+            // 5. Fetch Profile (to keep avatar and business details live)
+            try {
+                val profileCall = api.getProfile()
+                if (profileCall.isSuccessful && profileCall.body() != null) {
+                    val userProf = profileCall.body()!!
+                    sessionManager.saveProfilePhoto(userProf.profilePhoto)
+                    sessionManager.saveCompanyLogo(userProf.companyLogo)
+                    sessionManager.saveCompanyName(userProf.companyName)
+                    profilePhoto = sessionManager.getAvatarUrl()
+                    companyName = sessionManager.getCompanyName()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CustomerDashboard", "Failed to sync profile", e)
             }
 
             if (hasErrors) {

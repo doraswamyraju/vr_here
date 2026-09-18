@@ -14,6 +14,9 @@ class SessionManager(context: Context) {
         private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_USER_ROLE = "user_role"
         private const val KEY_USER_ACTIVE = "user_active"
+        private const val KEY_PROFILE_PHOTO = "user_profile_photo"
+        private const val KEY_COMPANY_LOGO = "user_company_logo"
+        private const val KEY_COMPANY_NAME = "user_company_name"
     }
 
     fun saveSession(
@@ -22,7 +25,10 @@ class SessionManager(context: Context) {
         name: String,
         email: String,
         role: String,
-        isActive: Boolean
+        isActive: Boolean,
+        profilePhoto: String? = null,
+        companyLogo: String? = null,
+        companyName: String? = null
     ) {
         prefs.edit().apply {
             putString(KEY_AUTH_TOKEN, token)
@@ -31,8 +37,43 @@ class SessionManager(context: Context) {
             putString(KEY_USER_EMAIL, email)
             putString(KEY_USER_ROLE, role)
             putBoolean(KEY_USER_ACTIVE, isActive)
+            putString(KEY_PROFILE_PHOTO, profilePhoto)
+            putString(KEY_COMPANY_LOGO, companyLogo)
+            putString(KEY_COMPANY_NAME, companyName)
             apply()
         }
+    }
+
+    fun saveProfilePhoto(url: String?) {
+        prefs.edit().putString(KEY_PROFILE_PHOTO, url).apply()
+    }
+
+    fun getProfilePhoto(): String? {
+        return prefs.getString(KEY_PROFILE_PHOTO, null)
+    }
+
+    fun saveCompanyLogo(url: String?) {
+        prefs.edit().putString(KEY_COMPANY_LOGO, url).apply()
+    }
+
+    fun getCompanyLogo(): String? {
+        return prefs.getString(KEY_COMPANY_LOGO, null)
+    }
+
+    fun saveCompanyName(name: String?) {
+        prefs.edit().putString(KEY_COMPANY_NAME, name).apply()
+    }
+
+    fun getCompanyName(): String? {
+        return prefs.getString(KEY_COMPANY_NAME, "")
+    }
+
+    fun getAvatarUrl(): String? {
+        val photo = getProfilePhoto()
+        if (!photo.isNullOrBlank()) return photo
+        val logo = getCompanyLogo()
+        if (!logo.isNullOrBlank()) return logo
+        return null
     }
 
     fun getAuthToken(): String? {

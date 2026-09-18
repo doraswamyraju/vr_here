@@ -34,18 +34,33 @@ data class AuthResponse(
     @SerializedName("_id") val id: String,
     val name: String,
     val email: String,
-    val phone: String?,
+    val phone: String? = null,
     val role: String,
+    val profilePhoto: String? = null,
+    val companyLogo: String? = null,
+    val companyName: String? = null,
+    val businessType: String? = null,
+    val gstin: String? = null,
+    val panNumber: String? = null,
+    val address: String? = null,
     val isActive: Boolean,
     val token: String
 )
 
 data class UserProfile(
     @SerializedName("_id") val id: String,
-    val name: String,
-    val email: String,
-    val role: String,
-    val isActive: Boolean
+    val name: String = "",
+    val email: String = "",
+    val phone: String? = null,
+    val role: String = "client",
+    val profilePhoto: String? = null,
+    val companyLogo: String? = null,
+    val companyName: String? = null,
+    val businessType: String? = null,
+    val gstin: String? = null,
+    val panNumber: String? = null,
+    val address: String? = null,
+    val isActive: Boolean = true
 )
 
 // --- ORDER DATA CLASSES ---
@@ -511,6 +526,70 @@ data class LeadTelemetryRequest(
     val source: String = "android",
     val deviceInfo: String? = "Android App"
 )
+
+// --- CUSTOMER REFERRAL MODELS ---
+
+data class CustomerReferralItem(
+    @SerializedName("_id") val id: String = "",
+    val refereeName: String = "",
+    val refereePhone: String = "",
+    val refereeEmail: String? = null,
+    val interestedService: String? = null,
+    val status: String = "Invited",
+    val rewardAmount: Double? = 500.0,
+    val payoutStatus: String? = "None",
+    val createdAt: String? = null
+)
+
+data class CustomerReferralStatsResponse(
+    val success: Boolean? = true,
+    val referralCode: String = "",
+    val referralLink: String = "",
+    val walletBalance: Double = 0.0,
+    val savedUpiId: String? = null,
+    val totalInvited: Int = 0,
+    val successfulConversions: Int = 0,
+    val totalEarned: Double = 0.0,
+    val rewardPerReferral: Double? = 500.0,
+    val referrals: List<CustomerReferralItem> = emptyList()
+)
+
+data class AddReferralLeadRequest(
+    val name: String,
+    val phone: String,
+    val email: String? = null,
+    val interestedService: String? = null
+)
+
+data class UpiPayoutRequest(
+    val amount: Double,
+    val upiId: String
+)
+
+data class GeneralApiResponse(
+    val success: Boolean? = true,
+    val message: String? = null
+)
+
+// --- USER VAULT DOCUMENT MODELS ---
+
+data class UserVaultDocument(
+    @SerializedName("_id") val id: String = "",
+    val docType: String = "",
+    val fileName: String = "",
+    val gdriveWebViewLink: String? = null,
+    val verificationStatus: String? = "Verified",
+    val notes: String? = null,
+    val createdAt: String? = null
+)
+
+data class UserVaultDocumentsResponse(
+    val success: Boolean? = true,
+    val count: Int? = 0,
+    val data: List<UserVaultDocument> = emptyList()
+)
+
+
 
 
 

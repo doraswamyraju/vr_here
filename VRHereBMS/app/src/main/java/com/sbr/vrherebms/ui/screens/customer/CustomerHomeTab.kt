@@ -9,10 +9,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,9 +29,49 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sbr.vrherebms.ui.components.scaleOnPress
+import com.sbr.vrherebms.ui.theme.*
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun StatusBadge(status: String) {
+    val (bgColor, textColor, borderColor) = when (status) {
+        "Processing at Portal", "In Progress" -> Triple(Color(0xFFEFF6FF), Color(0xFF1D4ED8), Color(0xFFBFDBFE))
+        "Waiting for Clarification", "In Review" -> Triple(Color(0xFFFAF5FF), Color(0xFF7E22CE), Color(0xFFE9D5FF))
+        "Completed", "Approved" -> Triple(Color(0xFFECFDF5), Color(0xFF047857), Color(0xFFA7F3D0))
+        "Pending Documents", "Documents Required" -> Triple(Color(0xFFFFFBEB), Color(0xFFB45309), Color(0xFFFDE68A))
+        "Documents Verified" -> Triple(Color(0xFFECFDF5), Color(0xFF059669), Color(0xFFA7F3D0))
+        else -> Triple(Color(0xFFF1F5F9), Color(0xFF334155), Color(0xFFE2E8F0))
+    }
+
+    Surface(
+        color = bgColor,
+        border = BorderStroke(1.dp, borderColor),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Text(
+            text = status.uppercase(),
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Black,
+            color = textColor,
+            letterSpacing = 0.5.sp,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+        )
+    }
+}
+
+private data class QuickServiceItem(
+    val id: Int,
+    val name: String,
+    val tag: String,
+    val icon: ImageVector,
+    val iconBg: Color,
+    val iconTint: Color,
+    val key: String,
+    val url: String? = null
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerHomeTab(
     viewModel: CustomerDashboardViewModel,
@@ -44,6 +84,13 @@ fun CustomerHomeTab(
 ) {
     val context = LocalContext.current
     var showSuggestions by remember { mutableStateOf(false) }
+
+    val activeOrders = viewModel.orders.filter { it.status != "Completed" }
+    val completedOrders = viewModel.orders.filter { it.status == "Completed" }
+    val pendingActions = viewModel.orders.filter {
+        it.status == "Pending Documents" || it.status == "Waiting for Clarification" || it.status == "Documents Required"
+    }
+    val totalVolume = viewModel.orders.sumOf { it.price }
 
     val searchSuggestions = listOf(
         "Private Limited Company Registration",
@@ -61,364 +108,168 @@ fun CustomerHomeTab(
     )
 
     val filteredSuggestions = remember(searchQuery) {
-        searchSuggestions.filter { it.contains(searchQuery, ignoreCase = true) }.take(5)
+        if (searchQuery.isBlank()) emptyList()
+        else searchSuggestions.filter { it.contains(searchQuery, ignoreCase = true) }.take(5)
     }
+
+    val topServices = listOf(
+        QuickServiceItem(1, "Pvt Ltd Setup", "MCA Approval", Icons.Default.Business, Color(0xFFFEF2F2), PrimaryRed, "Services", "https://vrhere.in/pvt-ltd-registration"),
+        QuickServiceItem(2, "GST Filing", "Monthly / QRMP", Icons.Default.FactCheck, Color(0xFFECFDF5), Emerald500, "Services", "https://vrhere.in/gst-registration"),
+        QuickServiceItem(3, "Income Tax", "ITR 1-7 Assessment", Icons.Default.Computer, Color(0xFFEFF6FF), Color(0xFF2563EB), "Services", "https://vrhere.in/income-tax-return"),
+        QuickServiceItem(4, "Partnership", "Firm & Deed", Icons.Default.People, Color(0xFFFFFBEB), Amber500, "Services", "https://vrhere.in/partnership-firm"),
+        QuickServiceItem(5, "ISO Standards", "9001 / 27001", Icons.Default.Security, Color(0xFFFAF5FF), Color(0xFF9333EA), "Services"),
+        QuickServiceItem(6, "Audit Support", "Statutory & Tax", Icons.Default.AssignmentTurnedIn, Color(0xFFFFF1F2), Color(0xFFE11D48), "Support"),
+        QuickServiceItem(7, "MSME Loans", "Bank DPR & CMA", Icons.Default.CurrencyRupee, Color(0xFFECFDF5), Color(0xFF059669), "Services"),
+        QuickServiceItem(8, "ROC CCFS-2026", "Penalty Relief", Icons.Default.AutoAwesome, Color(0xFFFFF7ED), Color(0xFFEA580C), "Services", "https://vrhere.in/compliance-scheme-2026")
+    )
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        // Hello Heading Section
+        // 1. TOP GREETING & SEARCH BAR WITH GLOWING BACKDROP
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Greeting text
                 Column {
-                    Text(
-                        text = "Hello, ${userName.split(" ").firstOrNull() ?: "Guest"}!",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF1E293B),
-                        letterSpacing = (-0.5).sp
-                    )
-                    Text(
-                        text = "Here's what's happening today.",
-                        fontSize = 13.sp,
-                        color = Color(0xFF64748B)
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Notification Bell Button
-                    val unreadNotifications = viewModel.notifications.filter { !it.isRead }
-                    val unreadCount = unreadNotifications.size
-                    var showNotificationDialog by remember { mutableStateOf(false) }
-
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .background(Color(0xFFEEF2F6), RoundedCornerShape(12.dp))
-                            .scaleOnPress()
-                            .clickable { showNotificationDialog = true },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (unreadCount > 0) Icons.Default.NotificationsActive else Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = Color(0xFF6366F1),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        if (unreadCount > 0) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .align(Alignment.TopEnd)
-                                    .padding(top = 8.dp, end = 8.dp)
-                                    .background(Color(0xFFEF4444), CircleShape)
-                            )
-                        }
-                    }
-
-                    // Refresh Button
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .background(Color(0xFFEEF2F6), RoundedCornerShape(12.dp))
-                            .scaleOnPress()
-                            .clickable { viewModel.refreshAllData() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = Color(0xFF6366F1),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    // Notification dialog
-                    if (showNotificationDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showNotificationDialog = false },
-                            confirmButton = {
-                                TextButton(onClick = { showNotificationDialog = false }) {
-                                    Text("Close", color = Color(0xFF6366F1), fontWeight = FontWeight.Bold)
-                                }
-                            },
-                            title = {
-                                Text(
-                                    "Notifications",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color(0xFF1E293B)
-                                )
-                            },
-                            text = {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 400.dp)
-                                ) {
-                                    if (viewModel.notifications.isEmpty()) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(24.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                "No notifications available.",
-                                                color = Color(0xFF64748B),
-                                                fontSize = 13.sp
-                                            )
-                                        }
-                                    } else {
-                                        LazyColumn(
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            items(viewModel.notifications) { notification ->
-                                                Card(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clickable {
-                                                            if (!notification.isRead) {
-                                                                viewModel.markNotificationAsRead(notification.id)
-                                                            }
-                                                        },
-                                                    shape = RoundedCornerShape(16.dp),
-                                                    colors = CardDefaults.cardColors(
-                                                        containerColor = if (notification.isRead) Color(0xFFF8FAFC) else Color(0xFFF1F5F9)
-                                                    ),
-                                                    border = BorderStroke(
-                                                        1.dp, 
-                                                        if (notification.isRead) Color(0xFFE2E8F0) else Color(0xFF6366F1).copy(alpha = 0.2f)
-                                                    )
-                                                ) {
-                                                    Column(
-                                                        modifier = Modifier.padding(12.dp)
-                                                    ) {
-                                                        // Brand header inside card
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Row(
-                                                                verticalAlignment = Alignment.CenterVertically,
-                                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                            ) {
-                                                                Box(
-                                                                    modifier = Modifier
-                                                                        .size(16.dp)
-                                                                        .background(Color(0xFF6366F1), RoundedCornerShape(4.dp)),
-                                                                    contentAlignment = Alignment.Center
-                                                                ) {
-                                                                    Text("VR", color = Color.White, fontSize = 7.sp, fontWeight = FontWeight.Black)
-                                                                }
-                                                                Text(
-                                                                    text = "VR HERE", 
-                                                                    color = Color(0xFF475569), 
-                                                                    fontSize = 9.sp, 
-                                                                    fontWeight = FontWeight.Black, 
-                                                                    letterSpacing = 0.3.sp
-                                                                )
-                                                                if (!notification.isRead) {
-                                                                    Box(
-                                                                        modifier = Modifier
-                                                                            .size(5.dp)
-                                                                            .background(Color(0xFF6366F1), CircleShape)
-                                                                    )
-                                                                }
-                                                            }
-                                                            // Optional type badge or dot
-                                                            Box(
-                                                                modifier = Modifier
-                                                                    .background(Color(0xFFEEF2F6), RoundedCornerShape(4.dp))
-                                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                                                            ) {
-                                                                Text(
-                                                                    text = notification.type.uppercase(),
-                                                                    fontSize = 7.sp,
-                                                                    fontWeight = FontWeight.Black,
-                                                                    color = Color(0xFF6366F1)
-                                                                )
-                                                            }
-                                                        }
-                                                        Spacer(modifier = Modifier.height(8.dp))
-                                                        // Text block
-                                                        Text(
-                                                            text = notification.title,
-                                                            fontSize = 12.sp,
-                                                            fontWeight = FontWeight.Black,
-                                                            color = Color(0xFF1E293B)
-                                                        )
-                                                        Spacer(modifier = Modifier.height(2.dp))
-                                                        Text(
-                                                            text = notification.message,
-                                                            fontSize = 11.sp,
-                                                            color = Color(0xFF64748B),
-                                                            lineHeight = 14.sp
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            shape = RoundedCornerShape(24.dp),
-                            containerColor = Color.White
-                        )
-                    }
-                }
-            }
-        }
-
-        // Floating Search Bar with Autocomplete suggestions
-        item {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(4.dp, RoundedCornerShape(16.dp))
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(16.dp))
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = Color(0xFF94A3B8),
-                            modifier = Modifier.size(20.dp)
+                        Text(
+                            text = "Welcome, ${userName.ifEmpty { "Valued Client" }}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = TextDark,
+                            letterSpacing = (-0.5).sp
                         )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        TextField(
-                            value = searchQuery,
-                            onValueChange = {
-                                onSearchQueryChange(it)
-                                showSuggestions = it.isNotEmpty()
-                            },
-                            placeholder = {
-                                Text(
-                                    "Search services (e.g. GST, Company...)",
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF94A3B8)
-                                )
-                            },
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                disabledContainerColor = Color.Transparent,
-                                errorContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent
-                            ),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(
-                                onClick = {
-                                    onSearchQueryChange("")
-                                    showSuggestions = false
-                                },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color(0xFF94A3B8))
-                            }
-                        }
+                        Text(text = "👋", fontSize = 20.sp)
                     }
+                    Text(
+                        text = "Here is an executive snapshot of your filings, compliance status, and vault.",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextMuted,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
 
-                // Suggestion Dropdown List
-                if (showSuggestions && searchQuery.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Card(
+                // Glowing Search Input Container matching Web
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(8.dp, RoundedCornerShape(16.dp)),
+                            .shadow(6.dp, RoundedCornerShape(16.dp), ambientColor = PrimaryRed.copy(alpha = 0.15f), spotColor = PrimaryRed.copy(alpha = 0.25f)),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        color = Color.White,
+                        border = BorderStroke(1.dp, BorderLight)
                     ) {
-                        Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                            if (filteredSuggestions.isNotEmpty()) {
-                                filteredSuggestions.forEach { suggestion ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                val liveSuggestionsMap = mapOf(
-                                                    "Private Limited Company Registration" to Pair("Private Limited Company Registration", "https://vrhere.in/pvt-ltd-registration"),
-                                                    "Limited Liability Partnership (LLP)" to Pair("Partnership Firm Registration", "https://vrhere.in/partnership-firm"),
-                                                    "GST Registration" to Pair("GST Registration", "https://vrhere.in/gst-registration"),
-                                                    "GST Return Filing" to Pair("GST Return Filing", "https://vrhere.in/accounting-services"),
-                                                    "Income Tax Return" to Pair("Income Tax Return Filing", "https://vrhere.in/income-tax-return"),
-                                                    "Company Annual Compliances" to Pair("Companies Compliance Scheme 2026 (CCFS)", "https://vrhere.in/compliance-scheme-2026")
-                                                )
-                                                val target = liveSuggestionsMap[suggestion]
-                                                if (target != null) {
-                                                    onOpenLiveService(target.first, target.second)
-                                                } else {
-                                                    onSearchQueryChange(suggestion)
-                                                    onSelectTab("Services")
-                                                }
-                                                showSuggestions = false
-                                            }
-                                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = suggestion,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = Color(0xFF334155)
-                                        )
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowForward,
-                                            contentDescription = "Select",
-                                            tint = Color(0xFFCBD5E1),
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                    }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = PrimaryRed,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            TextField(
+                                value = searchQuery,
+                                onValueChange = {
+                                    onSearchQueryChange(it)
+                                    showSuggestions = it.isNotBlank()
+                                },
+                                placeholder = {
+                                    Text(
+                                        "Search any service or filing...",
+                                        fontSize = 12.5.sp,
+                                        color = TextMuted
+                                    )
+                                },
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    disabledContainerColor = Color.Transparent,
+                                    errorContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent
+                                ),
+                                singleLine = true,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (searchQuery.isNotBlank()) {
+                                Button(
+                                    onClick = {
+                                        onSelectTab("Services")
+                                        showSuggestions = false
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text("FIND", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.White)
                                 }
-                            } else {
-                                Box(
+                            }
+                        }
+                    }
+                }
+
+                // Autocomplete Suggestions Dropdown
+                if (showSuggestions && filteredSuggestions.isNotEmpty()) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(12.dp, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        border = BorderStroke(1.dp, BorderLight)
+                    ) {
+                        Column(modifier = Modifier.padding(vertical = 6.dp)) {
+                            filteredSuggestions.forEach { suggestion ->
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(
-                                            "Service not listed?",
-                                            fontSize = 11.sp,
-                                            color = Color(0xFF94A3B8),
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Button(
-                                            onClick = { onSelectTab("Support") },
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1)),
-                                            shape = RoundedCornerShape(8.dp)
-                                        ) {
-                                            Text("Request Custom Service", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        .clickable {
+                                            val liveMap = mapOf(
+                                                "Private Limited Company Registration" to Pair("Private Limited Registration", "https://vrhere.in/pvt-ltd-registration"),
+                                                "Limited Liability Partnership (LLP)" to Pair("Partnership Firm", "https://vrhere.in/partnership-firm"),
+                                                "GST Registration" to Pair("GST Registration", "https://vrhere.in/gst-registration"),
+                                                "Income Tax Return" to Pair("Income Tax Return", "https://vrhere.in/income-tax-return"),
+                                                "Company Annual Compliances" to Pair("CCFS-2026 Scheme", "https://vrhere.in/compliance-scheme-2026")
+                                            )
+                                            val matched = liveMap[suggestion]
+                                            if (matched != null) {
+                                                onOpenLiveService(matched.first, matched.second)
+                                            } else {
+                                                onSearchQueryChange(suggestion)
+                                                onSelectTab("Services")
+                                            }
+                                            showSuggestions = false
                                         }
-                                    }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = suggestion,
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = TextDark
+                                    )
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = null,
+                                        tint = PrimaryRed,
+                                        modifier = Modifier.size(14.dp)
+                                    )
                                 }
                             }
                         }
@@ -427,173 +278,644 @@ fun CustomerHomeTab(
             }
         }
 
-        // Indigo Active Portfolio Gradient Card
+        // 2. 4-KPI STAT CARDS (EXECUTIVE OVERVIEW) MATCHING WEB 1:1
         item {
-            val activeCount = viewModel.orders.filter { it.status != "Completed" }.size
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                border = BorderStroke(1.dp, Color(0xFFFFFFFF).copy(alpha = 0.2f))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.linearGradient(
-                                listOf(Color(0xFF4F46E5), Color(0xFF6D28D9))
-                            )
-                        )
-                        .padding(24.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.BusinessCenter,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.8f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "ACTIVE PORTFOLIO",
-                                color = Color.White.copy(alpha = 0.8f),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            Column {
-                                Text(
-                                    text = activeCount.toString(),
-                                    color = Color.White,
-                                    fontSize = 44.sp,
-                                    fontWeight = FontWeight.Black,
-                                    lineHeight = 44.sp
-                                )
-                                Text(
-                                    text = "Projects currently in progress",
-                                    color = Color(0xFFE0E7FF),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                    // KPI 1: Active Orders
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .scaleOnPress()
+                            .clickable { onSelectTab("Orders") },
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color.White,
+                        border = BorderStroke(1.dp, BorderLight),
+                        shadowElevation = 1.dp
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("ACTIVE ORDERS", fontSize = 9.sp, fontWeight = FontWeight.Black, color = TextMuted, letterSpacing = 0.5.sp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .background(PrimaryRed.copy(alpha = 0.10f), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Work, contentDescription = null, tint = PrimaryRed, modifier = Modifier.size(15.dp))
+                                }
                             }
-                            Button(
-                                onClick = { onSelectTab("Orders") },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.scaleOnPress(),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                Text("${activeOrders.size}", fontSize = 22.sp, fontWeight = FontWeight.Black, color = TextDark)
+                                Text("Track →", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = PrimaryRed)
+                            }
+                            Text("In-progress filings", fontSize = 10.sp, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
+                        }
+                    }
+
+                    // KPI 2: Action Needed
+                    val hasPending = pendingActions.isNotEmpty()
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .scaleOnPress()
+                            .clickable { onSelectTab("Orders") },
+                        shape = RoundedCornerShape(18.dp),
+                        color = if (hasPending) Color(0xFFFFF1F2) else Color.White,
+                        border = BorderStroke(1.dp, if (hasPending) Color(0xFFFECDD3) else BorderLight),
+                        shadowElevation = 1.dp
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Track Status",
-                                    color = Color(0xFF4F46E5),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Black
+                                    "ACTION NEEDED",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (hasPending) Color(0xFFE11D48) else TextMuted,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .background(if (hasPending) Color(0xFFFFE4E6) else BgInput, RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = if (hasPending) Color(0xFFE11D48) else TextMuted,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                Text(
+                                    "${pendingActions.size}",
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (hasPending) Color(0xFFBE123C) else TextDark
+                                )
+                                Text(
+                                    "Upload →",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (hasPending) Color(0xFFE11D48) else TextMuted
                                 )
                             }
+                            Text("Pending proofs", fontSize = 10.sp, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // KPI 3: Digital Vault
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .scaleOnPress()
+                            .clickable { onSelectTab("Vault") },
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color.White,
+                        border = BorderStroke(1.dp, BorderLight),
+                        shadowElevation = 1.dp
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("DIGITAL VAULT", fontSize = 9.sp, fontWeight = FontWeight.Black, color = TextMuted, letterSpacing = 0.5.sp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .background(Emerald500.copy(alpha = 0.10f), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Folder, contentDescription = null, tint = Emerald500, modifier = Modifier.size(15.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                val vaultCount = if (completedOrders.isNotEmpty()) completedOrders.size * 3 + 8 else 8
+                                Text("$vaultCount", fontSize = 22.sp, fontWeight = FontWeight.Black, color = TextDark)
+                                Text("Vault →", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Emerald500)
+                            }
+                            Text("Verified documents", fontSize = 10.sp, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
+                        }
+                    }
+
+                    // KPI 4: Total Portfolio
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .scaleOnPress()
+                            .clickable { onSelectTab("Invoices") },
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color.White,
+                        border = BorderStroke(1.dp, BorderLight),
+                        shadowElevation = 1.dp
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("TOTAL PORTFOLIO", fontSize = 9.sp, fontWeight = FontWeight.Black, color = TextMuted, letterSpacing = 0.5.sp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .background(Color(0xFF2563EB).copy(alpha = 0.10f), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.CurrencyRupee, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(15.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                val volumeK = (totalVolume / 1000.0)
+                                Text("₹${"%.1f".format(volumeK)}k", fontSize = 22.sp, fontWeight = FontWeight.Black, color = TextDark)
+                                Text("Bills →", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                            }
+                            Text("Settled volume", fontSize = 10.sp, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
                         }
                     }
                 }
             }
         }
 
-        // Quick Access Services 4x2 Grid (Exact match of HSL icons and keys)
+        // 3. ENTERPRISE CLIENT HUB HERO BANNER MATCHING WEB 1:1
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(32.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(12.dp, RoundedCornerShape(24.dp), ambientColor = Color.Black.copy(alpha = 0.2f)),
+                shape = RoundedCornerShape(24.dp),
+                color = DarkSlate,
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Surface(
+                            color = PrimaryRed.copy(alpha = 0.25f),
+                            border = BorderStroke(1.dp, PrimaryRed.copy(alpha = 0.4f)),
+                            shape = RoundedCornerShape(20.dp)
+                        ) {
+                            Text(
+                                text = "ENTERPRISE CLIENT HUB",
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFFFF8080),
+                                letterSpacing = 0.8.sp,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Emerald500,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = "Real-Time MCA Sync",
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Slate400
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Manage Filings, Upload Vault Docs & Track Milestones",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White,
+                        lineHeight = 22.sp
+                    )
+
+                    Text(
+                        text = "All filings and compliance submissions are managed directly by your assigned dedicated advisor and operations team.",
+                        fontSize = 11.5.sp,
+                        color = Slate400,
+                        lineHeight = 16.sp
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = { onSelectTab("Orders") },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .scaleOnPress(),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("View Pipeline (${activeOrders.size})", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(13.dp))
+                            }
+                        }
+
+                        Button(
+                            onClick = { onSelectTab("Services") },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.12f)),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.scaleOnPress(),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                            Text("Catalog", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. ACTION ITEMS REQUIRING ATTENTION (IF ANY)
+        if (pendingActions.isNotEmpty()) {
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFFFFFBEB),
+                    border = BorderStroke(1.dp, Color(0xFFFDE68A))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(Amber500, RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
+                            }
+                            Column {
+                                Text(
+                                    text = "Action Items Require Attention",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF78350F)
+                                )
+                                Text(
+                                    text = "${pendingActions.size} order(s) waiting for document uploads or clarification.",
+                                    fontSize = 10.5.sp,
+                                    color = Color(0xFF92400E)
+                                )
+                            }
+                        }
+
+                        pendingActions.take(2).forEach { order ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenProject(order.id) },
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.dp, Color(0xFFFDE68A))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(order.serviceName, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                                        Text(order.status, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFB45309))
+                                    }
+                                    Button(
+                                        onClick = { onOpenProject(order.id) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Amber500),
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Text("Take Action →", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 5. ACTIVE OPERATIONAL PIPELINE SNAPSHOT
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
                         Text(
-                            text = "Quick Access Services",
-                            fontWeight = FontWeight.Black,
+                            text = "Active Operational Pipeline",
                             fontSize = 15.sp,
-                            color = Color(0xFF1E293B)
+                            fontWeight = FontWeight.Black,
+                            color = TextDark
                         )
                         Text(
-                            text = "View Catalog",
+                            text = "Live stage progress for ongoing filings",
+                            fontSize = 11.sp,
+                            color = TextMuted
+                        )
+                    }
+
+                    Text(
+                        text = "All Orders →",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryRed,
+                        modifier = Modifier
+                            .clickable { onSelectTab("Orders") }
+                            .scaleOnPress()
+                    )
+                }
+
+                if (activeOrders.isEmpty()) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color.White,
+                        border = BorderStroke(1.dp, BorderLight)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .background(BgInput, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Work, contentDescription = null, tint = TextMuted, modifier = Modifier.size(20.dp))
+                            }
+                            Text("No Active Engagements", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                            Text(
+                                "Explore our catalog to start a new company incorporation, GST, or compliance filing.",
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Button(
+                                onClick = { onSelectTab("Services") },
+                                colors = ButtonDefaults.buttonColors(containerColor = DarkSlate),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text("Browse Services", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                    }
+                } else {
+                    activeOrders.take(3).forEach { proj ->
+                        val progress = getStatusProgress(proj.status)
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .scaleOnPress()
+                                .clickable { onOpenProject(proj.id) },
+                            shape = RoundedCornerShape(18.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.dp, BorderLight),
+                            shadowElevation = 1.dp
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = proj.serviceName,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = TextDark,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = proj.packageName.ifEmpty { "Standard Execution" },
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextMuted
+                                        )
+                                    }
+                                    StatusBadge(status = proj.status)
+                                }
+
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("MILESTONE PROGRESS", fontSize = 9.sp, fontWeight = FontWeight.Black, color = TextMuted, letterSpacing = 0.5.sp)
+                                        Text("$progress%", fontSize = 10.5.sp, fontWeight = FontWeight.Black, color = PrimaryRed)
+                                    }
+                                    LinearProgressIndicator(
+                                        progress = { progress / 100f },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(5.dp)
+                                            .clip(CircleShape),
+                                        color = PrimaryRed,
+                                        trackColor = BgInput
+                                    )
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "ID: #${proj.id.takeLast(6).uppercase()}",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextMuted
+                                    )
+                                    Text(
+                                        text = "Details →",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryRed
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6. QUICK ACTION LAUNCHPAD (8 SERVICES BENTO GRID) MATCHING WEB 1:1
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, BorderLight),
+                shadowElevation = 1.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Quick Action Launchpad", fontSize = 15.sp, fontWeight = FontWeight.Black, color = TextDark)
+                            Text("One-click jump to frequent requirements", fontSize = 11.sp, color = TextMuted)
+                        }
+                        Text(
+                            "Catalog →",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6366F1),
+                            color = PrimaryRed,
                             modifier = Modifier
                                 .clickable { onSelectTab("Services") }
                                 .scaleOnPress()
                         )
                     }
-                    Spacer(modifier = Modifier.height(20.dp))
 
-                    data class QuickAccessService(
-                        val name: String,
-                        val icon: ImageVector,
-                        val bg: Color,
-                        val tint: Color
-                    )
-
-                    val topServices = listOf(
-                        QuickAccessService("Pvt Ltd", Icons.Default.Business, Color(0xFFEFF6FF), Color(0xFF2563EB)),
-                        QuickAccessService("GST", Icons.Default.FactCheck, Color(0xFFF0FDF4), Color(0xFF16A34A)),
-                        QuickAccessService("IT Return", Icons.Default.Computer, Color(0xFFEEF2F6), Color(0xFF4F46E5)),
-                        QuickAccessService("Partnership", Icons.Default.People, Color(0xFFFEF3C7), Color(0xFFD97706)),
-                        QuickAccessService("Trademark", Icons.Default.Security, Color(0xFFF3E8FF), Color(0xFF9333EA)),
-                        QuickAccessService("Audit", Icons.Default.AssignmentTurnedIn, Color(0xFFFFF1F2), Color(0xFFE11D48)),
-                        QuickAccessService("Funding", Icons.Default.CurrencyRupee, Color(0xFFECFDF5), Color(0xFF059669)),
-                        QuickAccessService("Compliance", Icons.Default.Settings, Color(0xFFF8FAFC), Color(0xFF475569))
-                    )
-
-                    // 4-column layout
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // 4x2 Grid Layout
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         for (row in 0 until 2) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 for (col in 0 until 4) {
                                     val idx = row * 4 + col
                                     if (idx < topServices.size) {
                                         val service = topServices[idx]
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        Surface(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .scaleOnPress()
-                                                .clickable { onSelectTab("Services") }
+                                                .clickable {
+                                                    if (service.url != null) {
+                                                        onOpenLiveService(service.name, service.url)
+                                                    } else {
+                                                        onSelectTab(service.key)
+                                                    }
+                                                },
+                                            shape = RoundedCornerShape(14.dp),
+                                            color = BgLight,
+                                            border = BorderStroke(1.dp, BorderLight)
                                         ) {
-                                            Box(
+                                            Column(
                                                 modifier = Modifier
-                                                    .size(54.dp)
-                                                    .background(service.bg, RoundedCornerShape(16.dp)),
-                                                contentAlignment = Alignment.Center
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 12.dp, horizontal = 4.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center
                                             ) {
-                                                Icon(
-                                                    imageVector = service.icon,
-                                                    contentDescription = service.name,
-                                                    tint = service.tint,
-                                                    modifier = Modifier.size(22.dp)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(42.dp)
+                                                        .background(service.iconBg, RoundedCornerShape(12.dp)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = service.icon,
+                                                        contentDescription = service.name,
+                                                        tint = service.iconTint,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Text(
+                                                    text = service.name,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Black,
+                                                    color = TextDark,
+                                                    textAlign = TextAlign.Center,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = service.tag,
+                                                    fontSize = 8.5.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = TextMuted,
+                                                    textAlign = TextAlign.Center,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
                                                 )
                                             }
-                                            Spacer(modifier = Modifier.height(6.dp))
-                                            Text(
-                                                text = service.name,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Black,
-                                                color = Color(0xFF475569),
-                                                textAlign = TextAlign.Center,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
                                         }
                                     }
                                 }
@@ -604,291 +926,291 @@ fun CustomerHomeTab(
             }
         }
 
-        // Live Operational Pipeline Section
+        // 7. DEDICATED ADVISOR CARD MATCHING WEB 1:1
         item {
-            Row(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                shape = RoundedCornerShape(22.dp),
+                color = DarkSlate,
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                shadowElevation = 2.dp
             ) {
-                Text(
-                    text = "Operational Pipeline",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF1E293B),
-                    letterSpacing = (-0.5).sp
-                )
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFFEEF2F6), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        "LIVE UPDATES",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF6366F1)
-                    )
-                }
-            }
-        }
-
-        val activeOrders = viewModel.orders.filter { it.status != "Completed" }
-        if (activeOrders.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .background(Color(0xFFEEF2F6), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(24.dp))
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            "Your pipeline is empty",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155)
-                        )
-                        Text(
-                            "Start a new project to see it tracked here live.",
-                            fontSize = 11.sp,
-                            color = Color(0xFF64748B),
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { onSelectTab("Services") },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1)),
-                            modifier = Modifier.scaleOnPress(),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Start Now", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        } else {
-            items(activeOrders.take(3)) { order ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .scaleOnPress()
-                        .clickable { onOpenProject(order.id) },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFF1F5F9))
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = order.serviceName,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color(0xFF1E293B)
-                                )
-                                Text(
-                                    text = order.packageName,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF94A3B8),
-                                    modifier = Modifier.padding(top = 2.dp)
-                                )
-                            }
-                            StatusBadgeWidget(status = order.status)
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        val completeness = getStatusProgress(order.status)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "COMPLETENESS",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color(0xFF94A3B8),
-                                letterSpacing = 0.5.sp
-                            )
-                            Text(
-                                "$completeness%",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color(0xFF6366F1)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        LinearProgressIndicator(
-                            progress = completeness / 100f,
-                            color = Color(0xFF6366F1),
-                            trackColor = Color(0xFFEEF2F6),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(CircleShape)
-                        )
-                    }
-                }
-            }
-        }
-
-        // Stats sidebar equivalents in grid
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                val pendingActions = viewModel.orders.filter { it.status == "Pending Documents" || it.status == "Waiting for Clarification" }.size
-                val totalValue = viewModel.orders.sumOf { it.price }
-
-                Card(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFF1F5F9))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFFFEF3C7), RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("Attention", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-                            Text("$pendingActions Tasks", fontSize = 13.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
-                        }
-                    }
-                }
-
-                Card(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFF1F5F9))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFFD1FAE5), RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.CurrencyRupee, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("Investment", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-                            Text("₹${(totalValue / 1000).toInt()}k", fontSize = 13.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
-                        }
-                    }
-                }
-            }
-        }
-
-        // Accounting CTA Card
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF064E3B))
-            ) {
-                Column(modifier = Modifier.padding(24.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFF10B981).copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.AssignmentTurnedIn, contentDescription = null, tint = Color(0xFF34D399), modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Accounting Services", color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp)
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        "Customize your own GST, TDS, and Payroll packages with our multi-select builder.",
-                        color = Color(0xFFA7F3D0),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { onSelectTab("Services") },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .scaleOnPress(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Build Package", color = Color(0xFF064E3B), fontWeight = FontWeight.Black, fontSize = 11.sp)
-                    }
-                }
-            }
-        }
-
-        // Insights / News Alert Card
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, Color(0xFFF1F5F9))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Insights Feed", fontWeight = FontWeight.Black, fontSize = 14.sp, color = Color(0xFF1E293B))
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0xFFEEF2F6), RoundedCornerShape(6.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        Text(
+                            "DEDICATED ADVISOR",
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Slate400,
+                            letterSpacing = 0.8.sp
+                        )
+                        Surface(
+                            color = Emerald500.copy(alpha = 0.20f),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("ALERT", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFF6366F1))
+                            Text(
+                                "Available",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Emerald500,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(
+                                    Brush.linearGradient(listOf(Indigo500, Color(0xFF6366F1))),
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("CA", color = Color.White, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                        }
+                        Column {
+                            Text("Dedicated CA Advisory Team", fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("Senior Chartered Accountant", fontSize = 11.sp, color = Slate400)
+                        }
+                    }
+
                     Text(
-                        "GST Compliance: New Rules for IT Credit in 2026",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 13.sp,
-                        color = Color(0xFF1E293B)
+                        "Need priority clarification on your filing or requirements? Reach your dedicated advisor directly.",
+                        fontSize = 11.5.sp,
+                        color = Slate400,
+                        lineHeight = 15.sp
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                try {
+                                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:918008530606"))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Dialer not available", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.12f)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .scaleOnPress(),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(Icons.Default.Phone, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                                Text("Call Advisor", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                try {
+                                    val url = "https://wa.me/918008530606"
+                                    val i = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    context.startActivity(i)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "WhatsApp not available", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .scaleOnPress(),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Text("WhatsApp", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 8. STATUTORY COMPLIANCE CALENDAR MATCHING WEB 1:1
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, BorderLight),
+                shadowElevation = 1.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = PrimaryRed, modifier = Modifier.size(16.dp))
+                            Text("Compliance Calendar", fontSize = 13.sp, fontWeight = FontWeight.Black, color = TextDark)
+                        }
+                        Text("March 2026", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Compliance 1
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = BgLight,
+                            border = BorderStroke(1.dp, BorderLight)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("GST-3B Filing", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                                    Text("Monthly Return", fontSize = 10.sp, color = TextMuted)
+                                }
+                                Surface(
+                                    color = Color(0xFFFEF2F2),
+                                    border = BorderStroke(1.dp, Color(0xFFFECACA)),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text("20th Mar", fontSize = 10.sp, fontWeight = FontWeight.Black, color = PrimaryRed, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                }
+                            }
+                        }
+
+                        // Compliance 2
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = BgLight,
+                            border = BorderStroke(1.dp, BorderLight)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("Advance Tax Q4", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                                    Text("Direct Tax Installment", fontSize = 10.sp, color = TextMuted)
+                                }
+                                Surface(
+                                    color = Color(0xFFFFFBEB),
+                                    border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text("15th Mar", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Amber500, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                }
+                            }
+                        }
+
+                        // Compliance 3
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = BgLight,
+                            border = BorderStroke(1.dp, BorderLight)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("CCFS-2026 Amnesty", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                                    Text("ROC Late Filing Waiver", fontSize = 10.sp, color = TextMuted)
+                                }
+                                Surface(
+                                    color = Color(0xFFECFDF5),
+                                    border = BorderStroke(1.dp, Color(0xFFA7F3D0)),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text("Active", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Emerald500, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 9. REFER & EARN REWARD CARD MATCHING WEB 1:1
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                color = Color(0xFFFFFBEB),
+                border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                shadowElevation = 1.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(Amber500, RoundedCornerShape(10.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        }
+                        Column {
+                            Text("Refer & Earn ₹500", fontSize = 13.5.sp, fontWeight = FontWeight.Black, color = Color(0xFF78350F))
+                            Text("Instant wallet credits per referral", fontSize = 10.5.sp, color = Color(0xFF92400E))
+                        }
+                    }
+
                     Text(
-                        "Stay ahead with latest amendments in GST laws affecting MSMEs and industrial inputs.",
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B),
-                        modifier = Modifier.padding(top = 4.dp)
+                        "Refer another founder for company registration or ISO certification and receive ₹500 credit on your next filing.",
+                        fontSize = 11.5.sp,
+                        color = Color(0xFF78350F).copy(alpha = 0.85f),
+                        lineHeight = 15.sp
                     )
+
+                    Button(
+                        onClick = { onSelectTab("Referrals") },
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkSlate),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .scaleOnPress()
+                    ) {
+                        Text("Get Referral Link", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
             }
         }

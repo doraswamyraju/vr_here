@@ -65,7 +65,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         name = authData.name,
                         email = authData.email,
                         role = authData.role,
-                        isActive = authData.isActive
+                        isActive = authData.isActive,
+                        profilePhoto = authData.profilePhoto,
+                        companyLogo = authData.companyLogo,
+                        companyName = authData.companyName
                     )
                     sessionManager.savePhone(authData.phone ?: "")
                     authState = AuthState.Success(authData.role)
@@ -103,7 +106,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         name = authData.name,
                         email = authData.email,
                         role = authData.role,
-                        isActive = authData.isActive
+                        isActive = authData.isActive,
+                        profilePhoto = authData.profilePhoto,
+                        companyLogo = authData.companyLogo,
+                        companyName = authData.companyName
                     )
                     sessionManager.savePhone(authData.phone ?: "")
                     authState = AuthState.Success(authData.role)
@@ -167,7 +173,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         name = authData.name,
                         email = authData.email,
                         role = authData.role,
-                        isActive = authData.isActive
+                        isActive = authData.isActive,
+                        profilePhoto = authData.profilePhoto,
+                        companyLogo = authData.companyLogo,
+                        companyName = authData.companyName
                     )
                     sessionManager.savePhone(authData.phone ?: "")
                     
@@ -212,5 +221,21 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun getUserName(): String {
         return sessionManager.getUserName() ?: ""
+    }
+
+    fun getProfilePhoto(): String? {
+        return sessionManager.getProfilePhoto()
+    }
+
+    fun getCompanyLogo(): String? {
+        return sessionManager.getCompanyLogo()
+    }
+
+    fun getCompanyName(): String? {
+        return sessionManager.getCompanyName()
+    }
+
+    fun getAvatarUrl(): String? {
+        return sessionManager.getAvatarUrl()
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct CustomerOrdersTab: View {
     @ObservedObject var viewModel: CustomerDashboardViewModel
@@ -7,6 +8,14 @@ struct CustomerOrdersTab: View {
     
     @Environment(\.openURL) private var openURL
     @State private var selectedCategory = "All"
+    
+    @State private var activeEditingReq: CustomerRequirement? = nil
+    @State private var showEditDetailSheet = false
+    @State private var showPhotoPicker = false
+    @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var reqDetailInput = ""
+    @State private var reqNotesInput = ""
+    @State private var isSavingReq = false
     
     private let categories = ["All", "Active", "Completed", "Action Required"]
     
@@ -313,11 +322,23 @@ struct CustomerOrdersTab: View {
                         .padding(20)
                         .glassCard()
                         
-                        // 3. Vault Requirements
+                        // 3. Vault Requirements Workspace (Interactive Document & Detail Uploads)
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Vault Requirements")
-                                .font(.system(size: 15, weight: .black))
-                                .foregroundColor(.textDark)
+                            HStack {
+                                Text("Requirements Workspace")
+                                    .font(.system(size: 15, weight: .black))
+                                    .foregroundColor(.textDark)
+                                Spacer()
+                                let totalReqs = order.customerRequirements.count
+                                let completedReqs = order.customerRequirements.filter { $0.status == "Verified" || $0.isClientCompleted }.count
+                                Text("\(completedReqs)/\(totalReqs) Done")
+                                    .font(.system(size: 11, weight: .black))
+                                    .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color(red: 238/255, green: 242/255, blue: 255/255))
+                                    .cornerRadius(8)
+                            }
                             
                             if order.customerRequirements.isEmpty {
                                 Text("No custom requirements requested for this order.")
@@ -326,28 +347,85 @@ struct CustomerOrdersTab: View {
                             } else {
                                 VStack(spacing: 12) {
                                     ForEach(order.customerRequirements) { req in
-                                        HStack(alignment: .center, spacing: 12) {
-                                            VStack(alignment: .leading, spacing: 2) {
-                                                Text(req.title)
-                                                    .font(.system(size: 12, weight: .black))
-                                                    .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
-                                                    .multilineTextAlignment(.leading)
-                                                Text(req.description)
-                                                    .font(.system(size: 10))
-                                                    .foregroundColor(.textMuted)
-                                                    .multilineTextAlignment(.leading)
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack(alignment: .top) {
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text(req.title)
+                                                        .font(.system(size: 13, weight: .black))
+                                                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                    Text(req.description)
+                                                        .font(.system(size: 11))
+                                                        .foregroundColor(.textMuted)
+                                                }
+                                                Spacer()
+                                                
+                                                let isVerified = req.status == "Verified"
+                                                let isSubmitted = req.status == "Received" || req.status == "Submitted"
+                                                Text(isVerified ? "VERIFIED" : (isSubmitted ? "SUBMITTED" : req.status.uppercased()))
+                                                    .font(.system(size: 9, weight: .black))
+                                                    .foregroundColor(isVerified ? Color(red: 6/255, green: 95/255, blue: 70/255) : (isSubmitted ? Color(red: 30/255, green: 64/255, blue: 175/255) : Color(red: 146/255, green: 64/255, blue: 14/255)))
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(isVerified ? Color(red: 209/255, green: 250/255, blue: 229/255) : (isSubmitted ? Color(red: 219/255, green: 234/255, blue: 254/255) : Color(red: 254/255, green: 243/255, blue: 199/255)))
+                                                    .cornerRadius(6)
                                             }
-                                            Spacer()
                                             
-                                            let isVerified = req.status == "Verified"
-                                            Text(req.status)
-                                                .font(.system(size: 9, weight: .black))
-                                                .foregroundColor(isVerified ? Color(red: 6/255, green: 95/255, blue: 70/255) : Color(red: 146/255, green: 64/255, blue: 14/255))
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .background(isVerified ? Color(red: 209/255, green: 250/255, blue: 229/255) : Color(red: 254/255, green: 243/255, blue: 199/255))
-                                                .cornerRadius(6)
+                                            // Value or Notes display if present
+                                            if let val = req.value, !val.isEmpty {
+                                                Text("Submitted Detail: \(val)")
+                                                    .font(.system(size: 11, weight: .bold))
+                                                    .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                                                    .padding(6)
+                                                    .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                                                    .cornerRadius(6)
+                                            }
+                                            
+                                            // Action Buttons (Upload / Fill)
+                                            HStack(spacing: 8) {
+                                                if req.type == "Detail" {
+                                                    Button(action: {
+                                                        activeEditingReq = req
+                                                        reqDetailInput = req.value ?? ""
+                                                        reqNotesInput = req.clientNotes ?? ""
+                                                        showEditDetailSheet = true
+                                                    }) {
+                                                        HStack(spacing: 4) {
+                                                            Image(systemName: "pencil")
+                                                            Text(req.value?.isEmpty == false ? "Edit Details" : "Provide Details")
+                                                        }
+                                                        .font(.system(size: 11, weight: .bold))
+                                                        .foregroundColor(.white)
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 6)
+                                                        .background(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                                        .cornerRadius(8)
+                                                    }
+                                                } else {
+                                                    Button(action: {
+                                                        activeEditingReq = req
+                                                        showPhotoPicker = true
+                                                    }) {
+                                                        HStack(spacing: 4) {
+                                                            Image(systemName: "arrow.up.doc.fill")
+                                                            Text(req.status == "Verified" ? "Replace Document" : "Upload Document")
+                                                        }
+                                                        .font(.system(size: 11, weight: .bold))
+                                                        .foregroundColor(.white)
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 6)
+                                                        .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                        .cornerRadius(8)
+                                                    }
+                                                }
+                                            }
                                         }
+                                        .padding(12)
+                                        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+                                        )
                                     }
                                 }
                             }
@@ -619,6 +697,92 @@ struct CustomerOrdersTab: View {
                 }
                 
                 Spacer().frame(height: 100)
+            }
+        }
+        .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhotoItem, matching: .images)
+        .onChange(of: selectedPhotoItem) { newItem in
+            guard let item = newItem, let req = activeEditingReq else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self) {
+                    do {
+                        let updatedOrder = try await NetworkManager.shared.uploadOrderRequirementDocument(
+                            orderId: selectedOrderId,
+                            requirementId: req.id,
+                            fileData: data,
+                            fileName: "document_\(req.id).jpg",
+                            mimeType: "image/jpeg"
+                        )
+                        if let idx = viewModel.orders.firstIndex(where: { $0.id == updatedOrder.id }) {
+                            viewModel.orders[idx] = updatedOrder
+                        }
+                        viewModel.toastMessage = "\(req.title) uploaded successfully!"
+                    } catch {
+                        viewModel.toastMessage = "Upload failed: \(error.localizedDescription)"
+                    }
+                }
+                selectedPhotoItem = nil
+                activeEditingReq = nil
+            }
+        }
+        .sheet(isPresented: $showEditDetailSheet) {
+            if let req = activeEditingReq {
+                NavigationView {
+                    Form {
+                        Section(header: Text("Requirement Details")) {
+                            Text(req.title).font(.headline)
+                            Text(req.description).font(.caption).foregroundColor(.secondary)
+                        }
+                        
+                        Section(header: Text("Your Input / Value")) {
+                            TextField("Enter requested details...", text: $reqDetailInput)
+                        }
+                        
+                        Section(header: Text("Additional Notes (Optional)")) {
+                            TextField("Enter any notes for CA/Accountant...", text: $reqNotesInput)
+                        }
+                        
+                        Section {
+                            Button(action: {
+                                isSavingReq = true
+                                Task {
+                                    do {
+                                        let updatedOrder = try await NetworkManager.shared.updateOrderRequirement(
+                                            orderId: selectedOrderId,
+                                            requirementId: req.id,
+                                            clientValue: reqDetailInput,
+                                            clientNotes: reqNotesInput,
+                                            isClientCompleted: true
+                                        )
+                                        if let idx = viewModel.orders.firstIndex(where: { $0.id == updatedOrder.id }) {
+                                            viewModel.orders[idx] = updatedOrder
+                                        }
+                                        viewModel.toastMessage = "Details submitted successfully!"
+                                        showEditDetailSheet = false
+                                    } catch {
+                                        viewModel.toastMessage = "Save failed: \(error.localizedDescription)"
+                                    }
+                                    isSavingReq = false
+                                }
+                            }) {
+                                if isSavingReq {
+                                    HStack {
+                                        Spacer()
+                                        ProgressView()
+                                        Spacer()
+                                    }
+                                } else {
+                                    Text("Submit Details for Verification")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                }
+                            }
+                            .disabled(isSavingReq)
+                        }
+                    }
+                    .navigationTitle("Submit Requirement")
+                    .navigationBarItems(leading: Button("Cancel") { showEditDetailSheet = false })
+                }
             }
         }
     }

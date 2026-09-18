@@ -92,6 +92,8 @@ struct CustomerDashboardView: View {
                                 selectedOrderId: $selectedOrderId,
                                 onSelectTab: { activeTab = $0 }
                             )
+                        case "Referrals":
+                            CustomerReferralTab(viewModel: viewModel)
                         case "Invoices":
                             CustomerInvoicesTab(viewModel: viewModel)
                         case "Vault":
@@ -208,6 +210,7 @@ struct CustomerDashboardView: View {
                         BMSSidebarItem(label: "Dashboard", iconName: "square.grid.2x2", tabId: "Home"),
                         BMSSidebarItem(label: "Services Catalog", iconName: "briefcase", tabId: "Services"),
                         BMSSidebarItem(label: "My Orders", iconName: "bag", tabId: "Orders"),
+                        BMSSidebarItem(label: "Refer & Earn (₹500)", iconName: "gift", tabId: "Referrals"),
                         BMSSidebarItem(label: "Invoices", iconName: "doc.text", tabId: "Invoices"),
                         BMSSidebarItem(label: "Vault Documents", iconName: "folder", tabId: "Vault"),
                         BMSSidebarItem(label: "Bookkeeping", iconName: "book", tabId: "Bookkeeping"),

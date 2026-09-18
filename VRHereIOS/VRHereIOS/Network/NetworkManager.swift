@@ -516,6 +516,125 @@ class NetworkManager {
             print("Lead telemetry error: \(error)")
         }
     }
+    
+    // --- CUSTOMER REFERRAL API ---
+    
+    func getCustomerReferralStats() async throws -> CustomerReferralStatsResponse {
+        return try await performRequest(path: "api/customer/referrals/stats")
+    }
+    
+    func addCustomerReferralLead(name: String, phone: String, email: String?, interestedService: String?) async throws -> GeneralResponse {
+        let payload = AddReferralLeadRequest(name: name, phone: phone, email: email, interestedService: interestedService)
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/customer/referrals/lead", method: "POST", body: data)
+    }
+    
+    func requestCustomerUpiPayout(amount: Double, upiId: String) async throws -> GeneralResponse {
+        let payload = UpiPayoutRequest(amount: amount, upiId: upiId)
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/customer/referrals/payout-request", method: "POST", body: data)
+    }
+    
+    // --- ORDER REQUIREMENTS & UPLOAD API ---
+    
+    func updateOrderRequirement(orderId: String, requirementId: String, clientValue: String?, clientNotes: String?, isClientCompleted: Bool) async throws -> OrderResponse {
+        var payload: [String: AnyCodable] = [
+            "isClientCompleted": AnyCodable(isClientCompleted)
+        ]
+        if let val = clientValue {
+            payload["clientValue"] = AnyCodable(val)
+        }
+        if let notes = clientNotes {
+            payload["clientNotes"] = AnyCodable(notes)
+        }
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/orders/\(orderId)/requirements/\(requirementId)", method: "PUT", body: data)
+    }
+    
+    func uploadOrderRequirementDocument(orderId: String, requirementId: String, fileData: Data, fileName: String, mimeType: String = "application/pdf") async throws -> OrderResponse {
+        guard let url = URL(string: "\(baseURL)api/orders/\(orderId)/documents") else {
+            throw NetworkError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        if let token = SessionManager.shared.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        // Append requirementId field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"requirementId\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(requirementId)\r\n".data(using: .utf8)!)
+        
+        // Append file field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"document\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
+        body.append("\r\n".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = body
+        
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            let errorMsg = String(data: data, encoding: .utf8) ?? "Upload failed"
+            throw NetworkError.serverError(errorMsg)
+        }
+        return try JSONDecoder().decode(OrderResponse.self, from: data)
+    }
+    
+    // --- USER VAULT DOCUMENT API ---
+    
+    func getUserVaultDocuments() async throws -> [UserVaultDocument] {
+        let res: UserVaultDocumentsResponse = try await performRequest(path: "api/documents")
+        return res.data
+    }
+    
+    func uploadUserVaultDocument(docType: String, fileData: Data, fileName: String, mimeType: String = "application/pdf") async throws -> GeneralResponse {
+        guard let url = URL(string: "\(baseURL)api/documents/upload") else {
+            throw NetworkError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        if let token = SessionManager.shared.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        // Append docType field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"docType\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(docType)\r\n".data(using: .utf8)!)
+        
+        // Append file field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"document\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
+        body.append("\r\n".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = body
+        
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            let errorMsg = String(data: data, encoding: .utf8) ?? "Upload failed"
+            throw NetworkError.serverError(errorMsg)
+        }
+        return try JSONDecoder().decode(GeneralResponse.self, from: data)
+    }
+    
+    func deleteUserVaultDocument(id: String) async throws -> GeneralResponse {
+        return try await performRequest(path: "api/documents/\(id)", method: "DELETE")
+    }
 }
 
 // AnyCodable helper struct to encode/decode dynamic types in Swift

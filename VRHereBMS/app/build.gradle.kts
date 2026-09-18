@@ -76,6 +76,9 @@ dependencies {
     // Navigation
     implementation(libs.androidx.navigation.compose)
 
+    // Image Loading
+    implementation(libs.coil.compose)
+
     // Firebase Messaging & Google Auth
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
