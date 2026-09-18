@@ -60,6 +60,8 @@ fun CustomerDashboardScreen(
     var checkoutOrderData by remember { mutableStateOf<com.sbr.vrherebms.data.model.CheckoutOrderResponse?>(null) }
     var checkoutPayloadData by remember { mutableStateOf<com.sbr.vrherebms.data.model.CheckoutPayload?>(null) }
 
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -114,7 +116,10 @@ fun CustomerDashboardScreen(
                         selectedOrderId = ""
                     }
                 },
-                onLogout = onLogout,
+                onLogout = {
+                    scope.launch { drawerState.close() }
+                    showLogoutDialog = true
+                },
                 onCloseDrawer = {
                     scope.launch { drawerState.close() }
                 }
@@ -132,13 +137,13 @@ fun CustomerDashboardScreen(
                                 if (drawerState.isClosed) drawerState.open() else drawerState.close()
                             }
                         },
-                        showBack = activeTab != "Home",
+                        showBack = false,
                         onBackClick = { activeTab = "Home" },
                         showNotifications = true,
                         hasUnreadNotifications = viewModel.notifications.any { !it.isRead },
                         onNotificationsClick = { isShowingNotifications = true },
                         showLogout = true,
-                        onLogoutClick = onLogout,
+                        onLogoutClick = { showLogoutDialog = true },
                         userProfilePhoto = viewModel.profilePhoto,
                         userName = userName,
                         onProfileClick = { activeTab = "Account" }
@@ -628,5 +633,43 @@ fun CustomerDashboardScreen(
                 }
             }
         }
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = {
+                Text(
+                    text = "Sign Out",
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to sign out of VR Here?",
+                    color = TextMuted,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed)
+                ) {
+                    Text("Sign Out", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel", color = Slate600, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }

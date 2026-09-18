@@ -150,6 +150,9 @@ struct VRHeader: View {
     var showNotifications: Bool = false
     var hasUnreadNotifications: Bool = false
     var onNotificationsClick: (() -> Void)? = nil
+    var userProfilePhoto: String? = nil
+    var userName: String = ""
+    var onProfileClick: (() -> Void)? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -183,8 +186,8 @@ struct VRHeader: View {
                     
                     Spacer()
                     
-                    // Right side buttons
-                    HStack(spacing: 4) {
+                    // Right side buttons: Notification Bell + User Profile Pic + Logout Button
+                    HStack(spacing: 6) {
                         if showNotifications {
                             Button(action: { onNotificationsClick?() }) {
                                 ZStack(alignment: .topTrailing) {
@@ -200,6 +203,13 @@ struct VRHeader: View {
                                             .offset(x: 4, y: -4)
                                     }
                                 }
+                            }
+                            .buttonStyle(ScaleOnPressButtonStyle())
+                        }
+
+                        if !userName.isEmpty || userProfilePhoto != nil {
+                            Button(action: { onProfileClick?() }) {
+                                VRAvatarView(photoUrl: userProfilePhoto, name: userName, size: 28)
                             }
                             .buttonStyle(ScaleOnPressButtonStyle())
                         }
@@ -222,6 +232,60 @@ struct VRHeader: View {
             
             Divider()
                 .background(Color.borderLight)
+        }
+    }
+}
+
+// Modern Avatar View matching Android VRAvatarView
+struct VRAvatarView: View {
+    var photoUrl: String? = nil
+    var name: String = ""
+    var size: CGFloat = 30
+    
+    var initials: String {
+        let parts = name.split(separator: " ").filter { !$0.isEmpty }
+        if parts.isEmpty { return "C" }
+        if parts.count == 1 { return String(parts[0].prefix(1)).uppercased() }
+        return (String(parts[0].prefix(1)) + String(parts[1].prefix(1))).uppercased()
+    }
+    
+    var body: some View {
+        ZStack {
+            if let urlStr = photoUrl, let url = URL(string: urlStr), !urlStr.isEmpty {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: size, height: size)
+                            .clipShape(Circle())
+                    default:
+                        fallbackInitials
+                    }
+                }
+            } else {
+                fallbackInitials
+            }
+        }
+        .frame(width: size, height: size)
+        .overlay(Circle().stroke(Color.borderLight, lineWidth: 1.5))
+    }
+    
+    private var fallbackInitials: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            Text(initials)
+                .font(.system(size: size * 0.4, weight: .bold))
+                .foregroundColor(.white)
         }
     }
 }

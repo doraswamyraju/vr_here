@@ -186,35 +186,107 @@ fun Modifier.scaleOnPress(): Modifier = this.composed {
 }
 
 /**
- * Official Brand Logo from res/drawable/logo.png
+ * Official Brand Logo matching the signature VR Here brand identity:
+ * [VR Monogram] | [Here (underlined)] [Business Management Solutions]
  */
 @Composable
 fun VRLogoView(
     modifier: Modifier = Modifier,
-    height: androidx.compose.ui.unit.Dp = 30.dp
+    height: androidx.compose.ui.unit.Dp = 28.dp,
+    isDark: Boolean = false
 ) {
-    Image(
-        painter = painterResource(id = R.drawable.logo),
-        contentDescription = "VR HERE Business Management Solutions",
-        contentScale = ContentScale.Fit,
-        modifier = modifier.height(height)
-    )
+    Row(
+        modifier = modifier.height(height),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        // 1. Stylized VR Monogram Icon
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = "VR Here",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(height)
+        )
+
+        // 2. Subtle Vertical Divider Line with Centered Red Dot
+        Box(
+            modifier = Modifier
+                .height(height * 0.88f)
+                .width(6.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(if (isDark) Color.White.copy(alpha = 0.35f) else Color(0xFFCBD5E1))
+            )
+            Box(
+                modifier = Modifier
+                    .size(4.5.dp)
+                    .background(PrimaryRed, CircleShape)
+            )
+        }
+
+        // 3. Brand Name & Subtitle
+        Column(
+            modifier = Modifier.height(height),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.Start
+        ) {
+            // "Here" with its signature red underline
+            Column(
+                modifier = Modifier.width(IntrinsicSize.Min),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = "Here",
+                    color = PrimaryRed,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = (height.value * 0.52f).sp,
+                    lineHeight = (height.value * 0.52f).sp,
+                    letterSpacing = 0.sp
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.4.dp)
+                        .background(PrimaryRed)
+                )
+            }
+
+            // Subtitle: "Business Management Solutions"
+            Text(
+                text = "Business Management Solutions",
+                color = if (isDark) Color.White.copy(alpha = 0.9f) else Color(0xFF1E293B),
+                fontWeight = FontWeight.Bold,
+                fontSize = (height.value * 0.25f).sp,
+                lineHeight = (height.value * 0.28f).sp,
+                letterSpacing = 0.15.sp,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
 }
 
 /**
- * Top App Header Bar matching Web / iOS VRHeader
+ * Top App Header Bar matching the exact specification:
+ * [Toggle] [Logo] ---------------- [Notification Bell] [User Profile Pic] [Logout Button]
  */
 @Composable
 fun VRHeader(
     title: String = "DASHBOARD",
-    showMenu: Boolean = false,
+    showMenu: Boolean = true,
     onMenuClick: (() -> Unit)? = null,
     showBack: Boolean = false,
     onBackClick: (() -> Unit)? = null,
-    showNotifications: Boolean = false,
+    showNotifications: Boolean = true,
     hasUnreadNotifications: Boolean = false,
     onNotificationsClick: (() -> Unit)? = null,
-    showLogout: Boolean = false,
+    showLogout: Boolean = true,
     onLogoutClick: (() -> Unit)? = null,
     userProfilePhoto: String? = null,
     userName: String = "",
@@ -231,61 +303,67 @@ fun VRHeader(
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .height(58.dp)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left Action Buttons (Menu / Back)
+            // LEFT SIDE: Toggle + Official Brand Logo
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (showMenu) {
                     IconButton(
                         onClick = { onMenuClick?.invoke() },
-                        modifier = Modifier.size(36.dp).scaleOnPress()
+                        modifier = Modifier
+                            .size(38.dp)
+                            .scaleOnPress()
                     ) {
                         Icon(
                             imageVector = Icons.Default.Menu,
-                            contentDescription = "Menu",
-                            tint = TextDark,
-                            modifier = Modifier.size(22.dp)
+                            contentDescription = "Toggle Menu",
+                            tint = Slate700,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                }
-                if (showBack) {
+                } else if (showBack) {
                     IconButton(
                         onClick = { onBackClick?.invoke() },
-                        modifier = Modifier.size(36.dp).scaleOnPress()
+                        modifier = Modifier
+                            .size(38.dp)
+                            .scaleOnPress()
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextDark,
+                            tint = Slate700,
                             modifier = Modifier.size(22.dp)
                         )
                     }
                 }
+
+                // Official Brand Logo (VR emblem + divider with red dot + "Here" + "Business Management Solutions")
+                VRLogoView(height = 26.dp)
             }
 
-            // Center: Official Brand Logo
-            VRLogoView(height = 30.dp)
-
-            // Right Action Buttons (Notifications + Avatar / SignOut)
+            // RIGHT SIDE: Notification Bell + User Profile Pic + Logout Button
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // 1. Notification Bell
                 if (showNotifications) {
                     IconButton(
                         onClick = { onNotificationsClick?.invoke() },
-                        modifier = Modifier.size(36.dp).scaleOnPress()
+                        modifier = Modifier
+                            .size(36.dp)
+                            .scaleOnPress()
                     ) {
                         Box(contentAlignment = Alignment.TopEnd) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = "Notifications",
-                                tint = TextDark,
+                                tint = Slate700,
                                 modifier = Modifier.size(22.dp)
                             )
                             if (hasUnreadNotifications) {
@@ -301,32 +379,36 @@ fun VRHeader(
                     }
                 }
 
-                if (userName.isNotBlank() || !userProfilePhoto.isNullOrBlank()) {
-                    VRAvatarView(
-                        photoUrl = userProfilePhoto,
-                        name = userName,
-                        size = 34.dp,
-                        borderWidth = 1.5.dp,
-                        borderColor = BorderLight,
-                        fontSize = 12.sp,
-                        onClick = onProfileClick
-                    )
-                } else if (showLogout) {
+                // 2. User Profile Pic (Avatar with photo or initials)
+                VRAvatarView(
+                    photoUrl = userProfilePhoto,
+                    name = userName.ifBlank { "Customer" },
+                    size = 32.dp,
+                    borderWidth = 1.5.dp,
+                    borderColor = Slate200,
+                    fontSize = 11.5.sp,
+                    onClick = onProfileClick
+                )
+
+                // 3. Logout Button
+                if (showLogout) {
                     IconButton(
                         onClick = { onLogoutClick?.invoke() },
-                        modifier = Modifier.size(36.dp).scaleOnPress()
+                        modifier = Modifier
+                            .size(36.dp)
+                            .scaleOnPress()
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "Sign Out",
-                            tint = PrimaryRed,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
             }
         }
-        HorizontalDivider(thickness = 1.dp, color = BorderLight)
+        HorizontalDivider(thickness = 1.dp, color = Slate200)
     }
 }
 
@@ -742,31 +824,11 @@ fun BMSBottomSheetMenuView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    VRLogoView(height = 28.dp)
-
-                    Column {
-                        Text(
-                            text = "Workspace Hub",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Black,
-                            color = TextDark
-                        )
-                        Text(
-                            text = "All Business Modules & Tools",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextMuted
-                        )
-                    }
-                }
+                VRLogoView(height = 26.dp)
 
                 IconButton(
                     onClick = onDismissRequest,
@@ -778,7 +840,7 @@ fun BMSBottomSheetMenuView(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
                         tint = TextMuted,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

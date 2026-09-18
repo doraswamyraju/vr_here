@@ -38,11 +38,14 @@ struct CustomerDashboardView: View {
                     onMenuClick: { withAnimation { isSidebarOpen.toggle() } },
                     showLogout: true,
                     onLogoutClick: onLogout,
-                    showBack: activeTab != "Home",
+                    showBack: false,
                     onBackClick: { withAnimation { activeTab = "Home" } },
                     showNotifications: true,
                     hasUnreadNotifications: viewModel.notifications.contains(where: { !$0.isRead }),
-                    onNotificationsClick: { isShowingNotifications = true }
+                    onNotificationsClick: { isShowingNotifications = true },
+                    userProfilePhoto: viewModel.profilePhoto,
+                    userName: viewModel.displayName,
+                    onProfileClick: { withAnimation { activeTab = "Account" } }
                 )
                 
                 // Tab Contents & Floating Dock
