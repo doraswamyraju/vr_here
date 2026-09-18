@@ -425,7 +425,7 @@ fun CustomerServicesTab(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 40.dp),
-                        horizontalAlignment = Alignment.CenterVertically,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
