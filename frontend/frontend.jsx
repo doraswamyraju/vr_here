@@ -105,7 +105,7 @@ const App = () => {
   const location = useLocation();
 
   React.useEffect(() => {
-    const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard|partner\/dashboard)/.test(location.pathname);
+    const isDashboardPath = /^\/(admin|employee|freelancer-dashboard|partner-dashboard|customer-dashboard|dashboard|customer|partner\/dashboard)/.test(location.pathname);
     
     const applyMode = () => {
       const rootEl = document.getElementById('letstrack-widget-root');
@@ -125,6 +125,9 @@ const App = () => {
               visibility: hidden !important;
               opacity: 0 !important;
               pointer-events: none !important;
+            }
+            #lt-custom-close-btn {
+              display: none !important;
             }
             .lt-widget-container {
               position: fixed !important;
@@ -158,7 +161,7 @@ const App = () => {
             color: #ffffff !important;
             font-size: 13px !important;
             font-weight: 900 !important;
-            display: flex !important;
+            display: none !important;
             align-items: center !important;
             justify-content: center !important;
             cursor: pointer !important;
@@ -183,6 +186,14 @@ const App = () => {
           };
           container.appendChild(closeBtn);
         }
+
+        // Toggle custom close button visibility based on chat window visibility/height
+        const closeBtn = shadow.getElementById('lt-custom-close-btn');
+        if (closeBtn && container) {
+          const rect = container.getBoundingClientRect();
+          const isChatOpen = rect.height > 100 && rect.width > 100 && container.style.display !== 'none' && container.style.visibility !== 'hidden';
+          closeBtn.style.setProperty('display', isChatOpen ? 'flex' : 'none', 'important');
+        }
       } else {
         if (style) {
           style.remove();
@@ -193,13 +204,9 @@ const App = () => {
     };
 
     applyMode();
-    const t1 = setTimeout(applyMode, 500);
-    const t2 = setTimeout(applyMode, 1500);
-    const t3 = setTimeout(applyMode, 3500);
+    const interval = setInterval(applyMode, 500);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      clearInterval(interval);
     };
   }, [location.pathname]);
 
