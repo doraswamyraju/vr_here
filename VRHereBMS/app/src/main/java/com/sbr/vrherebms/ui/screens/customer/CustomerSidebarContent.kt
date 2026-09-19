@@ -139,7 +139,10 @@ fun CustomerSidebarContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            VRLogoView(height = 28.dp)
+            VRLogoView(height = 28.dp, onClick = {
+                onTabSelected("Home")
+                onCloseDrawer()
+            })
 
             IconButton(
                 onClick = onCloseDrawer,

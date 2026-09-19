@@ -64,14 +64,23 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val authViewModel: AuthViewModel = viewModel()
                 
-                // Determine starting destination based on session status
-                val startDestination = if (authViewModel.isUserLoggedIn()) {
-                    when (authViewModel.getUserRole()) {
-                        "admin" -> "admin_dashboard"
-                        "employee" -> "employee_dashboard"
-                        "partner" -> "partner_dashboard"
+                // Helper to robustly resolve screen destination based on normalized role
+                fun resolveRoleDestination(role: String?): String {
+                    val normalized = role?.trim()?.lowercase() ?: "client"
+                    return when {
+                        normalized == "admin" || normalized.contains("admin") -> "admin_dashboard"
+                        normalized in listOf("employee", "staff", "freelancer", "specialist") ||
+                            normalized.contains("employee") ||
+                            normalized.contains("staff") ||
+                            normalized.contains("freelancer") -> "employee_dashboard"
+                        normalized == "partner" || normalized.contains("partner") -> "partner_dashboard"
                         else -> "customer_dashboard"
                     }
+                }
+
+                // Determine starting destination based on session status
+                val startDestination = if (authViewModel.isUserLoggedIn()) {
+                    resolveRoleDestination(authViewModel.getUserRole())
                 } else {
                     "login"
                 }
@@ -88,12 +97,7 @@ class MainActivity : ComponentActivity() {
                             onLoginSuccess = { role ->
                                 // Sync FCM token on login success
                                 com.sbr.vrherebms.utils.FcmTokenHelper.uploadFcmToken(applicationContext)
-                                val destination = when (role) {
-                                    "admin" -> "admin_dashboard"
-                                    "employee" -> "employee_dashboard"
-                                    "partner" -> "partner_dashboard"
-                                    else -> "customer_dashboard"
-                                }
+                                val destination = resolveRoleDestination(role)
                                 navController.navigate(destination) {
                                     popUpTo("login") { inclusive = true }
                                 }
@@ -109,12 +113,7 @@ class MainActivity : ComponentActivity() {
                                 // Sync FCM token on registration success
                                 com.sbr.vrherebms.utils.FcmTokenHelper.uploadFcmToken(applicationContext)
                                 val role = authViewModel.getUserRole()
-                                val destination = when (role) {
-                                    "admin" -> "admin_dashboard"
-                                    "employee" -> "employee_dashboard"
-                                    "partner" -> "partner_dashboard"
-                                    else -> "customer_dashboard"
-                                }
+                                val destination = resolveRoleDestination(role)
                                 navController.navigate(destination) {
                                     popUpTo("register") { inclusive = true }
                                 }

@@ -260,7 +260,11 @@ fun AdminDashboardScreen(
                         Spacer(modifier = Modifier.width(12.dp))
 
                         // 2. Title header text
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { activeTab = "Dashboard" }
+                        ) {
                             Text(
                                 text = "VR Here Admin Panel",
                                 fontSize = 11.sp,

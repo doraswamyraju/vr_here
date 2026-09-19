@@ -167,7 +167,11 @@ fun EmployeeDashboardScreen(
                         
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { activeTab = "Overview" }
+                        ) {
                             Text(
                                 text = "VR Here Employee Panel",
                                 color = Color(0xFF64748B),

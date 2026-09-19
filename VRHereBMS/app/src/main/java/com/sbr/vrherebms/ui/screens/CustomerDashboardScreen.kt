@@ -139,6 +139,10 @@ fun CustomerDashboardScreen(
                         },
                         showBack = false,
                         onBackClick = { activeTab = "Home" },
+                        onLogoClick = {
+                            activeTab = "Home"
+                            selectedOrderId = ""
+                        },
                         showNotifications = true,
                         hasUnreadNotifications = viewModel.notifications.any { !it.isRead },
                         onNotificationsClick = { isShowingNotifications = true },

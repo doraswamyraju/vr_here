@@ -342,6 +342,9 @@ fun CustomerPaymentWebView(
                     factory = { ctx ->
                         WebView(ctx).apply {
                             webViewInstance = this
+                            android.webkit.CookieManager.getInstance().setAcceptCookie(true)
+                            android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+
                             settings.apply {
                                 javaScriptEnabled = true
                                 domStorageEnabled = true
@@ -350,9 +353,11 @@ fun CustomerPaymentWebView(
                                 loadWithOverviewMode = true
                                 javaScriptCanOpenWindowsAutomatically = true
                                 setSupportMultipleWindows(true)
+                                allowFileAccess = true
+                                allowContentAccess = true
                                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                                 cacheMode = WebSettings.LOAD_DEFAULT
-                                userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+                                userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36 VRHereApp/1.0"
                             }
                             webViewClient = object : WebViewClient() {
                                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -361,9 +366,10 @@ fun CustomerPaymentWebView(
                                     if (url.startsWith("http://") || url.startsWith("https://")) {
                                         return false
                                     }
-                                    // Handle UPI, PhonePe, Paytm, GooglePay, WhatsApp deep links
+                                    // Handle UPI, PhonePe, Paytm, GooglePay, WhatsApp, Intent deep links
                                     return try {
                                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                         context.startActivity(intent)
                                         true
                                     } catch (e: Exception) {
@@ -371,10 +377,22 @@ fun CustomerPaymentWebView(
                                         true
                                     }
                                 }
+
+                                override fun onReceivedError(
+                                    view: WebView?,
+                                    errorCode: Int,
+                                    description: String?,
+                                    failingUrl: String?
+                                ) {
+                                    Log.w("RazorpayCheckout", "WebView error: $description for $failingUrl. Falling back to inline checkout payload...")
+                                    if (failingUrl?.contains("checkout-app.html") == true) {
+                                        view?.loadDataWithBaseURL("https://vrhere.in", htmlContent, "text/html", "UTF-8", null)
+                                    }
+                                }
                             }
                             webChromeClient = object : WebChromeClient() {
                                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                                    Log.d("RazorpayCheckout_JS", "${consoleMessage?.message()} -- From line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
+                                    Log.d("RazorpayCheckout_JS", "${consoleMessage?.message()} -- line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
                                     return true
                                 }
 
@@ -408,7 +426,21 @@ fun CustomerPaymentWebView(
                                 RazorpayPaymentInterface(onSuccess, onFailure),
                                 "AndroidInterface"
                             )
-                            loadDataWithBaseURL("https://vrhere.in", htmlContent, "text/html", "UTF-8", "https://vrhere.in")
+
+                            // Try direct secure https checkout page first, falls back gracefully to inline
+                            val checkoutUrl = "https://vrhere.in/checkout-app.html?" +
+                                "key=" + Uri.encode(key) +
+                                "&order_id=" + Uri.encode(orderId) +
+                                "&amount=" + Uri.encode(amount.toString()) +
+                                "&currency=" + Uri.encode(currency) +
+                                "&name=" + Uri.encode(customerName) +
+                                "&email=" + Uri.encode(customerEmail) +
+                                "&contact=" + Uri.encode(customerPhone) +
+                                "&service=" + Uri.encode(serviceName) +
+                                "&package=" + Uri.encode(packageName)
+
+                            Log.d("RazorpayCheckout", "Opening gateway URL: $checkoutUrl")
+                            loadUrl(checkoutUrl)
                         }
                     },
                     modifier = Modifier.fillMaxSize()

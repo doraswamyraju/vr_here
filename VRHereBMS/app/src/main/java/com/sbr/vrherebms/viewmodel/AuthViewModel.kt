@@ -59,19 +59,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val response = api.googleLogin(GoogleAuthRequest(idToken = idToken, credential = idToken))
                 if (response.isSuccessful && response.body() != null) {
                     val authData = response.body()!!
+                    val cleanRole = authData.role.trim().lowercase()
                     sessionManager.saveSession(
                         token = authData.token,
                         userId = authData.id,
                         name = authData.name,
                         email = authData.email,
-                        role = authData.role,
+                        role = cleanRole,
                         isActive = authData.isActive,
                         profilePhoto = authData.profilePhoto,
                         companyLogo = authData.companyLogo,
                         companyName = authData.companyName
                     )
                     sessionManager.savePhone(authData.phone ?: "")
-                    authState = AuthState.Success(authData.role)
+                    authState = AuthState.Success(cleanRole)
                     _eventFlow.emit(UiEvent.ShowToast("Welcome, ${authData.name}!"))
                 } else {
                     val errorMsg = response.errorBody()?.string() ?: "Google Sign-In failed"
@@ -100,19 +101,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val response = api.login(LoginRequest(emailInput, passwordInput))
                 if (response.isSuccessful && response.body() != null) {
                     val authData = response.body()!!
+                    val cleanRole = authData.role.trim().lowercase()
                     sessionManager.saveSession(
                         token = authData.token,
                         userId = authData.id,
                         name = authData.name,
                         email = authData.email,
-                        role = authData.role,
+                        role = cleanRole,
                         isActive = authData.isActive,
                         profilePhoto = authData.profilePhoto,
                         companyLogo = authData.companyLogo,
                         companyName = authData.companyName
                     )
                     sessionManager.savePhone(authData.phone ?: "")
-                    authState = AuthState.Success(authData.role)
+                    authState = AuthState.Success(cleanRole)
                     _eventFlow.emit(UiEvent.ShowToast("Welcome back, ${authData.name}!"))
                 } else {
                     val errorMsg = response.errorBody()?.string() ?: "Login failed"
@@ -167,12 +169,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                 if (response.isSuccessful && response.body() != null) {
                     val authData = response.body()!!
+                    val cleanRole = authData.role.trim().lowercase()
                     sessionManager.saveSession(
                         token = authData.token,
                         userId = authData.id,
                         name = authData.name,
                         email = authData.email,
-                        role = authData.role,
+                        role = cleanRole,
                         isActive = authData.isActive,
                         profilePhoto = authData.profilePhoto,
                         companyLogo = authData.companyLogo,
@@ -181,7 +184,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     sessionManager.savePhone(authData.phone ?: "")
                     
                     if (authData.isActive) {
-                        authState = AuthState.Success(authData.role)
+                        authState = AuthState.Success(cleanRole)
                         _eventFlow.emit(UiEvent.ShowToast("Registration successful!"))
                     } else {
                         authState = AuthState.Idle
@@ -216,7 +219,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getUserRole(): String {
-        return sessionManager.getUserRole() ?: "client"
+        return sessionManager.getUserRole()?.trim()?.lowercase() ?: "client"
     }
 
     fun getUserName(): String {

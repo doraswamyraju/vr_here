@@ -193,10 +193,15 @@ fun Modifier.scaleOnPress(): Modifier = this.composed {
 fun VRLogoView(
     modifier: Modifier = Modifier,
     height: androidx.compose.ui.unit.Dp = 28.dp,
-    isDark: Boolean = false
+    isDark: Boolean = false,
+    onClick: (() -> Unit)? = null
 ) {
     Row(
-        modifier = modifier.height(height),
+        modifier = modifier
+            .height(height)
+            .then(
+                if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(7.dp)
     ) {
@@ -283,6 +288,7 @@ fun VRHeader(
     onMenuClick: (() -> Unit)? = null,
     showBack: Boolean = false,
     onBackClick: (() -> Unit)? = null,
+    onLogoClick: (() -> Unit)? = null,
     showNotifications: Boolean = true,
     hasUnreadNotifications: Boolean = false,
     onNotificationsClick: (() -> Unit)? = null,
@@ -343,7 +349,7 @@ fun VRHeader(
                 }
 
                 // Official Brand Logo (VR emblem + divider with red dot + "Here" + "Business Management Solutions")
-                VRLogoView(height = 26.dp)
+                VRLogoView(height = 26.dp, onClick = onLogoClick)
             }
 
             // RIGHT SIDE: Notification Bell + User Profile Pic + Logout Button
@@ -674,13 +680,13 @@ fun BMSAppBottomNavBar(
                     modifier = Modifier.weight(1f)
                 )
 
-                // Tab 5: Account
+                // Tab 5: Invoices / Billing
                 NavBarTabItem(
-                    id = "Account",
-                    label = "Account",
-                    icon = Icons.Default.Person,
-                    isSelected = activeTab == "Account",
-                    onClick = { onTabSelected("Account") },
+                    id = "Invoices",
+                    label = "Invoices",
+                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
+                    isSelected = activeTab == "Invoices" || activeTab == "Billing",
+                    onClick = { onTabSelected("Invoices") },
                     modifier = Modifier.weight(1f)
                 )
             }
