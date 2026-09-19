@@ -195,26 +195,26 @@ fun CustomerDashboardScreen(
                                     activeTab = "Orders"
                                 },
                                 onOpenLiveService = { name, url ->
-                                    val key = url.substringAfterLast("/")
-                                    if (key in ServiceCatalog.items.keys) {
-                                        activeServiceKey = key
+                                    val rawKey = url.substringAfterLast("/").trim().removeSuffix("/")
+                                    val key = if (rawKey.isNotBlank() && !rawKey.startsWith("http")) {
+                                        rawKey
                                     } else {
-                                        webviewUrl = url
-                                        webviewTitle = name
+                                        name.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
                                     }
+                                    activeServiceKey = key
                                 }
                             )
                             "Services" -> CustomerServicesTab(
                                 viewModel = viewModel,
                                 onSelectTab = { activeTab = it },
                                 onOpenLiveService = { name, url ->
-                                    val key = url.substringAfterLast("/")
-                                    if (key in ServiceCatalog.items.keys) {
-                                        activeServiceKey = key
+                                    val rawKey = url.substringAfterLast("/").trim().removeSuffix("/")
+                                    val key = if (rawKey.isNotBlank() && !rawKey.startsWith("http")) {
+                                        rawKey
                                     } else {
-                                        webviewUrl = url
-                                        webviewTitle = name
+                                        name.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
                                     }
+                                    activeServiceKey = key
                                 }
                             )
                             "Orders" -> CustomerOrdersTab(

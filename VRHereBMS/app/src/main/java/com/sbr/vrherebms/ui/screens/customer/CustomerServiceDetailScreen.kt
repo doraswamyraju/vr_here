@@ -225,6 +225,53 @@ object ServiceCatalog {
         }
         items = updatedMap
     }
+
+    fun getService(key: String): ServiceDetail {
+        items[key]?.let { return it }
+
+        // Dynamic fallback builder for any service catalog ID
+        val formattedTitle = key.split("-")
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { word -> word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } }
+            .ifBlank { "Compliance & Registration Service" }
+
+        val dynamicPkgs = listOf(
+            ServicePackage(
+                id = "consultation",
+                name = "Expert CA/CS Consultation",
+                price = 499.0,
+                isAdjustable = true,
+                description = "30 mins consultation with verified CA/CS. Fee adjusted against filing.",
+                features = listOf("30 Mins Expert Call", "Eligibility & Document Checklist", "Compliance Roadmap & Strategy"),
+                creativeButtonText = "Book CA/CS Call"
+            ),
+            ServicePackage(
+                id = "basic",
+                name = "Essential Registration Plan",
+                price = 2999.0,
+                description = "Standard statutory application & verified certificate issuance.",
+                features = listOf("Online Government Application", "Document Verification & Filing", "Government Registration Certificate", "Dedicated Support Executive"),
+                creativeButtonText = "Start Registration"
+            ),
+            ServicePackage(
+                id = "pro",
+                name = "Premium Fast-Track Suite",
+                price = 6999.0,
+                isPopular = true,
+                description = "End-to-end statutory compliance with priority same-day filing.",
+                features = listOf("Everything in Essential", "Fast-Track Processing", "1-Year Annual Compliance Support", "ISO/GST/MSME Alignment", "Dedicated CA Relationship Manager"),
+                creativeButtonText = "Unlock Fast-Track"
+            )
+        )
+
+        return ServiceDetail(
+            id = key,
+            title = formattedTitle,
+            description = "Get comprehensive legal, statutory & compliance registration with CA/CS verified documentation.",
+            icon = resolveComposeIcon(key),
+            packages = dynamicPkgs
+        )
+    }
 }
 
 @Composable
@@ -361,7 +408,7 @@ fun CustomerServiceDetailScreen(
 ) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
-    val service = remember(serviceKey) { ServiceCatalog.items[serviceKey] }
+    val service = remember(serviceKey) { ServiceCatalog.getService(serviceKey) }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
