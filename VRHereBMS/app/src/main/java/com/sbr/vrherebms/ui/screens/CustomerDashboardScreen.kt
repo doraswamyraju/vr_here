@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sbr.vrherebms.ui.screens.customer.*
+import com.sbr.vrherebms.ui.screens.customer.bookkeeping.BookkeepingHostScreen
 import com.sbr.vrherebms.ui.components.*
 import com.sbr.vrherebms.ui.theme.*
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
@@ -226,7 +227,7 @@ fun CustomerDashboardScreen(
                             "Referrals" -> CustomerReferralTab()
                             "Invoices" -> CustomerInvoicesTab(viewModel)
                             "Vault" -> CustomerVaultTab(viewModel)
-                            "Bookkeeping" -> BookkeepingScreen(viewModel)
+                            "Bookkeeping" -> BookkeepingHostScreen(viewModel)
                             "Support" -> CustomerSupportTab(viewModel)
                             "Account" -> CustomerAccountTab(
                                 viewModel = viewModel,
@@ -406,57 +407,9 @@ fun CustomerDashboardScreen(
                                     val checkoutResponse = apiService.checkoutOrder(payload)
                                     if (checkoutResponse.isSuccessful && checkoutResponse.body() != null) {
                                         val orderData = checkoutResponse.body()!!
-                                        val activity = context as? android.app.Activity
-                                        if (activity != null) {
-                                            com.sbr.vrherebms.utils.RazorpayManager.startPayment(
-                                                activity = activity,
-                                                key = orderData.key,
-                                                orderId = orderData.orderId,
-                                                amount = orderData.amount,
-                                                currency = orderData.currency,
-                                                serviceName = payload.serviceName,
-                                                packageName = payload.packageName,
-                                                customerName = payload.customerName,
-                                                customerEmail = payload.email,
-                                                customerPhone = payload.phone,
-                                                onSuccess = { paymentId, ordId, signature ->
-                                                    scope.launch {
-                                                        Toast.makeText(context, "Payment successful! Verifying transaction...", Toast.LENGTH_LONG).show()
-                                                        val verifyPayload = com.sbr.vrherebms.data.model.VerifyPayload(
-                                                            serviceName = payload.serviceName,
-                                                            packageName = payload.packageName,
-                                                            amount = payload.amount,
-                                                            customerName = payload.customerName,
-                                                            email = payload.email,
-                                                            phone = payload.phone,
-                                                            razorpay_order_id = ordId.ifBlank { orderData.orderId },
-                                                            razorpay_payment_id = paymentId,
-                                                            razorpay_signature = signature
-                                                        )
-                                                        try {
-                                                            val verifyResponse = apiService.verifyPayment(verifyPayload)
-                                                            if (verifyResponse.isSuccessful && verifyResponse.body()?.success == true) {
-                                                                Toast.makeText(context, "Compliance Order Registered Successfully!", Toast.LENGTH_LONG).show()
-                                                                activeServiceKey = null
-                                                                viewModel.refreshAllData()
-                                                                activeTab = "Orders"
-                                                            } else {
-                                                                val errorMsg = verifyResponse.body()?.message ?: "Signature verification failed"
-                                                                Toast.makeText(context, "Verification Error: $errorMsg", Toast.LENGTH_LONG).show()
-                                                            }
-                                                        } catch (e: Exception) {
-                                                            Toast.makeText(context, "Network Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                                                        }
-                                                    }
-                                                },
-                                                onFailure = { errorMsg ->
-                                                    Toast.makeText(context, "Payment cancelled / failed: $errorMsg", Toast.LENGTH_LONG).show()
-                                                }
-                                            )
-                                        } else {
-                                            checkoutPayloadData = payload
-                                            checkoutOrderData = orderData
-                                        }
+                                        
+                                        checkoutOrderData = orderData
+                                        checkoutPayloadData = payload
                                     } else {
                                         val errorMsg = checkoutResponse.errorBody()?.string() ?: "Failed to generate checkout order"
                                         Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
@@ -470,86 +423,62 @@ fun CustomerDashboardScreen(
                 }
             }
 
-            // High-fidelity WebView overlay for Razorpay Payment
-            AnimatedVisibility(
-                visible = checkoutOrderData != null,
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioLowBouncy,
-                        stiffness = Spring.StiffnessMediumLow
-                    )
-                ) + fadeIn(),
-                exit = slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                ) + fadeOut(),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                val orderData = checkoutOrderData
-                val payload = checkoutPayloadData
-                if (orderData != null && payload != null) {
-                    CustomerPaymentWebView(
-                        key = orderData.key,
-                        orderId = orderData.orderId,
-                        amount = orderData.amount,
-                        currency = orderData.currency,
-                        serviceName = payload.serviceName,
-                        packageName = payload.packageName,
-                        customerName = payload.customerName,
-                        customerEmail = payload.email,
-                        customerPhone = payload.phone,
-                        onSuccess = { paymentId, ordId, signature ->
-                            checkoutOrderData = null
-                            checkoutPayloadData = null
-                            activeServiceKey = null
-                            
-                            scope.launch {
-                                Toast.makeText(context, "Payment successful! Verifying transaction...", Toast.LENGTH_LONG).show()
-                                val verifyPayload = com.sbr.vrherebms.data.model.VerifyPayload(
-                                    serviceName = payload.serviceName,
-                                    packageName = payload.packageName,
-                                    amount = payload.amount,
-                                    customerName = payload.customerName,
-                                    email = payload.email,
-                                    phone = payload.phone,
-                                    razorpay_order_id = ordId,
-                                    razorpay_payment_id = paymentId,
-                                    razorpay_signature = signature
-                                )
-                                try {
-                                    val apiService = VRHereAPI.getInstance(context)
-                                    val verifyResponse = apiService.verifyPayment(verifyPayload)
-                                    if (verifyResponse.isSuccessful && verifyResponse.body()?.success == true) {
-                                        Toast.makeText(context, "Compliance Order Registered Successfully!", Toast.LENGTH_LONG).show()
-                                        // Refresh all data on dashboard
-                                        viewModel.refreshAllData()
-                                        // Route to orders page
-                                        activeTab = "Orders"
-                                    } else {
-                                        val errorMsg = verifyResponse.body()?.message ?: "Signature verification failed"
-                                        Toast.makeText(context, "Verification Error: $errorMsg", Toast.LENGTH_LONG).show()
-                                    }
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Network Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            // Custom Payment Bottom Sheet
+            if (checkoutOrderData != null && checkoutPayloadData != null) {
+                val orderData = checkoutOrderData!!
+                val payload = checkoutPayloadData!!
+                
+                com.sbr.vrherebms.ui.screens.customer.CustomPaymentBottomSheet(
+                    key = orderData.key,
+                    orderId = orderData.orderId,
+                    amount = orderData.amount,
+                    currency = orderData.currency,
+                    serviceName = payload.serviceName,
+                    packageName = payload.packageName,
+                    customerName = payload.customerName,
+                    customerEmail = payload.email,
+                    customerPhone = payload.phone,
+                    onSuccess = { paymentId, ordId, signature ->
+                        scope.launch {
+                            Toast.makeText(context, "Payment successful! Verifying transaction...", Toast.LENGTH_LONG).show()
+                            val verifyPayload = com.sbr.vrherebms.data.model.VerifyPayload(
+                                serviceName = payload.serviceName,
+                                packageName = payload.packageName,
+                                amount = payload.amount,
+                                customerName = payload.customerName,
+                                email = payload.email,
+                                phone = payload.phone,
+                                razorpay_order_id = ordId.ifBlank { orderData.orderId },
+                                razorpay_payment_id = paymentId,
+                                razorpay_signature = signature
+                            )
+                            try {
+                                val apiService = com.sbr.vrherebms.data.remote.VRHereAPI.getInstance(context)
+                                val verifyResponse = apiService.verifyPayment(verifyPayload)
+                                if (verifyResponse.isSuccessful && verifyResponse.body()?.success == true) {
+                                    Toast.makeText(context, "Compliance Order Registered Successfully!", Toast.LENGTH_LONG).show()
+                                    activeServiceKey = null
+                                    checkoutOrderData = null
+                                    checkoutPayloadData = null
+                                    viewModel.refreshAllData()
+                                    activeTab = "Orders"
+                                } else {
+                                    val errorMsg = verifyResponse.body()?.message ?: "Signature verification failed"
+                                    Toast.makeText(context, "Verification Error: $errorMsg", Toast.LENGTH_LONG).show()
                                 }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Network Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                             }
-                        },
-                        onFailure = { errorMsg ->
-                            checkoutOrderData = null
-                            checkoutPayloadData = null
-                            Toast.makeText(context, "Payment failed: $errorMsg", Toast.LENGTH_LONG).show()
-                        },
-                        onClose = {
-                            checkoutOrderData = null
-                            checkoutPayloadData = null
-                            Toast.makeText(context, "Payment closed", Toast.LENGTH_SHORT).show()
                         }
-                    )
-                }
+                    },
+                    onFailure = { errorMsg ->
+                        Toast.makeText(context, "Payment failed: $errorMsg", Toast.LENGTH_LONG).show()
+                    },
+                    onClose = {
+                        checkoutOrderData = null
+                        checkoutPayloadData = null
+                    }
+                )
             }
 
             // Lockscreen-style Heads-up In-app Notification Banner
