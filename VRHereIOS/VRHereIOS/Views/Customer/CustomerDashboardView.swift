@@ -43,8 +43,7 @@ struct CustomerDashboardView: View {
                     showNotifications: true,
                     hasUnreadNotifications: viewModel.notifications.contains(where: { !$0.isRead }),
                     onNotificationsClick: { isShowingNotifications = true },
-                    userProfilePhoto: viewModel.profilePhoto,
-                    userName: viewModel.displayName,
+                    userName: userName,
                     onProfileClick: { withAnimation { activeTab = "Account" } }
                 )
                 

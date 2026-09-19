@@ -35,6 +35,10 @@ class SessionManager {
         return prefs.string(forKey: keyAuthToken)
     }
     
+    func getToken() -> String? {
+        return getAuthToken()
+    }
+    
     func getUserId() -> String? {
         return prefs.string(forKey: keyUserId)
     }

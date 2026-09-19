@@ -6,6 +6,7 @@ enum NetworkError: Error, LocalizedError {
     case apiError(String)
     case unauthorized
     case decodingError(Error)
+    case serverError(String)
     
     var errorDescription: String? {
         switch self {
@@ -14,6 +15,7 @@ enum NetworkError: Error, LocalizedError {
         case .apiError(let message): return message
         case .unauthorized: return "Unauthorized access. Please login again."
         case .decodingError(let error): return "JSON decoding failure: \(error.localizedDescription)"
+        case .serverError(let message): return message
         }
     }
 }
@@ -28,7 +30,7 @@ class NetworkManager {
     // Core Request wrapper
     private func performRequest<T: Codable>(
         path: String,
-        method: String,
+        method: String = "GET",
         body: Data? = nil,
         headers: [String: String] = [:],
         isMultipart: Bool = false,
@@ -557,7 +559,7 @@ class NetworkManager {
         }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        if let token = SessionManager.shared.getToken() {
+        if let token = SessionManager.shared.getAuthToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -580,7 +582,7 @@ class NetworkManager {
         
         request.httpBody = body
         
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
             let errorMsg = String(data: data, encoding: .utf8) ?? "Upload failed"
             throw NetworkError.serverError(errorMsg)
@@ -591,7 +593,7 @@ class NetworkManager {
     // --- USER VAULT DOCUMENT API ---
     
     func getUserVaultDocuments() async throws -> [UserVaultDocument] {
-        let res: UserVaultDocumentsResponse = try await performRequest(path: "api/documents")
+        let res: UserVaultDocumentsResponse = try await performRequest(path: "api/documents", method: "GET")
         return res.data
     }
     
@@ -601,7 +603,7 @@ class NetworkManager {
         }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        if let token = SessionManager.shared.getToken() {
+        if let token = SessionManager.shared.getAuthToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -624,7 +626,7 @@ class NetworkManager {
         
         request.httpBody = body
         
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
             let errorMsg = String(data: data, encoding: .utf8) ?? "Upload failed"
             throw NetworkError.serverError(errorMsg)

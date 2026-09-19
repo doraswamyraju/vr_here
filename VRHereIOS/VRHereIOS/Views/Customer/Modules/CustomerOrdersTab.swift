@@ -347,85 +347,7 @@ struct CustomerOrdersTab: View {
                             } else {
                                 VStack(spacing: 12) {
                                     ForEach(order.customerRequirements) { req in
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            HStack(alignment: .top) {
-                                                VStack(alignment: .leading, spacing: 2) {
-                                                    Text(req.title)
-                                                        .font(.system(size: 13, weight: .black))
-                                                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                                    Text(req.description)
-                                                        .font(.system(size: 11))
-                                                        .foregroundColor(.textMuted)
-                                                }
-                                                Spacer()
-                                                
-                                                let isVerified = req.status == "Verified"
-                                                let isSubmitted = req.status == "Received" || req.status == "Submitted"
-                                                Text(isVerified ? "VERIFIED" : (isSubmitted ? "SUBMITTED" : req.status.uppercased()))
-                                                    .font(.system(size: 9, weight: .black))
-                                                    .foregroundColor(isVerified ? Color(red: 6/255, green: 95/255, blue: 70/255) : (isSubmitted ? Color(red: 30/255, green: 64/255, blue: 175/255) : Color(red: 146/255, green: 64/255, blue: 14/255)))
-                                                    .padding(.horizontal, 8)
-                                                    .padding(.vertical, 4)
-                                                    .background(isVerified ? Color(red: 209/255, green: 250/255, blue: 229/255) : (isSubmitted ? Color(red: 219/255, green: 234/255, blue: 254/255) : Color(red: 254/255, green: 243/255, blue: 199/255)))
-                                                    .cornerRadius(6)
-                                            }
-                                            
-                                            // Value or Notes display if present
-                                            if let val = req.value, !val.isEmpty {
-                                                Text("Submitted Detail: \(val)")
-                                                    .font(.system(size: 11, weight: .bold))
-                                                    .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
-                                                    .padding(6)
-                                                    .background(Color(red: 241/255, green: 245/255, blue: 249/255))
-                                                    .cornerRadius(6)
-                                            }
-                                            
-                                            // Action Buttons (Upload / Fill)
-                                            HStack(spacing: 8) {
-                                                if req.type == "Detail" {
-                                                    Button(action: {
-                                                        activeEditingReq = req
-                                                        reqDetailInput = req.value ?? ""
-                                                        reqNotesInput = req.clientNotes ?? ""
-                                                        showEditDetailSheet = true
-                                                    }) {
-                                                        HStack(spacing: 4) {
-                                                            Image(systemName: "pencil")
-                                                            Text(req.value?.isEmpty == false ? "Edit Details" : "Provide Details")
-                                                        }
-                                                        .font(.system(size: 11, weight: .bold))
-                                                        .foregroundColor(.white)
-                                                        .padding(.horizontal, 10)
-                                                        .padding(.vertical, 6)
-                                                        .background(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                                        .cornerRadius(8)
-                                                    }
-                                                } else {
-                                                    Button(action: {
-                                                        activeEditingReq = req
-                                                        showPhotoPicker = true
-                                                    }) {
-                                                        HStack(spacing: 4) {
-                                                            Image(systemName: "arrow.up.doc.fill")
-                                                            Text(req.status == "Verified" ? "Replace Document" : "Upload Document")
-                                                        }
-                                                        .font(.system(size: 11, weight: .bold))
-                                                        .foregroundColor(.white)
-                                                        .padding(.horizontal, 10)
-                                                        .padding(.vertical, 6)
-                                                        .background(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                                        .cornerRadius(8)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        .padding(12)
-                                        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
-                                        .cornerRadius(12)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
-                                        )
+                                        requirementItemView(req: req)
                                     }
                                 }
                             }
@@ -785,6 +707,94 @@ struct CustomerOrdersTab: View {
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private func requirementItemView(req: CustomerRequirement) -> some View {
+        let isVerified = req.status == "Verified"
+        let isSubmitted = req.status == "Received" || req.status == "Submitted"
+        let statusBadgeText = isVerified ? "VERIFIED" : (isSubmitted ? "SUBMITTED" : req.status.uppercased())
+        let badgeBg = isVerified ? Color(red: 209/255, green: 250/255, blue: 229/255) : (isSubmitted ? Color(red: 219/255, green: 234/255, blue: 254/255) : Color(red: 254/255, green: 243/255, blue: 199/255))
+        let badgeFg = isVerified ? Color(red: 6/255, green: 95/255, blue: 70/255) : (isSubmitted ? Color(red: 30/255, green: 64/255, blue: 175/255) : Color(red: 146/255, green: 64/255, blue: 14/255))
+        let hasValue = !req.value.isEmpty
+        let detailBtnText = hasValue ? "Edit Details" : "Provide Details"
+        let docBtnText = isVerified ? "Replace Document" : "Upload Document"
+
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(req.title)
+                        .font(.system(size: 13, weight: .black))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                    Text(req.description)
+                        .font(.system(size: 11))
+                        .foregroundColor(.textMuted)
+                }
+                Spacer()
+                
+                Text(statusBadgeText)
+                    .font(.system(size: 9, weight: .black))
+                    .foregroundColor(badgeFg)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(badgeBg)
+                    .cornerRadius(6)
+            }
+            
+            if !req.value.isEmpty {
+                Text("Submitted Detail: \(req.value)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                    .padding(6)
+                    .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                    .cornerRadius(6)
+            }
+            
+            HStack(spacing: 8) {
+                if req.type == "Detail" {
+                    Button(action: {
+                        activeEditingReq = req
+                        reqDetailInput = req.value
+                        reqNotesInput = req.clientNotes
+                        showEditDetailSheet = true
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "pencil")
+                            Text(detailBtnText)
+                        }
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color(red: 99/255, green: 102/255, blue: 241/255))
+                        .cornerRadius(8)
+                    }
+                } else {
+                    Button(action: {
+                        activeEditingReq = req
+                        showPhotoPicker = true
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.doc.fill")
+                            Text(docBtnText)
+                        }
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                        .cornerRadius(8)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+        )
     }
 }
 
