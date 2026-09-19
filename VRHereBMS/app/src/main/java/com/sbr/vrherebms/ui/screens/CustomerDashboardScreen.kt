@@ -405,8 +405,58 @@ fun CustomerDashboardScreen(
                                     val apiService = VRHereAPI.getInstance(context)
                                     val checkoutResponse = apiService.checkoutOrder(payload)
                                     if (checkoutResponse.isSuccessful && checkoutResponse.body() != null) {
-                                        checkoutPayloadData = payload
-                                        checkoutOrderData = checkoutResponse.body()
+                                        val orderData = checkoutResponse.body()!!
+                                        val activity = context as? android.app.Activity
+                                        if (activity != null) {
+                                            com.sbr.vrherebms.utils.RazorpayManager.startPayment(
+                                                activity = activity,
+                                                key = orderData.key,
+                                                orderId = orderData.orderId,
+                                                amount = orderData.amount,
+                                                currency = orderData.currency,
+                                                serviceName = payload.serviceName,
+                                                packageName = payload.packageName,
+                                                customerName = payload.customerName,
+                                                customerEmail = payload.email,
+                                                customerPhone = payload.phone,
+                                                onSuccess = { paymentId, ordId, signature ->
+                                                    scope.launch {
+                                                        Toast.makeText(context, "Payment successful! Verifying transaction...", Toast.LENGTH_LONG).show()
+                                                        val verifyPayload = com.sbr.vrherebms.data.model.VerifyPayload(
+                                                            serviceName = payload.serviceName,
+                                                            packageName = payload.packageName,
+                                                            amount = payload.amount,
+                                                            customerName = payload.customerName,
+                                                            email = payload.email,
+                                                            phone = payload.phone,
+                                                            razorpay_order_id = ordId.ifBlank { orderData.orderId },
+                                                            razorpay_payment_id = paymentId,
+                                                            razorpay_signature = signature
+                                                        )
+                                                        try {
+                                                            val verifyResponse = apiService.verifyPayment(verifyPayload)
+                                                            if (verifyResponse.isSuccessful && verifyResponse.body()?.success == true) {
+                                                                Toast.makeText(context, "Compliance Order Registered Successfully!", Toast.LENGTH_LONG).show()
+                                                                activeServiceKey = null
+                                                                viewModel.refreshAllData()
+                                                                activeTab = "Orders"
+                                                            } else {
+                                                                val errorMsg = verifyResponse.body()?.message ?: "Signature verification failed"
+                                                                Toast.makeText(context, "Verification Error: $errorMsg", Toast.LENGTH_LONG).show()
+                                                            }
+                                                        } catch (e: Exception) {
+                                                            Toast.makeText(context, "Network Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                                        }
+                                                    }
+                                                },
+                                                onFailure = { errorMsg ->
+                                                    Toast.makeText(context, "Payment cancelled / failed: $errorMsg", Toast.LENGTH_LONG).show()
+                                                }
+                                            )
+                                        } else {
+                                            checkoutPayloadData = payload
+                                            checkoutOrderData = orderData
+                                        }
                                     } else {
                                         val errorMsg = checkoutResponse.errorBody()?.string() ?: "Failed to generate checkout order"
                                         Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
