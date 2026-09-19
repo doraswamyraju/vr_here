@@ -69,10 +69,7 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
-    // Razorpay Mobile Native    // Razorpay Mobile Native Checkout (Standard UI Bottom Sheet)
-    implementation("com.razorpay:checkout:1.6.33")
-
-    // Navigation
+    // Razorpay Mobile Native    // Navigation
     implementation(libs.androidx.navigation.compose)
 
     // Image Loading

@@ -21,13 +21,10 @@ import com.sbr.vrherebms.viewmodel.EmployeeDashboardViewModel
 import com.sbr.vrherebms.viewmodel.PartnerDashboardViewModel
 import com.sbr.vrherebms.viewmodel.AdminDashboardViewModel
 
-class MainActivity : ComponentActivity(), com.razorpay.PaymentResultWithDataListener {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize native Razorpay Mobile Checkout SDK
-        com.sbr.vrherebms.utils.RazorpayManager.initialize(applicationContext)
-
         // Request notification permission at runtime for Android 13+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             val requestPermissionLauncher = registerForActivityResult(
@@ -183,13 +180,5 @@ class MainActivity : ComponentActivity(), com.razorpay.PaymentResultWithDataList
                 }
             }
         }
-    }
-
-    override fun onPaymentSuccess(razorpayPaymentId: String?, paymentData: com.razorpay.PaymentData?) {
-        com.sbr.vrherebms.utils.RazorpayManager.onPaymentSuccess(razorpayPaymentId, paymentData)
-    }
-
-    override fun onPaymentError(errorCode: Int, response: String?, paymentData: com.razorpay.PaymentData?) {
-        com.sbr.vrherebms.utils.RazorpayManager.onPaymentError(errorCode, response, paymentData)
     }
 }
