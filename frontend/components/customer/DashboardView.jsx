@@ -1,12 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Upload, Briefcase, CreditCard, ChevronRight, AlertTriangle, Bell, Plus,
     Search, Gift, Newspaper, Building2, FileCheck, Shield,
     ClipboardCheck, IndianRupee, Settings, Monitor, Stamp, ExternalLink, ArrowRight,
-    User as UsersIcon, CheckCircle2, Phone, Calendar, Clock, Sparkles, FileText, CheckCircle
+    User as UsersIcon, CheckCircle2, Phone, Calendar, Clock, Sparkles, FileText, CheckCircle,
+    Wallet, Loader2
 } from 'lucide-react';
 import { getOrderStatusProgress } from '../../utils/orderProgress';
+import { launchRazorpayCheckout } from '../../utils/razorpayCheckout';
 
 const getStatusProgress = getOrderStatusProgress;
 
@@ -25,27 +27,95 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenProject, onOpenNotifications, onSelectService }) => {
+const DashboardView = ({ setActiveTab, orders = [], payments = [], notifications = [], userInfo, onOpenProject, onOpenNotifications, onSelectService, refreshOrders }) => {
     const navigate = useNavigate();
+    const [payingOrderId, setPayingOrderId] = useState(null);
+
     const activeOrders = orders.filter(o => o.status !== 'Completed');
     const completedOrders = orders.filter(o => o.status === 'Completed');
-    const pendingActions = orders.filter(o => {
+
+    // Fix: Only flag pending actions if there are actual incomplete requirements or clarification needed
+    const pendingActions = (orders || []).filter(o => {
         if (o.status === 'Completed' || o.status === 'Documents Verified' || o.status === 'Processing at Portal') return false;
         if (o.status === 'Waiting for Clarification') return true;
-        if (o.status === 'Pending Documents') {
+        if (o.status === 'Pending Documents' || o.status === 'Documents Required') {
             if (o.customerRequirements && o.customerRequirements.length > 0) {
                 return o.customerRequirements.some(r => {
                     if (r.required === false) return false;
                     if (r.type === 'Document') {
-                        return !r.isClientCompleted && (!r.documents || r.documents.length === 0) && !r.uploadedDocumentUrl && r.status !== 'Received' && r.status !== 'Verified';
+                        return !r.isClientCompleted && (!r.documents || r.documents.length === 0) && !r.uploadedDocumentUrl && !r.documentUrl && r.status !== 'Received' && r.status !== 'Verified';
                     }
                     return !r.isClientCompleted && !r.clientValue && !r.value && r.status !== 'Received' && r.status !== 'Verified';
                 });
             }
-            return true;
+            return false;
         }
         return false;
     });
+
+    // Unpaid & Pending Invoices calculation
+    const unpaidOrders = useMemo(() => {
+        return (orders || []).filter(order => {
+            if (order.status === 'Completed') return false;
+            const orderPrice = Number(order.price || 0);
+            const orderPayments = (payments || []).filter(p => {
+                const pOrderId = p.order?._id || p.order;
+                return pOrderId === order._id;
+            });
+            const totalPaid = orderPayments.reduce((acc, curr) => 
+                acc + (curr.status === 'Completed' || curr.status === 'Paid' ? Number(curr.amount || 0) : 0), 0);
+            const balanceDue = Math.max(0, orderPrice - totalPaid);
+            return balanceDue > 0;
+        }).map(order => {
+            const orderPrice = Number(order.price || 0);
+            const orderPayments = (payments || []).filter(p => {
+                const pOrderId = p.order?._id || p.order;
+                return pOrderId === order._id;
+            });
+            const totalPaid = orderPayments.reduce((acc, curr) => 
+                acc + (curr.status === 'Completed' || curr.status === 'Paid' ? Number(curr.amount || 0) : 0), 0);
+            const balanceDue = Math.max(0, orderPrice - totalPaid);
+            return {
+                ...order,
+                totalPaid,
+                balanceDue
+            };
+        });
+    }, [orders, payments]);
+
+    const totalOutstandingDue = useMemo(() => {
+        return unpaidOrders.reduce((acc, o) => acc + o.balanceDue, 0);
+    }, [unpaidOrders]);
+
+    const handlePayOutstanding = async (orderItem) => {
+        if (!orderItem || orderItem.balanceDue <= 0) return;
+        setPayingOrderId(orderItem._id);
+        try {
+            await launchRazorpayCheckout({
+                amount: orderItem.balanceDue,
+                serviceName: orderItem.serviceName || 'Order Balance Payment',
+                packageName: orderItem.packageName || 'Standard',
+                customerName: userInfo?.name || orderItem.clientName || '',
+                customerEmail: userInfo?.email || orderItem.clientEmail || '',
+                customerPhone: userInfo?.phone || orderItem.clientPhone || '',
+                token: userInfo?.token,
+                onSuccess: async () => {
+                    alert('Payment successful! Your order balance has been updated.');
+                    if (refreshOrders) await refreshOrders();
+                },
+                onFailure: (err) => {
+                    alert(err?.message || 'Payment was cancelled or failed.');
+                },
+                onSubmittingChange: (isSubmitting) => {
+                    if (!isSubmitting) setPayingOrderId(null);
+                }
+            });
+        } catch (err) {
+            console.error('Payment launch error:', err);
+            alert(err?.message || 'Failed to initiate payment.');
+            setPayingOrderId(null);
+        }
+    };
     const unreadNotifications = notifications.filter(n => !n.isRead);
 
     const topServices = [
@@ -239,19 +309,31 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
 
                 <div 
                     onClick={() => setActiveTab('Invoices')}
-                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group"
+                    className={`rounded-2xl p-5 border shadow-2xs hover:shadow-md transition-all cursor-pointer group ${
+                        totalOutstandingDue > 0
+                            ? 'bg-amber-50/40 border-amber-200/90 hover:border-amber-400'
+                            : 'bg-white border-slate-200/90 hover:border-slate-300'
+                    }`}
                 >
                     <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Portfolio</span>
-                        <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${totalOutstandingDue > 0 ? 'text-amber-700' : 'text-slate-400'}`}>
+                            {totalOutstandingDue > 0 ? 'Due Balance' : 'Total Portfolio'}
+                        </span>
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${totalOutstandingDue > 0 ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-600'}`}>
                             <IndianRupee size={16} />
                         </div>
                     </div>
                     <div className="flex items-baseline justify-between">
-                        <h3 className="text-2xl font-black text-slate-900">₹{(orders.reduce((acc, curr) => acc + (curr.price || 0), 0) / 1000).toFixed(1)}k</h3>
-                        <span className="text-[11px] font-bold text-blue-600">Bills &rarr;</span>
+                        <h3 className={`text-2xl font-black ${totalOutstandingDue > 0 ? 'text-amber-700' : 'text-slate-900'}`}>
+                            {totalOutstandingDue > 0 ? `₹${totalOutstandingDue.toLocaleString('en-IN')}` : `₹${(orders.reduce((acc, curr) => acc + (curr.price || 0), 0) / 1000).toFixed(1)}k`}
+                        </h3>
+                        <span className={`text-[11px] font-bold ${totalOutstandingDue > 0 ? 'text-amber-700' : 'text-blue-600'}`}>
+                            {totalOutstandingDue > 0 ? 'Pay →' : 'Bills →'}
+                        </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-1 font-medium">Settled engagement volume</p>
+                    <p className="text-[11px] text-slate-500 mt-1 font-medium">
+                        {totalOutstandingDue > 0 ? `${unpaidOrders.length} pending payment(s)` : 'Settled engagement volume'}
+                    </p>
                 </div>
             </div>
 
@@ -299,6 +381,88 @@ const DashboardView = ({ setActiveTab, orders, notifications, userInfo, onOpenPr
                             </div>
                         </div>
                     </div>
+
+                    {/* Pending Invoices & Outstanding Balance Attention Card */}
+                    {unpaidOrders.length > 0 && (
+                        <div className="bg-gradient-to-r from-red-500/10 via-rose-500/10 to-amber-500/10 border border-red-500/30 rounded-3xl p-6 space-y-4 shadow-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-black shadow-md shadow-red-600/30">
+                                        <Wallet size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-sm font-black text-slate-950">Pending Invoices & Payment Due</h4>
+                                            <span className="bg-red-100 text-red-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">
+                                                {unpaidOrders.length} Unsettled
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-600 font-medium">
+                                            Total Outstanding Balance: <span className="font-bold text-red-600">₹{totalOutstandingDue.toLocaleString('en-IN')}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setActiveTab('Invoices')}
+                                    className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 self-start sm:self-auto"
+                                >
+                                    <span>View All Invoices</span>
+                                    <ChevronRight size={14} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-2.5">
+                                {unpaidOrders.map(item => (
+                                    <div
+                                        key={item._id}
+                                        className="bg-white p-4 rounded-2xl border border-red-100/80 hover:border-red-300 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-black text-sm shrink-0">
+                                                ₹
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-black text-slate-900 truncate">{item.serviceName}</p>
+                                                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 font-medium">
+                                                    <span>Package: <strong className="text-slate-700">{item.packageName || 'Standard'}</strong></span>
+                                                    <span>•</span>
+                                                    <span>ID: <strong className="text-slate-700">#{String(item._id).slice(-6).toUpperCase()}</strong></span>
+                                                    <span>•</span>
+                                                    <span>Due: <strong className="text-red-600 font-bold">₹{item.balanceDue.toLocaleString('en-IN')}</strong></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                onClick={() => onOpenProject ? onOpenProject(item._id) : setActiveTab('Orders')}
+                                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+                                            >
+                                                Order Details
+                                            </button>
+                                            <button
+                                                disabled={payingOrderId === item._id}
+                                                onClick={() => handlePayOutstanding(item)}
+                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-black text-xs rounded-xl transition shadow-md shadow-red-600/20 flex items-center gap-1.5 disabled:opacity-50"
+                                            >
+                                                {payingOrderId === item._id ? (
+                                                    <>
+                                                        <Loader2 size={13} className="animate-spin" />
+                                                        <span>Connecting...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span>Pay ₹{item.balanceDue.toLocaleString('en-IN')}</span>
+                                                        <ArrowRight size={13} />
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Operational Pipeline Snapshot */}
                     <div className="space-y-4">

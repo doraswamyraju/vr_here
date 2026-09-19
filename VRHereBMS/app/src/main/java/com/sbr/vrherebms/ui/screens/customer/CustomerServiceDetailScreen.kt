@@ -379,7 +379,9 @@ fun CustomerServiceDetailScreen(
     }
 
     var selectedPackage by remember { mutableStateOf(service.packages.first()) }
-    var isConfirmSheetOpen by remember { mutableStateOf(false) }
+    var showPhonePrompt by remember { mutableStateOf(false) }
+    var pendingPackageForCheckout by remember { mutableStateOf<ServicePackage?>(null) }
+    var inputPhone by remember { mutableStateOf("") }
 
     val density = LocalDensity.current
     val selectedElevation = remember(density) { with(density) { 12.dp.toPx() } }
@@ -453,11 +455,25 @@ fun CustomerServiceDetailScreen(
         }
     }
 
-    // Prefill form states
+    // Prefill form states from session
     var clientName by remember { mutableStateOf(sessionManager.getUserName() ?: "") }
     var clientEmail by remember { mutableStateOf(sessionManager.getUserEmail() ?: "") }
     var clientPhone by remember { mutableStateOf(sessionManager.getPhone()) }
-    var termsAccepted by remember { mutableStateOf(false) }
+
+    // Direct Checkout Trigger matching iOS
+    val triggerDirectCheckout: (ServicePackage) -> Unit = { pkg ->
+        selectedPackage = pkg
+        trackPackageClick(pkg)
+        val phone = clientPhone.trim()
+        if (phone.isEmpty() || phone == "9999999999") {
+            pendingPackageForCheckout = pkg
+            inputPhone = ""
+            showPhonePrompt = true
+        } else {
+            // Directly trigger Razorpay payment with verified phone and credentials!
+            onCheckoutClick(service.title, pkg, clientName, clientEmail, phone)
+        }
+    }
 
     fun formatCurrency(amount: Double): String {
         val format = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
@@ -736,9 +752,7 @@ fun CustomerServiceDetailScreen(
                                 pkg = pkg,
                                 isSelected = isSelected,
                                 onClick = {
-                                    selectedPackage = pkg
-                                    isConfirmSheetOpen = true
-                                    trackPackageClick(pkg)
+                                    triggerDirectCheckout(pkg)
                                 }
                             )
                         }
@@ -798,98 +812,119 @@ fun CustomerServiceDetailScreen(
                             val advantages = listOf(
                                 Pair("CA/CS Expert Oversight", "Every single filing is strictly reviewed for accuracy and regulatory compliance."),
                                 Pair("Real-time Active Portal Tracking", "Monitor every step, milestone, and document progress directly in this app dashboard."),
-                                Pair("Lifetime Post-Registration Support", "We assist in post-setup compliances, payroll structure, accounting, and licensing.")
+                                Pair("Direct Phone / WhatsApp Helpline", "Instantly consult seasoned legal counsel whenever questions arise."),
+                                Pair("Transparent Pricing Guarantee", "Zero hidden fees or surprise statutory extra charges.")
                             )
 
-                            advantages.forEach { (title, desc) ->
+                            advantages.forEach { (advTitle, advDesc) ->
                                 Row(
-                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 6.dp),
                                     verticalAlignment = Alignment.Top
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(8.dp)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Star,
-                                            contentDescription = null,
-                                            tint = Color(0xFFFBBF24),
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(14.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color(0xFF818CF8),
+                                        modifier = Modifier.size(16.dp).padding(top = 2.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
                                     Column {
                                         Text(
-                                            text = title,
-                                            color = Color.White,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold
+                                            text = advTitle,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
                                         )
                                         Text(
-                                            text = desc,
-                                            color = Color(0xFF94A3B8),
+                                            text = advDesc,
                                             fontSize = 11.sp,
+                                            color = Color(0xFF94A3B8),
                                             lineHeight = 15.sp,
                                             modifier = Modifier.padding(top = 2.dp)
                                         )
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
 
-                            HorizontalDivider(
-                                thickness = 1.dp,
-                                color = Color(0xFF1E293B),
-                                modifier = Modifier.padding(vertical = 18.dp)
-                            )
+            // Trust Indicators / Guaranteed SLAs
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TrustBadge(icon = Icons.Default.Shield, title = "MCA / Govt Verified", subtitle = "Legally binding filings")
+                    TrustBadge(icon = Icons.Default.Lock, title = "256-Bit Encrypted", subtitle = "Bank-grade data security")
+                }
+            }
 
-                            // Confused? Free Assessment section
-                            Column(
+            // Need custom advice or questions section
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEEF2FF)),
+                    shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(1.dp, Color(0xFFC7D2FE))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(20.dp))
-                                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(20.dp))
-                                    .padding(20.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                    .size(40.dp)
+                                    .background(Color(0xFF6366F1), CircleShape),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Info,
+                                    imageVector = Icons.Default.SupportAgent,
                                     contentDescription = null,
-                                    tint = Color(0xFF818CF8),
-                                    modifier = Modifier.size(32.dp)
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Confused? Get Free Assessment",
-                                    color = Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Black
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Not sure which registration structure fits your needs? Raise a consultation support ticket in 1 tap for free advice.",
-                                    color = Color(0xFF94A3B8),
-                                    fontSize = 11.sp,
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 15.sp,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(
-                                    onClick = onNeedAdviceClick,
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF0F172A)),
-                                    modifier = Modifier.scaleOnPress()
-                                ) {
-                                    Text(
-                                        text = "TALK TO EXPERT",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Black,
-                                        letterSpacing = 1.sp
-                                    )
-                                }
                             }
+                            Column {
+                                Text(
+                                    text = "Have questions first?",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF1E1B4B)
+                                )
+                                Text(
+                                    text = "Chat or call our dedicated advisory desk",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF4338CA)
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = onNeedAdviceClick,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF6366F1),
+                                contentColor = Color.White
+                            ),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text("Get Advice", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -1027,7 +1062,7 @@ fun CustomerServiceDetailScreen(
 
                     // Right Side: Action CTA Button showing price
                     Button(
-                        onClick = { isConfirmSheetOpen = true },
+                        onClick = { triggerDirectCheckout(selectedPackage) },
                         modifier = Modifier
                             .weight(1.7f)
                             .height(48.dp)
@@ -1125,10 +1160,10 @@ fun CustomerServiceDetailScreen(
             }
         }
 
-        // --- PREFILLED CHECKOUT BOTTOM SHEET DIALOG ---
-        if (isConfirmSheetOpen) {
+        // --- PHONE NUMBER PROMPT MODAL (Only if phone is missing in session, matching iOS) ---
+        if (showPhonePrompt) {
             ModalBottomSheet(
-                onDismissRequest = { isConfirmSheetOpen = false },
+                onDismissRequest = { showPhonePrompt = false },
                 containerColor = Color.White,
                 shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
             ) {
@@ -1139,14 +1174,14 @@ fun CustomerServiceDetailScreen(
                         .padding(bottom = 40.dp)
                 ) {
                     Text(
-                        text = "Confirm Purchase Details",
+                        text = "Enter Phone Number",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFF0F172A),
                         letterSpacing = (-0.5).sp
                     )
                     Text(
-                        text = "Review and confirm contact info for portal document updates.",
+                        text = "Required for GST invoice and order status updates on WhatsApp.",
                         fontSize = 12.sp,
                         color = Color(0xFF64748B),
                         modifier = Modifier.padding(top = 2.dp)
@@ -1154,85 +1189,11 @@ fun CustomerServiceDetailScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Selected Item Summary
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = service.title,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color(0xFF6366F1),
-                                    letterSpacing = 0.5.sp
-                                )
-                                Text(
-                                    text = selectedPackage.name,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color(0xFF0F172A)
-                                )
-                            }
-                            Text(
-                                text = formatCurrency(selectedPackage.price),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color(0xFF0F172A)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Prefilled Input Form
-                    Text(
-                        text = "YOUR CONTACT INFORMATION",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF94A3B8),
-                        letterSpacing = 1.sp,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-
                     OutlinedTextField(
-                        value = clientName,
-                        onValueChange = { clientName = it },
-                        label = { Text("Name", fontSize = 12.sp) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF6366F1),
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        ),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = clientEmail,
-                        onValueChange = { clientEmail = it },
-                        label = { Text("Email Address", fontSize = 12.sp) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF6366F1),
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        ),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = clientPhone,
-                        onValueChange = { clientPhone = it },
-                        label = { Text("Phone Number", fontSize = 12.sp) },
-                        placeholder = { Text("10-Digit Mobile", color = Color.LightGray) },
+                        value = inputPhone,
+                        onValueChange = { if (it.length <= 10) inputPhone = it.filter { ch -> ch.isDigit() } },
+                        label = { Text("10-Digit Mobile Number", fontSize = 12.sp) },
+                        placeholder = { Text("9876543210", color = Color.LightGray) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         shape = RoundedCornerShape(12.dp),
@@ -1243,49 +1204,20 @@ fun CustomerServiceDetailScreen(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    // Terms and Conditions checkbox
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { termsAccepted = !termsAccepted }
-                            .padding(vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = termsAccepted,
-                            onCheckedChange = { termsAccepted = it },
-                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF6366F1))
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "I accept the Terms and Conditions of service execution.",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF475569)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Big glowing Proceed to checkout call
                     Button(
                         onClick = {
-                            if (clientName.isBlank() || clientEmail.isBlank() || clientPhone.isBlank()) {
-                                return@Button
+                            val clean = inputPhone.trim()
+                            if (clean.length == 10) {
+                                clientPhone = clean
+                                sessionManager.savePhone(clean)
+                                showPhonePrompt = false
+                                val pkg = pendingPackageForCheckout ?: selectedPackage
+                                onCheckoutClick(service.title, pkg, clientName, clientEmail, clean)
                             }
-                            if (!termsAccepted) {
-                                return@Button
-                            }
-                            // Save phone locally for convenience
-                            sessionManager.savePhone(clientPhone)
-                            
-                            isConfirmSheetOpen = false
-                            // Fire the checkout trigger!
-                            onCheckoutClick(service.title, selectedPackage, clientName, clientEmail, clientPhone)
                         },
-                        enabled = clientName.isNotBlank() && clientEmail.isNotBlank() && clientPhone.isNotBlank() && termsAccepted,
+                        enabled = inputPhone.trim().length == 10,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
@@ -1306,13 +1238,49 @@ fun CustomerServiceDetailScreen(
                         )
                     ) {
                         Text(
-                            text = "PROCEED TO SECURE CHECKOUT",
-                            fontSize = 11.sp,
+                            text = "CONTINUE TO PAYMENT",
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun RowScope.TrustBadge(icon: ImageVector, title: String, subtitle: String) {
+    Card(
+        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color(0xFF6366F1),
+                modifier = Modifier.size(20.dp)
+            )
+            Column {
+                Text(
+                    text = title,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF0F172A)
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 9.sp,
+                    color = Color(0xFF64748B)
+                )
             }
         }
     }

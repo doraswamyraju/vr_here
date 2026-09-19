@@ -87,9 +87,23 @@ fun CustomerHomeTab(
 
     val activeOrders = viewModel.orders.filter { it.status != "Completed" }
     val completedOrders = viewModel.orders.filter { it.status == "Completed" }
-    val pendingActions = viewModel.orders.filter {
-        it.status == "Pending Documents" || it.status == "Waiting for Clarification" || it.status == "Documents Required"
+    val pendingActions = viewModel.orders.filter { order ->
+        if (order.status == "Completed" || order.status == "Documents Verified" || order.status == "Processing at Portal") return@filter false
+        if (order.status == "Waiting for Clarification") return@filter true
+        if (order.status == "Pending Documents" || order.status == "Documents Required") {
+            if (order.customerRequirements.isNotEmpty()) {
+                return@filter order.customerRequirements.any { r ->
+                    !r.isClientCompleted && r.uploadedDocumentUrl.isBlank() && r.documentUrl.isBlank() && r.clientValue.isBlank() && r.status != "Received" && r.status != "Verified"
+                }
+            }
+            return@filter false
+        }
+        false
     }
+    val unpaidOrders = viewModel.orders.filter { order ->
+        order.status != "Completed" && (order.paymentStatus.equals("Pending", ignoreCase = true) || order.paymentStatus.equals("Partial", ignoreCase = true) || order.paymentStatus.equals("Unpaid", ignoreCase = true))
+    }
+    val totalOutstanding = unpaidOrders.sumOf { it.price.toLong() }
     val totalVolume = viewModel.orders.sumOf { it.price }
 
     val searchSuggestions = listOf(
@@ -433,15 +447,16 @@ fun CustomerHomeTab(
                         }
                     }
 
-                    // KPI 4: Total Portfolio
+                    // KPI 4: Total Portfolio / Due Balance
+                    val hasDue = totalOutstanding > 0
                     Surface(
                         modifier = Modifier
                             .weight(1f)
                             .scaleOnPress()
                             .clickable { onSelectTab("Invoices") },
                         shape = RoundedCornerShape(18.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, BorderLight),
+                        color = if (hasDue) Color(0xFFFFFBEB) else Color.White,
+                        border = BorderStroke(1.dp, if (hasDue) Color(0xFFFDE68A) else BorderLight),
                         shadowElevation = 1.dp
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -450,14 +465,25 @@ fun CustomerHomeTab(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("TOTAL PORTFOLIO", fontSize = 9.sp, fontWeight = FontWeight.Black, color = TextMuted, letterSpacing = 0.5.sp)
+                                Text(
+                                    if (hasDue) "DUE BALANCE" else "TOTAL PORTFOLIO",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (hasDue) Amber500 else TextMuted,
+                                    letterSpacing = 0.5.sp
+                                )
                                 Box(
                                     modifier = Modifier
                                         .size(30.dp)
-                                        .background(Color(0xFF2563EB).copy(alpha = 0.10f), RoundedCornerShape(8.dp)),
+                                        .background(if (hasDue) Color(0xFFFEF3C7) else Color(0xFF2563EB).copy(alpha = 0.10f), RoundedCornerShape(8.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.Default.CurrencyRupee, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(15.dp))
+                                    Icon(
+                                        Icons.Default.CurrencyRupee,
+                                        contentDescription = null,
+                                        tint = if (hasDue) Amber500 else Color(0xFF2563EB),
+                                        modifier = Modifier.size(15.dp)
+                                    )
                                 }
                             }
                             Spacer(modifier = Modifier.height(8.dp))
@@ -466,11 +492,21 @@ fun CustomerHomeTab(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.Bottom
                             ) {
-                                val volumeK = (totalVolume / 1000.0)
-                                Text("₹${"%.1f".format(volumeK)}k", fontSize = 22.sp, fontWeight = FontWeight.Black, color = TextDark)
-                                Text("Bills →", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                                if (hasDue) {
+                                    Text("₹${totalOutstanding}", fontSize = 20.sp, fontWeight = FontWeight.Black, color = Color(0xFF92400E))
+                                    Text("Pay →", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Amber500)
+                                } else {
+                                    val volumeK = (totalVolume / 1000.0)
+                                    Text("₹${"%.1f".format(volumeK)}k", fontSize = 22.sp, fontWeight = FontWeight.Black, color = TextDark)
+                                    Text("Bills →", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                                }
                             }
-                            Text("Settled volume", fontSize = 10.sp, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
+                            Text(
+                                if (hasDue) "${unpaidOrders.size} pending payment(s)" else "Settled volume",
+                                fontSize = 10.sp,
+                                color = TextMuted,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
                         }
                     }
                 }
@@ -578,6 +614,90 @@ fun CustomerHomeTab(
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
                         ) {
                             Text("Catalog", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3.5 PENDING INVOICES & OUTSTANDING BALANCE ATTENTION CARD
+        if (unpaidOrders.isNotEmpty()) {
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFFFEF2F2),
+                    border = BorderStroke(1.dp, Color(0xFFFECDD3))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(PrimaryRed, RoundedCornerShape(10.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                                }
+                                Column {
+                                    Text(
+                                        text = "Pending Invoices & Payment Due",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFF991B1B)
+                                    )
+                                    Text(
+                                        text = "Total Outstanding: ₹${totalOutstanding}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryRed
+                                    )
+                                }
+                            }
+                        }
+
+                        unpaidOrders.take(3).forEach { order ->
+                            val balanceDue = order.price.toLong()
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenProject(order.id) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.dp, Color(0xFFFEE2E2))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(order.serviceName, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark, maxLines = 1)
+                                        Text("Balance Due: ₹$balanceDue", fontSize = 10.5.sp, fontWeight = FontWeight.Black, color = PrimaryRed)
+                                    }
+                                    Button(
+                                        onClick = { onOpenProject(order.id) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
+                                        shape = RoundedCornerShape(10.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text("Pay ₹$balanceDue", fontSize = 10.5.sp, fontWeight = FontWeight.Black, color = Color.White)
+                                    }
+                                }
+                            }
                         }
                     }
                 }

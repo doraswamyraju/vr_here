@@ -204,8 +204,10 @@ export default function CustomerApp() {
                    setActiveTab('Services');
                 }}
                 orders={orders}
+                payments={payments}
                 notifications={notifications}
                 userInfo={userInfo}
+                refreshOrders={fetchData}
                 onOpenProject={(orderId) => {
                    setSelectedOrderId(orderId);
                    setActiveTab('Orders');
