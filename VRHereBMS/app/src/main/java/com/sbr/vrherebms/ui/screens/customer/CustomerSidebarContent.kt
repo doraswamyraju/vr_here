@@ -125,7 +125,7 @@ fun CustomerSidebarContent(
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .width(300.dp)
+            .fillMaxWidth()
             .background(DarkSlate)
             .statusBarsPadding()
             .navigationBarsPadding()

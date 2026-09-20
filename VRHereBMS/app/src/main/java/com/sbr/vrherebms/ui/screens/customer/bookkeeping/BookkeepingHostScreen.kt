@@ -23,6 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.sbr.vrherebms.ui.screens.customer.GSTSalesInvoiceTemplateModal
+import com.sbr.vrherebms.ui.screens.customer.GSTInvoiceItemData
 import com.sbr.vrherebms.ui.screens.customer.bookkeeping.models.*
 import com.sbr.vrherebms.ui.screens.customer.bookkeeping.screens.*
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
@@ -227,74 +229,41 @@ fun BookkeepingHostScreen(viewModel: CustomerDashboardViewModel) {
     // Modal Dialog: Preview GST Invoice
     if (previewInvoice != null) {
         val inv = previewInvoice!!
-        Dialog(onDismissRequest = { previewInvoice = null }) {
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth().padding(10.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("TAX INVOICE", fontSize = 16.sp, fontWeight = FontWeight.Black, color = textDark)
-                            Text(inv.docNumber, fontSize = 12.sp, color = primaryIndigo, fontWeight = FontWeight.Bold)
-                        }
-                        IconButton(onClick = { previewInvoice = null }) {
-                            Icon(Icons.Default.Close, contentDescription = null, tint = textMuted)
-                        }
-                    }
+    if (previewInvoice != null) {
+        val inv = previewInvoice!!
+        val subtotal = inv.amount
+        val gstTax = inv.taxAmount
+        val cgst = gstTax / 2.0
+        val sgst = gstTax / 2.0
 
-                    HorizontalDivider(color = Color(0xFFF1F5F9))
-
-                    Text("Billed To: ${inv.partyName}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textDark)
-                    if (inv.gstin.isNotEmpty()) {
-                        Text("GSTIN: ${inv.gstin}", fontSize = 11.sp, color = textMuted)
-                    }
-                    Text("Date: ${inv.date}", fontSize = 11.sp, color = textMuted)
-
-                    HorizontalDivider(color = Color(0xFFF1F5F9))
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Taxable Amount", fontSize = 12.sp, color = textMuted)
-                        Text("₹${inv.amount.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textDark)
-                    }
-
-                    if (inv.taxAmount > 0) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("CGST (9%) + SGST (9%)", fontSize = 12.sp, color = textMuted)
-                            Text("₹${inv.taxAmount.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textDark)
-                        }
-                    }
-
-                    HorizontalDivider(color = Color(0xFFE2E8F0))
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Grand Total", fontSize = 14.sp, fontWeight = FontWeight.Black, color = textDark)
-                        Text("₹${(inv.amount + inv.taxAmount).toInt()}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = primaryIndigo)
-                    }
-
-                    Button(
-                        onClick = {
-                            Toast.makeText(context, "Downloading PDF: ${inv.docNumber}...", Toast.LENGTH_SHORT).show()
-                            previewInvoice = null
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = primaryIndigo),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth().height(44.dp)
-                    ) {
-                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Download PDF Invoice", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
+        GSTSalesInvoiceTemplateModal(
+            invoiceNumber = inv.docNumber,
+            invoiceDate = inv.date,
+            dueDate = null,
+            clientName = inv.partyName,
+            clientAddress = "Telangana, India",
+            clientGstin = inv.gstin.ifEmpty { "37AABCS9912D1Z4" },
+            clientEmail = "",
+            clientPhone = "",
+            items = listOf(
+                GSTInvoiceItemData(
+                    description = "Outward Sales Service / Professional Services",
+                    hsn = "998311",
+                    qty = 1,
+                    rate = subtotal,
+                    taxRate = 18.0,
+                    amount = subtotal + gstTax
+                )
+            ),
+            subtotal = subtotal,
+            cgst = cgst,
+            sgst = sgst,
+            igst = 0.0,
+            totalAmount = subtotal + gstTax,
+            status = inv.status,
+            pdfUrl = null,
+            onDismiss = { previewInvoice = null }
+        )
+    }
     }
 }

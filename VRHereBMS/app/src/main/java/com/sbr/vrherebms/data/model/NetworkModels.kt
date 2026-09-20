@@ -202,10 +202,14 @@ data class PaymentResponse(
 
 data class TicketResponse(
     @SerializedName("_id") val id: String,
-    val subject: String,
-    val description: String,
-    val status: String = "Open", // 'Open', 'In Progress', 'Closed'
-    val priority: String = "Low", // 'Low', 'Medium', 'High'
+    val ticketNumber: String? = null,
+    val category: String? = "Support",
+    val subject: String = "",
+    val description: String = "",
+    val status: String = "Open", // 'Open', 'In Progress', 'Resolved', 'Closed'
+    val priority: String = "Low", // 'Low', 'Medium', 'High', 'Urgent'
+    val user: UserProfile? = null,
+    val assignedTo: UserProfile? = null,
     val messages: List<TicketMessage> = emptyList(),
     val createdAt: String = "",
     val updatedAt: String = ""
@@ -219,9 +223,10 @@ data class TicketMessage(
 )
 
 data class CreateTicketRequest(
+    val category: String = "Service",
     val subject: String,
     val description: String,
-    val priority: String = "Low"
+    val priority: String = "Medium"
 )
 
 data class AddMessageRequest(

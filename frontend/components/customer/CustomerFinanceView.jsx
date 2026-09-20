@@ -14,9 +14,95 @@ const CustomerFinanceView = ({ token }) => {
         setLoading(true);
         try {
             const { data } = await axios.get('/api/finance', config);
-            setRecords(data);
+            if (Array.isArray(data) && data.length > 0) {
+                setRecords(data);
+            } else {
+                // Fallback to payments data mapped to GST invoice template schema
+                const paymentsRes = await axios.get('/api/payments', config);
+                const mapped = (paymentsRes.data || []).map(p => {
+                    valAmount = p.amount || 0;
+                    valSub = Math.round(valAmount / 1.18);
+                    valTax = valAmount - valSub;
+                    valCgst = Math.round(valTax / 2);
+                    valSgst = valTax - valCgst;
+                    return {
+                        _id: p._id || p.id,
+                        type: 'TAX INVOICE',
+                        number: (p.id || p._id || 'INV').slice(-8).toUpperCase(),
+                        date: p.createdAt || new Date().toISOString(),
+                        client: {
+                            name: p.customerName || 'Valued Client',
+                            email: p.email || '',
+                            phone: p.phone || '',
+                            address: 'Registered Office / Business Premises'
+                        },
+                        items: [
+                            {
+                                description: p.serviceName || 'Professional Compliance & Legal Services',
+                                hsn: '998311',
+                                qty: 1,
+                                rate: valSub,
+                                taxRate: 18,
+                                amount: valSub
+                            }
+                        ],
+                        totals: {
+                            subtotal: valSub,
+                            cgst: valCgst,
+                            sgst: valSgst,
+                            total: valAmount
+                        },
+                        status: (p.status === 'Completed' || p.status === 'Paid') ? 'Paid' : p.status,
+                        url: p.invoiceUrl || ''
+                    };
+                });
+                setRecords(mapped);
+            }
         } catch (error) {
-            console.error('Failed to fetch invoices:', error);
+            console.error('Failed to fetch invoices, trying payments fallback:', error);
+            try {
+                const paymentsRes = await axios.get('/api/payments', config);
+                const mapped = (paymentsRes.data || []).map(p => {
+                    const valAmount = p.amount || 0;
+                    const valSub = Math.round(valAmount / 1.18);
+                    const valTax = valAmount - valSub;
+                    const valCgst = Math.round(valTax / 2);
+                    const valSgst = valTax - valCgst;
+                    return {
+                        _id: p._id || p.id,
+                        type: 'TAX INVOICE',
+                        number: (p.id || p._id || 'INV').slice(-8).toUpperCase(),
+                        date: p.createdAt || new Date().toISOString(),
+                        client: {
+                            name: p.customerName || 'Valued Client',
+                            email: p.email || '',
+                            phone: p.phone || '',
+                            address: 'Registered Office / Business Premises'
+                        },
+                        items: [
+                            {
+                                description: p.serviceName || 'Professional Compliance & Legal Services',
+                                hsn: '998311',
+                                qty: 1,
+                                rate: valSub,
+                                taxRate: 18,
+                                amount: valSub
+                            }
+                        ],
+                        totals: {
+                            subtotal: valSub,
+                            cgst: valCgst,
+                            sgst: valSgst,
+                            total: valAmount
+                        },
+                        status: (p.status === 'Completed' || p.status === 'Paid') ? 'Paid' : p.status,
+                        url: p.invoiceUrl || ''
+                    };
+                });
+                setRecords(mapped);
+            } catch (err) {
+                console.error('Failed fetching payments fallback:', err);
+            }
         } finally {
             setLoading(false);
         }
@@ -54,85 +140,90 @@ const CustomerFinanceView = ({ token }) => {
     }
 
     return (
-        <div className="space-y-8 pb-20">
+        <div className="space-y-6 pb-20">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">Billing & Invoices</h2>
-                    <p className="text-sm text-slate-500 font-medium">View and download your service estimates, proforma, and tax invoices.</p>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Billing & Invoices</h2>
+                    <p className="text-xs text-slate-500 font-medium">View and download your service estimates, proforma, and tax invoices.</p>
                 </div>
-                <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
-                    <CheckCircle2 size={14} className="text-green-500" /> GST Compliant Billing
+                <div className="bg-white px-3 py-1.5 rounded-xl border border-slate-100 flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <CheckCircle2 size={12} className="text-green-500" /> GST Compliant Billing
                 </div>
             </div>
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50">
-                    <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+                <div className="flex flex-col items-center justify-center py-16 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                    <div className="w-10 h-10 border-4 border-slate-200 border-t-red-600 rounded-full animate-spin mb-3"></div>
                     <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Loading Invoices...</p>
                 </div>
             ) : records.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-                    <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mb-4">
-                        <FileText size={32} />
+                <div className="flex flex-col items-center justify-center py-16 bg-white rounded-3xl border border-dashed border-slate-200">
+                    <div className="w-14 h-14 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mb-3">
+                        <FileText size={28} />
                     </div>
-                    <p className="text-slate-900 font-black text-lg">No Billing History Yet</p>
-                    <p className="text-slate-400 text-sm font-medium mt-1">Your invoices will appear here once your projects are initiated.</p>
+                    <p className="text-slate-900 font-black text-base">No Billing History Yet</p>
+                    <p className="text-slate-400 text-xs font-medium mt-1">Your invoices will appear here once your projects are initiated.</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-xl shadow-slate-200/50">
+                <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-50/50 text-slate-400">
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Type</th>
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Invoice #</th>
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Date</th>
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Amount</th>
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Status</th>
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">View</th>
+                                <tr className="bg-slate-50/80 text-slate-500 border-b border-slate-200/60">
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Type</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Invoice #</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Date</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Amount</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">View / PDF</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
+                            <tbody className="divide-y divide-slate-100">
                                 {records.map((record) => {
                                     const style = getStatusStyle(record.status);
                                     const Icon = style.icon;
                                     return (
-                                        <tr key={record._id} className="hover:bg-slate-50/80 transition-all group">
-                                            <td className="px-8 py-6">
-                                                <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg uppercase tracking-tighter">{record.type}</span>
+                                        <tr 
+                                            key={record._id} 
+                                            onClick={() => setSelectedRecord(record)}
+                                            className="hover:bg-slate-50/80 transition-all group cursor-pointer"
+                                        >
+                                            <td className="px-6 py-4">
+                                                <span className="text-[10px] font-black text-red-600 bg-red-50 px-2.5 py-1 rounded-md uppercase tracking-wider">{record.type}</span>
                                             </td>
-                                            <td className="px-8 py-6">
-                                                <p className="text-sm font-black text-slate-900">#{record.number}</p>
+                                            <td className="px-6 py-4">
+                                                <p className="text-xs font-black text-slate-900">#{record.number}</p>
                                             </td>
-                                            <td className="px-8 py-6 text-center">
+                                            <td className="px-6 py-4 text-center">
                                                 <p className="text-xs font-bold text-slate-600">{new Date(record.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                             </td>
-                                            <td className="px-8 py-6 text-center">
-                                                <p className="text-sm font-black text-slate-900 tracking-tight">₹{record.totals.total.toLocaleString()}</p>
+                                            <td className="px-6 py-4 text-center">
+                                                <p className="text-xs font-black text-slate-900 tracking-tight">₹{record.totals?.total?.toLocaleString() || '0'}</p>
                                             </td>
-                                            <td className="px-8 py-6">
+                                            <td className="px-6 py-4">
                                                 <div className="flex justify-center">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${style.bg} ${style.text}`}>
+                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${style.bg} ${style.text}`}>
                                                         <Icon size={12} /> {record.status}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-6 text-right flex items-center justify-end gap-2">
+                                            <td className="px-6 py-4 text-right flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
                                                 {record.url && record.status !== 'Paid' && record.status !== 'Cancelled' && (
                                                     <a 
                                                         href={record.url}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="px-3.5 py-1.5 bg-indigo-600 text-white font-black text-[10px] rounded-xl uppercase tracking-wider hover:bg-indigo-700 transition shadow-md shadow-indigo-100 flex items-center gap-1.5"
+                                                        className="px-3 py-1 bg-red-600 text-white font-black text-[10px] rounded-lg uppercase tracking-wider hover:bg-red-700 transition shadow-sm flex items-center gap-1"
                                                     >
                                                         Pay Now
                                                     </a>
                                                 )}
                                                 <button 
                                                     onClick={() => setSelectedRecord(record)}
-                                                    className="p-2.5 bg-slate-50 text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 rounded-xl transition-all"
+                                                    className="p-2 bg-slate-100 text-slate-500 group-hover:text-red-600 group-hover:bg-red-50 rounded-xl transition-all flex items-center gap-1 text-[11px] font-bold"
+                                                    title="View Tax Invoice PDF"
                                                 >
-                                                    <Eye size={20} />
+                                                    <Eye size={16} /> View Invoice
                                                 </button>
                                             </td>
                                         </tr>

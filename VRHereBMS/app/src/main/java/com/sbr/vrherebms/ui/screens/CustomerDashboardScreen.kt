@@ -66,6 +66,17 @@ fun CustomerDashboardScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
+    var isSupportChatActive by remember { mutableStateOf(false) }
+    var isFloatingMenuExpanded by remember { mutableStateOf(false) }
+    var raiseTicketTrigger by remember { mutableStateOf(0) }
+
+    LaunchedEffect(activeTab) {
+        if (activeTab != "Support") {
+            isSupportChatActive = false
+        }
+        isFloatingMenuExpanded = false
+    }
+
     LaunchedEffect(key1 = true) {
         // Initial full-screen load
         viewModel.refreshAllData(silent = false)
@@ -100,31 +111,40 @@ fun CustomerDashboardScreen(
 
     val lightSlate = Color(0xFFF8FAFC)
 
+    val activeOrdersCount = remember(viewModel.orders) { viewModel.orders.count { it.status != "Completed" } }
+    val unreadNotificationsCount = remember(viewModel.notifications) { viewModel.notifications.count { !it.isRead } }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            CustomerSidebarContent(
-                userName = userName,
-                activeTab = activeTab,
-                profilePhoto = viewModel.profilePhoto,
-                companyName = viewModel.companyName,
-                activeOrdersCount = viewModel.orders.filter { it.status != "Completed" }.size,
-                unreadNotificationsCount = viewModel.notifications.filter { !it.isRead }.size,
-                onTabSelected = {
-                    activeTab = it
-                    // Reset order drilldown when switching tabs
-                    if (it != "Orders") {
-                        selectedOrderId = ""
+            ModalDrawerSheet(
+                drawerContainerColor = Color(0xFF020617),
+                drawerShape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                modifier = Modifier.width(320.dp)
+            ) {
+                CustomerSidebarContent(
+                    userName = userName,
+                    activeTab = activeTab,
+                    profilePhoto = viewModel.profilePhoto,
+                    companyName = viewModel.companyName,
+                    activeOrdersCount = activeOrdersCount,
+                    unreadNotificationsCount = unreadNotificationsCount,
+                    onTabSelected = {
+                        activeTab = it
+                        // Reset order drilldown when switching tabs
+                        if (it != "Orders") {
+                            selectedOrderId = ""
+                        }
+                    },
+                    onLogout = {
+                        scope.launch { drawerState.close() }
+                        showLogoutDialog = true
+                    },
+                    onCloseDrawer = {
+                        scope.launch { drawerState.close() }
                     }
-                },
-                onLogout = {
-                    scope.launch { drawerState.close() }
-                    showLogoutDialog = true
-                },
-                onCloseDrawer = {
-                    scope.launch { drawerState.close() }
-                }
-            )
+                )
+            }
         }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -220,15 +240,17 @@ fun CustomerDashboardScreen(
                             )
                             "Orders" -> CustomerOrdersTab(
                                 viewModel = viewModel,
-                                selectedOrderId = selectedOrderId,
-                                onSelectOrderId = { selectedOrderId = it },
                                 onSelectTab = { activeTab = it }
                             )
                             "Referrals" -> CustomerReferralTab()
                             "Invoices" -> CustomerInvoicesTab(viewModel)
                             "Vault" -> CustomerVaultTab(viewModel)
                             "Bookkeeping" -> BookkeepingHostScreen(viewModel)
-                            "Support" -> CustomerSupportTab(viewModel)
+                            "Support" -> CustomerSupportTab(
+                                viewModel = viewModel,
+                                onChatStateChanged = { isSupportChatActive = it },
+                                autoOpenRaiseTicket = raiseTicketTrigger
+                            )
                             "Account" -> CustomerAccountTab(
                                 viewModel = viewModel,
                                 onSelectTab = { activeTab = it }
@@ -236,69 +258,190 @@ fun CustomerDashboardScreen(
                         }
                     }
 
-                    // Persistence of WhatsApp & Direct Call floating triggers
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(end = 16.dp, bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        // WhatsApp Launcher
-                        Box(
+                    // Floating Action Button Stack (Matching Web 100%, Hidden inside Chat thread)
+                    if (!isSupportChatActive) {
+                        Column(
                             modifier = Modifier
-                                .size(48.dp)
-                                .background(Color(0xFF22C55E), CircleShape)
-                                .shadow(6.dp, CircleShape, ambientColor = Color(0xFF22C55E).copy(alpha = 0.3f))
-                                .scaleOnPress()
-                                .clickable {
-                                    try {
-                                        val url = "https://wa.me/918008530606"
-                                        val i = Intent(Intent.ACTION_VIEW)
-                                        i.data = Uri.parse(url)
-                                        context.startActivity(i)
-                                    } catch (e: Exception) {
-                                        Toast.makeText(context, "WhatsApp not found", Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 16.dp, bottom = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalAlignment = Alignment.End
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Chat,
-                                contentDescription = "WhatsApp Chat",
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
+                            // Expanded Options Stack
+                            AnimatedVisibility(
+                                visible = isFloatingMenuExpanded,
+                                enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
+                                exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut()
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    horizontalAlignment = Alignment.End
+                                ) {
+                                    // Option 1: Live Chat
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.clickable {
+                                            isFloatingMenuExpanded = false
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://tawk.to/chat"))
+                                                context.startActivity(intent)
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "Opening Live Chat", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFF0F172A),
+                                            shadowElevation = 4.dp
+                                        ) {
+                                            Text("Live Chat", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                        }
+                                        Surface(
+                                            modifier = Modifier.size(44.dp),
+                                            shape = CircleShape,
+                                            color = Color(0xFFF43F5E),
+                                            shadowElevation = 4.dp
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Message, contentDescription = "Live Chat", tint = Color.White, modifier = Modifier.size(18.dp))
+                                            }
+                                        }
+                                    }
 
-                        // Direct Phone Call Launcher
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(Indigo500, Indigo600)
-                                    ),
-                                    CircleShape
-                                )
-                                .shadow(6.dp, CircleShape, ambientColor = Indigo500.copy(alpha = 0.4f))
-                                .scaleOnPress()
-                                .clickable {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:918008530606"))
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        Toast.makeText(context, "Dialer not available", Toast.LENGTH_SHORT).show()
+                                    // Option 2: WhatsApp Chat
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.clickable {
+                                            isFloatingMenuExpanded = false
+                                            try {
+                                                val url = "https://wa.me/918008530606?text=Hi%20VR%20HERE%20Team,%20I%20am%20chatting%20from%20the%20Customer%20Portal."
+                                                val i = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                                context.startActivity(i)
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "WhatsApp not found", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFF0F172A),
+                                            shadowElevation = 4.dp
+                                        ) {
+                                            Text("WhatsApp Chat", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                        }
+                                        Surface(
+                                            modifier = Modifier.size(44.dp),
+                                            shape = CircleShape,
+                                            color = Color(0xFF10B981),
+                                            shadowElevation = 4.dp
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Chat, contentDescription = "WhatsApp", tint = Color.White, modifier = Modifier.size(18.dp))
+                                            }
+                                        }
                                     }
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Phone,
-                                contentDescription = "Direct Call",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+
+                                    // Option 3: Direct Phone Call
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.clickable {
+                                            isFloatingMenuExpanded = false
+                                            try {
+                                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:918008530606"))
+                                                context.startActivity(intent)
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "Dialer not available", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFF0F172A),
+                                            shadowElevation = 4.dp
+                                        ) {
+                                            Text("Call Helpline", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                        }
+                                        Surface(
+                                            modifier = Modifier.size(44.dp),
+                                            shape = CircleShape,
+                                            color = Color(0xFF2563EB),
+                                            shadowElevation = 4.dp
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Phone, contentDescription = "Call Helpline", tint = Color.White, modifier = Modifier.size(18.dp))
+                                            }
+                                        }
+                                    }
+
+                                    // Option 4: Raise Support Ticket
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.clickable {
+                                            isFloatingMenuExpanded = false
+                                            activeTab = "Support"
+                                            raiseTicketTrigger++
+                                        }
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFF0F172A),
+                                            shadowElevation = 4.dp
+                                        ) {
+                                            Text("Raise Support Ticket", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                        }
+                                        Surface(
+                                            modifier = Modifier.size(44.dp),
+                                            shape = CircleShape,
+                                            color = Color(0xFF0F172A),
+                                            shadowElevation = 4.dp
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Headphones, contentDescription = "Raise Ticket", tint = Color.White, modifier = Modifier.size(18.dp))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Main Floating Red Trigger Toggle Button
+                            val rotationAngle by animateFloatAsState(
+                                targetValue = if (isFloatingMenuExpanded) 135f else 0f,
+                                label = "fabRotation"
                             )
+
+                            Surface(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clickable { isFloatingMenuExpanded = !isFloatingMenuExpanded },
+                                shape = CircleShape,
+                                color = Color(0xFFDC2626),
+                                shadowElevation = 6.dp
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.linearGradient(
+                                                listOf(Color(0xFFDC2626), Color(0xFFE11D48))
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Contact Actions",
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .size(26.dp)
+                                            .graphicsLayer(rotationZ = rotationAngle)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

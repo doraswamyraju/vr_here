@@ -29,6 +29,17 @@ interface VRHereAPI {
     @GET("api/auth/profile")
     suspend fun getProfile(): Response<UserProfile>
 
+    @PUT("api/auth/profile")
+    suspend fun updateProfile(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<UserProfile>
+
+    @Multipart
+    @POST("api/auth/upload-avatar")
+    suspend fun uploadAvatar(@Part image: okhttp3.MultipartBody.Part): Response<Map<String, String>>
+
+    @Multipart
+    @POST("api/auth/upload-logo")
+    suspend fun uploadCompanyLogo(@Part image: okhttp3.MultipartBody.Part): Response<Map<String, String>>
+
     // --- ORDERS ---
     @GET("api/orders")
     suspend fun getOrders(): Response<List<OrderResponse>>
@@ -46,7 +57,7 @@ interface VRHereAPI {
     suspend fun updateOrderRequirement(
         @Path("id") id: String,
         @Path("reqId") reqId: String,
-        @Body body: Map<String, Any>
+        @Body body: Map<String, @JvmSuppressWildcards Any>
     ): Response<OrderResponse>
 
     @Multipart
