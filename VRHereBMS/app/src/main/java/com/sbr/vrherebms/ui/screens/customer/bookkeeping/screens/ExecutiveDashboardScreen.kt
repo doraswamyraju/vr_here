@@ -1,7 +1,8 @@
 package com.sbr.vrherebms.ui.screens.customer.bookkeeping.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -15,127 +16,217 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sbr.vrherebms.ui.screens.customer.bookkeeping.components.FinanceBox
-import com.sbr.vrherebms.ui.screens.customer.bookkeeping.components.MobileTxCard
-import com.sbr.vrherebms.ui.screens.customer.bookkeeping.models.MobileBankStatement
-import com.sbr.vrherebms.ui.screens.customer.bookkeeping.models.MobileTransaction
+import com.sbr.vrherebms.data.model.BankStatementDto
+import com.sbr.vrherebms.data.model.TransactionDto
+import com.sbr.vrherebms.ui.screens.customer.bookkeeping.components.BookkeepingKPICard
+import com.sbr.vrherebms.ui.screens.customer.bookkeeping.components.TransactionItemCard
+import com.sbr.vrherebms.ui.screens.customer.bookkeeping.utils.IndianCurrencyFormatter
 
 fun LazyListScope.executiveDashboardScreen(
-    filteredTx: List<MobileTransaction>,
-    bankAccounts: List<MobileBankStatement>,
+    transactions: List<TransactionDto>,
+    bankStatements: List<BankStatementDto>,
     selectedMonth: String,
-    onShowCreateSalesDialog: () -> Unit,
-    onPreviewInvoice: (MobileTransaction) -> Unit,
-    onImportStatement: () -> Unit
+    onNavigateTab: (String) -> Unit,
+    onCreateSales: () -> Unit,
+    onCreatePurchase: () -> Unit,
+    onCreateExpense: () -> Unit,
+    onViewTransaction: (TransactionDto) -> Unit
 ) {
-    val totalSales = filteredTx.filter { it.type == "Sales" }.sumOf { it.amount + it.taxAmount }
-    val totalPurchases = filteredTx.filter { it.type == "Purchase" }.sumOf { it.amount + it.taxAmount }
-    val totalExpenses = filteredTx.filter { it.type == "Expense" }.sumOf { it.amount }
-    
+    val primaryIndigo = Color(0xFF4F46E5)
+    val textDark = Color(0xFF0F172A)
+    val textMuted = Color(0xFF64748B)
+
+    // Calculate metrics
+    val salesTx = transactions.filter { it.transactionType == "Sales" }
+    val purchaseTx = transactions.filter { it.transactionType == "Purchase" }
+    val expenseTx = transactions.filter { it.transactionType == "Expense" }
+
+    val totalTurnover = salesTx.sumOf { it.summary.totalAmount }
+    val totalPurchases = purchaseTx.sumOf { it.summary.totalAmount }
+    val totalExpenses = expenseTx.sumOf { it.summary.totalAmount }
+
+    val outputGst = salesTx.sumOf { it.summary.totalCgst + it.summary.totalSgst + it.summary.totalIgst }
+    val inputItc = purchaseTx.sumOf { it.summary.totalCgst + it.summary.totalSgst + it.summary.totalIgst }
+    val netGstPayable = (outputGst - inputItc).coerceAtLeast(0.0)
+
+    val allBankTransactions = bankStatements.flatMap { it.transactions }
+    val latestBankBalance = allBankTransactions.lastOrNull()?.balance ?: 0.0
+
+    // 1. Quick Action Launcher Buttons
     item {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Hero Command Center Card (Dark Theme)
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = primaryIndigo,
+                modifier = Modifier.weight(1f).clickable { onCreateSales() },
+                shadowElevation = 1.dp
             ) {
-                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Surface(
-                        color = Color(0xFF1E293B),
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFF93C5FD), modifier = Modifier.size(12.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Real-Time Accounting & AaaS Command Center", color = Color(0xFF93C5FD), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                    
-                    Text("Business Ledger & Bookkeeping", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color.White)
-                    Text("Comprehensive financial visibility for $selectedMonth. Track receivables, vendor payables, GST liability, and bank reconciliation.", fontSize = 12.sp, color = Color(0xFF94A3B8), lineHeight = 18.sp)
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = onShowCreateSalesDialog,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f).height(44.dp)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("NEW INVOICE", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                        OutlinedButton(
-                            onClick = onImportStatement,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                            border = BorderStroke(1.dp, Color(0xFF334155)),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f).height(44.dp)
-                        ) {
-                            Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("IMPORT STATEMENT", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("+ Sales Inv", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
 
-            // 4 Core Financial KPI Tiles
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF059669),
+                modifier = Modifier.weight(1f).clickable { onCreatePurchase() },
+                shadowElevation = 1.dp
             ) {
-                val totalPendingColl = filteredTx.filter { it.type == "Sales" && it.status != "Paid" }.sumOf { it.amount + it.taxAmount }
-                FinanceBox(title = "TOTAL RECEIVABLES", value = "₹${totalSales.toInt()}", icon = Icons.Default.ArrowDownward, iconColor = Color(0xFF16A34A), indicatorText = "Pending Collection: ₹${totalPendingColl.toInt()}", indicatorColor = Color(0xFFDC2626), modifier = Modifier.weight(1f))
-                
-                val totalPendingPay = filteredTx.filter { it.type == "Purchase" && it.status != "Paid" }.sumOf { it.amount + it.taxAmount }
-                FinanceBox(title = "VENDOR PAYABLES", value = "₹${totalPurchases.toInt()}", icon = Icons.Default.ArrowUpward, iconColor = Color(0xFFE11D48), indicatorText = "Pending Payment: ₹${totalPendingPay.toInt()}", indicatorColor = Color(0xFFDC2626), modifier = Modifier.weight(1f))
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                val outputGst = filteredTx.filter { it.type == "Sales" }.sumOf { it.taxAmount }
-                val inputItc = filteredTx.filter { it.type == "Purchase" }.sumOf { it.taxAmount }
-                val netGstPayable = maxOf(0.0, outputGst - inputItc)
-
-                FinanceBox(title = "BANK STATEMENT ACTIVITY", value = "${bankAccounts.size} Txns", icon = Icons.Default.AccountBalance, iconColor = Color(0xFF4F46E5), indicatorText = "+30 In  -30 Out", indicatorColor = Color(0xFF16A34A), modifier = Modifier.weight(1f))
-                FinanceBox(title = "NET GST LIABILITY (3B)", value = "₹${netGstPayable.toInt()}", icon = Icons.Default.Shield, iconColor = Color(0xFFD97706), indicatorText = "Output GST: ₹${outputGst.toInt()}", indicatorColor = Color(0xFF0F172A), modifier = Modifier.weight(1f))
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("+ Bill", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
 
-            // Action Tables Grid: Pending Invoices vs Pending Vendor Bills
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFD97706),
+                modifier = Modifier.weight(1f).clickable { onCreateExpense() },
+                shadowElevation = 1.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("+ Expense", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+        }
+    }
+
+    // 2. Executive KPI Grid
+    item {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                BookkeepingKPICard(
+                    title = "Monthly Revenue",
+                    value = IndianCurrencyFormatter.formatNoDecimals(totalTurnover),
+                    subtitle = "${salesTx.size} Invoices in $selectedMonth",
+                    icon = Icons.Default.TrendingUp,
+                    accentColor = primaryIndigo,
+                    modifier = Modifier.weight(1f)
+                )
+                BookkeepingKPICard(
+                    title = "Net GST Liability",
+                    value = IndianCurrencyFormatter.formatNoDecimals(netGstPayable),
+                    subtitle = "Output: ₹${outputGst.toInt()} | ITC: ₹${inputItc.toInt()}",
+                    icon = Icons.Default.AccountBalance,
+                    accentColor = Color(0xFFEF4444),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                BookkeepingKPICard(
+                    title = "Total Inward Purchases",
+                    value = IndianCurrencyFormatter.formatNoDecimals(totalPurchases),
+                    subtitle = "${purchaseTx.size} Bills Logged",
+                    icon = Icons.Default.ShoppingCart,
+                    accentColor = Color(0xFF059669),
+                    modifier = Modifier.weight(1f)
+                )
+                BookkeepingKPICard(
+                    title = "Operational Expenses",
+                    value = IndianCurrencyFormatter.formatNoDecimals(totalExpenses),
+                    subtitle = "${expenseTx.size} Vouchers Logged",
+                    icon = Icons.Default.TrendingDown,
+                    accentColor = Color(0xFFD97706),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+
+    // 3. Bank Account Snapshot
+    item {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFF0F172A),
+            modifier = Modifier.fillMaxWidth().clickable { onNavigateTab("Banking") }
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Pending Sales Invoices", fontWeight = FontWeight.Black, fontSize = 13.sp, color = Color(0xFF0F172A))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(
+                        modifier = Modifier.size(36.dp).background(Color(0xFF6366F1), RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.AccountBalance, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
+                    Column {
+                        Text("Connected Bank Accounts", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("${bankStatements.size} Bank Statement Files Uploaded", fontSize = 10.5.sp, color = Color(0xFF94A3B8))
+                    }
+                }
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF94A3B8))
             }
         }
     }
 
-    val pendingSales = filteredTx.filter { it.type == "Sales" && it.status != "Paid" }
-    items(pendingSales.take(5)) { tx ->
-        MobileTxCard(tx, onClick = { onPreviewInvoice(tx) })
-    }
-    
+    // 4. Recent Transactions Section Header
     item {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Pending Purchase Bills", fontWeight = FontWeight.Black, fontSize = 13.sp, color = Color(0xFF0F172A))
+            Text("Recent Transactions", fontSize = 14.sp, fontWeight = FontWeight.Black, color = textDark)
+            Text(
+                text = "View All",
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = primaryIndigo,
+                modifier = Modifier.clickable { onNavigateTab("Sales") }
+            )
         }
     }
-    
-    val pendingPurchases = filteredTx.filter { it.type == "Purchase" && it.status != "Paid" }
-    items(pendingPurchases.take(5)) { tx ->
-        MobileTxCard(tx, onClick = { onPreviewInvoice(tx) })
+
+    // Recent Transactions List
+    if (transactions.isEmpty()) {
+        item {
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(Icons.Default.Inbox, contentDescription = null, tint = textMuted, modifier = Modifier.size(32.dp))
+                    Text("No transactions recorded for $selectedMonth", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = textDark)
+                    Text("Tap '+ Sales Inv' or '+ Bill' above to get started.", fontSize = 11.sp, color = textMuted)
+                }
+            }
+        }
+    } else {
+        items(transactions.take(5)) { tx ->
+            TransactionItemCard(
+                transaction = tx,
+                onView = { onViewTransaction(tx) }
+            )
+        }
     }
 }

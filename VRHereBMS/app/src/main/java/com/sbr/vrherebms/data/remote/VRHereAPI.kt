@@ -256,6 +256,69 @@ interface VRHereAPI {
     @DELETE("api/documents/{id}")
     suspend fun deleteUserVaultDocument(@Path("id") id: String): Response<GeneralApiResponse>
 
+    // --- BOOKKEEPING & AAAS (ACCOUNTING) ENDPOINTS ---
+    @GET("api/accounting/transactions")
+    suspend fun getAccountingTransactions(
+        @Query("type") type: String? = null,
+        @Query("month") month: String? = null,
+        @Query("status") status: String? = null
+    ): Response<List<TransactionDto>>
+
+    @POST("api/accounting/transactions")
+    suspend fun createAccountingTransaction(@Body transaction: TransactionDto): Response<TransactionDto>
+
+    @PUT("api/accounting/transactions/{id}")
+    suspend fun updateAccountingTransaction(
+        @Path("id") id: String,
+        @Body transaction: TransactionDto
+    ): Response<TransactionDto>
+
+    @DELETE("api/accounting/transactions/{id}")
+    suspend fun deleteAccountingTransaction(@Path("id") id: String): Response<GeneralApiResponse>
+
+    @POST("api/accounting/transactions/{id}/payment")
+    suspend fun recordAccountingPayment(
+        @Path("id") id: String,
+        @Body request: RecordPaymentRequest
+    ): Response<TransactionDto>
+
+    @GET("api/accounting/company")
+    suspend fun getCompanyDetails(): Response<CompanyDetailsDto>
+
+    @POST("api/accounting/company")
+    suspend fun updateCompanyDetails(@Body details: CompanyDetailsDto): Response<CompanyDetailsDto>
+
+    @GET("api/accounting/parties")
+    suspend fun getAccountingParties(@Query("partyType") partyType: String? = null): Response<List<PartyDto>>
+
+    @POST("api/accounting/parties")
+    suspend fun createAccountingParty(@Body party: PartyDto): Response<PartyDto>
+
+    @PUT("api/accounting/parties/{id}")
+    suspend fun updateAccountingParty(
+        @Path("id") id: String,
+        @Body party: PartyDto
+    ): Response<PartyDto>
+
+    @DELETE("api/accounting/parties/{id}")
+    suspend fun deleteAccountingParty(@Path("id") id: String): Response<GeneralApiResponse>
+
+    @GET("api/accounting/bank-statements")
+    suspend fun getBankStatements(): Response<List<BankStatementDto>>
+
+    @POST("api/accounting/bank-statements")
+    suspend fun createBankStatement(@Body statement: BankStatementDto): Response<BankStatementDto>
+
+    @DELETE("api/accounting/bank-statements/{id}")
+    suspend fun deleteBankStatement(@Path("id") id: String): Response<GeneralApiResponse>
+
+    @POST("api/accounting/bank-statements/{id}/tag")
+    suspend fun tagBankTransaction(
+        @Path("id") id: String,
+        @Body request: TagBankTransactionRequest
+    ): Response<GeneralApiResponse>
+
+
 
 
     companion object {

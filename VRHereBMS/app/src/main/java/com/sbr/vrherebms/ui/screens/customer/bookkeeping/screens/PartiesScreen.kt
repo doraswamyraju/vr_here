@@ -8,7 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Apartment
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
@@ -17,52 +18,50 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sbr.vrherebms.data.model.TransactionDto
+import com.sbr.vrherebms.data.model.PartyDto
 import com.sbr.vrherebms.ui.screens.customer.bookkeeping.components.BookkeepingKPICard
-import com.sbr.vrherebms.ui.screens.customer.bookkeeping.components.TransactionItemCard
-import com.sbr.vrherebms.ui.screens.customer.bookkeeping.utils.IndianCurrencyFormatter
+import com.sbr.vrherebms.ui.screens.customer.bookkeeping.components.PartyItemCard
 
-fun LazyListScope.salesInvoicesScreen(
-    salesTransactions: List<TransactionDto>,
-    selectedStatusFilter: String,
+fun LazyListScope.partiesScreen(
+    parties: List<PartyDto>,
+    selectedTypeFilter: String, // "All", "Customer", "Vendor"
     searchQuery: String,
-    onStatusFilterChange: (String) -> Unit,
+    onTypeFilterChange: (String) -> Unit,
     onSearchQueryChange: (String) -> Unit,
-    onCreateInvoice: () -> Unit,
-    onViewInvoice: (TransactionDto) -> Unit,
-    onDeleteInvoice: (TransactionDto) -> Unit
+    onAddParty: () -> Unit,
+    onEditParty: (PartyDto) -> Unit,
+    onDeleteParty: (PartyDto) -> Unit
 ) {
     val primaryIndigo = Color(0xFF4F46E5)
     val textDark = Color(0xFF0F172A)
     val textMuted = Color(0xFF64748B)
 
-    val totalTurnover = salesTransactions.sumOf { it.summary.totalAmount }
-    val totalPaid = salesTransactions.filter { it.paymentStatus.equals("Paid", ignoreCase = true) }.sumOf { it.summary.totalAmount }
-    val totalPending = totalTurnover - totalPaid
+    val customersCount = parties.count { it.partyType.equals("Customer", ignoreCase = true) || it.partyType.equals("Both", ignoreCase = true) }
+    val vendorsCount = parties.count { it.partyType.equals("Vendor", ignoreCase = true) || it.partyType.equals("Both", ignoreCase = true) }
 
     // 1. KPI Summaries
     item {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             BookkeepingKPICard(
-                title = "Total Invoiced",
-                value = IndianCurrencyFormatter.formatNoDecimals(totalTurnover),
-                subtitle = "${salesTransactions.size} Total Invoices",
-                icon = Icons.Default.Description,
+                title = "Total Customers",
+                value = "$customersCount Parties",
+                subtitle = "Active Clients & Buyers",
+                icon = Icons.Default.Person,
                 accentColor = primaryIndigo,
                 modifier = Modifier.weight(1f)
             )
             BookkeepingKPICard(
-                title = "Pending Collection",
-                value = IndianCurrencyFormatter.formatNoDecimals(totalPending),
-                subtitle = "Collected: ₹${totalPaid.toInt()}",
-                icon = Icons.Default.Description,
-                accentColor = Color(0xFFD97706),
+                title = "Total Vendors",
+                value = "$vendorsCount Vendors",
+                subtitle = "Suppliers & Contractors",
+                icon = Icons.Default.Apartment,
+                accentColor = Color(0xFF059669),
                 modifier = Modifier.weight(1f)
             )
         }
     }
 
-    // 2. Search & Create Button Bar
+    // 2. Search & Add Party Bar
     item {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -72,7 +71,7 @@ fun LazyListScope.salesInvoicesScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder = { Text("Search invoice / party...", fontSize = 12.sp) },
+                placeholder = { Text("Search party / GSTIN...", fontSize = 12.sp) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = textMuted, modifier = Modifier.size(18.dp)) },
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -84,34 +83,34 @@ fun LazyListScope.salesInvoicesScreen(
             )
 
             Button(
-                onClick = onCreateInvoice,
+                onClick = onAddParty,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = primaryIndigo),
                 modifier = Modifier.height(48.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("New Invoice", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Add Party", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
 
-    // 3. Status Filters Bar
+    // 3. Type Filters Bar
     item {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            listOf("All", "Paid", "Pending", "Draft").forEach { status ->
-                val isSel = selectedStatusFilter.equals(status, ignoreCase = true)
+            listOf("All", "Customer", "Vendor").forEach { t ->
+                val isSel = selectedTypeFilter.equals(t, ignoreCase = true)
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = if (isSel) primaryIndigo else Color.White,
                     border = BorderStroke(1.dp, if (isSel) primaryIndigo else Color(0xFFE2E8F0)),
-                    modifier = Modifier.clickable { onStatusFilterChange(status) }
+                    modifier = Modifier.clickable { onTypeFilterChange(t) }
                 ) {
                     Text(
-                        text = status,
+                        text = t,
                         fontSize = 11.sp,
                         fontWeight = if (isSel) FontWeight.Black else FontWeight.Bold,
                         color = if (isSel) Color.White else textDark,
@@ -122,15 +121,17 @@ fun LazyListScope.salesInvoicesScreen(
         }
     }
 
-    // 4. Invoices List
-    val filtered = salesTransactions.filter { tx ->
-        val statusMatch = selectedStatusFilter.equals("All", ignoreCase = true) ||
-            tx.paymentStatus.equals(selectedStatusFilter, ignoreCase = true) ||
-            tx.status.equals(selectedStatusFilter, ignoreCase = true)
+    // 4. Parties List
+    val filtered = parties.filter { p ->
+        val typeMatch = selectedTypeFilter.equals("All", ignoreCase = true) ||
+            p.partyType.equals(selectedTypeFilter, ignoreCase = true) ||
+            p.partyType.equals("Both", ignoreCase = true)
         val searchMatch = searchQuery.isBlank() ||
-            tx.docNumber.contains(searchQuery, ignoreCase = true) ||
-            tx.partyName.contains(searchQuery, ignoreCase = true)
-        statusMatch && searchMatch
+            p.name.contains(searchQuery, ignoreCase = true) ||
+            p.tradeName.contains(searchQuery, ignoreCase = true) ||
+            p.gstin.contains(searchQuery, ignoreCase = true) ||
+            p.phone.contains(searchQuery, ignoreCase = true)
+        typeMatch && searchMatch
     }
 
     if (filtered.isEmpty()) {
@@ -146,18 +147,18 @@ fun LazyListScope.salesInvoicesScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(Icons.Default.Description, contentDescription = null, tint = textMuted, modifier = Modifier.size(32.dp))
-                    Text("No Sales Invoices Found", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textDark)
-                    Text("Tap 'New Invoice' above to generate your first invoice.", fontSize = 11.sp, color = textMuted)
+                    Icon(Icons.Default.Apartment, contentDescription = null, tint = textMuted, modifier = Modifier.size(32.dp))
+                    Text("No Parties Registered", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textDark)
+                    Text("Add your customers and suppliers to auto-fill invoices.", fontSize = 11.sp, color = textMuted)
                 }
             }
         }
     } else {
-        items(filtered) { tx ->
-            TransactionItemCard(
-                transaction = tx,
-                onView = { onViewInvoice(tx) },
-                onDelete = { onDeleteInvoice(tx) }
+        items(filtered) { p ->
+            PartyItemCard(
+                party = p,
+                onEdit = { onEditParty(p) },
+                onDelete = { onDeleteParty(p) }
             )
         }
     }
