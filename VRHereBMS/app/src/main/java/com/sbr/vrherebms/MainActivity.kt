@@ -15,8 +15,7 @@ import com.sbr.vrherebms.ui.screens.admin.AdminDashboardScreen
 import com.sbr.vrherebms.ui.screens.employee.EmployeeDashboardScreen
 import com.sbr.vrherebms.ui.screens.partner.PartnerDashboardScreen
 import com.sbr.vrherebms.ui.theme.VRHereBMSTheme
-import com.sbr.vrherebms.viewmodel.AuthViewModel
-import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
+import com.sbr.vrherebms.viewmodel.*
 import com.razorpay.PaymentData
 import com.razorpay.PaymentResultWithDataListener
 import com.sbr.vrherebms.utils.RazorpayPaymentManager
