@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,10 +36,6 @@ fun GSTInvoicePreviewDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val primaryIndigo = Color(0xFF4F46E5)
-    val textDark = Color(0xFF0F172A)
-    val textMuted = Color(0xFF64748B)
-
     val isSales = transaction.transactionType.equals("Sales", ignoreCase = true)
     val isPurchase = transaction.transactionType.equals("Purchase", ignoreCase = true)
     val isIncome = transaction.transactionType.equals("Income", ignoreCase = true)
@@ -117,7 +115,28 @@ fun GSTInvoicePreviewDialog(
     val bankBranch = bankInfo?.accountName?.ifBlank { null } ?: "Main Branch"
     val upiId = companyDetails?.upiId ?: ""
 
-    val totalAmount = if (transaction.summary.totalAmount > 0) transaction.summary.totalAmount else transaction.items.sumOf { it.total }
+    val defaultTerms = listOf(
+        "1. Payment: Payment must be made as per the terms and due date mentioned in the invoice.",
+        "2. Taxes: GST and other applicable taxes will be charged as per prevailing laws.",
+        "3. Disputes: Any discrepancy in the invoice must be reported within 7 days of receipt.",
+        "4. Jurisdiction: Any disputes shall be subject to the jurisdiction of the seller's place of business."
+    )
+
+    val itemsList = if (transaction.items.isNotEmpty()) transaction.items else listOf(
+        com.sbr.vrherebms.data.model.TransactionItemDto(
+            description = "Professional Business Services",
+            hsnSac = "998311",
+            qty = 1.0,
+            unit = "PCS",
+            rate = 10000.0,
+            taxableValue = 10000.0,
+            gstRate = 18.0,
+            total = 11800.0
+        )
+    )
+
+    val summary = transaction.summary
+    val totalAmount = if (summary.totalAmount > 0) summary.totalAmount else itemsList.sumOf { it.total }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -126,391 +145,427 @@ fun GSTInvoicePreviewDialog(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 16.dp),
+                .padding(horizontal = 6.dp, vertical = 12.dp),
             shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            shadowElevation = 8.dp
+            color = Color(0xFFF1F5F9),
+            shadowElevation = 10.dp
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(12.dp)
+                    .padding(10.dp)
             ) {
-                // Top Action Toolbar
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // Top Web-Style Actions Bar
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        IconButton(
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
                             onClick = onDismiss,
-                            modifier = Modifier.size(34.dp).background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = textDark, modifier = Modifier.size(18.dp))
-                        }
-                        Column {
-                            Text(docTitle, fontSize = 14.sp, fontWeight = FontWeight.Black, color = textDark)
-                            Text(docNumber, fontSize = 11.sp, color = primaryIndigo, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    // Share WhatsApp PDF & Download PDF Buttons
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Button(
-                            onClick = {
-                                InvoicePdfGenerator.sharePdf(context, transaction, companyDetails, targetWhatsApp = true)
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                            modifier = Modifier.height(34.dp)
-                        ) {
-                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color(0xFF334155), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("WhatsApp PDF", fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                            Text("Back", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
                         }
 
-                        Button(
-                            onClick = {
-                                InvoicePdfGenerator.downloadAndOpenPdf(context, transaction, companyDetails)
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = primaryIndigo),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                            modifier = Modifier.height(34.dp)
-                        ) {
-                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Download", fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Button(
+                                onClick = {
+                                    InvoicePdfGenerator.sharePdf(context, transaction, companyDetails, targetWhatsApp = true)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("WhatsApp", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            Button(
+                                onClick = {
+                                    InvoicePdfGenerator.sharePdf(context, transaction, companyDetails, targetWhatsApp = false)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1F5F9)),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Text("Share PDF", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
+                            }
+
+                            Button(
+                                onClick = {
+                                    InvoicePdfGenerator.downloadAndOpenPdf(context, transaction, companyDetails)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Print / Save PDF", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
 
-                HorizontalDivider(color = Color(0xFFF1F5F9), modifier = Modifier.padding(vertical = 8.dp))
-
-                // Scrollable Document Preview Container matching Web version 100%
-                Column(
+                // Scrollable Document Sheet (Supporting horizontal + vertical scroll for 100% desktop fidelity)
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    // Copy Indicator
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = Color(0xFFF1F5F9),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                        ) {
-                            Text(
-                                text = "COPY : ${copyType.uppercase()}",
-                                fontSize = 8.5.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color(0xFF64748B),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-
-                    // Main Invoice Document Sheet
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(BorderStroke(1.5.dp, Color(0xFF0F172A)), RoundedCornerShape(8.dp))
+                            .horizontalScroll(rememberScrollState())
                     ) {
-                        // 1. Header Box
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFF8FAFC), RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                                .padding(10.dp)
-                        ) {
-                            // Supplier Left
-                            Column(modifier = Modifier.weight(1.3f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(supplierName, fontSize = 13.5.sp, fontWeight = FontWeight.Black, color = textDark)
-                                Text(supplierAddress, fontSize = 9.5.sp, color = Color(0xFF475569))
-                                Text(
-                                    "GSTIN: ${supplierGstin.ifBlank { "37ABCDE1234F1Z5" }} | State: $supplierState",
-                                    fontSize = 9.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = textDark
-                                )
-                                Text("Phone: ${supplierPhone.ifBlank { "07997991101" }} | Email: ${supplierEmail.ifBlank { "N/A" }}", fontSize = 9.sp, color = textMuted)
-                            }
-
-                            // Meta Right
-                            Column(
-                                modifier = Modifier
-                                    .weight(0.9f)
-                                    .padding(start = 8.dp),
-                                horizontalAlignment = Alignment.End,
-                                verticalArrangement = Arrangement.spacedBy(3.dp)
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(4.dp),
-                                    color = Color(0xFF0F172A),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = docTitle,
-                                        fontSize = 9.5.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color.White,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = 3.dp)
-                                    )
-                                }
-
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Invoice No.:", fontSize = 9.sp, color = textMuted)
-                                    Text(docNumber, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = textDark)
-                                }
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Invoice Date:", fontSize = 9.sp, color = textMuted)
-                                    Text(docDate, fontSize = 9.sp, color = textDark)
-                                }
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Due Date:", fontSize = 9.sp, color = textMuted)
-                                    Text(dueDate, fontSize = 9.sp, color = textDark)
-                                }
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Place of Supply:", fontSize = 9.sp, color = textMuted)
-                                    Text(placeOfSupply, fontSize = 9.sp, color = textDark)
-                                }
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Payment Mode:", fontSize = 9.sp, color = textMuted)
-                                    Text(paymentMode, fontSize = 9.sp, color = textDark)
-                                }
-                            }
-                        }
-
-                        HorizontalDivider(color = Color(0xFF0F172A), thickness = 1.5.dp)
-
-                        // 2. BILL TO & SHIP TO Boxes
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            // BILL TO
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text("BILL TO", fontSize = 9.sp, fontWeight = FontWeight.Black, color = primaryIndigo)
-                                Text(billToName, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = textDark)
-                                Text(billToAddress, fontSize = 9.sp, color = Color(0xFF475569))
-                                Text("GSTIN: $billToGstin  PAN: $billToPan", fontSize = 8.5.sp, color = textDark)
-                                Text("State: $billToState  Mobile: $billToPhone", fontSize = 8.5.sp, color = Color(0xFF475569))
-                                Text("Email: $billToEmail", fontSize = 8.5.sp, color = Color(0xFF475569))
-                            }
-
-                            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(Color(0xFF0F172A)))
-
-                            // SHIP TO
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("SHIP TO (Consignee)", fontSize = 9.sp, fontWeight = FontWeight.Black, color = textDark)
-                                    if (shipToSame) {
-                                        Text(" (same as billing)", fontSize = 7.5.sp, color = textMuted)
-                                    }
-                                }
-                                Text(shipToName, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = textDark)
-                                Text(shipToAddress, fontSize = 9.sp, color = Color(0xFF475569))
-                                Text("GSTIN: $shipToGstin  PAN: $shipToPan", fontSize = 8.5.sp, color = textDark)
-                                Text("State: $shipToState  Mobile: $shipToPhone", fontSize = 8.5.sp, color = Color(0xFF475569))
-                                Text("Email: $shipToEmail", fontSize = 8.5.sp, color = Color(0xFF475569))
-                            }
-                        }
-
-                        HorizontalDivider(color = Color(0xFF0F172A), thickness = 1.5.dp)
-
-                        // 3. Compact 10-Column Items Table (Horizontally scrollable for full desktop fidelity)
+                        // Desktop A4 Sized Sheet (720dp fixed width representation)
                         Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
+                                .width(720.dp)
+                                .background(Color.White, RoundedCornerShape(12.dp))
+                                .padding(16.dp)
                         ) {
-                            // Table Header
+                            // Top Copy Type Indicator
+                            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp), horizontalArrangement = Arrangement.End) {
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = Color(0xFFF1F5F9),
+                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                                ) {
+                                    Text(
+                                        text = "copy : ${copyType.lowercase()}",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF64748B),
+                                        letterSpacing = 0.8.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+
+                            // 1. Header Box
+                            Surface(
+                                shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp),
+                                color = Color(0xFFF8FAFC),
+                                border = BorderStroke(2.dp, Color(0xFF0F172A)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    // Supplier Left
+                                    Column(modifier = Modifier.weight(1.3f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                        Text(supplierName, fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                                        Text(supplierAddress, fontSize = 10.5.sp, color = Color(0xFF475569))
+                                        Row {
+                                            Text("GSTIN: ", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                            Text(supplierGstin.ifBlank { "37ABCDE1234F1Z5" }, fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                            Text("  |  State: $supplierState", fontSize = 10.5.sp, color = Color(0xFF0F172A))
+                                        }
+                                        if (supplierPhone.isNotBlank() || supplierEmail.isNotBlank()) {
+                                            Text("Phone: ${supplierPhone.ifBlank { "07997991101" }}  |  Email: ${supplierEmail.ifBlank { "N/A" }}", fontSize = 10.sp, color = Color(0xFF64748B))
+                                        }
+                                    }
+
+                                    // Invoice Meta Right
+                                    Column(
+                                        modifier = Modifier.weight(0.9f).padding(start = 14.dp),
+                                        horizontalAlignment = Alignment.End,
+                                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = Color(0xFF0F172A),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(
+                                                text = docTitle,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = Color.White,
+                                                textAlign = TextAlign.Center,
+                                                letterSpacing = 1.sp,
+                                                modifier = Modifier.padding(vertical = 4.dp)
+                                            )
+                                        }
+
+                                        Row(modifier = Modifier.fillMaxWidth().padding(top = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Invoice No.:", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                                            Text(docNumber, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFF0F172A))
+                                        }
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Invoice Date:", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                                            Text(docDate, fontSize = 10.5.sp, color = Color(0xFF0F172A))
+                                        }
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Due Date:", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                                            Text(dueDate, fontSize = 10.5.sp, color = Color(0xFF0F172A))
+                                        }
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Place of Supply:", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                                            Text(placeOfSupply, fontSize = 10.5.sp, color = Color(0xFF0F172A))
+                                        }
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Payment Mode:", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                                            Text(paymentMode, fontSize = 10.5.sp, color = Color(0xFF0F172A))
+                                        }
+                                    }
+                                }
+                            }
+
+                            // 2. Parties Block: BILL TO and SHIP TO
                             Row(
                                 modifier = Modifier
-                                    .width(620.dp)
-                                    .background(Color(0xFF0F172A))
-                                    .padding(vertical = 6.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .fillMaxWidth()
+                                    .border(
+                                        BorderStroke(2.dp, Color(0xFF0F172A))
+                                    )
                             ) {
-                                Text("#", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(24.dp), textAlign = TextAlign.Center)
-                                Text("Item / Service Description", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(170.dp))
-                                Text("HSN/SAC", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(60.dp), textAlign = TextAlign.Center)
-                                Text("Qty", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(36.dp), textAlign = TextAlign.Center)
-                                Text("Unit", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(36.dp), textAlign = TextAlign.Center)
-                                Text("Rate (₹)", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(55.dp), textAlign = TextAlign.End)
-                                Text("Disc %", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(42.dp), textAlign = TextAlign.End)
-                                Text("GST %", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(42.dp), textAlign = TextAlign.End)
-                                Text("Taxable (₹)", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(70.dp), textAlign = TextAlign.End)
-                                Text("Total (₹)", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(85.dp), textAlign = TextAlign.End)
+                                // BILL TO
+                                Column(
+                                    modifier = Modifier.weight(1f).padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Text(
+                                        text = "BILL TO",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFF312E81),
+                                        modifier = Modifier.padding(bottom = 2.dp)
+                                    )
+                                    Text(billToName, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                    Text(billToAddress, fontSize = 10.sp, color = Color(0xFF475569))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                        Text("GSTIN: $billToGstin", fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF0F172A))
+                                        Text("PAN: $billToPan", fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF0F172A))
+                                    }
+                                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                        Text("State: $billToState", fontSize = 10.sp, color = Color(0xFF475569))
+                                        Text("Mobile: $billToPhone", fontSize = 10.sp, color = Color(0xFF475569))
+                                    }
+                                    Text("Email: $billToEmail", fontSize = 10.sp, color = Color(0xFF475569))
+                                }
+
+                                Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(Color(0xFFE2E8F0)))
+
+                                // SHIP TO
+                                Column(
+                                    modifier = Modifier.weight(1f).padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp)
+                                    ) {
+                                        Text("SHIP TO (CONSIGNEE)", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                                        if (shipToSame) {
+                                            Text("(same as billing)", fontSize = 9.sp, color = Color(0xFF64748B))
+                                        }
+                                    }
+                                    Text(shipToName, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                    Text(shipToAddress, fontSize = 10.sp, color = Color(0xFF475569))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                        Text("GSTIN: $shipToGstin", fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF0F172A))
+                                        Text("PAN: $shipToPan", fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF0F172A))
+                                    }
+                                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                        Text("State: $shipToState", fontSize = 10.sp, color = Color(0xFF475569))
+                                        Text("Mobile: $shipToPhone", fontSize = 10.sp, color = Color(0xFF475569))
+                                    }
+                                    Text("Email: $shipToEmail", fontSize = 10.sp, color = Color(0xFF475569))
+                                }
                             }
 
-                            // Items
-                            val itemsList = if (transaction.items.isNotEmpty()) transaction.items else listOf(
-                                com.sbr.vrherebms.data.model.TransactionItemDto(
-                                    description = "Professional Business Services",
-                                    hsnSac = "998311",
-                                    qty = 1.0,
-                                    unit = "PCS",
-                                    rate = 10000.0,
-                                    taxableValue = 10000.0,
-                                    gstRate = 18.0,
-                                    total = 11800.0
-                                )
-                            )
-
-                            itemsList.forEachIndexed { idx, item ->
+                            // 3. Compact 10-Column Items Table
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(BorderStroke(2.dp, Color(0xFF0F172A)))
+                            ) {
+                                // Table Header
                                 Row(
                                     modifier = Modifier
-                                        .width(620.dp)
-                                        .background(if (idx % 2 == 0) Color.White else Color(0xFFF8FAFC))
-                                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF0F172A))
+                                        .padding(vertical = 8.dp, horizontal = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("${idx + 1}", fontSize = 8.5.sp, color = textMuted, modifier = Modifier.width(24.dp), textAlign = TextAlign.Center)
-                                    Text(item.description, fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = textDark, modifier = Modifier.width(170.dp))
-                                    Text(item.hsnSac.ifBlank { "-" }, fontSize = 8.5.sp, color = Color(0xFF475569), modifier = Modifier.width(60.dp), textAlign = TextAlign.Center)
-                                    Text("${item.qty}", fontSize = 8.5.sp, color = textDark, modifier = Modifier.width(36.dp), textAlign = TextAlign.Center)
-                                    Text(item.unit.ifBlank { "PCS" }, fontSize = 8.5.sp, color = textMuted, modifier = Modifier.width(36.dp), textAlign = TextAlign.Center)
-                                    Text("₹%.2f".format(item.rate), fontSize = 8.5.sp, color = textDark, modifier = Modifier.width(55.dp), textAlign = TextAlign.End)
-                                    Text(if (item.discPercent > 0) "${item.discPercent}%" else "-", fontSize = 8.5.sp, color = textMuted, modifier = Modifier.width(42.dp), textAlign = TextAlign.End)
-                                    Text("${item.gstRate.toInt()}%", fontSize = 8.5.sp, color = textMuted, modifier = Modifier.width(42.dp), textAlign = TextAlign.End)
-                                    Text("₹%.2f".format(item.taxableValue), fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = textDark, modifier = Modifier.width(70.dp), textAlign = TextAlign.End)
-                                    Text("₹%.2f".format(item.total), fontSize = 8.5.sp, fontWeight = FontWeight.Black, color = textDark, modifier = Modifier.width(85.dp), textAlign = TextAlign.End)
+                                    Text("#", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(32.dp), textAlign = TextAlign.Center)
+                                    Text("Item / Service Description", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
+                                    Text("HSN/SAC", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(65.dp), textAlign = TextAlign.Center)
+                                    Text("Qty", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(36.dp), textAlign = TextAlign.Center)
+                                    Text("Unit", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(42.dp), textAlign = TextAlign.Center)
+                                    Text("Rate (₹)", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(65.dp), textAlign = TextAlign.End)
+                                    Text("Disc %", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(46.dp), textAlign = TextAlign.End)
+                                    Text("GST %", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(46.dp), textAlign = TextAlign.End)
+                                    Text("Taxable (₹)", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(75.dp), textAlign = TextAlign.End)
+                                    Text("Total (₹)", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.width(85.dp), textAlign = TextAlign.End)
                                 }
-                                HorizontalDivider(color = Color(0xFFE2E8F0))
-                            }
-                        }
 
-                        HorizontalDivider(color = Color(0xFF0F172A), thickness = 1.5.dp)
-
-                        // 4. Totals and Calculations Block
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            // Left: Amount in Words & Notes
-                            Column(
-                                modifier = Modifier
-                                    .weight(1.3f)
-                                    .background(Color(0xFFF8FAFC))
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text("AMOUNT IN WORDS:", fontSize = 8.sp, fontWeight = FontWeight.Black, color = textMuted)
-                                val words = transaction.summary.amountInWords.ifBlank { IndianCurrencyFormatter.numberToWords(totalAmount) }
-                                Text(words, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = textDark)
-                                if (transaction.notes.isNotBlank()) {
-                                    Text("Special Notes: ${transaction.notes}", fontSize = 8.sp, color = textMuted)
-                                }
-                            }
-
-                            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(Color(0xFF0F172A)))
-
-                            // Right: Totals
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .background(Color(0xFFF8FAFC))
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(3.dp)
-                            ) {
-                                val summary = transaction.summary
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Subtotal (Taxable):", fontSize = 8.5.sp, color = textMuted)
-                                    Text("₹%.2f".format(if (summary.totalTaxableValue > 0) summary.totalTaxableValue else transaction.items.sumOf { it.taxableValue }), fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = textDark)
-                                }
-                                if (summary.totalCgst > 0) {
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Total CGST:", fontSize = 8.5.sp, color = textMuted)
-                                        Text("₹%.2f".format(summary.totalCgst), fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = textDark)
+                                itemsList.forEachIndexed { idx, item ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(if (idx % 2 == 0) Color.White else Color(0xFFF8FAFC))
+                                            .padding(vertical = 8.dp, horizontal = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("${idx + 1}", fontSize = 9.5.sp, color = Color(0xFF64748B), modifier = Modifier.width(32.dp), textAlign = TextAlign.Center)
+                                        Text(item.description, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), modifier = Modifier.weight(1f))
+                                        Text(item.hsnSac.ifBlank { "-" }, fontSize = 9.5.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF475569), modifier = Modifier.width(65.dp), textAlign = TextAlign.Center)
+                                        Text("${item.qty}", fontSize = 9.5.sp, color = Color(0xFF0F172A), modifier = Modifier.width(36.dp), textAlign = TextAlign.Center)
+                                        Text(item.unit.ifBlank { "PCS" }, fontSize = 9.5.sp, color = Color(0xFF64748B), modifier = Modifier.width(42.dp), textAlign = TextAlign.Center)
+                                        Text("%.2f".format(item.rate), fontSize = 9.5.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF0F172A), modifier = Modifier.width(65.dp), textAlign = TextAlign.End)
+                                        Text(if (item.discPercent > 0) "${item.discPercent}%" else "-", fontSize = 9.5.sp, color = Color(0xFF64748B), modifier = Modifier.width(46.dp), textAlign = TextAlign.End)
+                                        Text("${item.gstRate.toInt()}%", fontSize = 9.5.sp, color = Color(0xFF64748B), modifier = Modifier.width(46.dp), textAlign = TextAlign.End)
+                                        Text("%.2f".format(item.taxableValue), fontSize = 9.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), modifier = Modifier.width(75.dp), textAlign = TextAlign.End)
+                                        Text("%.2f".format(item.total), fontSize = 10.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, color = Color(0xFF0F172A), modifier = Modifier.width(85.dp), textAlign = TextAlign.End)
                                     }
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Total SGST:", fontSize = 8.5.sp, color = textMuted)
-                                        Text("₹%.2f".format(summary.totalSgst), fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = textDark)
-                                    }
-                                } else if (summary.totalIgst > 0) {
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Total IGST:", fontSize = 8.5.sp, color = textMuted)
-                                        Text("₹%.2f".format(summary.totalIgst), fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = textDark)
+                                    if (idx < itemsList.size - 1) {
+                                        HorizontalDivider(color = Color(0xFFE2E8F0))
                                     }
                                 }
-                                HorizontalDivider(color = Color(0xFF0F172A), thickness = 1.dp)
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("GRAND TOTAL:", fontSize = 9.5.sp, fontWeight = FontWeight.Black, color = textDark)
-                                    Text(IndianCurrencyFormatter.format(totalAmount), fontSize = 11.sp, fontWeight = FontWeight.Black, color = primaryIndigo)
+                            }
+
+                            // 4. Totals and Calculations Block
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(BorderStroke(2.dp, Color(0xFF0F172A)))
+                            ) {
+                                // Left: Amount in Words & Notes
+                                Column(
+                                    modifier = Modifier.weight(1.3f).background(Color(0xFFF8FAFC)).padding(12.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("AMOUNT IN WORDS:", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF475569), letterSpacing = 0.5.sp)
+                                        val words = summary.amountInWords.ifBlank { IndianCurrencyFormatter.numberToWords(totalAmount) }
+                                        Text(words, fontSize = 10.5.sp, fontStyle = FontStyle.Italic, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                                    }
+
+                                    if (transaction.notes.isNotBlank()) {
+                                        Text("Special Notes: ${transaction.notes}", fontSize = 9.5.sp, color = Color(0xFF475569), modifier = Modifier.padding(top = 8.dp))
+                                    }
+                                }
+
+                                Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(Color(0xFFCBD5E1)))
+
+                                // Right: Totals
+                                Column(
+                                    modifier = Modifier.weight(1f).background(Color(0xFFF8FAFC)).padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Subtotal (Taxable Value):", fontSize = 10.5.sp, color = Color(0xFF475569))
+                                        Text("₹%.2f".format(if (summary.totalTaxableValue > 0) summary.totalTaxableValue else itemsList.sumOf { it.taxableValue }), fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                    }
+                                    if (summary.totalCgst > 0) {
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Total CGST:", fontSize = 10.5.sp, color = Color(0xFF475569))
+                                            Text("₹%.2f".format(summary.totalCgst), fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                        }
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Total SGST:", fontSize = 10.5.sp, color = Color(0xFF475569))
+                                            Text("₹%.2f".format(summary.totalSgst), fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                        }
+                                    } else if (summary.totalIgst > 0) {
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Total IGST:", fontSize = 10.5.sp, color = Color(0xFF475569))
+                                            Text("₹%.2f".format(summary.totalIgst), fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                        }
+                                    }
+
+                                    HorizontalDivider(color = Color(0xFF0F172A), thickness = 2.dp, modifier = Modifier.padding(top = 4.dp))
+
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Text("GRAND TOTAL:", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                                        Text(IndianCurrencyFormatter.format(totalAmount), fontSize = 14.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, color = Color(0xFF312E81))
+                                    }
                                 }
                             }
-                        }
 
-                        HorizontalDivider(color = Color(0xFF0F172A), thickness = 1.5.dp)
-
-                        // 5. Footer: Bank Details & Terms & Conditions
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            // Bank Details
-                            Column(
+                            // 5. Footer: Bank Details & Terms
+                            Row(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    .fillMaxWidth()
+                                    .border(BorderStroke(2.dp, Color(0xFF0F172A)))
                             ) {
-                                Text("BANK DETAILS", fontSize = 8.5.sp, fontWeight = FontWeight.Black, color = textDark)
-                                Text("Bank Name: $bankName", fontSize = 8.sp, color = Color(0xFF475569))
-                                Text("Account No.: $bankAccount", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = textDark)
-                                Text("IFSC Code: $bankIfsc", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = textDark)
-                                Text("Branch: $bankBranch", fontSize = 8.sp, color = Color(0xFF475569))
-                                if (upiId.isNotBlank()) {
-                                    Text("UPI ID: $upiId", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = primaryIndigo)
+                                // Bank Details
+                                Column(
+                                    modifier = Modifier.weight(1f).padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Text("BANK DETAILS", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A), letterSpacing = 0.5.sp)
+                                    Text("Bank Name: $bankName", fontSize = 9.5.sp, color = Color(0xFF475569))
+                                    Text("Account No.: $bankAccount", fontSize = 9.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                    Text("IFSC Code: $bankIfsc", fontSize = 9.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                    Text("Branch: $bankBranch", fontSize = 9.5.sp, color = Color(0xFF475569))
+                                    if (upiId.isNotBlank()) {
+                                        Text("UPI ID: $upiId", fontSize = 9.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = Color(0xFF4F46E5))
+                                    }
+                                }
+
+                                Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(Color(0xFFCBD5E1)))
+
+                                // Terms & Conditions
+                                Column(
+                                    modifier = Modifier.weight(1.3f).padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Text("TERMS & CONDITIONS", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A), letterSpacing = 0.5.sp)
+                                    defaultTerms.forEach { t ->
+                                        Text(t, fontSize = 9.sp, color = Color(0xFF475569), lineHeight = 12.sp)
+                                    }
                                 }
                             }
 
-                            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(Color(0xFFCBD5E1)))
-
-                            // Terms & Conditions
-                            Column(
-                                modifier = Modifier
-                                    .weight(1.2f)
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            // 6. Declaration & Signatory
+                            Surface(
+                                shape = RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp),
+                                color = Color(0xFFF8FAFC),
+                                border = BorderStroke(2.dp, Color(0xFF0F172A)),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("TERMS & CONDITIONS", fontSize = 8.5.sp, fontWeight = FontWeight.Black, color = textDark)
-                                Text("1. Payment must be made as per agreed terms.", fontSize = 7.5.sp, color = textMuted)
-                                Text("2. Taxes charged per prevailing GST regulations.", fontSize = 7.5.sp, color = textMuted)
-                                Text("3. Disputes subject to seller's local jurisdiction.", fontSize = 7.5.sp, color = textMuted)
-                            }
-                        }
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Declaration: We declare that this invoice shows the actual price of the goods/services described and that all particulars are true and correct.",
+                                        fontSize = 9.5.sp,
+                                        fontStyle = FontStyle.Italic,
+                                        color = Color(0xFF64748B),
+                                        modifier = Modifier.weight(1.3f)
+                                    )
 
-                        HorizontalDivider(color = Color(0xFFCBD5E1))
-
-                        // 6. Declaration & Signatory
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFF8FAFC), RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Declaration: We declare that this invoice shows the actual price of the goods/services described and that all particulars are true and correct.",
-                                fontSize = 7.5.sp,
-                                color = textMuted,
-                                modifier = Modifier.weight(1.3f)
-                            )
-
-                            Column(
-                                modifier = Modifier.weight(0.9f),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text("Authorized Signatory", fontSize = 8.5.sp, fontWeight = FontWeight.Black, color = textDark)
-                                Text(supplierName.uppercase(), fontSize = 7.5.sp, fontWeight = FontWeight.Bold, color = textMuted)
+                                    Column(
+                                        modifier = Modifier.weight(0.9f),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        Spacer(modifier = Modifier.height(20.dp))
+                                        HorizontalDivider(color = Color(0xFF94A3B8), thickness = 1.dp, modifier = Modifier.width(140.dp))
+                                        Text("Authorized Signatory", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                                        Text(supplierName.uppercase(), fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
+                                    }
+                                }
                             }
                         }
                     }
