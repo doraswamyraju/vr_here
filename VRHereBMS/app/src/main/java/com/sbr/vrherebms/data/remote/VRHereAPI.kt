@@ -341,10 +341,40 @@ interface VRHereAPI {
                     .readTimeout(30, TimeUnit.SECONDS)
                     .build()
 
+                val gson = com.google.gson.GsonBuilder()
+                    .registerTypeAdapter(UserProfile::class.java, com.google.gson.JsonDeserializer { json, _, _ ->
+                        if (json == null || json.isJsonNull) return@JsonDeserializer null
+                        if (json.isJsonPrimitive && json.asJsonPrimitive.isString) {
+                            return@JsonDeserializer UserProfile(id = json.asString, name = "")
+                        }
+                        if (json.isJsonObject) {
+                            val obj = json.asJsonObject
+                            return@JsonDeserializer UserProfile(
+                                id = obj.get("_id")?.takeIf { !it.isJsonNull }?.asString
+                                    ?: obj.get("id")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                name = obj.get("name")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                email = obj.get("email")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                phone = obj.get("phone")?.takeIf { !it.isJsonNull }?.asString,
+                                role = obj.get("role")?.takeIf { !it.isJsonNull }?.asString ?: "client",
+                                profilePhoto = obj.get("profilePhoto")?.takeIf { !it.isJsonNull }?.asString,
+                                companyLogo = obj.get("companyLogo")?.takeIf { !it.isJsonNull }?.asString,
+                                companyName = obj.get("companyName")?.takeIf { !it.isJsonNull }?.asString,
+                                businessType = obj.get("businessType")?.takeIf { !it.isJsonNull }?.asString,
+                                gstin = obj.get("gstin")?.takeIf { !it.isJsonNull }?.asString,
+                                panNumber = obj.get("panNumber")?.takeIf { !it.isJsonNull }?.asString,
+                                address = obj.get("address")?.takeIf { !it.isJsonNull }?.asString,
+                                isActive = obj.get("isActive")?.takeIf { !it.isJsonNull }?.asBoolean ?: true
+                            )
+                        }
+                        null
+                    })
+                    .setLenient()
+                    .create()
+
                 instance = Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .client(okHttpClient)
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(gson))
                     .build()
                     .create(VRHereAPI::class.java)
             }

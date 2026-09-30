@@ -142,6 +142,7 @@ const getTickets = asyncHandler(async (req, res) => {
         .populate('user', 'name email phone')
         .populate('assignedTo', 'name email')
         .populate('orderId', 'serviceName packageName clientName')
+        .populate('messages.sender', 'name role')
         .sort({ updatedAt: -1 });
 
     res.json(tickets);
