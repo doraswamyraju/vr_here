@@ -69,7 +69,10 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
-    // Razorpay Mobile Native    // Navigation
+    // Razorpay Mobile Native SDK
+    implementation("com.razorpay:checkout:1.6.38")
+
+    // Navigation
     implementation(libs.androidx.navigation.compose)
 
     // Image Loading

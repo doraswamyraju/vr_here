@@ -49,8 +49,8 @@ object InvoicePdfGenerator {
             }
         }
         val docDate = transaction.docDate.take(10).ifBlank { "30/09/2026" }
-        val dueDate = transaction.dueDate.take(10).ifBlank { docDate }
-        val paymentMode = transaction.paymentMode.ifBlank { transaction.paymentType.ifBlank { "Bank Transfer" } }
+        val dueDate = transaction.dueDate?.take(10)?.ifBlank { null } ?: docDate
+        val paymentMode = transaction.paymentMode.ifBlank { "Bank Transfer" }
         val placeOfSupply = transaction.placeOfSupply.ifBlank { company?.state ?: "37-Andhra Pradesh" }
 
         // Supplier details (Company or Party depending on transaction)

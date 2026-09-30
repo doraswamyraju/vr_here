@@ -17,13 +17,16 @@ import com.sbr.vrherebms.ui.screens.partner.PartnerDashboardScreen
 import com.sbr.vrherebms.ui.theme.VRHereBMSTheme
 import com.sbr.vrherebms.viewmodel.AuthViewModel
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
-import com.sbr.vrherebms.viewmodel.EmployeeDashboardViewModel
-import com.sbr.vrherebms.viewmodel.PartnerDashboardViewModel
-import com.sbr.vrherebms.viewmodel.AdminDashboardViewModel
+import com.razorpay.PaymentData
+import com.razorpay.PaymentResultWithDataListener
+import com.sbr.vrherebms.utils.RazorpayPaymentManager
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Preload Razorpay Checkout resources for instantaneous native launch
+        RazorpayPaymentManager.preload(this)
         
         // Request notification permission at runtime for Android 13+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -180,5 +183,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onPaymentSuccess(razorpayPaymentID: String?, paymentData: PaymentData?) {
+        RazorpayPaymentManager.onPaymentSuccess(razorpayPaymentID, paymentData)
+    }
+
+    override fun onPaymentError(code: Int, response: String?, paymentData: PaymentData?) {
+        RazorpayPaymentManager.onPaymentError(code, response, paymentData)
     }
 }

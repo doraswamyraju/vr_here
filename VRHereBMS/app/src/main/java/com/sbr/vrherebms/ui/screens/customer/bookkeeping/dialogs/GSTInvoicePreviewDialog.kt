@@ -54,8 +54,8 @@ fun GSTInvoicePreviewDialog(
         }
     }
     val docDate = transaction.docDate.take(10).ifBlank { "30/09/2026" }
-    val dueDate = transaction.dueDate.take(10).ifBlank { docDate }
-    val paymentMode = transaction.paymentMode.ifBlank { transaction.paymentType.ifBlank { "Bank Transfer" } }
+    val dueDate = transaction.dueDate?.take(10)?.ifBlank { null } ?: docDate
+    val paymentMode = transaction.paymentMode.ifBlank { "Bank Transfer" }
     val placeOfSupply = transaction.placeOfSupply.ifBlank { companyDetails?.state ?: "37-Andhra Pradesh" }
 
     val docTitle = when {
