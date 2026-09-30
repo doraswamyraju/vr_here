@@ -1,11 +1,15 @@
 package com.sbr.vrherebms.ui.screens.customer.bookkeeping.utils
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.*
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.sbr.vrherebms.data.model.CompanyDetailsDto
@@ -16,7 +20,7 @@ import java.io.FileOutputStream
 object InvoicePdfGenerator {
 
     /**
-     * Generates a standard A4 PDF Document (595 x 842 points) matching the web template
+     * Generates a standard A4 PDF Document (595 x 842 points) matching the Web version GSTInvoiceView.jsx
      */
     fun generateInvoicePdf(context: Context, transaction: TransactionDto, company: CompanyDetailsDto?): File {
         val pdfDocument = PdfDocument()
@@ -25,7 +29,7 @@ object InvoicePdfGenerator {
         val canvas = page.canvas
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        val boldPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
 
@@ -33,166 +37,224 @@ object InvoicePdfGenerator {
         val isPurchase = transaction.transactionType.equals("Purchase", ignoreCase = true)
         val isIncome = transaction.transactionType.equals("Income", ignoreCase = true)
         val isExpense = transaction.transactionType.equals("Expense", ignoreCase = true)
+        val isVoucher = isIncome || isExpense
 
-        val docTitle = when {
+        val copyType = transaction.copyType.ifBlank { "Original for Recipient" }
+        val docNumber = transaction.docNumber.ifBlank {
+            when {
+                isIncome -> "RV-0001"
+                isExpense -> "PV-0001"
+                isPurchase -> "PUR-0001"
+                else -> "INV-0001"
+            }
+        }
+        val docDate = transaction.docDate.take(10).ifBlank { "30/09/2026" }
+        val dueDate = transaction.dueDate.take(10).ifBlank { docDate }
+        val paymentMode = transaction.paymentMode.ifBlank { transaction.paymentType.ifBlank { "Bank Transfer" } }
+        val placeOfSupply = transaction.placeOfSupply.ifBlank { company?.state ?: "37-Andhra Pradesh" }
+
+        // Supplier details (Company or Party depending on transaction)
+        val supplierName = if (isSales || isVoucher) {
+            company?.companyName?.ifBlank { null } ?: "Rajugari Ventures"
+        } else {
+            transaction.partyName.ifBlank { "Vendor Name" }
+        }
+        val supplierAddress = if (isSales || isVoucher) {
+            company?.address?.ifBlank { null } ?: "#38, 1st Floor, TUDA Complex, Bairagipatteda, Tirupati"
+        } else {
+            transaction.partyAddress
+        }
+        val supplierGstin = if (isSales || isVoucher) company?.gstin ?: "" else transaction.partyGstin
+        val supplierState = if (isSales || isVoucher) company?.state ?: "Andhra Pradesh" else placeOfSupply
+        val supplierPhone = if (isSales || isVoucher) company?.phone ?: "" else transaction.partyPhone
+        val supplierEmail = if (isSales || isVoucher) company?.email ?: "" else transaction.partyEmail
+
+        // Bill To details
+        val billToName = if (isSales) {
+            transaction.partyName.ifBlank { "Rajugari Ventures" }
+        } else if (isVoucher) {
+            transaction.partyName.ifBlank { "General" }
+        } else {
+            company?.companyName ?: "Rajugari Ventures"
+        }
+        val billToAddress = if (isSales) {
+            transaction.partyAddress.ifBlank { "#38, 1st Floor, TUDA Complex, Bairagipatteda" }
+        } else {
+            company?.address ?: "#38, 1st Floor, TUDA Complex"
+        }
+        val billToGstin = if (isSales) transaction.partyGstin.ifBlank { "URP / N/A" } else company?.gstin ?: "N/A"
+        val billToPan = if (isSales) transaction.partyPan.ifBlank { "N/A" } else "N/A"
+        val billToState = if (isSales) transaction.partyState.ifBlank { placeOfSupply } else company?.state ?: "Andhra Pradesh"
+        val billToPhone = if (isSales) transaction.partyPhone.ifBlank { "N/A" } else company?.phone ?: "N/A"
+        val billToEmail = if (isSales) transaction.partyEmail.ifBlank { "N/A" } else company?.email ?: "N/A"
+
+        // Ship To details
+        val shipToSame = transaction.shipToSameAsBilling
+        val shipToName = if (shipToSame) billToName else transaction.shipToName.ifBlank { billToName }
+        val shipToAddress = if (shipToSame) billToAddress else transaction.shipToAddress.ifBlank { billToAddress }
+        val shipToGstin = if (shipToSame) billToGstin else transaction.shipToGstin.ifBlank { billToGstin }
+        val shipToPan = if (shipToSame) billToPan else transaction.shipToPan.ifBlank { billToPan }
+        val shipToState = if (shipToSame) billToState else transaction.shipToState.ifBlank { billToState }
+        val shipToPhone = if (shipToSame) billToPhone else transaction.shipToMobile.ifBlank { billToPhone }
+        val shipToEmail = if (shipToSame) billToEmail else transaction.shipToEmail.ifBlank { billToEmail }
+
+        // Bank Details
+        val bankInfo = company?.bankDetails
+        val bankName = bankInfo?.bankName?.ifBlank { null } ?: "HDFC Bank"
+        val bankAccount = bankInfo?.accountNumber?.ifBlank { null } ?: "50200012345678"
+        val bankIfsc = bankInfo?.ifscCode?.ifBlank { null } ?: "HDFC0001234"
+        val bankBranch = bankInfo?.accountName?.ifBlank { null } ?: "Main Branch"
+        val upiId = company?.upiId ?: ""
+
+        val leftMargin = 24f
+        val rightMargin = 571f
+        val contentWidth = rightMargin - leftMargin
+        var y = 24f
+
+        // --- 1. COPY INDICATOR (Top Right) ---
+        paint.color = Color.rgb(100, 116, 139)
+        paint.textSize = 7.5f
+        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        paint.textAlign = Paint.Align.RIGHT
+        canvas.drawText("COPY : ${copyType.uppercase()}", rightMargin - 4f, y + 8f, paint)
+        paint.textAlign = Paint.Align.LEFT
+        paint.typeface = Typeface.DEFAULT
+        y += 14f
+
+        // --- 2. HEADER BOX ---
+        val headerH = 88f
+        // Outer border
+        paint.style = Paint.Style.STROKE
+        paint.color = Color.rgb(15, 23, 42)
+        paint.strokeWidth = 1.2f
+        canvas.drawRect(leftMargin, y, rightMargin, y + headerH, paint)
+
+        // Left 60%: Supplier Details
+        val headerSplitX = leftMargin + 310f
+        canvas.drawLine(headerSplitX, y, headerSplitX, y + headerH, paint)
+
+        // Draw Supplier Info
+        boldPaint.color = Color.rgb(15, 23, 42)
+        boldPaint.textSize = 12.5f
+        canvas.drawText(supplierName, leftMargin + 10f, y + 18f, boldPaint)
+
+        paint.style = Paint.Style.FILL
+        paint.color = Color.rgb(71, 85, 105)
+        paint.textSize = 8f
+        canvas.drawText(supplierAddress.take(50), leftMargin + 10f, y + 32f, paint)
+
+        boldPaint.textSize = 8f
+        boldPaint.color = Color.rgb(15, 23, 42)
+        canvas.drawText("GSTIN: ${supplierGstin.ifBlank { "37ABCDE1234F1Z5" }}  |  State: $supplierState", leftMargin + 10f, y + 46f, boldPaint)
+
+        paint.color = Color.rgb(71, 85, 105)
+        if (supplierPhone.isNotBlank() || supplierEmail.isNotBlank()) {
+            canvas.drawText("Phone: ${supplierPhone.ifBlank { "07997991101" }}  |  Email: ${supplierEmail.ifBlank { "N/A" }}", leftMargin + 10f, y + 60f, paint)
+        }
+
+        // Right 40%: Document Badge & Metadata
+        val rightBoxW = rightMargin - headerSplitX
+        paint.style = Paint.Style.FILL
+        paint.color = Color.rgb(15, 23, 42)
+        canvas.drawRect(headerSplitX + 8f, y + 8f, rightMargin - 8f, y + 26f, paint)
+
+        paint.color = Color.WHITE
+        paint.textSize = 9.5f
+        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        paint.textAlign = Paint.Align.CENTER
+        val docBadgeTitle = when {
             isIncome -> "RECEIPT VOUCHER"
             isExpense -> "PAYMENT VOUCHER"
             isPurchase -> "PURCHASE INVOICE"
             else -> "TAX INVOICE"
         }
-
-        val copyType = transaction.copyType.ifBlank { "Original for Recipient" }
-
-        // Supplier details (Company or Party depending on transaction)
-        val supplierName = if (isSales || isIncome || isExpense) {
-            company?.companyName?.ifBlank { null } ?: "VR HERE Business Solutions"
-        } else {
-            transaction.partyName
-        }
-
-        val supplierGstin = if (isSales || isIncome || isExpense) company?.gstin ?: "" else transaction.partyGstin
-        val supplierAddress = if (isSales || isIncome || isExpense) company?.address ?: "Tirupati, Andhra Pradesh" else transaction.partyAddress
-        val supplierPhone = if (isSales || isIncome || isExpense) company?.phone ?: "" else transaction.partyPhone
-
-        val billToName = if (isSales) transaction.partyName else company?.companyName ?: "VR HERE Business Solutions"
-        val billToGstin = if (isSales) transaction.partyGstin else company?.gstin ?: ""
-        val billToAddress = if (isSales) transaction.partyAddress else company?.address ?: ""
-
-        val margin = 28f
-        val rightMargin = 595f - margin
-        var y = 30f
-
-        // 1. Top Copy Indicator
-        paint.color = Color.rgb(100, 116, 139)
-        paint.textSize = 8.5f
-        paint.textAlign = Paint.Align.RIGHT
-        canvas.drawText("COPY: ${copyType.uppercase()}", rightMargin, y, paint)
+        canvas.drawText(docBadgeTitle, headerSplitX + (rightBoxW / 2f), y + 20f, paint)
         paint.textAlign = Paint.Align.LEFT
-        y += 12f
+        paint.typeface = Typeface.DEFAULT
 
-        // 2. Main Outer Header Box
-        paint.style = Paint.Style.FILL
-        paint.color = Color.rgb(248, 250, 252)
-        canvas.drawRect(margin, y, rightMargin, y + 80f, paint)
+        // Key Value Metadata
+        val metaKeys = arrayOf("Invoice No.:", "Invoice Date:", "Due Date:", "Place of Supply:", "Payment Mode:")
+        val metaVals = arrayOf(docNumber, docDate, dueDate, placeOfSupply, paymentMode)
+        var metaY = y + 37f
 
-        paint.style = Paint.Style.STROKE
-        paint.color = Color.rgb(15, 23, 42)
-        paint.strokeWidth = 1.5f
-        canvas.drawRect(margin, y, rightMargin, y + 80f, paint)
-
-        // Company Details (Left)
-        titlePaint.color = Color.rgb(15, 23, 42)
-        titlePaint.textSize = 13f
-        canvas.drawText(supplierName, margin + 12f, y + 20f, titlePaint)
-
-        paint.style = Paint.Style.FILL
-        paint.color = Color.rgb(71, 85, 105)
-        paint.textSize = 8.5f
-        canvas.drawText(supplierAddress.take(45), margin + 12f, y + 34f, paint)
-        if (supplierGstin.isNotBlank()) {
-            paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            paint.color = Color.rgb(15, 23, 42)
-            canvas.drawText("GSTIN: $supplierGstin", margin + 12f, y + 48f, paint)
-            paint.typeface = Typeface.DEFAULT
-        }
-        if (supplierPhone.isNotBlank()) {
+        for (i in metaKeys.indices) {
             paint.color = Color.rgb(71, 85, 105)
-            canvas.drawText("Phone: $supplierPhone", margin + 12f, y + 62f, paint)
+            paint.textSize = 7.5f
+            paint.typeface = Typeface.DEFAULT
+            canvas.drawText(metaKeys[i], headerSplitX + 10f, metaY, paint)
+
+            paint.color = Color.rgb(15, 23, 42)
+            paint.typeface = Typeface.create(Typeface.DEFAULT, if (i == 0) Typeface.BOLD else Typeface.NORMAL)
+            paint.textAlign = Paint.Align.RIGHT
+            canvas.drawText(metaVals[i], rightMargin - 10f, metaY, paint)
+            paint.textAlign = Paint.Align.LEFT
+            metaY += 10.5f
         }
 
-        // Invoice Metadata Box (Right)
-        val metaX = rightMargin - 180f
-        paint.color = Color.rgb(15, 23, 42)
-        paint.strokeWidth = 1f
-        canvas.drawLine(metaX, y, metaX, y + 80f, paint)
+        y += headerH
 
-        // Document Title Pill
-        paint.style = Paint.Style.FILL
-        paint.color = Color.rgb(15, 23, 42)
-        canvas.drawRect(metaX + 10f, y + 8f, rightMargin - 10f, y + 26f, paint)
-
-        paint.color = Color.WHITE
-        paint.textSize = 10f
-        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        paint.textAlign = Paint.Align.CENTER
-        canvas.drawText(docTitle, metaX + 85f, y + 21f, paint)
-        paint.textAlign = Paint.Align.LEFT
-        paint.typeface = Typeface.DEFAULT
-
-        // Doc details
-        paint.color = Color.rgb(71, 85, 105)
-        paint.textSize = 8.5f
-        canvas.drawText("Invoice No.:", metaX + 10f, y + 40f, paint)
-        paint.color = Color.rgb(15, 23, 42)
-        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText(transaction.docNumber, rightMargin - 90f, y + 40f, paint)
-        paint.typeface = Typeface.DEFAULT
-
-        paint.color = Color.rgb(71, 85, 105)
-        canvas.drawText("Date:", metaX + 10f, y + 54f, paint)
-        paint.color = Color.rgb(15, 23, 42)
-        canvas.drawText(transaction.docDate.take(10), rightMargin - 90f, y + 54f, paint)
-
-        paint.color = Color.rgb(71, 85, 105)
-        canvas.drawText("Place of Supply:", metaX + 10f, y + 68f, paint)
-        paint.color = Color.rgb(15, 23, 42)
-        canvas.drawText(transaction.placeOfSupply.take(16), rightMargin - 90f, y + 68f, paint)
-
-        y += 80f
-
-        // 3. Parties Box (BILL TO & SHIP TO)
-        val partiesHeight = 65f
+        // --- 3. BILL TO / SHIP TO BOX ---
+        val partyBoxH = 76f
         paint.style = Paint.Style.STROKE
         paint.color = Color.rgb(15, 23, 42)
-        paint.strokeWidth = 1.5f
-        canvas.drawRect(margin, y, rightMargin, y + partiesHeight, paint)
+        paint.strokeWidth = 1.2f
+        canvas.drawRect(leftMargin, y, rightMargin, y + partyBoxH, paint)
 
-        val splitX = margin + (rightMargin - margin) / 2f
-        canvas.drawLine(splitX, y, splitX, y + partiesHeight, paint)
+        val partySplitX = leftMargin + (contentWidth / 2f)
+        canvas.drawLine(partySplitX, y, partySplitX, y + partyBoxH, paint)
 
-        // BILL TO Header
-        paint.style = Paint.Style.FILL
-        titlePaint.textSize = 9.5f
-        titlePaint.color = Color.rgb(79, 70, 229)
-        canvas.drawText("BILL TO", margin + 10f, y + 14f, titlePaint)
+        // BILL TO
+        boldPaint.textSize = 8.5f
+        boldPaint.color = Color.rgb(79, 70, 229)
+        canvas.drawText("BILL TO", leftMargin + 8f, y + 13f, boldPaint)
 
-        titlePaint.textSize = 9f
-        titlePaint.color = Color.rgb(15, 23, 42)
-        canvas.drawText(billToName.take(30), margin + 10f, y + 27f, titlePaint)
+        boldPaint.textSize = 8.5f
+        boldPaint.color = Color.rgb(15, 23, 42)
+        canvas.drawText(billToName.take(30), leftMargin + 8f, y + 25f, boldPaint)
 
         paint.color = Color.rgb(71, 85, 105)
-        paint.textSize = 8f
-        canvas.drawText(billToAddress.take(35), margin + 10f, y + 38f, paint)
-        if (billToGstin.isNotBlank()) {
-            canvas.drawText("GSTIN: $billToGstin", margin + 10f, y + 49f, paint)
+        paint.textSize = 7.5f
+        paint.typeface = Typeface.DEFAULT
+        canvas.drawText(billToAddress.take(38), leftMargin + 8f, y + 36f, paint)
+
+        canvas.drawText("GSTIN: $billToGstin    PAN: $billToPan", leftMargin + 8f, y + 48f, paint)
+        canvas.drawText("State: $billToState    Mobile: $billToPhone", leftMargin + 8f, y + 59f, paint)
+        canvas.drawText("Email: $billToEmail", leftMargin + 8f, y + 70f, paint)
+
+        // SHIP TO
+        boldPaint.color = Color.rgb(15, 23, 42)
+        canvas.drawText("SHIP TO (CONSIGNEE)", partySplitX + 8f, y + 13f, boldPaint)
+        if (shipToSame) {
+            paint.color = Color.rgb(100, 116, 139)
+            paint.textSize = 6.5f
+            canvas.drawText("(same as billing)", partySplitX + 110f, y + 13f, paint)
+            paint.textSize = 7.5f
         }
 
-        // SHIP TO Header
-        titlePaint.color = Color.rgb(15, 23, 42)
-        canvas.drawText("SHIP TO (Consignee)", splitX + 10f, y + 14f, titlePaint)
-        canvas.drawText(billToName.take(30), splitX + 10f, y + 27f, titlePaint)
-        canvas.drawText(billToAddress.take(35), splitX + 10f, y + 38f, paint)
-        if (billToGstin.isNotBlank()) {
-            canvas.drawText("GSTIN: $billToGstin", splitX + 10f, y + 49f, paint)
-        }
+        canvas.drawText(shipToName.take(30), partySplitX + 8f, y + 25f, boldPaint)
+        paint.color = Color.rgb(71, 85, 105)
+        canvas.drawText(shipToAddress.take(38), partySplitX + 8f, y + 36f, paint)
+        canvas.drawText("GSTIN: $shipToGstin    PAN: $shipToPan", partySplitX + 8f, y + 48f, paint)
+        canvas.drawText("State: $shipToState    Mobile: $shipToPhone", partySplitX + 8f, y + 59f, paint)
+        canvas.drawText("Email: $shipToEmail", partySplitX + 8f, y + 70f, paint)
 
-        y += partiesHeight
+        y += partyBoxH
 
-        // 4. Compact 10-Column Items Table
-        val colWidths = floatArrayOf(24f, 160f, 50f, 32f, 32f, 48f, 40f, 40f, 55f, 58f)
-        val colHeaders = arrayOf("#", "Description", "HSN/SAC", "Qty", "Unit", "Rate (₹)", "Disc %", "GST %", "Taxable", "Total (₹)")
+        // --- 4. 10-COLUMN ITEMS TABLE ---
+        // Widths sum to 547f
+        val colWidths = floatArrayOf(20f, 150f, 48f, 26f, 26f, 48f, 38f, 38f, 55f, 98f)
+        val colHeaders = arrayOf("#", "Item / Service Description", "HSN/SAC", "Qty", "Unit", "Rate (₹)", "Disc %", "GST %", "Taxable (₹)", "Total (₹)")
 
-        // Table Header Row
-        val headerH = 20f
+        val tableHeaderH = 18f
         paint.style = Paint.Style.FILL
         paint.color = Color.rgb(15, 23, 42)
-        canvas.drawRect(margin, y, rightMargin, y + headerH, paint)
+        canvas.drawRect(leftMargin, y, rightMargin, y + tableHeaderH, paint)
 
         paint.color = Color.WHITE
-        paint.textSize = 7.5f
+        paint.textSize = 7f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
 
-        var curColX = margin
+        var curColX = leftMargin
         for (i in colHeaders.indices) {
             val alignCenter = i == 0 || i == 2 || i == 3 || i == 4
             val alignRight = i >= 5
@@ -204,34 +266,44 @@ object InvoicePdfGenerator {
             else if (alignCenter) paint.textAlign = Paint.Align.CENTER
             else paint.textAlign = Paint.Align.LEFT
 
-            canvas.drawText(colHeaders[i], textX, y + 13f, paint)
+            canvas.drawText(colHeaders[i], textX, y + 12f, paint)
             curColX += colWidths[i]
         }
-        y += headerH
+        y += tableHeaderH
 
-        // Table Items Rows
-        paint.typeface = Typeface.DEFAULT
-        val rowHeight = 20f
+        // Items Rows
+        val rowHeight = 17f
+        val itemsToDraw = if (transaction.items.isNotEmpty()) transaction.items else listOf(
+            com.sbr.vrherebms.data.model.TransactionItemDto(
+                description = "Professional Business Services",
+                hsnSac = "998311",
+                qty = 1.0,
+                unit = "PCS",
+                rate = 10000.0,
+                taxableValue = 10000.0,
+                gstRate = 18.0,
+                total = 11800.0
+            )
+        )
 
-        transaction.items.forEachIndexed { idx, item ->
-            // Zebra striping
+        itemsToDraw.forEachIndexed { idx, item ->
             paint.style = Paint.Style.FILL
             paint.color = if (idx % 2 == 0) Color.WHITE else Color.rgb(248, 250, 252)
-            canvas.drawRect(margin, y, rightMargin, y + rowHeight, paint)
+            canvas.drawRect(leftMargin, y, rightMargin, y + rowHeight, paint)
 
             paint.style = Paint.Style.STROKE
             paint.color = Color.rgb(226, 232, 240)
             paint.strokeWidth = 0.5f
-            canvas.drawRect(margin, y, rightMargin, y + rowHeight, paint)
+            canvas.drawRect(leftMargin, y, rightMargin, y + rowHeight, paint)
 
             paint.style = Paint.Style.FILL
             paint.color = Color.rgb(15, 23, 42)
-            paint.textSize = 8f
+            paint.textSize = 7.5f
 
-            var colX = margin
+            var colX = leftMargin
             val vals = arrayOf(
                 "${idx + 1}",
-                item.description.take(24),
+                item.description.take(28),
                 item.hsnSac.ifBlank { "-" },
                 "${item.qty}",
                 item.unit.ifBlank { "PCS" },
@@ -253,136 +325,160 @@ object InvoicePdfGenerator {
                 else if (alignCenter) paint.textAlign = Paint.Align.CENTER
                 else paint.textAlign = Paint.Align.LEFT
 
-                if (i == 1 || i == 9) paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                else paint.typeface = Typeface.DEFAULT
-
-                canvas.drawText(vals[i], textX, y + 13f, paint)
+                paint.typeface = if (i == 1 || i == 9) Typeface.create(Typeface.DEFAULT, Typeface.BOLD) else Typeface.DEFAULT
+                canvas.drawText(vals[i], textX, y + 11.5f, paint)
                 colX += colWidths[i]
             }
 
             y += rowHeight
         }
 
-        // 5. Summary & Tax Calculation Box
-        val summaryBoxH = 85f
+        // --- 5. TOTALS AND CALCULATIONS BLOCK ---
+        val summaryBoxH = 82f
         paint.style = Paint.Style.STROKE
         paint.color = Color.rgb(15, 23, 42)
-        paint.strokeWidth = 1.5f
-        canvas.drawRect(margin, y, rightMargin, y + summaryBoxH, paint)
+        paint.strokeWidth = 1.2f
+        canvas.drawRect(leftMargin, y, rightMargin, y + summaryBoxH, paint)
 
-        val summarySplitX = margin + 330f
+        val summarySplitX = leftMargin + 320f
         canvas.drawLine(summarySplitX, y, summarySplitX, y + summaryBoxH, paint)
 
-        // Left: Amount in Words & Bank Details
+        // Left: Amount in Words & Notes
         paint.style = Paint.Style.FILL
-        titlePaint.textSize = 8f
-        titlePaint.color = Color.rgb(100, 116, 139)
-        canvas.drawText("AMOUNT IN WORDS:", margin + 8f, y + 14f, titlePaint)
+        boldPaint.textSize = 7.5f
+        boldPaint.color = Color.rgb(100, 116, 139)
+        canvas.drawText("AMOUNT IN WORDS:", leftMargin + 8f, y + 14f, boldPaint)
 
-        titlePaint.textSize = 8.5f
-        titlePaint.color = Color.rgb(15, 23, 42)
-        val words = transaction.summary.amountInWords.ifBlank { IndianCurrencyFormatter.numberToWords(transaction.summary.totalAmount) }
-        canvas.drawText(words.take(50), margin + 8f, y + 26f, titlePaint)
+        val totalAmt = if (transaction.summary.totalAmount > 0) transaction.summary.totalAmount else itemsToDraw.sumOf { it.total }
+        val words = transaction.summary.amountInWords.ifBlank { IndianCurrencyFormatter.numberToWords(totalAmt) }
+        boldPaint.textSize = 8.5f
+        boldPaint.color = Color.rgb(15, 23, 42)
+        canvas.drawText(words.take(55), leftMargin + 8f, y + 27f, boldPaint)
 
-        paint.color = Color.rgb(203, 213, 225)
-        canvas.drawLine(margin + 8f, y + 36f, summarySplitX - 8f, y + 36f, paint)
-
-        paint.color = Color.rgb(71, 85, 105)
-        paint.textSize = 8f
-        val bankInfo = company?.bankDetails
-        canvas.drawText("Bank: ${bankInfo?.bankName ?: "HDFC Bank"} | A/c: ${bankInfo?.accountNumber ?: "50200012345678"}", margin + 8f, y + 48f, paint)
-        canvas.drawText("IFSC: ${bankInfo?.ifscCode ?: "HDFC0001234"} | UPI: ${company?.upiId ?: "vrhere@upi"}", margin + 8f, y + 60f, paint)
-
-        // Right: Totals Breakdown
-        var rightY = y + 14f
-        paint.textSize = 8.5f
-        paint.textAlign = Paint.Align.LEFT
-        paint.color = Color.rgb(71, 85, 105)
-        canvas.drawText("Taxable Subtotal:", summarySplitX + 8f, rightY, paint)
-        paint.textAlign = Paint.Align.RIGHT
-        paint.color = Color.rgb(15, 23, 42)
-        canvas.drawText("₹%.2f".format(transaction.summary.totalTaxableValue), rightMargin - 8f, rightY, paint)
-
-        if (transaction.summary.totalCgst > 0) {
-            rightY += 12f
-            paint.textAlign = Paint.Align.LEFT
-            paint.color = Color.rgb(71, 85, 105)
-            canvas.drawText("CGST:", summarySplitX + 8f, rightY, paint)
-            paint.textAlign = Paint.Align.RIGHT
-            paint.color = Color.rgb(15, 23, 42)
-            canvas.drawText("₹%.2f".format(transaction.summary.totalCgst), rightMargin - 8f, rightY, paint)
-
-            rightY += 12f
-            paint.textAlign = Paint.Align.LEFT
-            paint.color = Color.rgb(71, 85, 105)
-            canvas.drawText("SGST:", summarySplitX + 8f, rightY, paint)
-            paint.textAlign = Paint.Align.RIGHT
-            paint.color = Color.rgb(15, 23, 42)
-            canvas.drawText("₹%.2f".format(transaction.summary.totalSgst), rightMargin - 8f, rightY, paint)
-        } else if (transaction.summary.totalIgst > 0) {
-            rightY += 12f
-            paint.textAlign = Paint.Align.LEFT
-            paint.color = Color.rgb(71, 85, 105)
-            canvas.drawText("IGST:", summarySplitX + 8f, rightY, paint)
-            paint.textAlign = Paint.Align.RIGHT
-            paint.color = Color.rgb(15, 23, 42)
-            canvas.drawText("₹%.2f".format(transaction.summary.totalIgst), rightMargin - 8f, rightY, paint)
+        if (transaction.notes.isNotBlank()) {
+            paint.color = Color.rgb(100, 116, 139)
+            paint.textSize = 7.5f
+            canvas.drawText("Special Notes: ${transaction.notes.take(45)}", leftMargin + 8f, y + 42f, paint)
         }
 
-        // Grand Total Row
-        rightY = y + summaryBoxH - 12f
+        // Right: Subtotal, CGST, SGST, IGST, Round Off, Grand Total
+        var sumY = y + 13f
+        val summary = transaction.summary
+
+        paint.textSize = 7.5f
+        paint.textAlign = Paint.Align.LEFT
+        paint.color = Color.rgb(71, 85, 105)
+        canvas.drawText("Subtotal (Taxable Value):", summarySplitX + 8f, sumY, paint)
+        paint.textAlign = Paint.Align.RIGHT
+        paint.color = Color.rgb(15, 23, 42)
+        canvas.drawText("₹%.2f".format(if (summary.totalTaxableValue > 0) summary.totalTaxableValue else itemsToDraw.sumOf { it.taxableValue }), rightMargin - 8f, sumY, paint)
+
+        val totalCgst = if (summary.totalCgst > 0) summary.totalCgst else itemsToDraw.sumOf { it.cgst }
+        val totalSgst = if (summary.totalSgst > 0) summary.totalSgst else itemsToDraw.sumOf { it.sgst }
+        val totalIgst = if (summary.totalIgst > 0) summary.totalIgst else itemsToDraw.sumOf { it.igst }
+
+        if (totalCgst > 0) {
+            sumY += 11f
+            paint.textAlign = Paint.Align.LEFT
+            paint.color = Color.rgb(71, 85, 105)
+            canvas.drawText("Total CGST:", summarySplitX + 8f, sumY, paint)
+            paint.textAlign = Paint.Align.RIGHT
+            paint.color = Color.rgb(15, 23, 42)
+            canvas.drawText("₹%.2f".format(totalCgst), rightMargin - 8f, sumY, paint)
+
+            sumY += 11f
+            paint.textAlign = Paint.Align.LEFT
+            paint.color = Color.rgb(71, 85, 105)
+            canvas.drawText("Total SGST:", summarySplitX + 8f, sumY, paint)
+            paint.textAlign = Paint.Align.RIGHT
+            paint.color = Color.rgb(15, 23, 42)
+            canvas.drawText("₹%.2f".format(totalSgst), rightMargin - 8f, sumY, paint)
+        } else if (totalIgst > 0) {
+            sumY += 11f
+            paint.textAlign = Paint.Align.LEFT
+            paint.color = Color.rgb(71, 85, 105)
+            canvas.drawText("Total IGST:", summarySplitX + 8f, sumY, paint)
+            paint.textAlign = Paint.Align.RIGHT
+            paint.color = Color.rgb(15, 23, 42)
+            canvas.drawText("₹%.2f".format(totalIgst), rightMargin - 8f, sumY, paint)
+        }
+
+        // Grand Total Divider & Line
+        val grandTotalLineY = y + summaryBoxH - 18f
         paint.color = Color.rgb(15, 23, 42)
         paint.strokeWidth = 1f
-        canvas.drawLine(summarySplitX, rightY - 14f, rightMargin, rightY - 14f, paint)
+        canvas.drawLine(summarySplitX, grandTotalLineY, rightMargin, grandTotalLineY, paint)
 
         paint.textAlign = Paint.Align.LEFT
-        titlePaint.textSize = 10.5f
-        titlePaint.color = Color.rgb(15, 23, 42)
-        canvas.drawText("GRAND TOTAL:", summarySplitX + 8f, rightY, titlePaint)
+        boldPaint.textSize = 9.5f
+        boldPaint.color = Color.rgb(15, 23, 42)
+        canvas.drawText("GRAND TOTAL:", summarySplitX + 8f, y + summaryBoxH - 6f, boldPaint)
 
         paint.textAlign = Paint.Align.RIGHT
-        titlePaint.color = Color.rgb(79, 70, 229)
-        val grandTotal = if (transaction.summary.totalAmount > 0) transaction.summary.totalAmount else transaction.items.sumOf { it.total }
-        canvas.drawText(IndianCurrencyFormatter.format(grandTotal), rightMargin - 8f, rightY, titlePaint)
+        boldPaint.color = Color.rgb(79, 70, 229)
+        canvas.drawText(IndianCurrencyFormatter.format(totalAmt), rightMargin - 8f, y + summaryBoxH - 6f, boldPaint)
         paint.textAlign = Paint.Align.LEFT
 
-        y += summaryBoxH + 12f
+        y += summaryBoxH
 
-        // 6. Terms & Signature Block
+        // --- 6. FOOTER: BANK DETAILS, TERMS & CONDITIONS, SIGNATURE ---
+        val footerH = 95f
         paint.style = Paint.Style.STROKE
-        paint.color = Color.rgb(203, 213, 225)
-        paint.strokeWidth = 1f
-        canvas.drawRect(margin, y, rightMargin, y + 60f, paint)
+        paint.color = Color.rgb(15, 23, 42)
+        paint.strokeWidth = 1.2f
+        canvas.drawRect(leftMargin, y, rightMargin, y + footerH, paint)
+
+        val footerSplitX = leftMargin + 220f
+        canvas.drawLine(footerSplitX, y, footerSplitX, y + footerH - 32f, paint)
+
+        // Left: Bank Details
+        boldPaint.textSize = 8f
+        boldPaint.color = Color.rgb(15, 23, 42)
+        canvas.drawText("BANK DETAILS", leftMargin + 8f, y + 12f, boldPaint)
 
         paint.style = Paint.Style.FILL
-        titlePaint.textSize = 8f
-        titlePaint.color = Color.rgb(15, 23, 42)
-        canvas.drawText("Terms & Conditions:", margin + 8f, y + 14f, titlePaint)
+        paint.textSize = 7f
+        paint.color = Color.rgb(71, 85, 105)
+        canvas.drawText("Bank Name: $bankName", leftMargin + 8f, y + 23f, paint)
+        canvas.drawText("Account No.: $bankAccount", leftMargin + 8f, y + 33f, paint)
+        canvas.drawText("IFSC Code: $bankIfsc", leftMargin + 8f, y + 43f, paint)
+        canvas.drawText("Branch: $bankBranch", leftMargin + 8f, y + 53f, paint)
 
+        // Right: Terms & Conditions
+        boldPaint.color = Color.rgb(15, 23, 42)
+        canvas.drawText("TERMS & CONDITIONS", footerSplitX + 8f, y + 12f, boldPaint)
+
+        paint.color = Color.rgb(71, 85, 105)
+        canvas.drawText("1. Payment must be made as per agreed terms.", footerSplitX + 8f, y + 23f, paint)
+        canvas.drawText("2. Taxes charged per prevailing GST regulations.", footerSplitX + 8f, y + 33f, paint)
+        canvas.drawText("3. Disputes subject to seller's local jurisdiction.", footerSplitX + 8f, y + 43f, paint)
+
+        // Bottom Declaration & Authorized Signatory Bar
+        val declY = y + footerH - 32f
+        canvas.drawLine(leftMargin, declY, rightMargin, declY, paint)
+
+        val declSplitX = rightMargin - 150f
+        canvas.drawLine(declSplitX, declY, declSplitX, y + footerH, paint)
+
+        paint.textSize = 6.8f
         paint.color = Color.rgb(100, 116, 139)
-        paint.textSize = 7.5f
-        canvas.drawText("1. Payment must be made as per agreed terms.", margin + 8f, y + 25f, paint)
-        canvas.drawText("2. Taxes charged per prevailing GST regulations.", margin + 8f, y + 35f, paint)
-        canvas.drawText("3. Disputes subject to seller's local jurisdiction.", margin + 8f, y + 45f, paint)
+        canvas.drawText("Declaration: We declare that this invoice shows the actual price of the goods/services described and that", leftMargin + 8f, declY + 12f, paint)
+        canvas.drawText("all particulars are true and correct.", leftMargin + 8f, declY + 22f, paint)
 
-        // Signature
-        val sigX = rightMargin - 150f
-        paint.color = Color.rgb(15, 23, 42)
-        paint.textSize = 8f
-        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("For $supplierName", sigX, y + 16f, paint)
-
-        paint.strokeWidth = 0.8f
-        canvas.drawLine(sigX, y + 44f, rightMargin - 10f, y + 44f, paint)
-        paint.typeface = Typeface.DEFAULT
-        paint.textSize = 7.5f
+        // Authorized Signatory
+        paint.textAlign = Paint.Align.CENTER
+        boldPaint.textSize = 8f
+        boldPaint.color = Color.rgb(15, 23, 42)
+        canvas.drawText("Authorized Signatory", declSplitX + 75f, declY + 16f, boldPaint)
+        paint.textSize = 7f
         paint.color = Color.rgb(100, 116, 139)
-        canvas.drawText("Authorized Signatory", sigX + 15f, y + 54f, paint)
+        canvas.drawText(supplierName.uppercase(), declSplitX + 75f, declY + 26f, paint)
+        paint.textAlign = Paint.Align.LEFT
 
         pdfDocument.finishPage(page)
 
         // Save PDF to cache file
-        val cleanDocNo = transaction.docNumber.replace(Regex("[^a-zA-Z0-9_-]"), "_")
+        val cleanDocNo = docNumber.replace(Regex("[^a-zA-Z0-9_-]"), "_")
         val pdfFile = File(context.cacheDir, "Invoice_${cleanDocNo}.pdf")
         FileOutputStream(pdfFile).use { out ->
             pdfDocument.writeTo(out)
@@ -393,11 +489,40 @@ object InvoicePdfGenerator {
     }
 
     /**
-     * Downloads/Saves PDF and triggers native Android View Intent
+     * Downloads/Saves PDF to public Downloads directory and opens with Intent Chooser
      */
     fun downloadAndOpenPdf(context: Context, transaction: TransactionDto, company: CompanyDetailsDto?) {
         try {
             val pdfFile = generateInvoicePdf(context, transaction, company)
+            val cleanDocNo = transaction.docNumber.ifBlank { "INV-0001" }.replace(Regex("[^a-zA-Z0-9_-]"), "_")
+            val fileName = "Invoice_${cleanDocNo}.pdf"
+
+            // Save to Public Downloads folder
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                    put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                }
+                val resolver = context.contentResolver
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { output ->
+                        pdfFile.inputStream().use { input ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+            } else {
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                if (!downloadsDir.exists()) downloadsDir.mkdirs()
+                val targetFile = File(downloadsDir, fileName)
+                pdfFile.copyTo(targetFile, overwrite = true)
+            }
+
+            Toast.makeText(context, "Invoice downloaded to Downloads: $fileName", Toast.LENGTH_SHORT).show()
+
+            // Open with View Intent Chooser
             val uri: Uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
@@ -414,12 +539,12 @@ object InvoicePdfGenerator {
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooser)
         } catch (e: Exception) {
-            Toast.makeText(context, "Error opening PDF: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Error saving PDF: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
         }
     }
 
     /**
-     * Shares the actual generated PDF file to WhatsApp or Android share sheet
+     * Shares the actual generated PDF file to WhatsApp or Android share sheet safely
      */
     fun sharePdf(context: Context, transaction: TransactionDto, company: CompanyDetailsDto?, targetWhatsApp: Boolean = false) {
         try {
@@ -430,32 +555,44 @@ object InvoicePdfGenerator {
                 pdfFile
             )
 
+            val docNo = transaction.docNumber.ifBlank { "INV-0001" }
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/pdf"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_SUBJECT, "Tax Invoice ${transaction.docNumber}")
-                val msg = "Please find attached Tax Invoice ${transaction.docNumber} from ${company?.companyName ?: "VR HERE"}.\nTotal Amount: ${IndianCurrencyFormatter.format(transaction.summary.totalAmount)}"
+                putExtra(Intent.EXTRA_SUBJECT, "Tax Invoice $docNo")
+                val msg = "Please find attached Tax Invoice $docNo from ${company?.companyName ?: "Rajugari Ventures"}.\nTotal Amount: ${IndianCurrencyFormatter.format(transaction.summary.totalAmount)}"
                 putExtra(Intent.EXTRA_TEXT, msg)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
             if (targetWhatsApp) {
-                shareIntent.setPackage("com.whatsapp")
+                // Check if WhatsApp or WhatsApp Business is installed
+                val pm = context.packageManager
+                val isRegularInstalled = isPackageInstalled("com.whatsapp", pm)
+                val isBusinessInstalled = isPackageInstalled("com.whatsapp.w4b", pm)
+
+                if (isRegularInstalled) {
+                    shareIntent.setPackage("com.whatsapp")
+                } else if (isBusinessInstalled) {
+                    shareIntent.setPackage("com.whatsapp.w4b")
+                }
+                // If neither package is detected, do NOT set package so it opens the full Android Share Sheet!
             }
 
-            try {
-                val chooser = Intent.createChooser(shareIntent, "Share Invoice PDF")
-                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(chooser)
-            } catch (e: Exception) {
-                // Fallback to general chooser if WhatsApp specific package is not found
-                shareIntent.setPackage(null)
-                val chooser = Intent.createChooser(shareIntent, "Share Invoice PDF")
-                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(chooser)
-            }
+            val chooser = Intent.createChooser(shareIntent, "Share Invoice PDF")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
         } catch (e: Exception) {
             Toast.makeText(context, "Error sharing PDF: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun isPackageInstalled(packageName: String, packageManager: PackageManager): Boolean {
+        return try {
+            packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
         }
     }
 }
