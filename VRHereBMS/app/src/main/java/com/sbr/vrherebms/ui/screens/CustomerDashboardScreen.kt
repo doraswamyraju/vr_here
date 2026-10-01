@@ -166,7 +166,8 @@ fun CustomerDashboardScreen(
                             selectedOrderId = ""
                         },
                         showNotifications = true,
-                        hasUnreadNotifications = viewModel.notifications.any { !it.isRead },
+                        hasUnreadNotifications = unreadNotificationsCount > 0,
+                        unreadNotificationsCount = unreadNotificationsCount,
                         onNotificationsClick = { isShowingNotifications = true },
                         showLogout = true,
                         onLogoutClick = { showLogoutDialog = true },
@@ -461,6 +462,42 @@ fun CustomerDashboardScreen(
                     notifications = viewModel.notifications,
                     onMarkAsRead = { notificationId ->
                         viewModel.markNotificationAsRead(notificationId)
+                    },
+                    onMarkAllAsRead = {
+                        viewModel.markAllNotificationsAsRead()
+                    },
+                    onNotificationClick = { notif ->
+                        viewModel.markNotificationAsRead(notif.id)
+                        isShowingNotifications = false
+                        val typeLower = notif.type.lowercase()
+                        val titleLower = notif.title.lowercase()
+                        val msgLower = notif.message.lowercase()
+                        when {
+                            typeLower == "order" || titleLower.contains("order") || msgLower.contains("order") -> {
+                                val matchedOrder = viewModel.orders.firstOrNull { ord ->
+                                    notif.message.contains(ord.id.takeLast(8), ignoreCase = true) ||
+                                    notif.message.contains(ord.id, ignoreCase = true) ||
+                                    notif.title.contains(ord.serviceName, ignoreCase = true) ||
+                                    notif.message.contains(ord.serviceName, ignoreCase = true)
+                                }
+                                if (matchedOrder != null) {
+                                    selectedOrderId = matchedOrder.id
+                                }
+                                activeTab = "Orders"
+                            }
+                            typeLower == "ticket" || titleLower.contains("ticket") || msgLower.contains("ticket") || titleLower.contains("support") -> {
+                                activeTab = "Support"
+                            }
+                            typeLower == "payment" || titleLower.contains("invoice") || msgLower.contains("invoice") || titleLower.contains("payment") -> {
+                                activeTab = "Invoices"
+                            }
+                            typeLower.contains("bookkeeping") || titleLower.contains("bookkeeping") || msgLower.contains("bookkeeping") -> {
+                                activeTab = "Bookkeeping"
+                            }
+                            else -> {
+                                activeTab = "Home"
+                            }
+                        }
                     },
                     onDismiss = { isShowingNotifications = false }
                 )

@@ -2,6 +2,7 @@ package com.sbr.vrherebms.ui.screens.customer
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -10,13 +11,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -80,24 +79,29 @@ fun LetsTrackChatDialog(
                     padding: 20px;
                 }
                 .spinner {
-                    width: 38px;
-                    height: 38px;
+                    width: 36px;
+                    height: 36px;
                     border: 3px solid rgba(99, 102, 241, 0.2);
                     border-top-color: #6366F1;
                     border-radius: 50%;
                     animation: spin 0.8s linear infinite;
-                    margin-bottom: 14px;
+                    margin-bottom: 12px;
                 }
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
+                }
+
+                /* Hide redundant launcher button inside webview since dialog is already open */
+                .lt-widget-btn, #letstrack-widget-btn {
+                    display: none !important;
                 }
             </style>
         </head>
         <body>
             <div id="loading-view">
                 <div class="spinner"></div>
-                <div>Connecting to VR HERE Support...</div>
+                <div>Connecting to VR HERE Live Support...</div>
             </div>
 
             <script>
@@ -143,11 +147,6 @@ fun LetsTrackChatDialog(
                             return;
                         }
                     }
-                    var fallbackBtn = document.querySelector('.lt-widget-btn, #letstrack-widget-btn');
-                    if (fallbackBtn) {
-                        fallbackBtn.click();
-                        hideLoading();
-                    }
                 }
 
                 function hideLoading() {
@@ -160,9 +159,8 @@ fun LetsTrackChatDialog(
                     s.src = "https://livechat.vrhere.in/widget.js";
                     s.async = true;
                     s.onload = function() {
-                        setTimeout(autoOpenWidget, 400);
-                        setTimeout(autoOpenWidget, 1200);
-                        setTimeout(autoOpenWidget, 2500);
+                        setTimeout(autoOpenWidget, 300);
+                        setTimeout(autoOpenWidget, 1000);
                     };
                     d.getElementsByTagName('head')[0].appendChild(s);
                 })();
@@ -175,126 +173,135 @@ fun LetsTrackChatDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(Color(0xFF0F172A))
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 12.dp),
-            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // Header Bar
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Clean Native Top Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .background(Color(0xFF0F172A))
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                        .background(Color(0xFF1E293B))
-                        .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    IconButton(
+                        onClick = onClose,
+                        modifier = Modifier.size(36.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .background(Color(0xFF10B981), CircleShape)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
                         )
-                        Column {
-                            Text(
-                                text = "VR HERE Live Chat",
-                                color = Color.White,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "LetsTrack Support Engine",
-                                color = Color(0xFF94A3B8),
-                                fontSize = 11.sp
-                            )
-                        }
                     }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        IconButton(
-                            onClick = { webViewInstance?.reload() },
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Reload Chat",
-                                tint = Color(0xFF94A3B8),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                    Box(
+                        modifier = Modifier
+                            .size(9.dp)
+                            .background(Color(0xFF10B981), CircleShape)
+                    )
 
-                        IconButton(
-                            onClick = onClose,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Close Chat",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                    Column {
+                        Text(
+                            text = "VR HERE Live Support",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "LetsTrack Live Agent",
+                            color = Color(0xFF94A3B8),
+                            fontSize = 10.sp
+                        )
                     }
                 }
 
-                HorizontalDivider(thickness = 1.dp, color = Color(0xFF334155))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = { webViewInstance?.reload() },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Reload",
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
 
-                // Embedded Webview Container
-                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    AndroidView(
-                        factory = { ctx ->
-                            WebView(ctx).apply {
-                                webViewInstance = this
-                                settings.apply {
-                                    javaScriptEnabled = true
-                                    domStorageEnabled = true
-                                    databaseEnabled = true
-                                    useWideViewPort = true
-                                    loadWithOverviewMode = true
-                                    mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                                    cacheMode = WebSettings.LOAD_DEFAULT
-                                    userAgentString = settings.userAgentString + " VRHereApp/Android"
-                                }
-                                webChromeClient = WebChromeClient()
-                                webViewClient = object : WebViewClient() {
-                                    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                                        isLoading = true
-                                    }
-                                    override fun onPageFinished(view: WebView?, url: String?) {
-                                        isLoading = false
-                                    }
-                                }
-                                setBackgroundColor(0xFF0F172A.toInt())
-                                loadDataWithBaseURL("https://vrhere.in", htmlContent, "text/html", "UTF-8", null)
+                    IconButton(
+                        onClick = onClose,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(thickness = 1.dp, color = Color(0xFF1E293B))
+
+            // Full-bleed Embedded WebView
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            webViewInstance = this
+                            settings.apply {
+                                javaScriptEnabled = true
+                                domStorageEnabled = true
+                                databaseEnabled = true
+                                useWideViewPort = true
+                                loadWithOverviewMode = true
+                                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                                cacheMode = WebSettings.LOAD_DEFAULT
+                                userAgentString = settings.userAgentString + " VRHereApp/Android"
                             }
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-
-                    if (isLoading) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF6366F1),
-                                modifier = Modifier.size(36.dp)
-                            )
+                            webChromeClient = WebChromeClient()
+                            webViewClient = object : WebViewClient() {
+                                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                    isLoading = true
+                                }
+                                override fun onPageFinished(view: WebView?, url: String?) {
+                                    isLoading = false
+                                }
+                            }
+                            setBackgroundColor(0xFF0F172A.toInt())
+                            loadDataWithBaseURL("https://vrhere.in", htmlContent, "text/html", "UTF-8", null)
                         }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF6366F1),
+                            modifier = Modifier.size(36.dp)
+                        )
                     }
                 }
             }

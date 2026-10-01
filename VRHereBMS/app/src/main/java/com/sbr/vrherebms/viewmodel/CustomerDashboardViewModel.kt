@@ -235,4 +235,15 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
             }
         }
     }
+
+    fun markAllNotificationsAsRead() {
+        viewModelScope.launch {
+            try {
+                api.markAllNotificationsAsRead()
+                notifications = notifications.map { it.copy(isRead = true) }
+            } catch (e: Exception) {
+                notifications = notifications.map { it.copy(isRead = true) }
+            }
+        }
+    }
 }

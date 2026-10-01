@@ -260,6 +260,10 @@ fun CustomerOrdersTab(
                     val pendingReqs = order.customerRequirements.count { !it.isClientCompleted }
                     val progress = getStatusProgress(order.status)
 
+                    val cardPayments = viewModel.payments.filter { p -> p.order?.id == order.id || p.serviceName.equals(order.serviceName, ignoreCase = true) }
+                    val cardPaid = cardPayments.filter { it.status == "Completed" || it.status == "Paid" }.sumOf { it.amount }
+                    val cardBalance = (order.price - cardPaid).coerceAtLeast(0.0)
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -299,7 +303,34 @@ fun CustomerOrdersTab(
                                         }
                                     }
                                 }
-                                StatusBadgeWidget(status = order.status)
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    StatusBadgeWidget(status = order.status)
+                                    if (cardBalance <= 0.0) {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = Color(0xFFECFDF5),
+                                            border = BorderStroke(1.dp, Color(0xFFA7F3D0))
+                                        ) {
+                                            Text("PAID", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF047857), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                        }
+                                    } else if (cardPaid > 0.0) {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = Color(0xFFFFFBEB),
+                                            border = BorderStroke(1.dp, Color(0xFFFDE68A))
+                                        ) {
+                                            Text("₹${cardBalance.toInt()} DUE", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFFB45309), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                        }
+                                    } else {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = Color(0xFFFEF2F2),
+                                            border = BorderStroke(1.dp, Color(0xFFFECDD3))
+                                        ) {
+                                            Text("UNPAID", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFFDC2626), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                        }
+                                    }
+                                }
                             }
 
                             // Service Title & Price
@@ -430,7 +461,52 @@ fun CustomerOrdersTab(
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        StatusBadgeWidget(status = order.status)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            StatusBadgeWidget(status = order.status)
+                            if (balance <= 0.0) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color(0xFFECFDF5),
+                                    border = BorderStroke(1.dp, Color(0xFFA7F3D0))
+                                ) {
+                                    Text(
+                                        "PAID IN FULL",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFF047857),
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
+                                    )
+                                }
+                            } else if (totalPaid > 0.0) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color(0xFFFFFBEB),
+                                    border = BorderStroke(1.dp, Color(0xFFFDE68A))
+                                ) {
+                                    Text(
+                                        "PARTIALLY PAID",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFFB45309),
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
+                                    )
+                                }
+                            } else {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color(0xFFFEF2F2),
+                                    border = BorderStroke(1.dp, Color(0xFFFECDD3))
+                                ) {
+                                    Text(
+                                        "UNPAID",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFFDC2626),
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     // Quick Action Bar (Pay Balance / Ask Support)
@@ -462,6 +538,71 @@ fun CustomerOrdersTab(
                                 Icon(Icons.Default.CreditCard, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text("Pay Balance ₹${balance.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color.White)
+                            }
+                        }
+                    }
+
+                    // Prominent Outstanding Balance Alert Banner (matching web)
+                    if (balance > 0) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF1F2)),
+                            border = BorderStroke(1.dp, Color(0xFFFECDD3))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .background(Color(0xFFDC2626), RoundedCornerShape(10.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CreditCard,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "Pending Balance: ₹${balance.toInt()}",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color(0xFF991B1B)
+                                        )
+                                        Text(
+                                            text = "Total package ₹${order.price.toInt()} • Paid ₹${totalPaid.toInt()}",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFFBE123C)
+                                        )
+                                    }
+                                }
+                                Button(
+                                    onClick = { showPaymentBottomSheet = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        "Settle ₹${balance.toInt()}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                }
                             }
                         }
                     }
@@ -693,6 +834,44 @@ fun CustomerOrdersTab(
 
             // --- SUB-TAB 1: REQUIREMENTS & ACTION ITEMS ---
             if (currentDetailTab == "requirements") {
+                item {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("TOTAL FEE", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
+                                Text("₹${order.price.toInt()}", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                            }
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFECFDF5)),
+                            border = BorderStroke(1.dp, Color(0xFFA7F3D0))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("PAID", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF047857))
+                                Text("₹${totalPaid.toInt()}", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFF064E3B))
+                            }
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
+                            border = BorderStroke(1.dp, Color(0xFFFECDD3))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("BALANCE", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFFBE123C))
+                                Text("₹${balance.toInt()}", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFF991B1B))
+                            }
+                        }
+                    }
+                }
+
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),

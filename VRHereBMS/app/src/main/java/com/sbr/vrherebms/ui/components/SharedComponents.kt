@@ -291,6 +291,7 @@ fun VRHeader(
     onLogoClick: (() -> Unit)? = null,
     showNotifications: Boolean = true,
     hasUnreadNotifications: Boolean = false,
+    unreadNotificationsCount: Int = 0,
     onNotificationsClick: (() -> Unit)? = null,
     showLogout: Boolean = true,
     onLogoutClick: (() -> Unit)? = null,
@@ -372,14 +373,26 @@ fun VRHeader(
                                 tint = Slate700,
                                 modifier = Modifier.size(22.dp)
                             )
-                            if (hasUnreadNotifications) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .background(PrimaryRed, CircleShape)
-                                        .border(1.5.dp, Color.White, CircleShape)
-                                        .offset(x = 1.dp, y = (-1).dp)
-                                )
+                            if (unreadNotificationsCount > 0 || hasUnreadNotifications) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = PrimaryRed,
+                                    border = BorderStroke(1.5.dp, Color.White),
+                                    modifier = Modifier.offset(x = 5.dp, y = (-4).dp)
+                                ) {
+                                    val badgeText = if (unreadNotificationsCount > 99) "99+" else if (unreadNotificationsCount > 0) "$unreadNotificationsCount" else ""
+                                    if (badgeText.isNotEmpty()) {
+                                        Text(
+                                            text = badgeText,
+                                            color = Color.White,
+                                            fontSize = 8.5.sp,
+                                            fontWeight = FontWeight.Black,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.5.dp)
+                                        )
+                                    } else {
+                                        Box(modifier = Modifier.size(7.dp))
+                                    }
+                                }
                             }
                         }
                     }
@@ -426,8 +439,12 @@ fun VRHeader(
 fun NotificationsSheet(
     notifications: List<NotificationResponse>,
     onMarkAsRead: (String) -> Unit,
+    onMarkAllAsRead: (() -> Unit)? = null,
+    onNotificationClick: ((NotificationResponse) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
+    val unreadCount = notifications.count { !it.isRead }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = BgLight,
@@ -447,24 +464,61 @@ fun NotificationsSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Notifications",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Black,
-                    color = TextDark
-                )
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .size(30.dp)
-                        .background(BgInput, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = TextMuted,
-                        modifier = Modifier.size(16.dp)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Notifications",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        color = TextDark
                     )
+                    if (unreadCount > 0) {
+                        Surface(
+                            shape = CircleShape,
+                            color = PrimaryRed.copy(alpha = 0.1f),
+                            border = BorderStroke(1.dp, PrimaryRed.copy(alpha = 0.25f))
+                        ) {
+                            Text(
+                                text = "$unreadCount new",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                color = PrimaryRed,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (unreadCount > 0 && onMarkAllAsRead != null) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.dp, BorderLight),
+                            modifier = Modifier.clickable { onMarkAllAsRead() }
+                        ) {
+                            Text(
+                                text = "Mark all read",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextDark,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(30.dp)
+                            .background(BgInput, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = TextMuted,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
 
@@ -504,17 +558,25 @@ fun NotificationsSheet(
                             "warning" -> Amber500
                             "success" -> Emerald500
                             "info" -> Indigo500
+                            "order" -> Color(0xFF2563EB)
+                            "ticket" -> Color(0xFF7C3AED)
+                            "payment" -> Color(0xFF059669)
                             else -> Purple40
                         }
 
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onMarkAsRead(item.id) },
+                                .clickable {
+                                    if (!item.isRead) {
+                                        onMarkAsRead(item.id)
+                                    }
+                                    onNotificationClick?.invoke(item)
+                                },
                             shape = RoundedCornerShape(14.dp),
-                            color = Color.White,
-                            border = BorderStroke(1.dp, BorderLight),
-                            shadowElevation = 1.dp
+                            color = if (item.isRead) Color.White else Color(0xFFF8FAFC),
+                            border = BorderStroke(1.dp, if (item.isRead) BorderLight else Color(0xFFCBD5E1)),
+                            shadowElevation = if (item.isRead) 0.5.dp else 2.dp
                         ) {
                             Row(
                                 modifier = Modifier
@@ -534,31 +596,48 @@ fun NotificationsSheet(
                                     modifier = Modifier.weight(1f),
                                     verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Text(
-                                        text = item.title,
-                                        fontSize = 13.sp,
-                                        fontWeight = if (item.isRead) FontWeight.SemiBold else FontWeight.Bold,
-                                        color = TextDark
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = item.title,
+                                            fontSize = 13.sp,
+                                            fontWeight = if (item.isRead) FontWeight.SemiBold else FontWeight.Black,
+                                            color = TextDark
+                                        )
+                                        if (!item.isRead) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(6.dp)
+                                                    .background(PrimaryRed, CircleShape)
+                                            )
+                                        }
+                                    }
                                     Text(
                                         text = item.message,
                                         fontSize = 11.sp,
                                         color = TextMuted,
                                         lineHeight = 15.sp
                                     )
-                                    Text(
-                                        text = item.createdAt ?: "",
-                                        fontSize = 9.sp,
-                                        color = TextMuted.copy(alpha = 0.8f)
-                                    )
-                                }
-
-                                if (!item.isRead) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .background(Indigo500, CircleShape)
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = item.createdAt.take(16).replace("T", " "),
+                                            fontSize = 9.sp,
+                                            color = TextMuted.copy(alpha = 0.8f)
+                                        )
+                                        Text(
+                                            text = "Open ›",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = PrimaryRed
+                                        )
+                                    }
                                 }
                             }
                         }
