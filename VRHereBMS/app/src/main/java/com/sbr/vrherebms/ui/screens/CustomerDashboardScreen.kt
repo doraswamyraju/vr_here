@@ -407,13 +407,13 @@ fun CustomerDashboardScreen(
 
                             // Main Floating Red Trigger Toggle Button
                             val rotationAngle by animateFloatAsState(
-                                targetValue = if (isFloatingMenuExpanded) 135f else 0f,
+                                targetValue = if (isFloatingMenuExpanded) 90f else 0f,
                                 label = "fabRotation"
                             )
 
                             Surface(
                                 modifier = Modifier
-                                    .size(52.dp)
+                                    .size(54.dp)
                                     .clickable { isFloatingMenuExpanded = !isFloatingMenuExpanded },
                                 shape = CircleShape,
                                 color = Color(0xFFDC2626),
@@ -430,11 +430,11 @@ fun CustomerDashboardScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Contact Actions",
+                                        imageVector = if (isFloatingMenuExpanded) Icons.Default.Close else Icons.Default.SupportAgent,
+                                        contentDescription = "Live Support & Contact Actions",
                                         tint = Color.White,
                                         modifier = Modifier
-                                            .size(26.dp)
+                                            .size(28.dp)
                                             .graphicsLayer(rotationZ = rotationAngle)
                                     )
                                 }
