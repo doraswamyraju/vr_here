@@ -303,11 +303,11 @@ fun VRHeader(
         modifier = modifier
             .fillMaxWidth()
             .background(Color.White)
+            .statusBarsPadding()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
                 .height(58.dp)
                 .padding(horizontal = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
