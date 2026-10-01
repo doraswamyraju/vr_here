@@ -498,7 +498,7 @@ fun LetsTrackChatDialog(
                         }, "AndroidBridge")
 
                         webChromeClient = WebChromeClient()
-                        webViewClient = object : WebViewClient()
+                        webViewClient = WebViewClient()
 
                         loadDataWithBaseURL("https://livechat.vrhere.in", htmlContent, "text/html", "UTF-8", null)
                     }
