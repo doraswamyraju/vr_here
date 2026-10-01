@@ -71,7 +71,7 @@ private data class QuickServiceItem(
     val icon: ImageVector,
     val iconBg: Color,
     val iconTint: Color,
-    val key: String,
+    val targetTab: String,
     val url: String? = null
 )
 
@@ -137,6 +137,36 @@ fun CustomerHomeTab(
     }
     val totalOutstanding = unpaidOrders.sumOf { it.price.toLong() }
     val totalVolume = viewModel.orders.sumOf { it.price }
+    val searchSuggestions = listOf(
+        "Private Limited Company Registration",
+        "Limited Liability Partnership (LLP)",
+        "GST Registration",
+        "GST Return Filing",
+        "Income Tax Return",
+        "MSME / Udyam Registration",
+        "Trademark Registration",
+        "FSSAI Food License",
+        "ISO Certification",
+        "Import Export Code (IEC)",
+        "Company Annual Compliances",
+        "Startup India DPIIT Registration"
+    )
+
+    val filteredSuggestions = remember(searchQuery) {
+        if (searchQuery.isBlank()) emptyList()
+        else searchSuggestions.filter { it.contains(searchQuery, ignoreCase = true) }.take(5)
+    }
+
+    val topServices = listOf(
+        QuickServiceItem(1, "Pvt Ltd Setup", "MCA Approval", Icons.Default.Business, Color(0xFFFEF2F2), PrimaryRed, "Services", "https://vrhere.in/pvt-ltd-registration"),
+        QuickServiceItem(2, "GST Filing", "Monthly / QRMP", Icons.Default.FactCheck, Color(0xFFECFDF5), Emerald500, "Services", "https://vrhere.in/gst-registration"),
+        QuickServiceItem(3, "Income Tax", "ITR 1-7 Assessment", Icons.Default.Computer, Color(0xFFEFF6FF), Color(0xFF2563EB), "Services", "https://vrhere.in/income-tax-return"),
+        QuickServiceItem(4, "Partnership", "Firm & Deed", Icons.Default.People, Color(0xFFFFFBEB), Amber500, "Services", "https://vrhere.in/partnership-firm"),
+        QuickServiceItem(5, "ISO Standards", "9001 / 27001", Icons.Default.Security, Color(0xFFFAF5FF), Color(0xFF9333EA), "Services"),
+        QuickServiceItem(6, "Audit Support", "Statutory & Tax", Icons.Default.AssignmentTurnedIn, Color(0xFFFFF1F2), Color(0xFFE11D48), "Support"),
+        QuickServiceItem(7, "MSME Loans", "Bank DPR & CMA", Icons.Default.CurrencyRupee, Color(0xFFECFDF5), Color(0xFF059669), "Services"),
+        QuickServiceItem(8, "ROC CCFS-2026", "Penalty Relief", Icons.Default.AutoAwesome, Color(0xFFFFF7ED), Color(0xFFEA580C), "Services", "https://vrhere.in/compliance-scheme-2026")
+    )
 
     val promoOffers = remember {
         listOf(
@@ -1372,7 +1402,7 @@ fun CustomerHomeTab(
                                                     if (service.url != null) {
                                                         onOpenLiveService(service.name, service.url)
                                                     } else {
-                                                        onSelectTab(service.key)
+                                                        onSelectTab(service.targetTab)
                                                     }
                                                 },
                                             shape = RoundedCornerShape(14.dp),

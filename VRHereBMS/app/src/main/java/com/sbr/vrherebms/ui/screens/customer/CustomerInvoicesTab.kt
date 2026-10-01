@@ -173,7 +173,7 @@ fun CustomerInvoicesTab(
                 )
             ),
             summary = TransactionSummaryDto(
-                totalTaxable = subtotal,
+                totalTaxableValue = subtotal,
                 totalCgst = cgst,
                 totalSgst = sgst,
                 totalIgst = 0.0,
