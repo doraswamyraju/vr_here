@@ -212,6 +212,48 @@ fun PartyItemCard(
                             )
                         }
                     }
+
+                    // Save to Phone Contacts Button
+                    if (party.name.isNotBlank() || party.phone.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                try {
+                                    val intent = Intent(android.provider.ContactsContract.Intents.Insert.ACTION).apply {
+                                        type = android.provider.ContactsContract.RawContacts.CONTENT_TYPE
+                                        putExtra(android.provider.ContactsContract.Intents.Insert.NAME, party.name)
+                                        if (party.phone.isNotBlank()) {
+                                            putExtra(android.provider.ContactsContract.Intents.Insert.PHONE, party.phone)
+                                            putExtra(android.provider.ContactsContract.Intents.Insert.PHONE_TYPE, android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_WORK)
+                                        }
+                                        if (party.email.isNotBlank()) {
+                                            putExtra(android.provider.ContactsContract.Intents.Insert.EMAIL, party.email)
+                                            putExtra(android.provider.ContactsContract.Intents.Insert.EMAIL_TYPE, android.provider.ContactsContract.CommonDataKinds.Email.TYPE_WORK)
+                                        }
+                                        if (party.tradeName.isNotBlank() || party.partyType.isNotBlank()) {
+                                            putExtra(android.provider.ContactsContract.Intents.Insert.COMPANY, party.tradeName.ifBlank { party.name })
+                                            putExtra(android.provider.ContactsContract.Intents.Insert.JOB_TITLE, "${party.partyType} (VR HERE)")
+                                        }
+                                        if (party.billingAddress.isNotBlank()) {
+                                            putExtra(android.provider.ContactsContract.Intents.Insert.POSTAL, "${party.billingAddress}, ${party.state} ${party.pincode}".trim().trim(','))
+                                        }
+                                    }
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Cannot open contacts app: ${e.message}", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier
+                                .size(30.dp)
+                                .background(Color(0xFFFEF3C7), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PersonAddAlt1,
+                                contentDescription = "Save to Phone Contacts",
+                                tint = Color(0xFFD97706),
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+                    }
                 }
 
                 // Delete Button

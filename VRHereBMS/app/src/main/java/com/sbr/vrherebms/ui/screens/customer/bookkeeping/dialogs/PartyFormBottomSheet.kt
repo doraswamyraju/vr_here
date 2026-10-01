@@ -1,6 +1,12 @@
 package com.sbr.vrherebms.ui.screens.customer.bookkeeping.dialogs
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.ContactsContract
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContactPhone
+import androidx.compose.material.icons.filled.PersonAddAlt1
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +54,77 @@ fun PartyFormBottomSheet(
     var state by remember { mutableStateOf(existingParty?.state ?: "Andhra Pradesh") }
     var pincode by remember { mutableStateOf(existingParty?.pincode ?: "") }
 
+    // Native Contact Picker Activity Launcher
+    val contactPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickContact()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val cursor = context.contentResolver.query(uri, null, null, null, null)
+                cursor?.use { c ->
+                    if (c.moveToFirst()) {
+                        val idIndex = c.getColumnIndex(ContactsContract.Contacts._ID)
+                        val nameIndex = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+                        val hasPhoneIndex = c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
+
+                        if (nameIndex != -1) {
+                            val pickedName = c.getString(nameIndex)
+                            if (!pickedName.isNullOrBlank() && name.isBlank()) {
+                                name = pickedName
+                            }
+                        }
+
+                        val contactId = if (idIndex != -1) c.getString(idIndex) else null
+                        val hasPhone = if (hasPhoneIndex != -1) c.getInt(hasPhoneIndex) > 0 else true
+
+                        if (contactId != null && hasPhone) {
+                            // Query Phone number
+                            val phoneCursor = context.contentResolver.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                null,
+                                "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+                                arrayOf(contactId),
+                                null
+                            )
+                            phoneCursor?.use { pc ->
+                                if (pc.moveToFirst()) {
+                                    val pIndex = pc.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                                    if (pIndex != -1) {
+                                        val rawNumber = pc.getString(pIndex)
+                                        phone = rawNumber.replace(Regex("[^0-9+]"), "")
+                                    }
+                                }
+                            }
+
+                            // Query Email
+                            val emailCursor = context.contentResolver.query(
+                                ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                                null,
+                                "${ContactsContract.CommonDataKinds.Email.CONTACT_ID} = ?",
+                                arrayOf(contactId),
+                                null
+                            )
+                            emailCursor?.use { ec ->
+                                if (ec.moveToFirst()) {
+                                    val eIndex = ec.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS)
+                                    if (eIndex != -1) {
+                                        val pickedEmail = ec.getString(eIndex)
+                                        if (!pickedEmail.isNullOrBlank() && email.isBlank()) {
+                                            email = pickedEmail
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Toast.makeText(context, "Contact imported successfully", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Could not read contact: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -79,11 +158,30 @@ fun PartyFormBottomSheet(
                     )
                 }
 
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.background(Color(0xFFF1F5F9), CircleShape).size(32.dp)
-                ) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = textMuted, modifier = Modifier.size(16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // Import Contact Quick Action
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFFEEF2FF),
+                        border = BorderStroke(1.dp, Color(0xFFC7D2FE)),
+                        modifier = Modifier.clickable { contactPickerLauncher.launch(null) }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(Icons.Default.ContactPhone, contentDescription = "Pick Contact", tint = primaryIndigo, modifier = Modifier.size(14.dp))
+                            Text("Phone Contacts", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = primaryIndigo)
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.background(Color(0xFFF1F5F9), CircleShape).size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = textMuted, modifier = Modifier.size(16.dp))
+                    }
                 }
             }
 
@@ -149,6 +247,11 @@ fun PartyFormBottomSheet(
                     value = phone,
                     onValueChange = { phone = it },
                     label = { Text("Phone / Mobile") },
+                    trailingIcon = {
+                        IconButton(onClick = { contactPickerLauncher.launch(null) }) {
+                            Icon(Icons.Default.ContactPhone, contentDescription = "Pick from contacts", tint = primaryIndigo, modifier = Modifier.size(18.dp))
+                        }
+                    },
                     modifier = Modifier.weight(1f),
                     singleLine = true
                 )
@@ -214,6 +317,45 @@ fun PartyFormBottomSheet(
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(if (existingParty != null) "Update Party Record" else "Save to Master Directory", fontWeight = FontWeight.Bold)
+            }
+
+            // Save to phone contacts action
+            if (phone.isNotBlank() || name.isNotBlank()) {
+                OutlinedButton(
+                    onClick = {
+                        try {
+                            val intent = Intent(ContactsContract.Intents.Insert.ACTION).apply {
+                                type = ContactsContract.RawContacts.CONTENT_TYPE
+                                putExtra(ContactsContract.Intents.Insert.NAME, name)
+                                if (phone.isNotBlank()) {
+                                    putExtra(ContactsContract.Intents.Insert.PHONE, phone)
+                                    putExtra(ContactsContract.Intents.Insert.PHONE_TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_WORK)
+                                }
+                                if (email.isNotBlank()) {
+                                    putExtra(ContactsContract.Intents.Insert.EMAIL, email)
+                                    putExtra(ContactsContract.Intents.Insert.EMAIL_TYPE, ContactsContract.CommonDataKinds.Email.TYPE_WORK)
+                                }
+                                if (tradeName.isNotBlank() || partyType.isNotBlank()) {
+                                    putExtra(ContactsContract.Intents.Insert.COMPANY, tradeName.ifBlank { name })
+                                    putExtra(ContactsContract.Intents.Insert.JOB_TITLE, "$partyType (VR HERE)")
+                                }
+                                if (billingAddress.isNotBlank()) {
+                                    putExtra(ContactsContract.Intents.Insert.POSTAL, "$billingAddress, $state $pincode".trim().trim(','))
+                                }
+                            }
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Cannot open contacts app: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, primaryIndigo),
+                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                ) {
+                    Icon(Icons.Default.PersonAddAlt1, contentDescription = null, tint = primaryIndigo, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Save Party to Phone Contacts", color = primaryIndigo, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
