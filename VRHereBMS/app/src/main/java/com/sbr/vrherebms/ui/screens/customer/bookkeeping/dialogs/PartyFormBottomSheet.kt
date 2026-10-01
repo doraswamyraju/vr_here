@@ -54,74 +54,54 @@ fun PartyFormBottomSheet(
     var state by remember { mutableStateOf(existingParty?.state ?: "Andhra Pradesh") }
     var pincode by remember { mutableStateOf(existingParty?.pincode ?: "") }
 
-    // Native Contact Picker Activity Launcher
+    // Native Phone Contact Picker (Direct URI intent that automatically grants permission without security denial)
     val contactPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickContact()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            try {
-                val cursor = context.contentResolver.query(uri, null, null, null, null)
-                cursor?.use { c ->
-                    if (c.moveToFirst()) {
-                        val idIndex = c.getColumnIndex(ContactsContract.Contacts._ID)
-                        val nameIndex = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
-                        val hasPhoneIndex = c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val contactUri: Uri? = result.data?.data
+            if (contactUri != null) {
+                try {
+                    val projection = arrayOf(
+                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                        ContactsContract.CommonDataKinds.Phone.NUMBER
+                    )
+                    val cursor = context.contentResolver.query(contactUri, projection, null, null, null)
+                    cursor?.use { c ->
+                        if (c.moveToFirst()) {
+                            val nameIdx = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                            val numberIdx = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
 
-                        if (nameIndex != -1) {
-                            val pickedName = c.getString(nameIndex)
-                            if (!pickedName.isNullOrBlank() && name.isBlank()) {
-                                name = pickedName
-                            }
-                        }
-
-                        val contactId = if (idIndex != -1) c.getString(idIndex) else null
-                        val hasPhone = if (hasPhoneIndex != -1) c.getInt(hasPhoneIndex) > 0 else true
-
-                        if (contactId != null && hasPhone) {
-                            // Query Phone number
-                            val phoneCursor = context.contentResolver.query(
-                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                                null,
-                                "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
-                                arrayOf(contactId),
-                                null
-                            )
-                            phoneCursor?.use { pc ->
-                                if (pc.moveToFirst()) {
-                                    val pIndex = pc.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-                                    if (pIndex != -1) {
-                                        val rawNumber = pc.getString(pIndex)
-                                        phone = rawNumber.replace(Regex("[^0-9+]"), "")
-                                    }
+                            if (nameIdx != -1) {
+                                val pickedName = c.getString(nameIdx)
+                                if (!pickedName.isNullOrBlank() && name.isBlank()) {
+                                    name = pickedName
                                 }
                             }
 
-                            // Query Email
-                            val emailCursor = context.contentResolver.query(
-                                ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-                                null,
-                                "${ContactsContract.CommonDataKinds.Email.CONTACT_ID} = ?",
-                                arrayOf(contactId),
-                                null
-                            )
-                            emailCursor?.use { ec ->
-                                if (ec.moveToFirst()) {
-                                    val eIndex = ec.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS)
-                                    if (eIndex != -1) {
-                                        val pickedEmail = ec.getString(eIndex)
-                                        if (!pickedEmail.isNullOrBlank() && email.isBlank()) {
-                                            email = pickedEmail
-                                        }
-                                    }
+                            if (numberIdx != -1) {
+                                val pickedNumber = c.getString(numberIdx)
+                                if (!pickedNumber.isNullOrBlank()) {
+                                    val cleaned = pickedNumber.replace(Regex("[^0-9+]"), "")
+                                    phone = cleaned
                                 }
                             }
                         }
                     }
+                    Toast.makeText(context, "Contact details imported successfully", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Could not import: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(context, "Contact imported successfully", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "Could not read contact: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    fun launchContactPicker() {
+        try {
+            val pickIntent = Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI)
+            contactPickerLauncher.launch(pickIntent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Contact picker unavailable", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -138,13 +118,13 @@ fun PartyFormBottomSheet(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Header
+            // Header Bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (existingParty != null) "Edit Party" else "Add New Customer / Vendor",
                         fontSize = 17.sp,
@@ -158,30 +138,39 @@ fun PartyFormBottomSheet(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    // Import Contact Quick Action
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFFEEF2FF),
-                        border = BorderStroke(1.dp, Color(0xFFC7D2FE)),
-                        modifier = Modifier.clickable { contactPickerLauncher.launch(null) }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.background(Color(0xFFF1F5F9), CircleShape).size(32.dp)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = textMuted, modifier = Modifier.size(16.dp))
+                }
+            }
+
+            // Quick Import Banner Button
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFEEF2FF),
+                border = BorderStroke(1.dp, Color(0xFFC7D2FE)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { launchContactPicker() }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(Icons.Default.ContactPhone, contentDescription = "Pick Contact", tint = primaryIndigo, modifier = Modifier.size(14.dp))
-                            Text("Phone Contacts", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = primaryIndigo)
+                        Icon(Icons.Default.ContactPhone, contentDescription = "Pick Contact", tint = primaryIndigo, modifier = Modifier.size(18.dp))
+                        Column {
+                            Text("Select from Phone Contacts", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = primaryIndigo)
+                            Text("Auto-fill name & phone number from address book", fontSize = 10.5.sp, color = textMuted)
                         }
                     }
-
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.background(Color(0xFFF1F5F9), CircleShape).size(32.dp)
-                    ) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = textMuted, modifier = Modifier.size(16.dp))
-                    }
+                    Text("Select →", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = primaryIndigo)
                 }
             }
 
@@ -248,7 +237,7 @@ fun PartyFormBottomSheet(
                     onValueChange = { phone = it },
                     label = { Text("Phone / Mobile") },
                     trailingIcon = {
-                        IconButton(onClick = { contactPickerLauncher.launch(null) }) {
+                        IconButton(onClick = { launchContactPicker() }) {
                             Icon(Icons.Default.ContactPhone, contentDescription = "Pick from contacts", tint = primaryIndigo, modifier = Modifier.size(18.dp))
                         }
                     },
