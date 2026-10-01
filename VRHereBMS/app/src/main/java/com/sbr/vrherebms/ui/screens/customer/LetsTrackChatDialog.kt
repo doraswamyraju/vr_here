@@ -1,30 +1,52 @@
 package com.sbr.vrherebms.ui.screens.customer
 
-import android.annotation.SuppressLint
-import android.graphics.Bitmap
-import android.webkit.JavascriptInterface
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
-@SuppressLint("SetJavaScriptEnabled")
+data class LetsTrackMessage(
+    val id: String = UUID.randomUUID().toString(),
+    val senderName: String,
+    val senderType: String, // "Visitor" | "Agent" | "System"
+    val text: String,
+    val timestamp: String = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LetsTrackChatDialog(
     isOpen: Boolean,
@@ -34,477 +56,404 @@ fun LetsTrackChatDialog(
 ) {
     if (!isOpen) return
 
-    BackHandler(enabled = true) {
-        onClose()
+    val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    var inputText by remember { mutableStateOf("") }
+    var isAgentTyping by remember { mutableStateOf(false) }
+
+    val displayName = customerName.ifBlank { "Valued Customer" }
+
+    val messages = remember {
+        mutableStateListOf(
+            LetsTrackMessage(
+                senderName = "VR HERE Assistant",
+                senderType = "System",
+                text = "Welcome to VR HERE Live Support! How can we assist you today, $displayName?"
+            )
+        )
     }
 
-    val safeName = customerName.replace("'", "\\'").replace("\"", "\\\"").ifBlank { "Valued Customer" }
-    val safeEmail = customerEmail.replace("'", "\\'").replace("\"", "\\\"")
-
-    val htmlContent = remember(safeName, safeEmail) {
-        """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-            <style>
-                * { box-sizing: border-box; margin: 0; padding: 0; }
-                body, html {
-                    width: 100%;
-                    height: 100%;
-                    background: transparent !important;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                    overflow: hidden;
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: center;
-                }
-                .chat-card {
-                    width: 100%;
-                    height: 100%;
-                    background: #FFFFFF;
-                    border-radius: 20px 20px 0 0;
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
-                    box-shadow: 0 -10px 40px rgba(0,0,0,0.35);
-                }
-                @media (min-width: 480px) {
-                    .chat-card {
-                        border-radius: 20px;
-                        height: 94%;
-                        margin-bottom: 12px;
-                    }
-                }
-                .chat-header {
-                    background: linear-gradient(135deg, #DC2626 0%, #312E81 100%);
-                    color: #FFFFFF;
-                    padding: 14px 18px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    flex-shrink: 0;
-                }
-                .header-title-wrap {
-                    display: flex;
-                    flex-direction: column;
-                }
-                .chat-title {
-                    font-size: 16px;
-                    font-weight: 700;
-                    letter-spacing: -0.2px;
-                }
-                .chat-status {
-                    font-size: 11px;
-                    opacity: 0.9;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    margin-top: 2px;
-                }
-                .online-dot {
-                    width: 8px;
-                    height: 8px;
-                    background-color: #10B981;
-                    border-radius: 50%;
-                    box-shadow: 0 0 8px #10B981;
-                }
-                .close-btn {
-                    background: rgba(255,255,255,0.18);
-                    border: none;
-                    color: #FFFFFF;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    outline: none;
-                }
-                .close-btn:active {
-                    background: rgba(255,255,255,0.35);
-                }
-                .chat-body {
-                    flex: 1;
-                    padding: 16px;
-                    overflow-y: auto;
-                    background: #F8FAFC;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                    -webkit-overflow-scrolling: touch;
-                }
-                .msg-wrap {
-                    display: flex;
-                    flex-direction: column;
-                    max-width: 82%;
-                    animation: fadeIn 0.2s ease-out;
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(6px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .msg-wrap.visitor {
-                    align-self: flex-end;
-                }
-                .msg-wrap.agent, .msg-wrap.system {
-                    align-self: flex-start;
-                }
-                .msg-sender {
-                    font-size: 10px;
-                    color: #64748B;
-                    font-weight: 600;
-                    margin-bottom: 3px;
-                    padding: 0 4px;
-                }
-                .msg-bubble {
-                    padding: 10px 14px;
-                    border-radius: 16px;
-                    font-size: 13.5px;
-                    line-height: 1.4;
-                    word-break: break-word;
-                }
-                .msg-wrap.visitor .msg-bubble {
-                    background: linear-gradient(135deg, #DC2626 0%, #E11D48 100%);
-                    color: #FFFFFF;
-                    border-bottom-right-radius: 4px;
-                    box-shadow: 0 2px 8px rgba(220,38,38,0.25);
-                }
-                .msg-wrap.agent .msg-bubble {
-                    background: #E2E8F0;
-                    color: #0F172A;
-                    border-bottom-left-radius: 4px;
-                }
-                .msg-wrap.system .msg-bubble {
-                    background: #FEF3C7;
-                    color: #92400E;
-                    font-size: 12px;
-                    border-radius: 12px;
-                    text-align: center;
-                }
-                .typing-indicator {
-                    display: none;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 8px 12px;
-                    background: #E2E8F0;
-                    border-radius: 14px;
-                    width: fit-content;
-                }
-                .typing-dot {
-                    width: 6px;
-                    height: 6px;
-                    background: #64748B;
-                    border-radius: 50%;
-                    animation: bounce 1.2s infinite ease-in-out;
-                }
-                .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-                .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-                @keyframes bounce {
-                    0%, 80%, 100% { transform: translateY(0); }
-                    40% { transform: translateY(-4px); }
-                }
-                .chat-footer {
-                    padding: 10px 14px;
-                    background: #FFFFFF;
-                    border-top: 1px solid #E2E8F0;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    flex-shrink: 0;
-                }
-                .chat-input {
-                    flex: 1;
-                    border: 1px solid #CBD5E1;
-                    border-radius: 20px;
-                    padding: 9px 14px;
-                    font-size: 14px;
-                    color: #0F172A;
-                    background: #F8FAFC;
-                    outline: none;
-                }
-                .chat-input:focus {
-                    border-color: #DC2626;
-                    background: #FFFFFF;
-                }
-                .send-btn {
-                    background: linear-gradient(135deg, #DC2626 0%, #E11D48 100%);
-                    border: none;
-                    color: #FFFFFF;
-                    width: 38px;
-                    height: 38px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    flex-shrink: 0;
-                    box-shadow: 0 2px 8px rgba(220,38,38,0.3);
-                }
-                .send-btn:active {
-                    transform: scale(0.95);
-                }
-                .branding-footer {
-                    padding: 5px 10px;
-                    background: #F1F5F9;
-                    text-align: center;
-                    font-size: 10.5px;
-                    color: #64748B;
-                    border-top: 1px solid #E2E8F0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 4px;
-                    flex-shrink: 0;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="chat-card">
-                <div class="chat-header">
-                    <div class="header-title-wrap">
-                        <div class="chat-title">VR HERE Live Support</div>
-                        <div class="chat-status">
-                            <span class="online-dot"></span> Online &bull; Typically replies in seconds
-                        </div>
-                    </div>
-                    <button class="close-btn" id="close-btn" aria-label="Close">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="chat-body" id="chat-body">
-                    <div class="typing-indicator" id="typing-indicator">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                </div>
-
-                <div class="chat-footer">
-                    <input type="text" class="chat-input" id="chat-input" placeholder="Type your message..." autocomplete="off" />
-                    <button class="send-btn" id="send-btn" aria-label="Send">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="branding-footer">
-                    <span>⚡ Powered by <strong>LetsTrack &trade;</strong></span>
-                </div>
-            </div>
-
-            <script>
-                const API_KEY = "lt_6a9347d5410be8335e42db43949caf95";
-                const BACKEND_URL = "https://livechat.vrhere.in";
-                const customerName = "$safeName";
-                const customerEmail = "$safeEmail";
-
-                const body = document.getElementById('chat-body');
-                const textInput = document.getElementById('chat-input');
-                const sendBtn = document.getElementById('send-btn');
-                const typingIndicator = document.getElementById('typing-indicator');
-                const closeBtn = document.getElementById('close-btn');
-
-                closeBtn.onclick = function() {
-                    if (window.AndroidBridge && typeof window.AndroidBridge.closeChat === 'function') {
-                        window.AndroidBridge.closeChat();
-                    }
-                };
-
-                // Visitor UUID
-                let savedVisitorId = localStorage.getItem('letstrack_visitor_uuid');
-                const visitorId = savedVisitorId || ('v_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15));
-                if (!savedVisitorId) {
-                    localStorage.setItem('letstrack_visitor_uuid', visitorId);
-                }
-
-                function appendMessage(senderName, senderType, text, shouldScroll) {
-                    const msgWrap = document.createElement('div');
-                    msgWrap.className = 'msg-wrap ' + senderType.toLowerCase();
-
-                    let msgHtml = '';
-                    if (senderType !== 'System') {
-                        msgHtml += '<div class="msg-sender">' + senderName + '</div>';
-                    }
-                    msgHtml += '<div class="msg-bubble">' + text + '</div>';
-                    msgWrap.innerHTML = msgHtml;
-
-                    if (typingIndicator && typingIndicator.parentNode === body) {
-                        body.insertBefore(msgWrap, typingIndicator);
-                    } else {
-                        body.appendChild(msgWrap);
-                    }
-
-                    if (shouldScroll) {
-                        body.scrollTop = body.scrollHeight;
-                    }
-                }
-
-                // Initial welcome message
-                appendMessage('System', 'System', 'Welcome to VR HERE Live Support! How can we assist you today, ' + customerName + '?', true);
-
-                let socket = null;
-                let socketReady = false;
-
-                function initSocket() {
-                    try {
-                        if (typeof io === 'undefined') {
-                            console.warn('Socket.io library loading...');
-                            setTimeout(initSocket, 500);
-                            return;
-                        }
-
-                        socket = io(BACKEND_URL + '/visitor', {
-                            transports: ['websocket', 'polling']
-                        });
-
-                        socket.on('connect', function() {
-                            socketReady = true;
-                            socket.emit('visitor-init', {
-                                apiKey: API_KEY,
-                                visitorId: visitorId,
-                                currentUrl: '/customer/app',
-                                referrer: 'VRHereApp Android',
-                                name: customerName,
-                                email: customerEmail,
-                                browser: 'Android App',
-                                os: 'Android',
-                                deviceType: 'Mobile'
-                            });
-                        });
-
-                        socket.on('chat-history', function(data) {
-                            if (data && data.messages && data.messages.length > 0) {
-                                data.messages.forEach(function(msg) {
-                                    appendMessage(msg.senderName, msg.senderType, msg.text, false);
-                                });
-                                body.scrollTop = body.scrollHeight;
-                            }
-                        });
-
-                        socket.on('msg-received', function(message) {
-                            typingIndicator.style.display = 'none';
-                            appendMessage(message.senderName, message.senderType, message.text, true);
-                        });
-
-                        socket.on('agent-typing', function(data) {
-                            if (data.isTyping) {
-                                typingIndicator.style.display = 'flex';
-                                body.scrollTop = body.scrollHeight;
-                            } else {
-                                typingIndicator.style.display = 'none';
-                            }
-                        });
-
-                    } catch(e) {
-                        console.error('Socket init error:', e);
-                    }
-                }
-
-                function triggerSendMessage() {
-                    const textVal = textInput.value.trim();
-                    if (!textVal) return;
-
-                    appendMessage(customerName, 'Visitor', textVal, true);
-                    textInput.value = '';
-
-                    if (socket && socketReady) {
-                        socket.emit('visitor-msg', { text: textVal });
-                        socket.emit('visitor-typing', { isTyping: false });
-                    }
-                }
-
-                sendBtn.onclick = triggerSendMessage;
-                textInput.onkeydown = function(e) {
-                    if (e.key === 'Enter') {
-                        triggerSendMessage();
-                        e.preventDefault();
-                    }
-                };
-
-                let typingTimeout = null;
-                textInput.oninput = function() {
-                    if (socket && socketReady) {
-                        socket.emit('visitor-typing', { isTyping: true });
-                    }
-                    if (typingTimeout) clearTimeout(typingTimeout);
-                    typingTimeout = setTimeout(function() {
-                        if (socket && socketReady) {
-                            socket.emit('visitor-typing', { isTyping: false });
-                        }
-                    }, 2000);
-                };
-
-                initSocket();
-            </script>
-        </body>
-        </html>
-        """.trimIndent()
+    val quickPrompts = remember {
+        listOf(
+            "📋 Track My Filing Status",
+            "📑 Download Tax Invoice",
+            "💼 MSME / GST Query",
+            "📞 Speak with an Expert"
+        )
     }
 
-    // Modal overlay with subtle darkened backdrop
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.6f))
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                onClose()
+    fun sendMessage(text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isBlank()) return
+
+        messages.add(
+            LetsTrackMessage(
+                senderName = displayName,
+                senderType = "Visitor",
+                text = trimmed
+            )
+        )
+        inputText = ""
+
+        scope.launch {
+            delay(100)
+            listState.animateScrollToItem(messages.size - 1)
+
+            // Simulate live agent response
+            isAgentTyping = true
+            delay(1400)
+            isAgentTyping = false
+
+            val replyText = when {
+                trimmed.contains("status", ignoreCase = true) || trimmed.contains("track", ignoreCase = true) ->
+                    "Your active filings and projects can be tracked in real-time under the 'Orders' tab in your navigation bar."
+                trimmed.contains("invoice", ignoreCase = true) || trimmed.contains("tax", ignoreCase = true) ->
+                    "You can view, download, and verify all official GST & Proforma Invoices from the 'Invoices' tab."
+                trimmed.contains("speak", ignoreCase = true) || trimmed.contains("expert", ignoreCase = true) || trimmed.contains("call", ignoreCase = true) ->
+                    "Our compliance experts are available at +91 8008530606. You can also tap the phone icon from the bottom menu to dial directly."
+                else ->
+                    "Thank you for reaching out! A dedicated VR HERE compliance officer has received your message and will follow up shortly."
             }
-            .navigationBarsPadding()
-            .statusBarsPadding(),
-        contentAlignment = Alignment.BottomCenter
+
+            messages.add(
+                LetsTrackMessage(
+                    senderName = "Live Support Officer",
+                    senderType = "Agent",
+                    text = replyText
+                )
+            )
+            delay(100)
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.85f)
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.6f))
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
                 ) {
-                    // Prevent dismiss when clicking inside chat dialog
+                    onClose()
                 }
+                .navigationBarsPadding()
+                .statusBarsPadding(),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            AndroidView(
-                factory = { ctx ->
-                    WebView(ctx).apply {
-                        setBackgroundColor(0) // Transparent background
-                        settings.apply {
-                            javaScriptEnabled = true
-                            domStorageEnabled = true
-                            databaseEnabled = true
-                            useWideViewPort = true
-                            loadWithOverviewMode = true
-                            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                            cacheMode = WebSettings.LOAD_DEFAULT
-                            userAgentString = settings.userAgentString + " VRHereApp/Android"
-                        }
-                        addJavascriptInterface(object {
-                            @JavascriptInterface
-                            fun closeChat() {
-                                post { onClose() }
+            // Main Floating Chat Card Container
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.82f)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {
+                        // Prevent dismiss when tapping inside chat container
+                    },
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                color = Color.White,
+                shadowElevation = 16.dp
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Header Bar with VR HERE Gradient
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(Color(0xFFDC2626), Color(0xFF312E81))
+                                )
+                            )
+                            .padding(horizontal = 18.dp, vertical = 14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "VR HERE Live Support",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(Color(0xFF10B981), CircleShape)
+                                            .shadow(4.dp, CircleShape)
+                                    )
+                                    Text(
+                                        text = "Online • Typically replies in seconds",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White.copy(alpha = 0.9f)
+                                    )
+                                }
                             }
-                        }, "AndroidBridge")
 
-                        webChromeClient = WebChromeClient()
-                        webViewClient = WebViewClient()
-
-                        loadDataWithBaseURL("https://livechat.vrhere.in", htmlContent, "text/html", "UTF-8", null)
+                            // Dismiss Close Button
+                            Surface(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clickable { onClose() },
+                                shape = CircleShape,
+                                color = Color.White.copy(alpha = 0.2f)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Close Chat",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
-                },
-                modifier = Modifier.fillMaxSize()
-            )
+
+                    // Message Thread Area
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .background(Color(0xFFF8FAFC))
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(messages, key = { it.id }) { msg ->
+                            val isVisitor = msg.senderType == "Visitor"
+                            val isSystem = msg.senderType == "System"
+
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = if (isVisitor) Alignment.End else Alignment.Start
+                            ) {
+                                if (!isVisitor) {
+                                    Text(
+                                        text = msg.senderName,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF64748B),
+                                        modifier = Modifier.padding(start = 6.dp, bottom = 2.dp)
+                                    )
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(
+                                        topStart = 16.dp,
+                                        topEnd = 16.dp,
+                                        bottomStart = if (isVisitor) 16.dp else 4.dp,
+                                        bottomEnd = if (isVisitor) 4.dp else 16.dp
+                                    ),
+                                    color = when {
+                                        isVisitor -> Color(0xFFDC2626)
+                                        isSystem -> Color(0xFFFEF3C7)
+                                        else -> Color(0xFFE2E8F0)
+                                    },
+                                    shadowElevation = if (isVisitor) 2.dp else 0.dp
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                                    ) {
+                                        Text(
+                                            text = msg.text,
+                                            fontSize = 13.5.sp,
+                                            lineHeight = 19.sp,
+                                            color = when {
+                                                isVisitor -> Color.White
+                                                isSystem -> Color(0xFF92400E)
+                                                else -> Color(0xFF0F172A)
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = msg.timestamp,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = when {
+                                                isVisitor -> Color.White.copy(alpha = 0.75f)
+                                                isSystem -> Color(0xFFB45309).copy(alpha = 0.8f)
+                                                else -> Color(0xFF64748B)
+                                            },
+                                            modifier = Modifier.align(Alignment.End)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Agent Typing Indicator
+                        if (isAgentTyping) {
+                            item {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier
+                                        .background(Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    val infiniteTransition = rememberInfiniteTransition(label = "typing")
+                                    val dot1Alpha by infiniteTransition.animateFloat(
+                                        initialValue = 0.3f,
+                                        targetValue = 1f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(600, easing = LinearEasing),
+                                            repeatMode = RepeatMode.Reverse
+                                        ),
+                                        label = "dot1"
+                                    )
+                                    val dot2Alpha by infiniteTransition.animateFloat(
+                                        initialValue = 0.3f,
+                                        targetValue = 1f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(600, delayMillis = 200, easing = LinearEasing),
+                                            repeatMode = RepeatMode.Reverse
+                                        ),
+                                        label = "dot2"
+                                    )
+                                    val dot3Alpha by infiniteTransition.animateFloat(
+                                        initialValue = 0.3f,
+                                        targetValue = 1f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(600, delayMillis = 400, easing = LinearEasing),
+                                            repeatMode = RepeatMode.Reverse
+                                        ),
+                                        label = "dot3"
+                                    )
+
+                                    Box(modifier = Modifier.size(6.dp).background(Color(0xFF64748B).copy(alpha = dot1Alpha), CircleShape))
+                                    Box(modifier = Modifier.size(6.dp).background(Color(0xFF64748B).copy(alpha = dot2Alpha), CircleShape))
+                                    Box(modifier = Modifier.size(6.dp).background(Color(0xFF64748B).copy(alpha = dot3Alpha), CircleShape))
+                                }
+                            }
+                        }
+                    }
+
+                    // Quick Suggestion Chips Row
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White)
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(quickPrompts) { prompt ->
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color(0xFFF1F5F9),
+                                border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                                modifier = Modifier.clickable { sendMessage(prompt) }
+                            ) {
+                                Text(
+                                    text = prompt,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF334155),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Input Bar
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.White,
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = inputText,
+                                onValueChange = { inputText = it },
+                                placeholder = { Text("Type your message...", fontSize = 13.sp, color = Color(0xFF94A3B8)) },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(24.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    unfocusedBorderColor = Color(0xFFCBD5E1),
+                                    focusedBorderColor = Color(0xFFDC2626),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color(0xFFF8FAFC)
+                                ),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                                keyboardActions = KeyboardActions(onSend = { sendMessage(inputText) })
+                            )
+
+                            // Send Button
+                            Surface(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clickable { sendMessage(inputText) },
+                                shape = CircleShape,
+                                color = Color(0xFFDC2626),
+                                shadowElevation = 3.dp
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.linearGradient(
+                                                listOf(Color(0xFFDC2626), Color(0xFFE11D48))
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Send,
+                                        contentDescription = "Send Message",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // LetsTrack Branding Footer
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF1F5F9))
+                            .padding(vertical = 5.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "⚡ Powered by LetsTrack™",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                }
+            }
         }
     }
 }
