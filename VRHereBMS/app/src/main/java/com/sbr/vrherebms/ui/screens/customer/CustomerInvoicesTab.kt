@@ -125,8 +125,8 @@ fun CustomerInvoicesTab(
         val invoiceNoStr = "INV-${inv.id.takeLast(6).uppercase()}"
 
         val vrHereSellerDetails = CompanyDetailsDto(
-            companyName = "RAJUGARI VENTURES PRIVATE LIMITED",
-            tradeName = "VR HERE BUSINESS MANAGEMENT SOLUTIONS",
+            companyName = "VR HERE BUSINESS MANAGEMENT SOLUTIONS PRIVATE LIMITED",
+            tradeName = "VR HERE",
             gstin = "37AAHCR7654E1Z8",
             address = "#38, 1st Floor, TUDA Complex, Bairagipatteda, Tirupati, Andhra Pradesh - 517501",
             state = "Andhra Pradesh",
@@ -134,7 +134,7 @@ fun CustomerInvoicesTab(
             email = "support@vrhere.in",
             businessType = "Private Limited",
             bankDetails = BankAccountDetailsDto(
-                accountName = "RAJUGARI VENTURES PRIVATE LIMITED",
+                accountName = "VR HERE BUSINESS MANAGEMENT SOLUTIONS PRIVATE LIMITED",
                 accountNumber = "50200085306061",
                 ifscCode = "HDFC0001234",
                 bankName = "HDFC Bank, Tirupati"

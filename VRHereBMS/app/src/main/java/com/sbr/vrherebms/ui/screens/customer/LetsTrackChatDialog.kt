@@ -55,6 +55,7 @@ fun LetsTrackChatDialog(
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
             <style>
                 * { box-sizing: border-box; }
                 body, html {
@@ -224,30 +225,21 @@ fun LetsTrackChatDialog(
                             `;
                             shadow.appendChild(style);
 
-                            // Auto-open and hide loading view as soon as nodes are inserted
-                            var tryOpen = function() {
+                            // Continuous interval to enforce open state & hide launcher button
+                            setInterval(function() {
                                 var win = shadow.querySelector('.lt-chat-window');
                                 if (win) {
-                                    win.classList.add('open');
-                                    var loading = document.getElementById('loading-view');
-                                    if (loading) loading.style.display = 'none';
+                                    if (!win.classList.contains('open')) {
+                                        win.classList.add('open');
+                                    }
+                                    var loader = document.getElementById('loading-view');
+                                    if (loader) loader.style.display = 'none';
                                 }
                                 var btn = shadow.querySelector('.lt-widget-btn');
                                 if (btn) {
-                                    btn.click();
+                                    btn.style.setProperty('display', 'none', 'important');
                                 }
-                            };
-
-                            var observer = new MutationObserver(function() {
-                                tryOpen();
-                            });
-                            observer.observe(shadow, { childList: true, subtree: true });
-
-                            // Immediate and timed fallbacks
-                            setTimeout(tryOpen, 100);
-                            setTimeout(tryOpen, 300);
-                            setTimeout(tryOpen, 800);
-                            setTimeout(tryOpen, 1500);
+                            }, 100);
                         }
                         return shadow;
                     };
