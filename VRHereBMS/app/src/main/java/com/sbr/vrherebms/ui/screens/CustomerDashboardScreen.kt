@@ -68,6 +68,7 @@ fun CustomerDashboardScreen(
 
     var isSupportChatActive by remember { mutableStateOf(false) }
     var isFloatingMenuExpanded by remember { mutableStateOf(false) }
+    var isLetsTrackChatOpen by remember { mutableStateOf(false) }
     var raiseTicketTrigger by remember { mutableStateOf(0) }
 
     LaunchedEffect(activeTab) {
@@ -277,18 +278,13 @@ fun CustomerDashboardScreen(
                                     verticalArrangement = Arrangement.spacedBy(10.dp),
                                     horizontalAlignment = Alignment.End
                                 ) {
-                                    // Option 1: Live Chat
+                                    // Option 1: Live Chat (LetsTrack Live Support Engine)
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         modifier = Modifier.clickable {
                                             isFloatingMenuExpanded = false
-                                            try {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://tawk.to/chat"))
-                                                context.startActivity(intent)
-                                            } catch (e: Exception) {
-                                                Toast.makeText(context, "Opening Live Chat", Toast.LENGTH_SHORT).show()
-                                            }
+                                            isLetsTrackChatOpen = true
                                         }
                                     ) {
                                         Surface(
@@ -445,6 +441,17 @@ fun CustomerDashboardScreen(
                         }
                     }
                 }
+            }
+
+            // LetsTrack Live Support Chat Modal
+            if (isLetsTrackChatOpen) {
+                val customerEmail = viewModel.customerProfile?.email ?: ""
+                LetsTrackChatDialog(
+                    isOpen = isLetsTrackChatOpen,
+                    customerName = userName,
+                    customerEmail = customerEmail,
+                    onClose = { isLetsTrackChatOpen = false }
+                )
             }
 
             // Notifications Sheet Modal
