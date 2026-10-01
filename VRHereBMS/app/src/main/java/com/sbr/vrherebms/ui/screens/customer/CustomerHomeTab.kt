@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
@@ -32,6 +34,8 @@ import androidx.compose.ui.unit.sp
 import com.sbr.vrherebms.ui.components.scaleOnPress
 import com.sbr.vrherebms.ui.theme.*
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 private fun StatusBadge(status: String) {
@@ -71,6 +75,34 @@ private data class QuickServiceItem(
     val url: String? = null
 )
 
+private data class PromoOfferItem(
+    val id: String,
+    val tag: String,
+    val title: String,
+    val description: String,
+    val badge: String,
+    val bgColors: List<Color>,
+    val accentColor: Color,
+    val icon: ImageVector,
+    val ctaText: String,
+    val liveServiceName: String? = null,
+    val liveServiceUrl: String? = null,
+    val targetTab: String = "Services"
+)
+
+private data class BlogPostItem(
+    val id: String,
+    val title: String,
+    val summary: String,
+    val category: String,
+    val categoryColor: Color,
+    val readTime: String,
+    val publishDate: String,
+    val icon: ImageVector,
+    val keyTakeaways: List<String>,
+    val fullArticle: String
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerHomeTab(
@@ -106,36 +138,207 @@ fun CustomerHomeTab(
     val totalOutstanding = unpaidOrders.sumOf { it.price.toLong() }
     val totalVolume = viewModel.orders.sumOf { it.price }
 
-    val searchSuggestions = listOf(
-        "Private Limited Company Registration",
-        "Limited Liability Partnership (LLP)",
-        "GST Registration",
-        "GST Return Filing",
-        "Income Tax Return",
-        "MSME / Udyam Registration",
-        "Trademark Registration",
-        "FSSAI Food License",
-        "ISO Certification",
-        "Import Export Code (IEC)",
-        "Company Annual Compliances",
-        "Startup India DPIIT Registration"
-    )
-
-    val filteredSuggestions = remember(searchQuery) {
-        if (searchQuery.isBlank()) emptyList()
-        else searchSuggestions.filter { it.contains(searchQuery, ignoreCase = true) }.take(5)
+    val promoOffers = remember {
+        listOf(
+            PromoOfferItem(
+                id = "offer-ccfs-2026",
+                tag = "GOVERNMENT AMNESTY",
+                title = "ROC CCFS-2026 Amnesty Scheme",
+                description = "100% Late Filing Penalty Waiver for pending MCA returns. Clear years of default with zero additional fees.",
+                badge = "LIMITED PERIOD",
+                bgColors = listOf(DarkSlate, Color(0xFF831843)),
+                accentColor = Color(0xFFF43F5E),
+                icon = Icons.Default.AutoAwesome,
+                ctaText = "Avail Scheme →",
+                liveServiceName = "CCFS-2026 Scheme",
+                liveServiceUrl = "https://vrhere.in/compliance-scheme-2026"
+            ),
+            PromoOfferItem(
+                id = "offer-startup-80iac",
+                tag = "TAX HOLIDAY",
+                title = "Startup India & 80-IAC 3-Year Exemption",
+                description = "Get 100% Income Tax Exemption for 3 consecutive years with DPIIT Recognition & IMB Certification.",
+                badge = "DPIIT APPROVED",
+                bgColors = listOf(DarkSlate, Color(0xFF065F46)),
+                accentColor = Emerald500,
+                icon = Icons.Default.RocketLaunch,
+                ctaText = "Apply Now →",
+                liveServiceName = "Startup India Registration",
+                liveServiceUrl = "https://vrhere.in/startup-india"
+            ),
+            PromoOfferItem(
+                id = "offer-pvt-ltd-pack",
+                tag = "ALL-IN-ONE PACK",
+                title = "Free GST + MSME with Pvt Ltd",
+                description = "Complete incorporation with DIN, DSC, MOA, AOA, PAN, TAN, GSTIN & MSME Udyam registration included.",
+                badge = "SAVE ₹4,999",
+                bgColors = listOf(DarkSlate, Color(0xFF312E81)),
+                accentColor = Indigo500,
+                icon = Icons.Default.Business,
+                ctaText = "Register Today →",
+                liveServiceName = "Private Limited Registration",
+                liveServiceUrl = "https://vrhere.in/pvt-ltd-registration"
+            ),
+            PromoOfferItem(
+                id = "offer-iso-fasttrack",
+                tag = "FAST-TRACK DISPATCH",
+                title = "Fast-Track ISO 9001 / 27001",
+                description = "Globally recognized IAF/UAF accredited certification delivered in 3 working days for tender eligibility.",
+                badge = "3-DAY DISPATCH",
+                bgColors = listOf(DarkSlate, Color(0xFF78350F)),
+                accentColor = Amber500,
+                icon = Icons.Default.Security,
+                ctaText = "Get Certified →",
+                targetTab = "Services"
+            )
+        )
     }
 
-    val topServices = listOf(
-        QuickServiceItem(1, "Pvt Ltd Setup", "MCA Approval", Icons.Default.Business, Color(0xFFFEF2F2), PrimaryRed, "Services", "https://vrhere.in/pvt-ltd-registration"),
-        QuickServiceItem(2, "GST Filing", "Monthly / QRMP", Icons.Default.FactCheck, Color(0xFFECFDF5), Emerald500, "Services", "https://vrhere.in/gst-registration"),
-        QuickServiceItem(3, "Income Tax", "ITR 1-7 Assessment", Icons.Default.Computer, Color(0xFFEFF6FF), Color(0xFF2563EB), "Services", "https://vrhere.in/income-tax-return"),
-        QuickServiceItem(4, "Partnership", "Firm & Deed", Icons.Default.People, Color(0xFFFFFBEB), Amber500, "Services", "https://vrhere.in/partnership-firm"),
-        QuickServiceItem(5, "ISO Standards", "9001 / 27001", Icons.Default.Security, Color(0xFFFAF5FF), Color(0xFF9333EA), "Services"),
-        QuickServiceItem(6, "Audit Support", "Statutory & Tax", Icons.Default.AssignmentTurnedIn, Color(0xFFFFF1F2), Color(0xFFE11D48), "Support"),
-        QuickServiceItem(7, "MSME Loans", "Bank DPR & CMA", Icons.Default.CurrencyRupee, Color(0xFFECFDF5), Color(0xFF059669), "Services"),
-        QuickServiceItem(8, "ROC CCFS-2026", "Penalty Relief", Icons.Default.AutoAwesome, Color(0xFFFFF7ED), Color(0xFFEA580C), "Services", "https://vrhere.in/compliance-scheme-2026")
-    )
+    val blogPosts = remember {
+        listOf(
+            BlogPostItem(
+                id = "blog-mca-kyc-2026",
+                title = "MCA Annual Returns & Director KYC: Mandatory Compliance Guide (FY 2025-26)",
+                summary = "Complete roadmap on Form AOC-4, MGT-7, and DIR-3 KYC timelines to avoid director disqualification and ₹100/day penalties under the Companies Act.",
+                category = "Corporate Law",
+                categoryColor = Color(0xFF2563EB),
+                readTime = "4 min read",
+                publishDate = "Mar 2026",
+                icon = Icons.Default.Business,
+                keyTakeaways = listOf(
+                    "DIR-3 KYC mandatory annually for all active DIN holders",
+                    "AOC-4 (Financial Statements) due within 30 days of AGM",
+                    "MGT-7 (Annual Return) due within 60 days of AGM",
+                    "Late fee accumulates at ₹100 per day with no upper cap unless under amnesty"
+                ),
+                fullArticle = """
+                    Every registered Private Limited and Public Limited Company in India is legally mandated to maintain active compliance with the Ministry of Corporate Affairs (MCA).
+                    
+                    1. DIR-3 KYC Filing:
+                    Every individual holding a Director Identification Number (DIN) must complete Web KYC or e-Form DIR-3 KYC before the cutoff date. Failure to file leads to deactivation of DIN and a standard penalty of ₹5,000 per DIN.
+                    
+                    2. Form AOC-4 (Financial Statements):
+                    Must include the Audited Balance Sheet, Profit & Loss Statement, Auditor's Report, and Director's Report. It must be filed within 30 days from the date of the Annual General Meeting (AGM).
+                    
+                    3. Form MGT-7 / MGT-7A (Annual Return):
+                    Small companies can file MGT-7A, while other companies file MGT-7. This captures shareholding patterns, directorship changes, and board meetings held during the financial year.
+                    
+                    4. Impact of Non-Compliance:
+                    Non-filing triggers disqualification of directors under Section 164(2) for 5 years and potential striking off by the ROC under Section 248. VR Here's corporate legal team handles end-to-end preparation and MCA portal filing.
+                """.trimIndent()
+            ),
+            BlogPostItem(
+                id = "blog-gst-einvoicing-itc",
+                title = "GST E-Invoicing & ITC 2B Reconciliation: Avoiding Audit Notices",
+                summary = "New strict audit rules on Form GSTR-1A, auto-generated GSTR-2B ITC matching, and avoiding 100% ITC disallowance under Section 16(2)(aa).",
+                category = "GST & Taxation",
+                categoryColor = Emerald500,
+                readTime = "5 min read",
+                publishDate = "Mar 2026",
+                icon = Icons.Default.ReceiptLong,
+                keyTakeaways = listOf(
+                    "E-Invoicing mandatory for B2B transactions above ₹5 Cr threshold",
+                    "Input Tax Credit (ITC) strictly restricted to invoices in GSTR-2B",
+                    "Form GSTR-1A introduces pre-filing amendment facility",
+                    "Automated Rule 88C / 88D notices issued for tax & ITC variances"
+                ),
+                fullArticle = """
+                    The GST Network (GSTN) has rolled out rigorous automated reconciliation mechanisms that directly impact monthly cash flows and input tax credits.
+                    
+                    1. Mandatory E-Invoicing Thresholds:
+                    Businesses with aggregate annual turnover exceeding ₹5 Crores must generate Invoice Reference Numbers (IRN) and signed QR codes via the IRP portal for all B2B invoices and debit/credit notes. Invoices without valid IRN are legally invalid.
+                    
+                    2. 100% GSTR-2B Matching Rule:
+                    Under Section 16(2)(aa), no taxpayer can claim ITC unless the supplier has uploaded the invoice in their GSTR-1 and it is reflected in the recipient's GSTR-2B.
+                    
+                    3. Automated DRC-01B & DRC-01C Notices:
+                    Variances between GSTR-1 vs GSTR-3B tax liability, or GSTR-2B vs GSTR-3B ITC claimed exceeding threshold percentages automatically generate DRC-01B/C notices requiring reconciliation within 7 days.
+                    
+                    4. Best Practices:
+                    Run monthly supplier reconciliation reports, verify GSTIN statuses, and utilize VR Here Bookkeeping & GST Filing modules for automated verification.
+                """.trimIndent()
+            ),
+            BlogPostItem(
+                id = "blog-startup-india-80iac",
+                title = "Startup India 80-IAC 3-Year Tax Holiday & IMB Approval Guide",
+                summary = "Step-by-step checklist to secure Inter-Ministerial Board (IMB) approval for 100% income tax exemption and collateral-free bank funding.",
+                category = "Startups & Funding",
+                categoryColor = Indigo500,
+                readTime = "6 min read",
+                publishDate = "Feb 2026",
+                icon = Icons.Default.RocketLaunch,
+                keyTakeaways = listOf(
+                    "100% tax exemption on profits for 3 consecutive years out of 10",
+                    "Entity must be Private Limited or LLP incorporated after April 1, 2016",
+                    "Turnover must not exceed ₹100 Crores in any financial year",
+                    "Requires innovative business model approved by Inter-Ministerial Board"
+                ),
+                fullArticle = """
+                    The Startup India initiative by the Department for Promotion of Industry and Internal Trade (DPIIT) offers transformative tax exemptions and funding benefits for eligible Indian startups.
+                    
+                    1. Section 80-IAC Benefits:
+                    Eligible startups can choose a 3-consecutive-year 100% tax holiday from their first 10 years of incorporation. This frees substantial capital for reinvestment into product R&D, scaling operations, and hiring talent.
+                    
+                    2. Eligibility Criteria:
+                    - Must be incorporated as a Private Limited Company or LLP.
+                    - Turnover must not have exceeded ₹100 Crores in any previous year.
+                    - Must be working towards innovation, development, or commercialization of new products or processes.
+                    
+                    3. Inter-Ministerial Board (IMB) Application:
+                    DPIIT recognition is the first step; obtaining Section 80-IAC certification requires pitching business model uniqueness, patent/IP portfolios, and audited projections to the IMB committee.
+                    
+                    4. Additional Perks:
+                    80% rebate on Patent filing fees, 50% rebate on Trademark fees, access to CGTMSE collateral-free credit guarantee loans up to ₹5 Crores, and self-certification under 6 labor and 3 environmental laws.
+                """.trimIndent()
+            ),
+            BlogPostItem(
+                id = "blog-trademark-classes",
+                title = "Trademark Classes & Brand Protection: Preventing Infringement",
+                summary = "How to accurately classify multi-class trademark applications (TM-A) across 45 NICE classes to protect logos, names, and software brands.",
+                category = "IPR & Legal",
+                categoryColor = Amber500,
+                readTime = "3 min read",
+                publishDate = "Feb 2026",
+                icon = Icons.Default.Shield,
+                keyTakeaways = listOf(
+                    "45 NICE Classification classes (Classes 1-34 Goods, 35-45 Services)",
+                    "Class 35 covers retail, wholesale, e-commerce, and digital marketplaces",
+                    "Class 42 covers SaaS, software development, and cloud IT services",
+                    "TM symbol can be used immediately on filing; ® only upon registration certificate"
+                ),
+                fullArticle = """
+                    A trademark protects your unique brand identity, brand reputation, and prevents competitors from using deceptively similar names, logos, or slogans.
+                    
+                    1. The NICE Classification System:
+                    Trademark applications are categorized into 45 distinct classes. Selecting incorrect classes leaves your actual core revenue streams vulnerable to competitor squatting and infringement.
+                    
+                    2. Key Classes for Modern Businesses:
+                    - Class 35: Advertising, business management, retail, and e-commerce distribution.
+                    - Class 42: Software as a Service (SaaS), IT solutions, technology hosting, and design.
+                    - Class 9: Mobile applications, downloadable software, and electronics.
+                    - Class 41: Education, training, entertainment, and digital media production.
+                    
+                    3. Registration Workflow:
+                    Search Clearance → Form TM-A Filing → Examination Report (responding to objections under Section 9 & 11) → Journal Publication (4-month opposition period) → Registration Certificate issued for 10-year renewable term.
+                    
+                    4. Brand Defense:
+                    VR Here provides end-to-end trademark search, objection drafting, hearing representation, and ongoing trademark monitoring to stop copycats immediately.
+                """.trimIndent()
+            )
+        )
+    }
+
+    var selectedBlogPost by remember { mutableStateOf<BlogPostItem?>(null) }
+    val pagerState = rememberPagerState(pageCount = { promoOffers.size })
+
+    // Auto-slide Carousel timer (4 seconds)
+    LaunchedEffect(pagerState) {
+        while (true) {
+            delay(4000)
+            val nextPage = (pagerState.currentPage + 1) % promoOffers.size
+            pagerState.animateScrollToPage(nextPage)
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -513,7 +716,187 @@ fun CustomerHomeTab(
             }
         }
 
-        // 3. ENTERPRISE CLIENT HUB HERO BANNER MATCHING WEB 1:1
+        // 3. OFFERS & SPECIAL PROMOTIONS AUTO-SLIDING CAROUSEL BANNER
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(Icons.Default.LocalOffer, contentDescription = null, tint = PrimaryRed, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = "Featured Offers & Schemes",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Black,
+                            color = TextDark
+                        )
+                    }
+
+                    // Dot Indicators
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(promoOffers.size) { index ->
+                            val isSelected = pagerState.currentPage == index
+                            Box(
+                                modifier = Modifier
+                                    .size(if (isSelected) 18.dp else 6.dp, 6.dp)
+                                    .background(
+                                        if (isSelected) PrimaryRed else BorderLight,
+                                        RoundedCornerShape(3.dp)
+                                    )
+                            )
+                        }
+                    }
+                }
+
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxWidth(),
+                    pageSpacing = 12.dp
+                ) { page ->
+                    val offer = promoOffers[page]
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .scaleOnPress()
+                            .clickable {
+                                if (offer.liveServiceUrl != null && offer.liveServiceName != null) {
+                                    onOpenLiveService(offer.liveServiceName, offer.liveServiceUrl)
+                                } else {
+                                    onSelectTab(offer.targetTab)
+                                }
+                            },
+                        shape = RoundedCornerShape(22.dp),
+                        color = offer.bgColors.first(),
+                        border = BorderStroke(1.dp, offer.accentColor.copy(alpha = 0.35f)),
+                        shadowElevation = 3.dp
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Brush.linearGradient(offer.bgColors))
+                                .padding(18.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Surface(
+                                        color = offer.accentColor.copy(alpha = 0.20f),
+                                        border = BorderStroke(1.dp, offer.accentColor.copy(alpha = 0.45f)),
+                                        shape = RoundedCornerShape(20.dp)
+                                    ) {
+                                        Text(
+                                            text = offer.tag,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = offer.accentColor,
+                                            letterSpacing = 0.8.sp,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        )
+                                    }
+
+                                    Surface(
+                                        color = Color.White.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            text = offer.badge,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color.White,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(46.dp)
+                                            .background(offer.accentColor.copy(alpha = 0.20f), RoundedCornerShape(14.dp))
+                                            .border(1.dp, offer.accentColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = offer.icon,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = offer.title,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color.White,
+                                            lineHeight = 19.sp
+                                        )
+                                        Text(
+                                            text = offer.description,
+                                            fontSize = 11.sp,
+                                            color = Slate400,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            lineHeight = 15.sp,
+                                            modifier = Modifier.padding(top = 2.dp)
+                                        )
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Tap to view eligibility & apply",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Slate400
+                                    )
+
+                                    Surface(
+                                        color = offer.accentColor,
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Text(
+                                                text = offer.ctaText,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = Color.White
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. ENTERPRISE CLIENT HUB HERO BANNER MATCHING WEB 1:1
         item {
             Surface(
                 modifier = Modifier
@@ -620,7 +1003,7 @@ fun CustomerHomeTab(
             }
         }
 
-        // 3.5 PENDING INVOICES & OUTSTANDING BALANCE ATTENTION CARD
+        // 4.5 PENDING INVOICES & OUTSTANDING BALANCE ATTENTION CARD
         if (unpaidOrders.isNotEmpty()) {
             item {
                 Surface(
@@ -704,7 +1087,7 @@ fun CustomerHomeTab(
             }
         }
 
-        // 4. ACTION ITEMS REQUIRING ATTENTION (IF ANY)
+        // 5. ACTION ITEMS REQUIRING ATTENTION (IF ANY)
         if (pendingActions.isNotEmpty()) {
             item {
                 Surface(
@@ -780,7 +1163,7 @@ fun CustomerHomeTab(
             }
         }
 
-        // 5. ACTIVE OPERATIONAL PIPELINE SNAPSHOT
+        // 6. ACTIVE OPERATIONAL PIPELINE SNAPSHOT
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(
@@ -937,7 +1320,7 @@ fun CustomerHomeTab(
             }
         }
 
-        // 6. QUICK ACTION LAUNCHPAD (8 SERVICES BENTO GRID) MATCHING WEB 1:1
+        // 7. QUICK ACTION LAUNCHPAD (8 SERVICES BENTO GRID) MATCHING WEB 1:1
         item {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -1046,7 +1429,7 @@ fun CustomerHomeTab(
             }
         }
 
-        // 7. DEDICATED ADVISOR CARD MATCHING WEB 1:1
+        // 8. DEDICATED ADVISOR CARD MATCHING WEB 1:1
         item {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -1166,7 +1549,7 @@ fun CustomerHomeTab(
             }
         }
 
-        // 8. STATUTORY COMPLIANCE CALENDAR MATCHING WEB 1:1
+        // 9. STATUTORY COMPLIANCE CALENDAR MATCHING WEB 1:1
         item {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -1283,7 +1666,7 @@ fun CustomerHomeTab(
             }
         }
 
-        // 9. REFER & EARN REWARD CARD MATCHING WEB 1:1
+        // 10. REFER & EARN REWARD CARD MATCHING WEB 1:1
         item {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -1330,6 +1713,305 @@ fun CustomerHomeTab(
                             .scaleOnPress()
                     ) {
                         Text("Get Referral Link", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+            }
+        }
+
+        // 11. LATEST REGULATORY UPDATES & INSIGHTS (BLOG SECTION)
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, BorderLight),
+                shadowElevation = 1.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(Icons.Default.MenuBook, contentDescription = null, tint = PrimaryRed, modifier = Modifier.size(16.dp))
+                                Text(
+                                    text = "Compliance Insights & News",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = TextDark
+                                )
+                            }
+                            Text(
+                                text = "Expert articles & statutory notifications",
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        blogPosts.forEach { post ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .scaleOnPress()
+                                    .clickable { selectedBlogPost = post },
+                                shape = RoundedCornerShape(16.dp),
+                                color = BgLight,
+                                border = BorderStroke(1.dp, BorderLight)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .background(post.categoryColor.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = post.icon,
+                                            contentDescription = null,
+                                            tint = post.categoryColor,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+
+                                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
+                                                color = post.categoryColor.copy(alpha = 0.12f),
+                                                shape = RoundedCornerShape(6.dp)
+                                            ) {
+                                                Text(
+                                                    text = post.category,
+                                                    fontSize = 8.5.sp,
+                                                    fontWeight = FontWeight.Black,
+                                                    color = post.categoryColor,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Text(post.readTime, fontSize = 9.sp, fontWeight = FontWeight.Medium, color = TextMuted)
+                                                Text("•", fontSize = 9.sp, color = TextMuted)
+                                                Text(post.publishDate, fontSize = 9.sp, fontWeight = FontWeight.Medium, color = TextMuted)
+                                            }
+                                        }
+
+                                        Text(
+                                            text = post.title,
+                                            fontSize = 12.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextDark,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            lineHeight = 16.sp
+                                        )
+
+                                        Text(
+                                            text = post.summary,
+                                            fontSize = 10.5.sp,
+                                            color = TextMuted,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            lineHeight = 14.sp
+                                        )
+
+                                        Text(
+                                            text = "Read Full Article →",
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = PrimaryRed,
+                                            modifier = Modifier.padding(top = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 12. INTERACTIVE BLOG POST READER BOTTOM SHEET MODAL
+    if (selectedBlogPost != null) {
+        val post = selectedBlogPost!!
+        ModalBottomSheet(
+            onDismissRequest = { selectedBlogPost = null },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = Color.White,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.88f)
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Header tags
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = post.categoryColor.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = post.category,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = post.categoryColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(post.readTime, fontSize = 10.5.sp, fontWeight = FontWeight.Medium, color = TextMuted)
+                        Text("•", fontSize = 10.sp, color = TextMuted)
+                        Text(post.publishDate, fontSize = 10.5.sp, fontWeight = FontWeight.Medium, color = TextMuted)
+                    }
+                }
+
+                // Title
+                Text(
+                    text = post.title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Black,
+                    color = TextDark,
+                    lineHeight = 24.sp
+                )
+
+                Divider(color = BorderLight)
+
+                // Scrollable Article Body
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Key Takeaways Callout Card
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = post.categoryColor.copy(alpha = 0.08f),
+                            border = BorderStroke(1.dp, post.categoryColor.copy(alpha = 0.25f))
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = post.categoryColor, modifier = Modifier.size(16.dp))
+                                    Text(
+                                        text = "KEY TAKEAWAYS & ACTION POINTS",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = post.categoryColor,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                }
+
+                                post.keyTakeaways.forEach { takeaway ->
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Text("•", fontSize = 12.sp, fontWeight = FontWeight.Black, color = post.categoryColor)
+                                        Text(
+                                            text = takeaway,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = TextDark,
+                                            lineHeight = 16.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Full Article Content
+                    item {
+                        Text(
+                            text = post.fullArticle,
+                            fontSize = 13.sp,
+                            color = Slate600,
+                            lineHeight = 21.sp,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+
+                    // Advisory Contact Footer
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = DarkSlate
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Need assistance with this compliance?",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "Our chartered accountants and legal advocates are ready to handle the filing on your behalf.",
+                                    fontSize = 11.sp,
+                                    color = Slate400,
+                                    lineHeight = 15.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Button(
+                                    onClick = {
+                                        selectedBlogPost = null
+                                        onSelectTab("Services")
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Explore Filing Services", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                            }
+                        }
                     }
                 }
             }
