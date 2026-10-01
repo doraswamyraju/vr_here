@@ -91,11 +91,6 @@ fun LetsTrackChatDialog(
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
                 }
-
-                /* Hide redundant launcher button inside webview since dialog is already open */
-                .lt-widget-btn, #letstrack-widget-btn {
-                    display: none !important;
-                }
             </style>
         </head>
         <body>
@@ -105,63 +100,167 @@ fun LetsTrackChatDialog(
             </div>
 
             <script>
+                // Pre-populate visitor credentials for instant seamless connection
+                try {
+                    if ("$safeName".length > 0) {
+                        localStorage.setItem('letstrack_visitor_name', "$safeName");
+                    }
+                    if ("$safeEmail".length > 0) {
+                        localStorage.setItem('letstrack_visitor_email', "$safeEmail");
+                    }
+                } catch(e) {}
+
+                // Intercept shadow DOM creation to make chat fullscreen inside native WebView
                 (function() {
                     var origAttachShadow = Element.prototype.attachShadow;
                     Element.prototype.attachShadow = function(init) {
                         var shadow = origAttachShadow.call(this, Object.assign({}, init, { mode: 'open' }));
                         if (this.id === 'letstrack-widget-root') {
                             window.__letsTrackShadowRoot = shadow;
+                            
+                            // Inject native-fitting responsive CSS directly into Shadow DOM
+                            var style = document.createElement('style');
+                            style.textContent = `
+                                .lt-widget-container {
+                                    position: fixed !important;
+                                    top: 0 !important;
+                                    left: 0 !important;
+                                    width: 100vw !important;
+                                    height: 100vh !important;
+                                    margin: 0 !important;
+                                    padding: 0 !important;
+                                    z-index: 999999 !important;
+                                    display: flex !important;
+                                    flex-direction: column !important;
+                                }
+                                .lt-widget-btn {
+                                    display: none !important;
+                                }
+                                .lt-popup {
+                                    display: none !important;
+                                }
+                                .lt-chat-window {
+                                    position: fixed !important;
+                                    top: 0 !important;
+                                    left: 0 !important;
+                                    right: 0 !important;
+                                    bottom: 0 !important;
+                                    width: 100vw !important;
+                                    height: 100vh !important;
+                                    max-width: 100vw !important;
+                                    max-height: 100vh !important;
+                                    margin: 0 !important;
+                                    border-radius: 0 !important;
+                                    border: none !important;
+                                    box-shadow: none !important;
+                                    display: flex !important;
+                                    opacity: 1 !important;
+                                    transform: none !important;
+                                    background: #0F172A !important;
+                                }
+                                .lt-chat-header {
+                                    display: none !important;
+                                }
+                                .lt-chat-body {
+                                    flex: 1 !important;
+                                    background: #0F172A !important;
+                                    padding: 16px !important;
+                                }
+                                .lt-msg-wrap.visitor .lt-msg-bubble {
+                                    background-color: #E11D48 !important;
+                                    color: #FFFFFF !important;
+                                    font-weight: 500 !important;
+                                }
+                                .lt-msg-wrap.agent .lt-msg-bubble {
+                                    background-color: #1E293B !important;
+                                    color: #F8FAFC !important;
+                                    border: 1px solid #334155 !important;
+                                }
+                                .lt-msg-wrap.system .lt-msg-bubble {
+                                    background-color: #1E293B !important;
+                                    color: #94A3B8 !important;
+                                    border: 1px solid #334155 !important;
+                                }
+                                .lt-msg-sender {
+                                    color: #64748B !important;
+                                }
+                                .lt-chat-footer {
+                                    background: #1E293B !important;
+                                    border-top: 1px solid #334155 !important;
+                                    padding: 12px 14px !important;
+                                }
+                                .lt-chat-input {
+                                    color: #F8FAFC !important;
+                                    font-size: 14px !important;
+                                }
+                                .lt-chat-input::placeholder {
+                                    color: #64748B !important;
+                                }
+                                .lt-send-btn {
+                                    color: #E11D48 !important;
+                                }
+                                .lt-branding-footer {
+                                    background: #0F172A !important;
+                                    border-top: 1px solid #1E293B !important;
+                                    color: #64748B !important;
+                                }
+                                .pre-chat-form {
+                                    background: #1E293B !important;
+                                    padding: 20px !important;
+                                    border-radius: 16px !important;
+                                    border: 1px solid #334155 !important;
+                                }
+                                .pre-chat-text {
+                                    color: #F8FAFC !important;
+                                }
+                                .pre-chat-input {
+                                    background: #0F172A !important;
+                                    border: 1px solid #334155 !important;
+                                    color: #F8FAFC !important;
+                                }
+                                .pre-chat-btn {
+                                    background-color: #E11D48 !important;
+                                }
+                            `;
+                            shadow.appendChild(style);
+
+                            // Auto-open and hide loading view as soon as nodes are inserted
+                            var tryOpen = function() {
+                                var win = shadow.querySelector('.lt-chat-window');
+                                if (win) {
+                                    win.classList.add('open');
+                                    var loading = document.getElementById('loading-view');
+                                    if (loading) loading.style.display = 'none';
+                                }
+                                var btn = shadow.querySelector('.lt-widget-btn');
+                                if (btn) {
+                                    btn.click();
+                                }
+                            };
+
+                            var observer = new MutationObserver(function() {
+                                tryOpen();
+                            });
+                            observer.observe(shadow, { childList: true, subtree: true });
+
+                            // Immediate and timed fallbacks
+                            setTimeout(tryOpen, 100);
+                            setTimeout(tryOpen, 300);
+                            setTimeout(tryOpen, 800);
+                            setTimeout(tryOpen, 1500);
                         }
                         return shadow;
                     };
                 })();
 
                 window.LetsTrackConfig = {
-                    websiteId: "lt_6a9347d5410be8335e42db43949caf95",
-                    user: {
-                        name: "$safeName",
-                        email: "$safeEmail"
-                    }
+                    websiteId: "lt_6a9347d5410be8335e42db43949caf95"
                 };
-
-                function autoOpenWidget() {
-                    if (window.LetsTrack) {
-                        if (typeof window.LetsTrack.open === 'function') {
-                            window.LetsTrack.open();
-                            hideLoading();
-                            return;
-                        }
-                        if (typeof window.LetsTrack.toggle === 'function') {
-                            window.LetsTrack.toggle();
-                            hideLoading();
-                            return;
-                        }
-                    }
-                    var rootEl = document.getElementById('letstrack-widget-root');
-                    var shadow = (rootEl && rootEl.shadowRoot) || window.__letsTrackShadowRoot;
-                    if (shadow) {
-                        var chatBtn = shadow.querySelector('.lt-widget-btn, #letstrack-widget-btn, button');
-                        if (chatBtn) {
-                            chatBtn.click();
-                            hideLoading();
-                            return;
-                        }
-                    }
-                }
-
-                function hideLoading() {
-                    var el = document.getElementById('loading-view');
-                    if (el) el.style.display = 'none';
-                }
 
                 (function () {
                     var d = document, s = d.createElement('script');
                     s.src = "https://livechat.vrhere.in/widget.js";
                     s.async = true;
-                    s.onload = function() {
-                        setTimeout(autoOpenWidget, 300);
-                        setTimeout(autoOpenWidget, 1000);
-                    };
                     d.getElementsByTagName('head')[0].appendChild(s);
                 })();
             </script>
