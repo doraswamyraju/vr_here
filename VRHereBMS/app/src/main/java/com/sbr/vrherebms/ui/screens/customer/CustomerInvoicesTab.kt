@@ -26,8 +26,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sbr.vrherebms.data.local.SessionManager
+import com.sbr.vrherebms.data.model.BankAccountDetailsDto
+import com.sbr.vrherebms.data.model.CompanyDetailsDto
 import com.sbr.vrherebms.data.model.OrderResponse
 import com.sbr.vrherebms.data.model.PaymentResponse
+import com.sbr.vrherebms.data.model.TransactionDto
+import com.sbr.vrherebms.data.model.TransactionItemDto
+import com.sbr.vrherebms.data.model.TransactionSummaryDto
+import com.sbr.vrherebms.ui.screens.customer.bookkeeping.dialogs.GSTInvoicePreviewDialog
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,10 +108,10 @@ fun CustomerInvoicesTab(
         }
     }
 
-    // --- GST TAX INVOICE TEMPLATE MODAL DIALOG ---
+    // --- GST TAX INVOICE PREVIEW DIALOG (Bookkeeping Standard) ---
     if (showInvoiceModal && selectedInvoicePayment != null) {
         val inv = selectedInvoicePayment!!
-        val userName = (sessionManager.getUserName() ?: "").ifEmpty { inv.customerName.ifEmpty { "Client" } }
+        val userName = (sessionManager.getUserName() ?: "").ifEmpty { inv.customerName.ifEmpty { "Customer" } }
         val userEmail = (sessionManager.getUserEmail() ?: "").ifEmpty { inv.email }
         val userPhone = sessionManager.getPhone().ifEmpty { inv.phone }
         val compName = (sessionManager.getCompanyName() ?: "").ifEmpty { userName }
@@ -115,35 +121,72 @@ fun CustomerInvoicesTab(
         val cgst = gstTax / 2.0
         val sgst = gstTax / 2.0
 
-        val invoiceDateStr = if (inv.createdAt.length >= 10) inv.createdAt.substring(0, 10) else "2026-09-19"
+        val invoiceDateStr = if (inv.createdAt.length >= 10) inv.createdAt.substring(0, 10) else "2026-09-30"
         val invoiceNoStr = "INV-${inv.id.takeLast(6).uppercase()}"
 
-        GSTSalesInvoiceTemplateModal(
-            invoiceNumber = invoiceNoStr,
-            invoiceDate = invoiceDateStr,
-            dueDate = null,
-            clientName = compName,
-            clientAddress = "Telangana, India",
-            clientGstin = "36AABCS9912D1Z4",
-            clientEmail = userEmail,
-            clientPhone = userPhone,
+        val vrHereSellerDetails = CompanyDetailsDto(
+            companyName = "RAJUGARI VENTURES PRIVATE LIMITED",
+            tradeName = "VR HERE BUSINESS MANAGEMENT SOLUTIONS",
+            gstin = "37AAHCR7654E1Z8",
+            address = "#38, 1st Floor, TUDA Complex, Bairagipatteda, Tirupati, Andhra Pradesh - 517501",
+            state = "Andhra Pradesh",
+            phone = "+91 80085 30606",
+            email = "support@vrhere.in",
+            businessType = "Private Limited",
+            bankDetails = BankAccountDetailsDto(
+                accountName = "RAJUGARI VENTURES PRIVATE LIMITED",
+                accountNumber = "50200085306061",
+                ifscCode = "HDFC0001234",
+                bankName = "HDFC Bank, Tirupati"
+            ),
+            upiId = "vrhere@hdfcbank"
+        )
+
+        val invoiceTransaction = TransactionDto(
+            id = inv.id,
+            transactionType = "Sales",
+            copyType = "Original for Recipient",
+            docNumber = invoiceNoStr,
+            docDate = invoiceDateStr,
+            paymentMode = inv.method.ifEmpty { "Razorpay / Online" },
+            partyName = compName,
+            partyEmail = userEmail,
+            partyPhone = userPhone,
+            partyAddress = "Registered Customer Jurisdiction",
+            partyGstin = "URP / N/A",
+            partyState = "Andhra Pradesh",
+            placeOfSupply = "37-Andhra Pradesh",
+            isInterstate = false,
             items = listOf(
-                GSTInvoiceItemData(
-                    description = inv.serviceName.ifEmpty { "Professional Advisory & Business Services" },
-                    hsn = "998311",
-                    qty = 1,
+                TransactionItemDto(
+                    description = inv.serviceName.ifEmpty { "Professional Advisory & Statutory Compliance Services" },
+                    hsnSac = "998311",
+                    qty = 1.0,
+                    unit = "NOS",
                     rate = subtotal,
-                    taxRate = 18.0,
-                    amount = inv.amount
+                    taxableValue = subtotal,
+                    gstRate = 18.0,
+                    cgst = cgst,
+                    sgst = sgst,
+                    igst = 0.0,
+                    total = inv.amount
                 )
             ),
-            subtotal = subtotal,
-            cgst = cgst,
-            sgst = sgst,
-            igst = 0.0,
-            totalAmount = inv.amount,
-            status = if (inv.status == "Paid" || inv.status == "Completed") "PAID" else inv.status,
-            pdfUrl = inv.invoiceUrl,
+            summary = TransactionSummaryDto(
+                totalTaxable = subtotal,
+                totalCgst = cgst,
+                totalSgst = sgst,
+                totalIgst = 0.0,
+                totalAmount = inv.amount
+            ),
+            paymentStatus = if (inv.status.equals("Paid", ignoreCase = true) || inv.status.equals("Completed", ignoreCase = true)) "Paid" else inv.status,
+            paidAmount = inv.amount,
+            status = "Verified"
+        )
+
+        GSTInvoicePreviewDialog(
+            transaction = invoiceTransaction,
+            companyDetails = vrHereSellerDetails,
             onDismiss = { showInvoiceModal = false }
         )
     }
