@@ -8,24 +8,18 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -63,25 +57,37 @@ fun LetsTrackChatDialog(
                     padding: 0;
                     width: 100%;
                     height: 100%;
-                    background-color: #0F172A;
+                    background: transparent !important;
                     overflow: hidden;
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 }
                 #loading-view {
+                    position: fixed;
+                    bottom: 24px;
+                    left: 16px;
+                    right: 16px;
+                    max-width: 400px;
+                    height: 200px;
+                    margin: 0 auto;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    height: 100%;
+                    background: rgba(15, 23, 42, 0.95);
+                    backdrop-filter: blur(12px);
+                    border-radius: 20px;
                     color: #94A3B8;
                     font-size: 13px;
                     font-weight: 600;
                     text-align: center;
                     padding: 20px;
+                    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    z-index: 999998;
                 }
                 .spinner {
-                    width: 36px;
-                    height: 36px;
+                    width: 34px;
+                    height: 34px;
                     border: 3px solid rgba(99, 102, 241, 0.2);
                     border-top-color: #6366F1;
                     border-radius: 50%;
@@ -101,7 +107,7 @@ fun LetsTrackChatDialog(
             </div>
 
             <script>
-                // Pre-populate visitor credentials for instant seamless connection
+                // Pre-populate visitor credentials for instant connection
                 try {
                     if ("$safeName".length > 0) {
                         localStorage.setItem('letstrack_visitor_name', "$safeName");
@@ -111,7 +117,7 @@ fun LetsTrackChatDialog(
                     }
                 } catch(e) {}
 
-                // Intercept shadow DOM creation to make chat fullscreen inside native WebView
+                // Intercept shadow DOM to style the widget window matching the web version
                 (function() {
                     var origAttachShadow = Element.prototype.attachShadow;
                     Element.prototype.attachShadow = function(init) {
@@ -119,20 +125,19 @@ fun LetsTrackChatDialog(
                         if (this.id === 'letstrack-widget-root') {
                             window.__letsTrackShadowRoot = shadow;
                             
-                            // Inject native-fitting responsive CSS directly into Shadow DOM
                             var style = document.createElement('style');
                             style.textContent = `
                                 .lt-widget-container {
                                     position: fixed !important;
-                                    top: 0 !important;
-                                    left: 0 !important;
-                                    width: 100vw !important;
-                                    height: 100vh !important;
-                                    margin: 0 !important;
-                                    padding: 0 !important;
+                                    bottom: 16px !important;
+                                    left: 12px !important;
+                                    right: 12px !important;
+                                    margin: 0 auto !important;
+                                    max-width: 420px !important;
                                     z-index: 999999 !important;
                                     display: flex !important;
                                     flex-direction: column !important;
+                                    align-items: center !important;
                                 }
                                 .lt-widget-btn {
                                     display: none !important;
@@ -141,91 +146,27 @@ fun LetsTrackChatDialog(
                                     display: none !important;
                                 }
                                 .lt-chat-window {
-                                    position: fixed !important;
-                                    top: 0 !important;
-                                    left: 0 !important;
-                                    right: 0 !important;
-                                    bottom: 0 !important;
-                                    width: 100vw !important;
-                                    height: 100vh !important;
-                                    max-width: 100vw !important;
-                                    max-height: 100vh !important;
-                                    margin: 0 !important;
-                                    border-radius: 0 !important;
-                                    border: none !important;
-                                    box-shadow: none !important;
+                                    width: 100% !important;
+                                    max-width: 420px !important;
+                                    height: 72vh !important;
+                                    max-height: 560px !important;
+                                    border-radius: 20px !important;
+                                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45) !important;
+                                    border: 1px solid rgba(255, 255, 255, 0.18) !important;
                                     display: flex !important;
                                     opacity: 1 !important;
                                     transform: none !important;
-                                    background: #0F172A !important;
+                                    overflow: hidden !important;
+                                    margin-bottom: 0 !important;
                                 }
                                 .lt-chat-header {
-                                    display: none !important;
-                                }
-                                .lt-chat-body {
-                                    flex: 1 !important;
-                                    background: #0F172A !important;
-                                    padding: 16px !important;
-                                }
-                                .lt-msg-wrap.visitor .lt-msg-bubble {
-                                    background-color: #E11D48 !important;
-                                    color: #FFFFFF !important;
-                                    font-weight: 500 !important;
-                                }
-                                .lt-msg-wrap.agent .lt-msg-bubble {
-                                    background-color: #1E293B !important;
-                                    color: #F8FAFC !important;
-                                    border: 1px solid #334155 !important;
-                                }
-                                .lt-msg-wrap.system .lt-msg-bubble {
-                                    background-color: #1E293B !important;
-                                    color: #94A3B8 !important;
-                                    border: 1px solid #334155 !important;
-                                }
-                                .lt-msg-sender {
-                                    color: #64748B !important;
-                                }
-                                .lt-chat-footer {
-                                    background: #1E293B !important;
-                                    border-top: 1px solid #334155 !important;
-                                    padding: 12px 14px !important;
-                                }
-                                .lt-chat-input {
-                                    color: #F8FAFC !important;
-                                    font-size: 14px !important;
-                                }
-                                .lt-chat-input::placeholder {
-                                    color: #64748B !important;
-                                }
-                                .lt-send-btn {
-                                    color: #E11D48 !important;
-                                }
-                                .lt-branding-footer {
-                                    background: #0F172A !important;
-                                    border-top: 1px solid #1E293B !important;
-                                    color: #64748B !important;
-                                }
-                                .pre-chat-form {
-                                    background: #1E293B !important;
-                                    padding: 20px !important;
-                                    border-radius: 16px !important;
-                                    border: 1px solid #334155 !important;
-                                }
-                                .pre-chat-text {
-                                    color: #F8FAFC !important;
-                                }
-                                .pre-chat-input {
-                                    background: #0F172A !important;
-                                    border: 1px solid #334155 !important;
-                                    color: #F8FAFC !important;
-                                }
-                                .pre-chat-btn {
-                                    background-color: #E11D48 !important;
+                                    border-top-left-radius: 20px !important;
+                                    border-top-right-radius: 20px !important;
                                 }
                             `;
                             shadow.appendChild(style);
 
-                            // Continuous interval to enforce open state & hide launcher button
+                            // Auto-open and wire close button to Android
                             setInterval(function() {
                                 var win = shadow.querySelector('.lt-chat-window');
                                 if (win) {
@@ -238,6 +179,17 @@ fun LetsTrackChatDialog(
                                 var btn = shadow.querySelector('.lt-widget-btn');
                                 if (btn) {
                                     btn.style.setProperty('display', 'none', 'important');
+                                }
+                                var closeBtn = shadow.querySelector('#lt-close-btn');
+                                if (closeBtn && !closeBtn.__boundToAndroid) {
+                                    closeBtn.__boundToAndroid = true;
+                                    closeBtn.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (window.AndroidBridge && typeof window.AndroidBridge.closeChat === 'function') {
+                                            window.AndroidBridge.closeChat();
+                                        }
+                                    });
                                 }
                             }, 100);
                         }
@@ -261,141 +213,68 @@ fun LetsTrackChatDialog(
         """.trimIndent()
     }
 
+    // Modal overlay with subtle darkened backdrop
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
-            .statusBarsPadding()
+            .background(Color.Black.copy(alpha = 0.55f))
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                onClose()
+            }
             .navigationBarsPadding()
+            .statusBarsPadding(),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Clean Native Top Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .background(Color(0xFF0F172A))
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.85f)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
                 ) {
-                    IconButton(
-                        onClick = onClose,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(9.dp)
-                            .background(Color(0xFF10B981), CircleShape)
-                    )
-
-                    Column {
-                        Text(
-                            text = "VR HERE Live Support",
-                            color = Color.White,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "LetsTrack Live Agent",
-                            color = Color(0xFF94A3B8),
-                            fontSize = 10.sp
-                        )
-                    }
+                    // Prevent dismiss when tapping inside the chat widget container
                 }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    IconButton(
-                        onClick = { webViewInstance?.reload() },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Reload",
-                            tint = Color(0xFF94A3B8),
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onClose,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = Color(0xFF94A3B8),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(thickness = 1.dp, color = Color(0xFF1E293B))
-
-            // Full-bleed Embedded WebView
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
-                AndroidView(
-                    factory = { ctx ->
-                        WebView(ctx).apply {
-                            webViewInstance = this
-                            settings.apply {
-                                javaScriptEnabled = true
-                                domStorageEnabled = true
-                                databaseEnabled = true
-                                useWideViewPort = true
-                                loadWithOverviewMode = true
-                                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                                cacheMode = WebSettings.LOAD_DEFAULT
-                                userAgentString = settings.userAgentString + " VRHereApp/Android"
-                            }
-                            webChromeClient = WebChromeClient()
-                            webViewClient = object : WebViewClient() {
-                                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                                    isLoading = true
-                                }
-                                override fun onPageFinished(view: WebView?, url: String?) {
-                                    isLoading = false
-                                }
-                            }
-                            setBackgroundColor(0xFF0F172A.toInt())
-                            loadDataWithBaseURL("https://vrhere.in", htmlContent, "text/html", "UTF-8", null)
+        ) {
+            AndroidView(
+                factory = { ctx ->
+                    WebView(ctx).apply {
+                        webViewInstance = this
+                        setBackgroundColor(0) // Transparent background so only the widget card is visible
+                        settings.apply {
+                            javaScriptEnabled = true
+                            domStorageEnabled = true
+                            databaseEnabled = true
+                            useWideViewPort = true
+                            loadWithOverviewMode = true
+                            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                            cacheMode = WebSettings.LOAD_DEFAULT
+                            userAgentString = settings.userAgentString + " VRHereApp/Android"
                         }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
+                        addJavascriptInterface(object {
+                            @JavascriptInterface
+                            fun closeChat() {
+                                post { onClose() }
+                            }
+                        }, "AndroidBridge")
 
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF6366F1),
-                            modifier = Modifier.size(36.dp)
-                        )
+                        webChromeClient = WebChromeClient()
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                isLoading = true
+                            }
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                isLoading = false
+                            }
+                        }
+                        loadDataWithBaseURL("https://vrhere.in", htmlContent, "text/html", "UTF-8", null)
                     }
-                }
-            }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
