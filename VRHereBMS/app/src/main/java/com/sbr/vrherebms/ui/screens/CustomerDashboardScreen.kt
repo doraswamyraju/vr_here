@@ -445,7 +445,8 @@ fun CustomerDashboardScreen(
 
             // LetsTrack Live Support Chat Modal
             if (isLetsTrackChatOpen) {
-                val customerEmail = viewModel.customerProfile?.email ?: ""
+                val sessionManager = remember { com.sbr.vrherebms.data.local.SessionManager(context) }
+                val customerEmail = sessionManager.getUserEmail() ?: ""
                 LetsTrackChatDialog(
                     isOpen = isLetsTrackChatOpen,
                     customerName = userName,
