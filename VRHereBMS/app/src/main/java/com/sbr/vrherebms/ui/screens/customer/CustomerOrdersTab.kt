@@ -397,7 +397,7 @@ fun CustomerOrdersTab(
         ) {
             // --- TOP NAVIGATION HEADER ---
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -405,65 +405,70 @@ fun CustomerOrdersTab(
                         IconButton(
                             onClick = { selectedOrderId = null },
                             modifier = Modifier
-                                .size(36.dp)
-                                .background(Color.White, CircleShape)
-                                .border(1.dp, Color(0xFFE2E8F0), CircleShape)
+                                .size(40.dp)
+                                .background(Color.White, RoundedCornerShape(12.dp))
+                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
                         ) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color(0xFF0F172A), modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color(0xFF0F172A), modifier = Modifier.size(20.dp))
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = order.serviceName,
-                                fontSize = 16.sp,
+                                fontSize = 17.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color(0xFF0F172A),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Order ID: #${order.id.takeLast(8).uppercase()} • ${order.packageName}",
                                 fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF64748B)
                             )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         StatusBadgeWidget(status = order.status)
                     }
 
                     // Quick Action Bar (Pay Balance / Ask Support)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        OutlinedButton(
+                            onClick = { showSupportModal = true },
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White),
+                            modifier = Modifier.weight(1f).height(44.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp)
+                        ) {
+                            Icon(Icons.Default.HelpOutline, contentDescription = null, tint = Color(0xFF4F46E5), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Ask Support", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                        }
+
                         if (balance > 0) {
                             Button(
                                 onClick = { showPaymentBottomSheet = true },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f),
-                                contentPadding = PaddingValues(vertical = 8.dp)
+                                modifier = Modifier.weight(1f).height(44.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp)
                             ) {
-                                Icon(Icons.Default.CreditCard, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.CreditCard, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Pay Balance ₹${balance.toInt()}", fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                Text("Pay Balance ₹${balance.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color.White)
                             }
-                        }
-
-                        OutlinedButton(
-                            onClick = { showSupportModal = true },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(vertical = 8.dp)
-                        ) {
-                            Icon(Icons.Default.HelpOutline, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Ask Support", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
 
-            // --- 5-PHASE TIMELINE STEPPER CARD ---
+            // --- 5-PHASE TIMELINE STEPPER CARD (Matching Web 100%) ---
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -471,39 +476,122 @@ fun CustomerOrdersTab(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("Filing Milestones Stepper", fontSize = 13.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
-                            Text("${getStatusProgress(order.status)}% Complete", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFFDC2626))
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Project Progress Overview", fontSize = 13.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                                Text("Live statutory lifecycle tracking", fontSize = 11.sp, color = Color(0xFF64748B))
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFFEF2F2),
+                                border = BorderStroke(1.dp, Color(0xFFFECDD3))
+                            ) {
+                                Text(
+                                    "${getStatusProgress(order.status)}% Complete",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFFDC2626),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
                         }
 
-                        LinearProgressIndicator(
-                            progress = { getStatusProgress(order.status) / 100f },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),
-                            color = Color(0xFFDC2626),
-                            trackColor = Color(0xFFF1F5F9)
+                        val phases = listOf(
+                            "Pending Documents" to "Docs",
+                            "Documents Verified" to "Verified",
+                            "Processing at Portal" to "Portal",
+                            "Waiting for Clarification" to "Clarify",
+                            "Completed" to "Done"
                         )
+                        val currentStep = when (order.status) {
+                            "Pending Documents" -> 0
+                            "Documents Verified" -> 1
+                            "Processing at Portal" -> 2
+                            "Waiting for Clarification" -> 3
+                            "Completed" -> 4
+                            else -> 0
+                        }
 
-                        val phases = listOf("Pending Docs", "Verified", "Portal Processing", "Clarification", "Completed")
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            phases.forEachIndexed { idx, phaseName ->
-                                val currentStep = when (order.status) {
-                                    "Pending Documents" -> 0
-                                    "Documents Verified" -> 1
-                                    "Processing at Portal" -> 2
-                                    "Waiting for Clarification" -> 3
-                                    "Completed" -> 4
-                                    else -> 0
+                        // Stepper Dots & Connector Line
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            phases.forEachIndexed { idx, (fullPhase, shortLabel) ->
+                                val isDone = idx < currentStep || order.status == "Completed"
+                                val isCurrent = idx == currentStep && order.status != "Completed"
+
+                                // Step Circle
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .background(
+                                            color = when {
+                                                isDone -> Color(0xFF10B981)
+                                                isCurrent -> Color(0xFFDC2626)
+                                                else -> Color(0xFFF1F5F9)
+                                            },
+                                            shape = CircleShape
+                                        )
+                                        .border(
+                                            width = if (isCurrent) 2.dp else 1.dp,
+                                            color = if (isCurrent) Color(0xFFFECDD3) else if (isDone) Color(0xFF10B981) else Color(0xFFE2E8F0),
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isDone) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "${idx + 1}",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = if (isCurrent) Color.White else Color(0xFF94A3B8)
+                                        )
+                                    }
                                 }
+
+                                // Connecting Line between circles
+                                if (idx < phases.size - 1) {
+                                    val isNextDone = idx < currentStep
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(3.dp)
+                                            .background(
+                                                color = if (isNextDone) Color(0xFF10B981) else Color(0xFFF1F5F9),
+                                                shape = RoundedCornerShape(2.dp)
+                                            )
+                                    )
+                                }
+                            }
+                        }
+
+                        // Phase Labels Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            phases.forEachIndexed { idx, (_, shortLabel) ->
                                 val isDone = idx <= currentStep
+                                val isCurrent = idx == currentStep
                                 Text(
-                                    text = phaseName,
-                                    fontSize = 8.sp,
-                                    fontWeight = if (isDone) FontWeight.Black else FontWeight.Normal,
-                                    color = if (isDone) Color(0xFF0F172A) else Color(0xFF94A3B8),
+                                    text = shortLabel,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (isCurrent) FontWeight.Black else if (isDone) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isCurrent) Color(0xFFDC2626) else if (isDone) Color(0xFF0F172A) else Color(0xFF94A3B8),
+                                    modifier = Modifier.width(48.dp),
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -553,33 +641,51 @@ fun CustomerOrdersTab(
                         .fillMaxWidth()
                         .background(Color.White, RoundedCornerShape(16.dp))
                         .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(16.dp))
-                        .padding(4.dp)
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     val tabs = listOf(
-                        Triple("requirements", "Requirements (${pendingRequirements.size} pending)", pendingRequirements.size),
-                        Triple("documents", "Vault (${order.adminDocuments.size + order.clientDocuments.size})", 0),
+                        Triple("requirements", "Requirements", pendingRequirements.size),
+                        Triple("documents", "Vault", order.adminDocuments.size + order.clientDocuments.size),
                         Triple("financials", "Financials", 0)
                     )
 
-                    tabs.forEach { (key, label, badgeCount) ->
+                    tabs.forEach { (key, title, badgeCount) ->
                         val isSelected = currentDetailTab == key
-                        Box(
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) Color(0xFFDC2626) else Color.Transparent,
                             modifier = Modifier
                                 .weight(1f)
-                                .background(
-                                    if (isSelected) Color(0xFFDC2626) else Color.Transparent,
-                                    RoundedCornerShape(12.dp)
-                                )
                                 .clickable { currentDetailTab = key }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = label,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Black,
-                                color = if (isSelected) Color.White else Color(0xFF64748B)
-                            )
+                            Row(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = title,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (isSelected) Color.White else Color(0xFF64748B)
+                                )
+                                if (badgeCount > 0) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = if (isSelected) Color.White.copy(alpha = 0.25f) else Color(0xFFF1F5F9)
+                                    ) {
+                                        Text(
+                                            text = "$badgeCount",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = if (isSelected) Color.White else Color(0xFFDC2626),
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -594,7 +700,7 @@ fun CustomerOrdersTab(
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                     ) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -602,7 +708,7 @@ fun CustomerOrdersTab(
                             ) {
                                 Column {
                                     Text("Required Action Checklist", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
-                                    Text("$reqProgressPercentage% Completed (${completedRequirements.size}/${requirements.size})", fontSize = 11.sp, color = Color(0xFF64748B))
+                                    Text("$reqProgressPercentage% Completed (${completedRequirements.size}/${requirements.size})", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = Color(0xFF64748B))
                                 }
 
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -638,19 +744,23 @@ fun CustomerOrdersTab(
                                         border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 horizontalArrangement = Arrangement.SpaceBetween,
                                                 verticalAlignment = Alignment.Top
                                             ) {
-                                                Column(modifier = Modifier.weight(1f)) {
+                                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                                                     Text(req.title, fontWeight = FontWeight.Black, fontSize = 13.sp, color = Color(0xFF0F172A))
-                                                    Text(req.description, fontSize = 11.sp, color = Color(0xFF64748B))
+                                                    if (req.description.isNotBlank()) {
+                                                        Spacer(modifier = Modifier.height(2.dp))
+                                                        Text(req.description, fontSize = 11.sp, color = Color(0xFF64748B))
+                                                    }
                                                 }
                                                 Surface(
                                                     color = if (isVerified) Color(0xFFD1FAE5) else if (isSubmitted) Color(0xFFDBEAFE) else Color(0xFFFFE4E6),
-                                                    shape = RoundedCornerShape(6.dp)
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    border = BorderStroke(1.dp, if (isVerified) Color(0xFFA7F3D0) else if (isSubmitted) Color(0xFFBFDBFE) else Color(0xFFFECDD3))
                                                 ) {
                                                     Text(
                                                         text = if (isVerified) "VERIFIED" else if (isSubmitted) "SUBMITTED" else "ACTION REQD",
@@ -665,7 +775,8 @@ fun CustomerOrdersTab(
                                             if (!req.value.isNullOrEmpty()) {
                                                 Surface(
                                                     shape = RoundedCornerShape(8.dp),
-                                                    color = Color(0xFFF1F5F9),
+                                                    color = Color.White,
+                                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                                                     modifier = Modifier.fillMaxWidth()
                                                 ) {
                                                     Row(
@@ -673,7 +784,7 @@ fun CustomerOrdersTab(
                                                         horizontalArrangement = Arrangement.SpaceBetween,
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
-                                                        Text("Submitted: ${req.value}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155), modifier = Modifier.weight(1f))
+                                                        Text("Submitted: ${req.value}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF334155), modifier = Modifier.weight(1f))
                                                         if (req.value.startsWith("http") || req.value.startsWith("/uploads")) {
                                                             TextButton(
                                                                 onClick = { openDocumentUrl(context, req.value) },
@@ -694,8 +805,8 @@ fun CustomerOrdersTab(
                                                     showRequirementSheet = true
                                                 },
                                                 colors = ButtonDefaults.buttonColors(containerColor = if (isSubmitted) Color(0xFF0F172A) else Color(0xFFDC2626)),
-                                                shape = RoundedCornerShape(8.dp),
-                                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                                shape = RoundedCornerShape(10.dp),
+                                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                                             ) {
                                                 Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(14.dp))
                                                 Spacer(modifier = Modifier.width(6.dp))
