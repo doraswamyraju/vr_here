@@ -14,14 +14,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "674627570227-tdaif2sht51ejtkisle8e4odjc9mfufp.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.sbr.vrherebms",
-            "certificate_hash": "6e3e204af06114261dd172ceab066266d6efcf8e"
-          }
-        },
-        {
           "client_id": "674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com",
           "client_type": 3
         }
