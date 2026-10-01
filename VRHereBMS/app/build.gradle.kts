@@ -67,6 +67,9 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
+    implementation("io.socket:socket.io-client:2.1.1") {
+        exclude(group = "org.json", module = "json")
+    }
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Razorpay Mobile Native SDK
