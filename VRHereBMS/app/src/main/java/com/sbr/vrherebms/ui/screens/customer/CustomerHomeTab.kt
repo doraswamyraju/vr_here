@@ -25,12 +25,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.sbr.vrherebms.ui.components.scaleOnPress
 import com.sbr.vrherebms.ui.theme.*
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
@@ -75,6 +77,21 @@ private data class QuickServiceItem(
     val url: String? = null
 )
 
+private fun parseHexColor(hexString: String?, defaultColor: Color): Color {
+    if (hexString.isNullOrBlank()) return defaultColor
+    return try {
+        val clean = hexString.trim().removePrefix("#")
+        val colorInt = when (clean.length) {
+            6 -> (0xFF000000 or clean.toLong(16)).toInt()
+            8 -> clean.toLong(16).toInt()
+            else -> return defaultColor
+        }
+        Color(colorInt)
+    } catch (e: Exception) {
+        defaultColor
+    }
+}
+
 private data class PromoOfferItem(
     val id: String,
     val tag: String,
@@ -87,7 +104,10 @@ private data class PromoOfferItem(
     val ctaText: String,
     val liveServiceName: String? = null,
     val liveServiceUrl: String? = null,
-    val targetTab: String = "Services"
+    val targetTab: String = "Services",
+    val bannerImageUrl: String? = null,
+    val discountedPrice: Double = 0.0,
+    val originalPrice: Double = 0.0
 )
 
 private data class BlogPostItem(
@@ -100,7 +120,8 @@ private data class BlogPostItem(
     val publishDate: String,
     val icon: ImageVector,
     val keyTakeaways: List<String>,
-    val fullArticle: String
+    val fullArticle: String,
+    val coverImageUrl: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -183,194 +204,261 @@ fun CustomerHomeTab(
         QuickServiceItem(8, "ROC CCFS-2026", "Penalty Relief", Icons.Default.AutoAwesome, Color(0xFFFFF7ED), Color(0xFFEA580C), "Services", "https://vrhere.in/compliance-scheme-2026")
     )
 
-    val promoOffers = remember {
-        listOf(
-            PromoOfferItem(
-                id = "offer-ccfs-2026",
-                tag = "GOVERNMENT AMNESTY",
-                title = "ROC CCFS-2026 Amnesty Scheme",
-                description = "100% Late Filing Penalty Waiver for pending MCA returns. Clear years of default with zero additional fees.",
-                badge = "LIMITED PERIOD",
-                bgColors = listOf(DarkSlate, Color(0xFF831843)),
-                accentColor = Color(0xFFF43F5E),
-                icon = Icons.Default.AutoAwesome,
-                ctaText = "Avail Scheme →",
-                liveServiceName = "CCFS-2026 Scheme",
-                liveServiceUrl = "https://vrhere.in/compliance-scheme-2026"
-            ),
-            PromoOfferItem(
-                id = "offer-startup-80iac",
-                tag = "TAX HOLIDAY",
-                title = "Startup India & 80-IAC 3-Year Exemption",
-                description = "Get 100% Income Tax Exemption for 3 consecutive years with DPIIT Recognition & IMB Certification.",
-                badge = "DPIIT APPROVED",
-                bgColors = listOf(DarkSlate, Color(0xFF065F46)),
-                accentColor = Emerald500,
-                icon = Icons.Default.RocketLaunch,
-                ctaText = "Apply Now →",
-                liveServiceName = "Startup India Registration",
-                liveServiceUrl = "https://vrhere.in/startup-india"
-            ),
-            PromoOfferItem(
-                id = "offer-pvt-ltd-pack",
-                tag = "ALL-IN-ONE PACK",
-                title = "Free GST + MSME with Pvt Ltd",
-                description = "Complete incorporation with DIN, DSC, MOA, AOA, PAN, TAN, GSTIN & MSME Udyam registration included.",
-                badge = "SAVE ₹4,999",
-                bgColors = listOf(DarkSlate, Color(0xFF312E81)),
-                accentColor = Indigo500,
-                icon = Icons.Default.Business,
-                ctaText = "Register Today →",
-                liveServiceName = "Private Limited Registration",
-                liveServiceUrl = "https://vrhere.in/pvt-ltd-registration"
-            ),
-            PromoOfferItem(
-                id = "offer-iso-fasttrack",
-                tag = "FAST-TRACK DISPATCH",
-                title = "Fast-Track ISO 9001 / 27001",
-                description = "Globally recognized IAF/UAF accredited certification delivered in 3 working days for tender eligibility.",
-                badge = "3-DAY DISPATCH",
-                bgColors = listOf(DarkSlate, Color(0xFF78350F)),
-                accentColor = Amber500,
-                icon = Icons.Default.Security,
-                ctaText = "Get Certified →",
-                targetTab = "Services"
+    val promoOffers = remember(viewModel.offers) {
+        val dynamic = viewModel.offers.filter { it.isActive }
+        if (dynamic.isNotEmpty()) {
+            dynamic.map { o ->
+                val accent = parseHexColor(o.badgeColor, PrimaryRed)
+                PromoOfferItem(
+                    id = o.id,
+                    tag = o.badgeTag,
+                    title = o.title,
+                    description = o.subtitle,
+                    badge = if (o.discountAmount > 0) "SAVE ₹${o.discountAmount.toLong()}" else "FEATURED",
+                    bgColors = listOf(DarkSlate, accent.copy(alpha = 0.5f)),
+                    accentColor = accent,
+                    icon = Icons.Default.LocalOffer,
+                    ctaText = o.ctaText,
+                    liveServiceName = o.title,
+                    liveServiceUrl = o.targetUrl?.takeIf { it.isNotBlank() },
+                    targetTab = "Services",
+                    bannerImageUrl = o.bannerImageUrl,
+                    discountedPrice = o.discountedPrice,
+                    originalPrice = o.originalPrice
+                )
+            }
+        } else {
+            listOf(
+                PromoOfferItem(
+                    id = "offer-ccfs-2026",
+                    tag = "GOVERNMENT AMNESTY",
+                    title = "ROC CCFS-2026 Amnesty Scheme",
+                    description = "100% Late Filing Penalty Waiver for pending MCA returns. Clear years of default with zero additional fees.",
+                    badge = "LIMITED PERIOD",
+                    bgColors = listOf(DarkSlate, Color(0xFF831843)),
+                    accentColor = Color(0xFFF43F5E),
+                    icon = Icons.Default.AutoAwesome,
+                    ctaText = "Avail Scheme →",
+                    liveServiceName = "CCFS-2026 Scheme",
+                    liveServiceUrl = "https://vrhere.in/compliance-scheme-2026",
+                    bannerImageUrl = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80",
+                    discountedPrice = 5000.0,
+                    originalPrice = 15000.0
+                ),
+                PromoOfferItem(
+                    id = "offer-startup-80iac",
+                    tag = "TAX HOLIDAY",
+                    title = "Startup India & 80-IAC 3-Year Exemption",
+                    description = "Get 100% Income Tax Exemption for 3 consecutive years with DPIIT Recognition & IMB Certification.",
+                    badge = "DPIIT APPROVED",
+                    bgColors = listOf(DarkSlate, Color(0xFF065F46)),
+                    accentColor = Emerald500,
+                    icon = Icons.Default.RocketLaunch,
+                    ctaText = "Apply Now →",
+                    liveServiceName = "Startup India Registration",
+                    liveServiceUrl = "https://vrhere.in/startup-india",
+                    bannerImageUrl = "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=80",
+                    discountedPrice = 9999.0,
+                    originalPrice = 14999.0
+                ),
+                PromoOfferItem(
+                    id = "offer-pvt-ltd-pack",
+                    tag = "ALL-IN-ONE PACK",
+                    title = "Free GST + MSME with Pvt Ltd",
+                    description = "Complete incorporation with DIN, DSC, MOA, AOA, PAN, TAN, GSTIN & MSME Udyam registration included.",
+                    badge = "SAVE ₹4,999",
+                    bgColors = listOf(DarkSlate, Color(0xFF312E81)),
+                    accentColor = Indigo500,
+                    icon = Icons.Default.Business,
+                    ctaText = "Register Today →",
+                    liveServiceName = "Private Limited Registration",
+                    liveServiceUrl = "https://vrhere.in/pvt-ltd-registration",
+                    bannerImageUrl = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80",
+                    discountedPrice = 7999.0,
+                    originalPrice = 12999.0
+                ),
+                PromoOfferItem(
+                    id = "offer-iso-fasttrack",
+                    tag = "FAST-TRACK DISPATCH",
+                    title = "Fast-Track ISO 9001 / 27001",
+                    description = "Globally recognized IAF/UAF accredited certification delivered in 3 working days for tender eligibility.",
+                    badge = "3-DAY DISPATCH",
+                    bgColors = listOf(DarkSlate, Color(0xFF78350F)),
+                    accentColor = Amber500,
+                    icon = Icons.Default.Security,
+                    ctaText = "Get Certified →",
+                    targetTab = "Services",
+                    bannerImageUrl = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop&q=80",
+                    discountedPrice = 6999.0,
+                    originalPrice = 9999.0
+                )
             )
-        )
+        }
     }
 
-    val blogPosts = remember {
-        listOf(
-            BlogPostItem(
-                id = "blog-mca-kyc-2026",
-                title = "MCA Annual Returns & Director KYC: Mandatory Compliance Guide (FY 2025-26)",
-                summary = "Complete roadmap on Form AOC-4, MGT-7, and DIR-3 KYC timelines to avoid director disqualification and ₹100/day penalties under the Companies Act.",
-                category = "Corporate Law",
-                categoryColor = Color(0xFF2563EB),
-                readTime = "4 min read",
-                publishDate = "Mar 2026",
-                icon = Icons.Default.Business,
-                keyTakeaways = listOf(
-                    "DIR-3 KYC mandatory annually for all active DIN holders",
-                    "AOC-4 (Financial Statements) due within 30 days of AGM",
-                    "MGT-7 (Annual Return) due within 60 days of AGM",
-                    "Late fee accumulates at ₹100 per day with no upper cap unless under amnesty"
+    val blogPosts = remember(viewModel.blogs) {
+        val dynamic = viewModel.blogs.filter { it.isPublished }
+        if (dynamic.isNotEmpty()) {
+            dynamic.map { b ->
+                val catColor = parseHexColor(b.categoryColor, Color(0xFF2563EB))
+                BlogPostItem(
+                    id = b.id,
+                    title = b.title,
+                    summary = b.summary,
+                    category = b.category,
+                    categoryColor = catColor,
+                    readTime = b.readTime.ifBlank { "4 min read" },
+                    publishDate = b.publishedAt?.take(10) ?: "Mar 2026",
+                    icon = when (b.category) {
+                        "Corporate & Legal" -> Icons.Default.Business
+                        "GST & Direct Taxes" -> Icons.Default.ReceiptLong
+                        "Startups & Funding" -> Icons.Default.RocketLaunch
+                        "IPR & Legal" -> Icons.Default.Shield
+                        "Accounting & Payroll" -> Icons.Default.AccountBalanceWallet
+                        else -> Icons.Default.FactCheck
+                    },
+                    keyTakeaways = b.keyTakeaways,
+                    fullArticle = b.fullArticle,
+                    coverImageUrl = b.coverImageUrl
+                )
+            }
+        } else {
+            listOf(
+                BlogPostItem(
+                    id = "blog-mca-kyc-2026",
+                    title = "MCA Annual Returns & Director KYC: Mandatory Compliance Guide (FY 2025-26)",
+                    summary = "Complete roadmap on Form AOC-4, MGT-7, and DIR-3 KYC timelines to avoid director disqualification and ₹100/day penalties under the Companies Act.",
+                    category = "Corporate & Legal",
+                    categoryColor = Color(0xFF2563EB),
+                    readTime = "4 min read",
+                    publishDate = "Mar 2026",
+                    icon = Icons.Default.Business,
+                    keyTakeaways = listOf(
+                        "DIR-3 KYC mandatory annually for all active DIN holders",
+                        "AOC-4 (Financial Statements) due within 30 days of AGM",
+                        "MGT-7 (Annual Return) due within 60 days of AGM",
+                        "Late fee accumulates at ₹100 per day with no upper cap unless under amnesty"
+                    ),
+                    fullArticle = """
+                        Every registered Private Limited and Public Limited Company in India is legally mandated to maintain active compliance with the Ministry of Corporate Affairs (MCA).
+                        
+                        1. DIR-3 KYC Filing:
+                        Every individual holding a Director Identification Number (DIN) must complete Web KYC or e-Form DIR-3 KYC before the cutoff date. Failure to file leads to deactivation of DIN and a standard penalty of ₹5,000 per DIN.
+                        
+                        2. Form AOC-4 (Financial Statements):
+                        Must include the Audited Balance Sheet, Profit & Loss Statement, Auditor's Report, and Director's Report. It must be filed within 30 days from the date of the Annual General Meeting (AGM).
+                        
+                        3. Form MGT-7 / MGT-7A (Annual Return):
+                        Small companies can file MGT-7A, while other companies file MGT-7. This captures shareholding patterns, directorship changes, and board meetings held during the financial year.
+                        
+                        4. Impact of Non-Compliance:
+                        Non-filing triggers disqualification of directors under Section 164(2) for 5 years and potential striking off by the ROC under Section 248. VR Here's corporate legal team handles end-to-end preparation and MCA portal filing.
+                    """.trimIndent(),
+                    coverImageUrl = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80"
                 ),
-                fullArticle = """
-                    Every registered Private Limited and Public Limited Company in India is legally mandated to maintain active compliance with the Ministry of Corporate Affairs (MCA).
-                    
-                    1. DIR-3 KYC Filing:
-                    Every individual holding a Director Identification Number (DIN) must complete Web KYC or e-Form DIR-3 KYC before the cutoff date. Failure to file leads to deactivation of DIN and a standard penalty of ₹5,000 per DIN.
-                    
-                    2. Form AOC-4 (Financial Statements):
-                    Must include the Audited Balance Sheet, Profit & Loss Statement, Auditor's Report, and Director's Report. It must be filed within 30 days from the date of the Annual General Meeting (AGM).
-                    
-                    3. Form MGT-7 / MGT-7A (Annual Return):
-                    Small companies can file MGT-7A, while other companies file MGT-7. This captures shareholding patterns, directorship changes, and board meetings held during the financial year.
-                    
-                    4. Impact of Non-Compliance:
-                    Non-filing triggers disqualification of directors under Section 164(2) for 5 years and potential striking off by the ROC under Section 248. VR Here's corporate legal team handles end-to-end preparation and MCA portal filing.
-                """.trimIndent()
-            ),
-            BlogPostItem(
-                id = "blog-gst-einvoicing-itc",
-                title = "GST E-Invoicing & ITC 2B Reconciliation: Avoiding Audit Notices",
-                summary = "New strict audit rules on Form GSTR-1A, auto-generated GSTR-2B ITC matching, and avoiding 100% ITC disallowance under Section 16(2)(aa).",
-                category = "GST & Taxation",
-                categoryColor = Emerald500,
-                readTime = "5 min read",
-                publishDate = "Mar 2026",
-                icon = Icons.Default.ReceiptLong,
-                keyTakeaways = listOf(
-                    "E-Invoicing mandatory for B2B transactions above ₹5 Cr threshold",
-                    "Input Tax Credit (ITC) strictly restricted to invoices in GSTR-2B",
-                    "Form GSTR-1A introduces pre-filing amendment facility",
-                    "Automated Rule 88C / 88D notices issued for tax & ITC variances"
+                BlogPostItem(
+                    id = "blog-gst-einvoicing-itc",
+                    title = "GST E-Invoicing & ITC 2B Reconciliation: Avoiding Audit Notices",
+                    summary = "New strict audit rules on Form GSTR-1A, auto-generated GSTR-2B ITC matching, and avoiding 100% ITC disallowance under Section 16(2)(aa).",
+                    category = "GST & Direct Taxes",
+                    categoryColor = Emerald500,
+                    readTime = "5 min read",
+                    publishDate = "Mar 2026",
+                    icon = Icons.Default.ReceiptLong,
+                    keyTakeaways = listOf(
+                        "E-Invoicing mandatory for B2B transactions above ₹5 Cr threshold",
+                        "Input Tax Credit (ITC) strictly restricted to invoices in GSTR-2B",
+                        "Form GSTR-1A introduces pre-filing amendment facility",
+                        "Automated Rule 88C / 88D notices issued for tax & ITC variances"
+                    ),
+                    fullArticle = """
+                        The GST Network (GSTN) has rolled out rigorous automated reconciliation mechanisms that directly impact monthly cash flows and input tax credits.
+                        
+                        1. Mandatory E-Invoicing Thresholds:
+                        Businesses with aggregate annual turnover exceeding ₹5 Crores must generate Invoice Reference Numbers (IRN) and signed QR codes via the IRP portal for all B2B invoices and debit/credit notes. Invoices without valid IRN are legally invalid.
+                        
+                        2. 100% GSTR-2B Matching Rule:
+                        Under Section 16(2)(aa), no taxpayer can claim ITC unless the supplier has uploaded the invoice in their GSTR-1 and it is reflected in the recipient's GSTR-2B.
+                        
+                        3. Automated DRC-01B & DRC-01C Notices:
+                        Variances between GSTR-1 vs GSTR-3B tax liability, or GSTR-2B vs GSTR-3B ITC claimed exceeding threshold percentages automatically generate DRC-01B/C notices requiring reconciliation within 7 days.
+                        
+                        4. Best Practices:
+                        Run monthly supplier reconciliation reports, verify GSTIN statuses, and utilize VR Here Bookkeeping & GST Filing modules for automated verification.
+                    """.trimIndent(),
+                    coverImageUrl = "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80"
                 ),
-                fullArticle = """
-                    The GST Network (GSTN) has rolled out rigorous automated reconciliation mechanisms that directly impact monthly cash flows and input tax credits.
-                    
-                    1. Mandatory E-Invoicing Thresholds:
-                    Businesses with aggregate annual turnover exceeding ₹5 Crores must generate Invoice Reference Numbers (IRN) and signed QR codes via the IRP portal for all B2B invoices and debit/credit notes. Invoices without valid IRN are legally invalid.
-                    
-                    2. 100% GSTR-2B Matching Rule:
-                    Under Section 16(2)(aa), no taxpayer can claim ITC unless the supplier has uploaded the invoice in their GSTR-1 and it is reflected in the recipient's GSTR-2B.
-                    
-                    3. Automated DRC-01B & DRC-01C Notices:
-                    Variances between GSTR-1 vs GSTR-3B tax liability, or GSTR-2B vs GSTR-3B ITC claimed exceeding threshold percentages automatically generate DRC-01B/C notices requiring reconciliation within 7 days.
-                    
-                    4. Best Practices:
-                    Run monthly supplier reconciliation reports, verify GSTIN statuses, and utilize VR Here Bookkeeping & GST Filing modules for automated verification.
-                """.trimIndent()
-            ),
-            BlogPostItem(
-                id = "blog-startup-india-80iac",
-                title = "Startup India 80-IAC 3-Year Tax Holiday & IMB Approval Guide",
-                summary = "Step-by-step checklist to secure Inter-Ministerial Board (IMB) approval for 100% income tax exemption and collateral-free bank funding.",
-                category = "Startups & Funding",
-                categoryColor = Indigo500,
-                readTime = "6 min read",
-                publishDate = "Feb 2026",
-                icon = Icons.Default.RocketLaunch,
-                keyTakeaways = listOf(
-                    "100% tax exemption on profits for 3 consecutive years out of 10",
-                    "Entity must be Private Limited or LLP incorporated after April 1, 2016",
-                    "Turnover must not exceed ₹100 Crores in any financial year",
-                    "Requires innovative business model approved by Inter-Ministerial Board"
+                BlogPostItem(
+                    id = "blog-startup-india-80iac",
+                    title = "Startup India 80-IAC 3-Year Tax Holiday & IMB Approval Guide",
+                    summary = "Step-by-step checklist to secure Inter-Ministerial Board (IMB) approval for 100% income tax exemption and collateral-free bank funding.",
+                    category = "Startups & Funding",
+                    categoryColor = Indigo500,
+                    readTime = "6 min read",
+                    publishDate = "Feb 2026",
+                    icon = Icons.Default.RocketLaunch,
+                    keyTakeaways = listOf(
+                        "100% tax exemption on profits for 3 consecutive years out of 10",
+                        "Entity must be Private Limited or LLP incorporated after April 1, 2016",
+                        "Turnover must not exceed ₹100 Crores in any financial year",
+                        "Requires innovative business model approved by Inter-Ministerial Board"
+                    ),
+                    fullArticle = """
+                        The Startup India initiative by the Department for Promotion of Industry and Internal Trade (DPIIT) offers transformative tax exemptions and funding benefits for eligible Indian startups.
+                        
+                        1. Section 80-IAC Benefits:
+                        Eligible startups can choose a 3-consecutive-year 100% tax holiday from their first 10 years of incorporation. This frees substantial capital for reinvestment into product R&D, scaling operations, and hiring talent.
+                        
+                        2. Eligibility Criteria:
+                        - Must be incorporated as a Private Limited Company or LLP.
+                        - Turnover must not have exceeded ₹100 Crores in any previous year.
+                        - Must be working towards innovation, development, or commercialization of new products or processes.
+                        
+                        3. Inter-Ministerial Board (IMB) Application:
+                        DPIIT recognition is the first step; obtaining Section 80-IAC certification requires pitching business model uniqueness, patent/IP portfolios, and audited projections to the IMB committee.
+                        
+                        4. Additional Perks:
+                        80% rebate on Patent filing fees, 50% rebate on Trademark fees, access to CGTMSE collateral-free credit guarantee loans up to ₹5 Crores, and self-certification under 6 labor and 3 environmental laws.
+                    """.trimIndent(),
+                    coverImageUrl = "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=80"
                 ),
-                fullArticle = """
-                    The Startup India initiative by the Department for Promotion of Industry and Internal Trade (DPIIT) offers transformative tax exemptions and funding benefits for eligible Indian startups.
-                    
-                    1. Section 80-IAC Benefits:
-                    Eligible startups can choose a 3-consecutive-year 100% tax holiday from their first 10 years of incorporation. This frees substantial capital for reinvestment into product R&D, scaling operations, and hiring talent.
-                    
-                    2. Eligibility Criteria:
-                    - Must be incorporated as a Private Limited Company or LLP.
-                    - Turnover must not have exceeded ₹100 Crores in any previous year.
-                    - Must be working towards innovation, development, or commercialization of new products or processes.
-                    
-                    3. Inter-Ministerial Board (IMB) Application:
-                    DPIIT recognition is the first step; obtaining Section 80-IAC certification requires pitching business model uniqueness, patent/IP portfolios, and audited projections to the IMB committee.
-                    
-                    4. Additional Perks:
-                    80% rebate on Patent filing fees, 50% rebate on Trademark fees, access to CGTMSE collateral-free credit guarantee loans up to ₹5 Crores, and self-certification under 6 labor and 3 environmental laws.
-                """.trimIndent()
-            ),
-            BlogPostItem(
-                id = "blog-trademark-classes",
-                title = "Trademark Classes & Brand Protection: Preventing Infringement",
-                summary = "How to accurately classify multi-class trademark applications (TM-A) across 45 NICE classes to protect logos, names, and software brands.",
-                category = "IPR & Legal",
-                categoryColor = Amber500,
-                readTime = "3 min read",
-                publishDate = "Feb 2026",
-                icon = Icons.Default.Shield,
-                keyTakeaways = listOf(
-                    "45 NICE Classification classes (Classes 1-34 Goods, 35-45 Services)",
-                    "Class 35 covers retail, wholesale, e-commerce, and digital marketplaces",
-                    "Class 42 covers SaaS, software development, and cloud IT services",
-                    "TM symbol can be used immediately on filing; ® only upon registration certificate"
-                ),
-                fullArticle = """
-                    A trademark protects your unique brand identity, brand reputation, and prevents competitors from using deceptively similar names, logos, or slogans.
-                    
-                    1. The NICE Classification System:
-                    Trademark applications are categorized into 45 distinct classes. Selecting incorrect classes leaves your actual core revenue streams vulnerable to competitor squatting and infringement.
-                    
-                    2. Key Classes for Modern Businesses:
-                    - Class 35: Advertising, business management, retail, and e-commerce distribution.
-                    - Class 42: Software as a Service (SaaS), IT solutions, technology hosting, and design.
-                    - Class 9: Mobile applications, downloadable software, and electronics.
-                    - Class 41: Education, training, entertainment, and digital media production.
-                    
-                    3. Registration Workflow:
-                    Search Clearance → Form TM-A Filing → Examination Report (responding to objections under Section 9 & 11) → Journal Publication (4-month opposition period) → Registration Certificate issued for 10-year renewable term.
-                    
-                    4. Brand Defense:
-                    VR Here provides end-to-end trademark search, objection drafting, hearing representation, and ongoing trademark monitoring to stop copycats immediately.
-                """.trimIndent()
+                BlogPostItem(
+                    id = "blog-trademark-classes",
+                    title = "Trademark Classes & Brand Protection: Preventing Infringement",
+                    summary = "How to accurately classify multi-class trademark applications (TM-A) across 45 NICE classes to protect logos, names, and software brands.",
+                    category = "IPR & Legal",
+                    categoryColor = Amber500,
+                    readTime = "3 min read",
+                    publishDate = "Feb 2026",
+                    icon = Icons.Default.Shield,
+                    keyTakeaways = listOf(
+                        "45 NICE Classification classes (Classes 1-34 Goods, 35-45 Services)",
+                        "Class 35 covers retail, wholesale, e-commerce, and digital marketplaces",
+                        "Class 42 covers SaaS, software development, and cloud IT services",
+                        "TM symbol can be used immediately on filing; ® only upon registration certificate"
+                    ),
+                    fullArticle = """
+                        A trademark protects your unique brand identity, brand reputation, and prevents competitors from using deceptively similar names, logos, or slogans.
+                        
+                        1. The NICE Classification System:
+                        Trademark applications are categorized into 45 distinct classes. Selecting incorrect classes leaves your actual core revenue streams vulnerable to competitor squatting and infringement.
+                        
+                        2. Key Classes for Modern Businesses:
+                        - Class 35: Advertising, business management, retail, and e-commerce distribution.
+                        - Class 42: Software as a Service (SaaS), IT solutions, technology hosting, and design.
+                        - Class 9: Mobile applications, downloadable software, and electronics.
+                        - Class 41: Education, training, entertainment, and digital media production.
+                        
+                        3. Registration Workflow:
+                        Search Clearance → Form TM-A Filing → Examination Report (responding to objections under Section 9 & 11) → Journal Publication (4-month opposition period) → Registration Certificate issued for 10-year renewable term.
+                        
+                        4. Brand Defense:
+                        VR Here provides end-to-end trademark search, objection drafting, hearing representation, and ongoing trademark monitoring to stop copycats immediately.
+                    """.trimIndent(),
+                    coverImageUrl = "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800&auto=format&fit=crop&q=80"
+                )
             )
-        )
+        }
     }
 
     var selectedBlogPost by remember { mutableStateOf<BlogPostItem?>(null) }
@@ -821,37 +909,69 @@ fun CustomerHomeTab(
                         shape = RoundedCornerShape(22.dp),
                         color = offer.bgColors.first(),
                         border = BorderStroke(1.dp, offer.accentColor.copy(alpha = 0.35f)),
-                        shadowElevation = 3.dp
+                        shadowElevation = 4.dp
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Brush.linearGradient(offer.bgColors))
-                                .padding(18.dp)
+                                .height(168.dp)
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            // High-Res Creative Banner Image
+                            if (!offer.bannerImageUrl.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = offer.bannerImageUrl,
+                                    contentDescription = offer.title,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.verticalGradient(
+                                                listOf(
+                                                    Color.Black.copy(alpha = 0.45f),
+                                                    Color.Black.copy(alpha = 0.88f)
+                                                )
+                                            )
+                                        )
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Brush.linearGradient(offer.bgColors))
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Surface(
-                                        color = offer.accentColor.copy(alpha = 0.20f),
-                                        border = BorderStroke(1.dp, offer.accentColor.copy(alpha = 0.45f)),
-                                        shape = RoundedCornerShape(20.dp)
+                                        color = offer.accentColor.copy(alpha = 0.85f),
+                                        shape = RoundedCornerShape(20.dp),
+                                        shadowElevation = 2.dp
                                     ) {
                                         Text(
                                             text = offer.tag,
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Black,
-                                            color = offer.accentColor,
+                                            color = Color.White,
                                             letterSpacing = 0.8.sp,
                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                         )
                                     }
 
                                     Surface(
-                                        color = Color.White.copy(alpha = 0.15f),
+                                        color = Color.White.copy(alpha = 0.20f),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
                                         Text(
@@ -864,44 +984,24 @@ fun CustomerHomeTab(
                                     }
                                 }
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(46.dp)
-                                            .background(offer.accentColor.copy(alpha = 0.20f), RoundedCornerShape(14.dp))
-                                            .border(1.dp, offer.accentColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = offer.icon,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = offer.title,
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.Black,
-                                            color = Color.White,
-                                            lineHeight = 19.sp
-                                        )
-                                        Text(
-                                            text = offer.description,
-                                            fontSize = 11.sp,
-                                            color = Slate400,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            lineHeight = 15.sp,
-                                            modifier = Modifier.padding(top = 2.dp)
-                                        )
-                                    }
+                                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Text(
+                                        text = offer.title,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White,
+                                        lineHeight = 19.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = offer.description,
+                                        fontSize = 11.sp,
+                                        color = Color(0xFFE2E8F0),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        lineHeight = 15.sp
+                                    )
                                 }
 
                                 Row(
@@ -909,16 +1009,39 @@ fun CustomerHomeTab(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = "Tap to view eligibility & apply",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Slate400
-                                    )
+                                    if (offer.discountedPrice > 0) {
+                                        Row(
+                                            verticalAlignment = Alignment.Bottom,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Text(
+                                                text = "₹${offer.discountedPrice.toLong()}",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = Color.White
+                                            )
+                                            if (offer.originalPrice > offer.discountedPrice) {
+                                                Text(
+                                                    text = "₹${offer.originalPrice.toLong()}",
+                                                    fontSize = 10.sp,
+                                                    color = Slate400,
+                                                    style = androidx.compose.ui.text.TextStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough)
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        Text(
+                                            text = "Tap to apply",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Slate400
+                                        )
+                                    }
 
                                     Surface(
                                         color = offer.accentColor,
-                                        shape = RoundedCornerShape(10.dp)
+                                        shape = RoundedCornerShape(10.dp),
+                                        shadowElevation = 2.dp
                                     ) {
                                         Row(
                                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -1821,18 +1944,33 @@ fun CustomerHomeTab(
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalAlignment = Alignment.Top
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(42.dp)
-                                            .background(post.categoryColor.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = post.icon,
-                                            contentDescription = null,
-                                            tint = post.categoryColor,
-                                            modifier = Modifier.size(20.dp)
-                                        )
+                                    if (!post.coverImageUrl.isNullOrBlank()) {
+                                        Surface(
+                                            shape = RoundedCornerShape(14.dp),
+                                            shadowElevation = 1.dp,
+                                            modifier = Modifier.size(64.dp)
+                                        ) {
+                                            AsyncImage(
+                                                model = post.coverImageUrl,
+                                                contentDescription = post.title,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(42.dp)
+                                                .background(post.categoryColor.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = post.icon,
+                                                contentDescription = null,
+                                                tint = post.categoryColor,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
                                     }
 
                                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -1917,6 +2055,24 @@ fun CustomerHomeTab(
                     .padding(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // Header Cover Image
+                if (!post.coverImageUrl.isNullOrBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        shadowElevation = 2.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                    ) {
+                        AsyncImage(
+                            model = post.coverImageUrl,
+                            contentDescription = post.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+
                 // Header tags
                 Row(
                     modifier = Modifier.fillMaxWidth(),

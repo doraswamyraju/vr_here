@@ -594,6 +594,44 @@ data class UserVaultDocumentsResponse(
     val data: List<UserVaultDocument> = emptyList()
 )
 
+// --- DYNAMIC BLOGS & PROMOTIONAL OFFERS MODELS ---
+
+data class BlogResponse(
+    @SerializedName("_id") val id: String = "",
+    val title: String = "",
+    val slug: String = "",
+    val summary: String = "",
+    val category: String = "Corporate & Legal",
+    val categoryColor: String? = "#3B82F6",
+    val readTime: String = "4 min read",
+    val coverImageUrl: String? = "",
+    val keyTakeaways: List<String> = emptyList(),
+    val fullArticle: String = "",
+    val isPublished: Boolean = true,
+    val priority: Int = 0,
+    val author: String = "VR HERE Editorial Board",
+    val publishedAt: String? = null
+)
+
+data class OfferResponse(
+    @SerializedName("_id") val id: String = "",
+    val title: String = "",
+    val subtitle: String = "",
+    val badgeTag: String = "LIMITED TIME",
+    val badgeColor: String = "#DC2626",
+    val bannerImageUrl: String? = "",
+    val targetServiceKey: String? = "",
+    val targetUrl: String? = "",
+    val discountAmount: Double = 0.0,
+    val originalPrice: Double = 0.0,
+    val discountedPrice: Double = 0.0,
+    val eligibilityText: String = "Tap to view eligibility & apply",
+    val ctaText: String = "Register Today →",
+    val isActive: Boolean = true,
+    val priority: Int = 0
+)
+
+
 
 
 

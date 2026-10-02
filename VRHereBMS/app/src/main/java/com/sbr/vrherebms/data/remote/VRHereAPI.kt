@@ -235,6 +235,16 @@ interface VRHereAPI {
     @POST("api/leads/telemetry")
     suspend fun sendLeadTelemetry(@Body request: com.sbr.vrherebms.data.model.LeadTelemetryRequest): Response<Map<String, Any>>
 
+    // --- DYNAMIC BLOGS & PROMOTIONAL OFFERS CMS ---
+    @GET("api/blogs")
+    suspend fun getBlogs(): Response<List<BlogResponse>>
+
+    @GET("api/blogs/{slug}")
+    suspend fun getBlogBySlug(@Path("slug") slug: String): Response<BlogResponse>
+
+    @GET("api/offers")
+    suspend fun getOffers(): Response<List<OfferResponse>>
+
     // --- CUSTOMER REFERRAL ENDPOINTS ---
     @GET("api/customer/referrals/stats")
     suspend fun getCustomerReferralStats(): Response<CustomerReferralStatsResponse>

@@ -37,6 +37,8 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
     var payments by mutableStateOf<List<PaymentResponse>>(emptyList())
     var tickets by mutableStateOf<List<TicketResponse>>(emptyList())
     var notifications by mutableStateOf<List<NotificationResponse>>(emptyList())
+    var blogs by mutableStateOf<List<BlogResponse>>(emptyList())
+    var offers by mutableStateOf<List<OfferResponse>>(emptyList())
     
     var activeBannerNotification by mutableStateOf<NotificationResponse?>(null)
         private set
@@ -158,6 +160,26 @@ class CustomerDashboardViewModel(application: Application) : AndroidViewModel(ap
                 }
             } catch (e: Exception) {
                 android.util.Log.e("CustomerDashboard", "Failed to sync profile", e)
+            }
+
+            // 6. Fetch Dynamic Offers & Schemes CMS
+            try {
+                val offersCall = api.getOffers()
+                if (offersCall.isSuccessful && offersCall.body() != null) {
+                    offers = offersCall.body()!!
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CustomerDashboard", "Failed to sync dynamic offers", e)
+            }
+
+            // 7. Fetch Dynamic Blogs & Regulatory Insights CMS
+            try {
+                val blogsCall = api.getBlogs()
+                if (blogsCall.isSuccessful && blogsCall.body() != null) {
+                    blogs = blogsCall.body()!!
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CustomerDashboard", "Failed to sync dynamic blogs", e)
             }
 
             if (hasErrors) {
