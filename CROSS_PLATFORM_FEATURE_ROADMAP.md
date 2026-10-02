@@ -9,10 +9,10 @@
 | Item | Feature | Web Admin / Customer | Android (`VRHereBMS`) | iOS (`VRHereIOS`) |
 | :--- | :--- | :--- | :--- | :--- |
 | **1** | Phone Contacts Import / Export | ❌ Not needed (Mobile only) | ✅ **Completed** | 🔜 To be implemented |
-| **2** | Standardized GST & Proforma Invoice PDF | 🔄 **To implement in Web** | ✅ **Completed** | 🔜 To be implemented |
+| **2** | Standardized GST & Proforma Invoice PDF | ✅ **Completed** | ✅ **Completed** | 🔜 To be implemented |
 | **3** | Floating Support Action Hub | ✅ Already present | ✅ **Completed** | 🔜 To be implemented |
-| **4** | Dynamic Blogs & Regulatory Insights CMS | 🔄 **To implement in Admin** | ✅ UI Ready (Needs API sync) | 🔜 To be implemented |
-| **5** | Dynamic Offers & Schemes CMS (with Images) | 🔄 **To implement in Admin** | ✅ UI Ready (Needs API sync) | 🔜 To be implemented |
+| **4** | Dynamic Blogs & Regulatory Insights CMS | ✅ **Completed** | ✅ **Completed** (Live Sync) | 🔜 To be implemented |
+| **5** | Dynamic Offers & Schemes CMS (with Images) | ✅ **Completed** | ✅ **Completed** (Live Sync) | 🔜 To be implemented |
 | **6** | Notification Center & Deep-Linking | ✅ Already present | ✅ **Completed** | 🔜 To be implemented |
 | **7** | Edge-to-Edge / System Inset Protection | ❌ Not needed (Web responsive) | ✅ **Completed** | 🔜 SafeArea / Inset Parity |
 | **8** | Mobile Gestures & Swipe Back | ❌ Not needed (Browser history) | ✅ **Completed** | 🔜 InteractivePopGesture |
