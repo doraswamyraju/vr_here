@@ -55,40 +55,80 @@ const INITIAL_FORM = {
 
 const DEFAULT_SAMPLE_BLOGS = [
   {
-    title: 'New MCA Compliance Filings for Private Limited Companies in 2026',
-    slug: 'new-mca-compliance-filings-pvt-ltd-2026',
-    summary: 'Essential updates on annual MCA return mandates, board meeting disclosures, and MSME payment compliance for Indian enterprises.',
+    title: 'MCA Annual Returns & Director KYC: Mandatory Compliance Guide (FY 2025-26)',
+    slug: 'mca-annual-returns-director-kyc-guide-2026',
+    summary: 'Complete roadmap on Form AOC-4, MGT-7, and DIR-3 KYC timelines to avoid director disqualification and ₹100/day penalties under the Companies Act.',
     category: 'Corporate & Legal',
     categoryColor: '#3B82F6',
-    readTime: '5 min read',
+    readTime: '4 min read',
     coverImageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80',
     keyTakeaways: [
-      'Annual DIR-3 KYC verification deadline strict guidelines.',
-      'Mandatory half-yearly reporting of pending MSME dues via MSME-1.',
-      'Revised threshold for mandatory statutory audits.'
+      'DIR-3 KYC mandatory annually for all active DIN holders',
+      'AOC-4 (Financial Statements) due within 30 days of AGM',
+      'MGT-7 (Annual Return) due within 60 days of AGM',
+      'Late fee accumulates at ₹100 per day with no upper cap unless under amnesty'
     ],
-    fullArticle: `The Ministry of Corporate Affairs (MCA) has introduced reinforced compliance benchmarks for FY 2026-27 to ensure greater corporate transparency and timely reporting.\n\n### 1. Mandatory DIR-3 KYC for All Active Directors\nEvery person holding a Director Identification Number (DIN) must complete annual biometric/web-based KYC before September 30.\n\n### 2. Form MSME-1 Semi-Annual Filings\nSpecified companies with vendor invoices outstanding beyond 45 days must file MSME-1 disclosures with interest computation.\n\n### 3. Statutory Audit & Financial Disclosures\nCompanies must ensure statutory balance sheet disclosures strictly conform to Schedule III requirements.`,
+    fullArticle: `Every registered Private Limited and Public Limited Company in India is legally mandated to maintain active compliance with the Ministry of Corporate Affairs (MCA).\n\n### 1. DIR-3 KYC Filing:\nEvery individual holding a Director Identification Number (DIN) must complete Web KYC or e-Form DIR-3 KYC before the cutoff date. Failure to file leads to deactivation of DIN and a standard penalty of ₹5,000 per DIN.\n\n### 2. Form AOC-4 (Financial Statements):\nMust include the Audited Balance Sheet, Profit & Loss Statement, Auditor's Report, and Director's Report. It must be filed within 30 days from the date of the Annual General Meeting (AGM).\n\n### 3. Form MGT-7 / MGT-7A (Annual Return):\nSmall companies can file MGT-7A, while other companies file MGT-7. This captures shareholding patterns, directorship changes, and board meetings held during the financial year.\n\n### 4. Impact of Non-Compliance:\nNon-filing triggers disqualification of directors under Section 164(2) for 5 years and potential striking off by the ROC under Section 248. VR Here's corporate legal team handles end-to-end preparation and MCA portal filing.`,
     isPublished: true,
     priority: 10,
     author: 'VR HERE Corporate Legal Desk'
   },
   {
-    title: 'GST E-Invoicing & ITC Reconciliation Best Practices for SMBs',
-    slug: 'gst-e-invoicing-itc-reconciliation-best-practices',
-    summary: 'How to automate GSTR-2B vs Books reconciliation, prevent 18% reversal penalties, and generate IRN e-invoices effortlessly.',
+    title: 'GST E-Invoicing & ITC 2B Reconciliation: Avoiding Audit Notices',
+    slug: 'gst-einvoicing-itc-2b-reconciliation',
+    summary: 'New strict audit rules on Form GSTR-1A, auto-generated GSTR-2B ITC matching, and avoiding 100% ITC disallowance under Section 16(2)(aa).',
     category: 'GST & Direct Taxes',
     categoryColor: '#10B981',
-    readTime: '4 min read',
+    readTime: '5 min read',
     coverImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
     keyTakeaways: [
-      'GSTR-2B matched credit is strictly non-negotiable for ITC claims.',
-      'E-invoicing IRN generation must be done within stipulated timeline.',
-      'Vendor follow-up automation reduces blocked working capital.'
+      'E-Invoicing mandatory for B2B transactions above ₹5 Cr threshold',
+      'Input Tax Credit (ITC) strictly restricted to invoices in GSTR-2B',
+      'Form GSTR-1A introduces pre-filing amendment facility',
+      'Automated Rule 88C / 88D notices issued for tax & ITC variances'
     ],
-    fullArticle: `Input Tax Credit (ITC) management under GST is now strictly governed by dynamic GSTR-2B matching.\n\n### Real-time Ledger Verification\nTaxpayers can no longer claim provisional ITC beyond what vendors reflect in their GSTR-1 filings.\n\n### VR HERE Bookkeeping & AaaS Advantage\nWith our direct Tally and ERP reconciliation engine, your team gets automated mismatched vendor reports every 11th of the month.`,
+    fullArticle: `The GST Network (GSTN) has rolled out rigorous automated reconciliation mechanisms that directly impact monthly cash flows and input tax credits.\n\n### 1. Mandatory E-Invoicing Thresholds:\nBusinesses with aggregate annual turnover exceeding ₹5 Crores must generate Invoice Reference Numbers (IRN) and signed QR codes via the IRP portal for all B2B invoices and debit/credit notes. Invoices without valid IRN are legally invalid.\n\n### 2. 100% GSTR-2B Matching Rule:\nUnder Section 16(2)(aa), no taxpayer can claim ITC unless the supplier has uploaded the invoice in their GSTR-1 and it is reflected in the recipient's GSTR-2B.\n\n### 3. Automated DRC-01B & DRC-01C Notices:\nVariances between GSTR-1 vs GSTR-3B tax liability, or GSTR-2B vs GSTR-3B ITC claimed exceeding threshold percentages automatically generate DRC-01B/C notices requiring reconciliation within 7 days.\n\n### 4. Best Practices:\nRun monthly supplier reconciliation reports, verify GSTIN statuses, and utilize VR Here Bookkeeping & GST Filing modules for automated verification.`,
+    isPublished: true,
+    priority: 9,
+    author: 'VR HERE Tax Advisory Cell'
+  },
+  {
+    title: 'Startup India 80-IAC 3-Year Tax Holiday & IMB Approval Guide',
+    slug: 'startup-india-80-iac-tax-holiday-guide',
+    summary: 'Step-by-step checklist to secure Inter-Ministerial Board (IMB) approval for 100% income tax exemption and collateral-free bank funding.',
+    category: 'Startups & Funding',
+    categoryColor: '#8B5CF6',
+    readTime: '6 min read',
+    coverImageUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=80',
+    keyTakeaways: [
+      '100% tax exemption on profits for 3 consecutive years out of 10',
+      'Entity must be Private Limited or LLP incorporated after April 1, 2016',
+      'Turnover must not exceed ₹100 Crores in any financial year',
+      'Requires innovative business model approved by Inter-Ministerial Board'
+    ],
+    fullArticle: `The Startup India initiative by the Department for Promotion of Industry and Internal Trade (DPIIT) offers transformative tax exemptions and funding benefits for eligible Indian startups.\n\n### 1. Section 80-IAC Benefits:\nEligible startups can choose a 3-consecutive-year 100% tax holiday from their first 10 years of incorporation. This frees substantial capital for reinvestment into product R&D, scaling operations, and hiring talent.\n\n### 2. Eligibility Criteria:\n- Must be incorporated as a Private Limited Company or LLP.\n- Turnover must not have exceeded ₹100 Crores in any previous year.\n- Must be working towards innovation, development, or commercialization of new products or processes.\n\n### 3. Inter-Ministerial Board (IMB) Application:\nDPIIT recognition is the first step; obtaining Section 80-IAC certification requires pitching business model uniqueness, patent/IP portfolios, and audited projections to the IMB committee.\n\n### 4. Additional Perks:\n80% rebate on Patent filing fees, 50% rebate on Trademark fees, access to CGTMSE collateral-free credit guarantee loans up to ₹5 Crores, and self-certification under 6 labor and 3 environmental laws.`,
     isPublished: true,
     priority: 8,
-    author: 'VR HERE Tax Advisory Cell'
+    author: 'VR HERE Startup Desk'
+  },
+  {
+    title: 'Trademark Classes & Brand Protection: Preventing Infringement',
+    slug: 'trademark-classes-brand-protection-guide',
+    summary: 'How to accurately classify multi-class trademark applications (TM-A) across 45 NICE classes to protect logos, names, and software brands.',
+    category: 'IPR & Legal',
+    categoryColor: '#EC4899',
+    readTime: '3 min read',
+    coverImageUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800&auto=format&fit=crop&q=80',
+    keyTakeaways: [
+      '45 NICE Classification classes (Classes 1-34 Goods, 35-45 Services)',
+      'Class 35 covers retail, wholesale, e-commerce, and digital marketplaces',
+      'Class 42 covers SaaS, software development, and cloud IT services',
+      'TM symbol can be used immediately on filing; ® only upon registration certificate'
+    ],
+    fullArticle: `A trademark protects your unique brand identity, brand reputation, and prevents competitors from using deceptively similar names, logos, or slogans.\n\n### 1. The NICE Classification System:\nTrademark applications are categorized into 45 distinct classes. Selecting incorrect classes leaves your actual core revenue streams vulnerable to competitor squatting and infringement.\n\n### 2. Key Classes for Modern Businesses:\n- Class 35: Advertising, business management, retail, and e-commerce distribution.\n- Class 42: Software as a Service (SaaS), IT solutions, technology hosting, and design.\n- Class 9: Mobile applications, downloadable software, and electronics.\n- Class 41: Education, training, entertainment, and digital media production.\n\n### 3. Registration Workflow:\nSearch Clearance → Form TM-A Filing → Examination Report (responding to objections under Section 9 & 11) → Journal Publication (4-month opposition period) → Registration Certificate issued for 10-year renewable term.\n\n### 4. Brand Defense:\nVR Here provides end-to-end trademark search, objection drafting, hearing representation, and ongoing trademark monitoring to stop copycats immediately.`,
+    isPublished: true,
+    priority: 7,
+    author: 'VR HERE IPR Cell'
   }
 ];
 
