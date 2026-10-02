@@ -133,9 +133,24 @@ fun CustomerHomeTab(
         false
     }
     val unpaidOrders = viewModel.orders.filter { order ->
-        order.status != "Completed" && (order.paymentStatus.equals("Pending", ignoreCase = true) || order.paymentStatus.equals("Partial", ignoreCase = true) || order.paymentStatus.equals("Unpaid", ignoreCase = true))
+        if (order.status == "Completed") return@filter false
+        val orderPrice = order.price
+        val orderPayments = viewModel.payments.filter { p ->
+            p.order?.id == order.id || (p.paymentId.isNotBlank() && p.paymentId == order.paymentId)
+        }
+        val totalPaid = orderPayments.filter { it.status.equals("Completed", ignoreCase = true) || it.status.equals("Paid", ignoreCase = true) }.sumOf { it.amount }
+        val balanceDue = maxOf(0.0, orderPrice - totalPaid)
+        val isExplicitUnpaid = order.paymentStatus.equals("Pending", ignoreCase = true) || order.paymentStatus.equals("Partial", ignoreCase = true) || order.paymentStatus.equals("Unpaid", ignoreCase = true)
+        balanceDue > 0 || (orderPrice > 0 && isExplicitUnpaid)
     }
-    val totalOutstanding = unpaidOrders.sumOf { it.price.toLong() }
+    val totalOutstanding = unpaidOrders.sumOf { order ->
+        val orderPayments = viewModel.payments.filter { p ->
+            p.order?.id == order.id || (p.paymentId.isNotBlank() && p.paymentId == order.paymentId)
+        }
+        val totalPaid = orderPayments.filter { it.status.equals("Completed", ignoreCase = true) || it.status.equals("Paid", ignoreCase = true) }.sumOf { it.amount }
+        val balance = maxOf(0.0, order.price - totalPaid)
+        if (balance > 0) balance.toLong() else order.price.toLong()
+    }
     val totalVolume = viewModel.orders.sumOf { it.price }
     val searchSuggestions = listOf(
         "Private Limited Company Registration",
