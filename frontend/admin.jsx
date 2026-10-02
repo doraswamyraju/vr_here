@@ -59,7 +59,9 @@ import CustomersModule from './components/admin/crm/CustomersModule';
 import FreelancersModule from './components/admin/FreelancersModule';
 import AdminBookkeepingView from './components/admin/AdminBookkeepingView';
 import LeadsManagerView from './components/admin/LeadsManagerView';
-import { Flame } from 'lucide-react';
+import AdminBlogsView from './components/admin/AdminBlogsView';
+import AdminOffersView from './components/admin/AdminOffersView';
+import { Flame, Sparkles, Tag } from 'lucide-react';
 
 const Card = ({ children, className = '' }) => (
   <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
@@ -821,6 +823,8 @@ function AdminApp() {
     { key: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { key: 'Leads', label: 'Leads CRM', icon: Flame },
     { key: 'Orders', label: 'Orders', icon: Layers },
+    { key: 'Blogs', label: 'Blogs & Insights', icon: BookOpen },
+    { key: 'Offers', label: 'Offers & Schemes', icon: Sparkles },
     { key: 'Users', label: 'Users', icon: UsersIcon },
     { key: 'Freelancers', label: 'Freelancer Hub', icon: UsersIcon },
     { key: 'ToDo', label: 'To Do', icon: CheckSquare },
@@ -844,6 +848,8 @@ function AdminApp() {
   const renderView = () => {
     if (activeTab === 'Dashboard') return <DashboardView />;
     if (activeTab === 'Leads') return <LeadsManagerView userInfo={userInfo} role="admin" employees={employees} />;
+    if (activeTab === 'Blogs') return <AdminBlogsView token={userInfo?.token} />;
+    if (activeTab === 'Offers') return <AdminOffersView token={userInfo?.token} />;
     if (activeTab === 'Orders') {
       return (
         <AdminOrdersView

@@ -14,16 +14,16 @@ const GSTInvoiceTemplate = ({ data }) => {
                     <div className="flex items-center gap-3 mb-4">
                         <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-xl">VR</div>
                         <div>
-                            <h1 className="text-2xl font-black tracking-tighter text-slate-900 leading-none">VR HERE</h1>
-                            <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mt-1">Business Solutions</p>
+                            <h1 className="text-xl font-black tracking-tighter text-slate-900 leading-tight">VR HERE BUSINESS MANAGEMENT SOLUTIONS PVT LTD</h1>
+                            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-0.5">Trade Name: VR HERE</p>
                         </div>
                     </div>
                     <div className="text-[10px] space-y-1 text-slate-500 font-medium">
-                        <p className="flex items-center gap-1"><MapPin size={10} /> Hyderabad, Telangana, India</p>
+                        <p className="flex items-center gap-1"><MapPin size={10} /> #38, 1st Floor, TUDA Complex, Bairagipatteda, Tirupati, Andhra Pradesh - 517501</p>
                         <p className="flex items-center gap-1"><Phone size={10} /> +91 80085 30606</p>
                         <p className="flex items-center gap-1"><Mail size={10} /> support@vrhere.in</p>
                         <p className="flex items-center gap-1"><Globe size={10} /> www.vrhere.in</p>
-                        <p className="mt-2 font-bold text-slate-900">GSTIN: 36XXXXXXXXXXXXX</p>
+                        <p className="mt-2 font-bold text-slate-900">GSTIN: 37AAHCR7654E1Z8</p>
                     </div>
                 </div>
                 <div className="text-right">
@@ -52,7 +52,7 @@ const GSTInvoiceTemplate = ({ data }) => {
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-center">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Place of Supply:</span>
-                        <span className="text-xs font-black text-slate-900">Telangana (36)</span>
+                        <span className="text-xs font-black text-slate-900">Andhra Pradesh (37)</span>
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reverse Charge:</span>
@@ -129,10 +129,10 @@ const GSTInvoiceTemplate = ({ data }) => {
                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Bank Details:</h4>
                     <div className="text-[10px] space-y-1 text-slate-600 font-bold">
                         <p>Bank: HDFC BANK LTD</p>
-                        <p>A/c Name: VR HERE BUSINESS SOLUTIONS</p>
-                        <p>A/c No: XXXXXXXXXXXXXXXX</p>
-                        <p>IFSC: HDFC000XXXX</p>
-                        <p>Branch: HYDERABAD</p>
+                        <p>A/c Name: VR HERE BUSINESS MANAGEMENT SOLUTIONS PVT LTD</p>
+                        <p>A/c No: 50200085306060</p>
+                        <p>IFSC: HDFC0000240</p>
+                        <p>Branch: TIRUPATI</p>
                     </div>
                     {notes && (
                         <div className="mt-6">
@@ -145,7 +145,7 @@ const GSTInvoiceTemplate = ({ data }) => {
                     <div className="text-center">
                         <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-12">Authorized Signatory</p>
                         <div className="w-40 h-px bg-slate-900 mb-2"></div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">VR HERE BUSINESS SOLUTIONS</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">VR HERE BUSINESS MANAGEMENT SOLUTIONS PVT LTD</p>
                     </div>
                     <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest italic mt-8">
                         This is a computer generated document and does not require a physical signature.

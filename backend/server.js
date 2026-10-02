@@ -108,6 +108,8 @@ import leadRoutes from './routes/leadRoutes.js';
 import renewalRoutes from './routes/renewalRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
 import customerReferralRoutes from './routes/customerReferralRoutes.js';
+import blogRoutes from './routes/blogRoutes.js';
+import offerRoutes from './routes/offerRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 
 // Routes
@@ -136,6 +138,8 @@ app.use('/api/freelancer', freelancerRoutes);
 app.use('/api/income-tax-assessment', incomeTaxAssessmentRoutes);
 app.use('/api/accounting', accountingRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/blogs', blogRoutes);
+app.use('/api/offers', offerRoutes);
 
 // Serve Frontend in Production
 
