@@ -73,11 +73,11 @@ fun CustomerInvoicesTab(
             order.invoices.forEach { inv ->
                 val isPaid = inv.status.equals("Paid", ignoreCase = true) || inv.status.equals("Completed", ignoreCase = true)
                 val canPay = !isPaid && !inv.status.equals("Cancelled", ignoreCase = true) && !inv.status.equals("Draft", ignoreCase = true)
-                val invNum = if (inv.number.isNotBlank()) inv.number else "INV-${inv.id.takeLast(6).uppercase()}"
+                val invNum = if (inv.invoiceNumber.isNotBlank()) inv.invoiceNumber else "INV-${(inv.id ?: "").takeLast(6).uppercase()}"
                 if (processedNumbers.add(invNum.uppercase())) {
                     list.add(
                         UnifiedInvoiceItem(
-                            id = inv.id.ifBlank { "inv_${order.id}_${inv.number}" },
+                            id = inv.id ?: "inv_${order.id}_${inv.invoiceNumber}",
                             orderId = order.id,
                             invoiceNumber = invNum,
                             serviceName = order.serviceName,
@@ -88,7 +88,7 @@ fun CustomerInvoicesTab(
                             status = inv.status,
                             isPaid = isPaid,
                             canPayNow = canPay,
-                            directUrl = inv.url
+                            directUrl = inv.url ?: ""
                         )
                     )
                 }

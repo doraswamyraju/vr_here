@@ -61,6 +61,18 @@ struct CustomerAccountTab: View {
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.textDark)
                     }
+                    
+                    HStack {
+                        Text("App Version:")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.textMuted)
+                        Spacer()
+                        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1"
+                        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+                        Text("v\(appVersion) (Build \(buildNumber))")
+                            .font(.system(size: 12, weight: .black))
+                            .foregroundColor(.indigo500)
+                    }
                 }
                 .padding(16)
                 .glassCard()
@@ -121,6 +133,18 @@ struct CustomerAccountTab: View {
                 .padding(16)
                 .glassCard()
                 .padding(.horizontal, 20)
+                
+                // App Version Footer
+                HStack {
+                    Spacer()
+                    let appVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1"
+                    let bld = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+                    Text("VR HERE BMS iOS • Version \(appVer) (Build \(bld))")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.textMuted)
+                    Spacer()
+                }
+                .padding(.top, 4)
                 
                 Spacer().frame(height: 100)
             }

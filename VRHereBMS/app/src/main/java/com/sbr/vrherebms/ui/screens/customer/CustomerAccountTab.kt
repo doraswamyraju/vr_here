@@ -255,6 +255,9 @@ fun CustomerAccountTab(
                                     Surface(shape = RoundedCornerShape(50), color = Color(0xFF10B981).copy(alpha = 0.2f)) {
                                         Text("VERIFIED", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFF34D399), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                                     }
+                                    Surface(shape = RoundedCornerShape(50), color = Color(0xFF818CF8).copy(alpha = 0.25f)) {
+                                        Text("v1.1", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFFA5B4FC), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                    }
                                 }
                                 Text(
                                     text = "$userEmailInput ${if (userPhoneInput.isNotEmpty()) "• $userPhoneInput" else ""}",
@@ -521,6 +524,19 @@ fun CustomerAccountTab(
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text("Save Profile & Business Changes", fontSize = 12.sp, fontWeight = FontWeight.Black)
                                 }
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "VR HERE BMS Android • Version 1.1 (Build 2)",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF94A3B8)
+                                )
                             }
                         }
                     }

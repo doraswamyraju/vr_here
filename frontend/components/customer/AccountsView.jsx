@@ -186,6 +186,9 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
               <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider rounded-full border border-emerald-500/30">
                 Verified Account
               </span>
+              <span className="px-2.5 py-0.5 bg-indigo-500/30 text-indigo-200 text-[10px] font-black tracking-wider rounded-full border border-indigo-400/40">
+                v1.1.0
+              </span>
             </div>
             <p className="text-xs text-slate-300 font-medium mt-1 flex items-center gap-3">
               <span>{formData.email || userInfo?.email}</span>
@@ -482,7 +485,10 @@ const AccountsView = ({ orders = [], payments = [], userInfo, token }) => {
               />
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+              <p className="text-xs font-bold text-slate-400">
+                VR HERE BMS Web Portal • Version 1.1.0 (Production)
+              </p>
               <button
                 type="submit"
                 disabled={savingProfile}
