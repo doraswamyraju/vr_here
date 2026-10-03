@@ -153,7 +153,7 @@ struct CustomerHomeTab: View {
             }.reduce(0.0) { $0 + $1.amount }
             
             let balanceDue = max(0.0, orderPrice - totalPaid)
-            let pStatus = (order.paymentStatus ?? "").lowercased()
+            let pStatus = order.paymentStatus.lowercased()
             let isExplicitUnpaid = pStatus == "pending" || pStatus == "partial" || pStatus == "unpaid"
             return balanceDue > 0 || (orderPrice > 0 && isExplicitUnpaid)
         }
@@ -1250,7 +1250,7 @@ struct CustomerHomeTab: View {
                                                 .font(.system(size: 13.5, weight: .black))
                                                 .foregroundColor(.textDark)
                                                 .lineLimit(1)
-                                            Text(proj.packageName?.isEmpty ?? true ? "Standard Execution" : proj.packageName!)
+                                            Text(proj.packageName.isEmpty ? "Standard Execution" : proj.packageName)
                                                 .font(.system(size: 10.5, weight: .bold))
                                                 .foregroundColor(.textMuted)
                                         }
