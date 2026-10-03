@@ -726,6 +726,82 @@ class NetworkManager {
     func deleteUserVaultDocument(id: String) async throws -> GeneralResponse {
         return try await performRequest(path: "api/documents/\(id)", method: "DELETE")
     }
+
+    // MARK: - Bookkeeping & AaaS (Accounting) Endpoints
+    
+    func getAccountingTransactions(type: String? = nil, month: String? = nil, status: String? = nil) async throws -> [TransactionDto] {
+        var queryItems: [String] = []
+        if let type = type, !type.isEmpty { queryItems.append("type=\(type.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? type)") }
+        if let month = month, !month.isEmpty { queryItems.append("month=\(month.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? month)") }
+        if let status = status, !status.isEmpty { queryItems.append("status=\(status.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? status)") }
+        let queryString = queryItems.isEmpty ? "" : "?" + queryItems.joined(separator: "&")
+        return try await performRequest(path: "api/accounting/transactions\(queryString)")
+    }
+    
+    func createAccountingTransaction(transaction: TransactionDto) async throws -> TransactionDto {
+        let body = try JSONEncoder().encode(transaction)
+        return try await performRequest(path: "api/accounting/transactions", method: "POST", body: body)
+    }
+    
+    func updateAccountingTransaction(id: String, transaction: TransactionDto) async throws -> TransactionDto {
+        let body = try JSONEncoder().encode(transaction)
+        return try await performRequest(path: "api/accounting/transactions/\(id)", method: "PUT", body: body)
+    }
+    
+    func deleteAccountingTransaction(id: String) async throws -> GeneralResponse {
+        return try await performRequest(path: "api/accounting/transactions/\(id)", method: "DELETE")
+    }
+    
+    func recordAccountingPayment(id: String, request: RecordPaymentRequest) async throws -> TransactionDto {
+        let body = try JSONEncoder().encode(request)
+        return try await performRequest(path: "api/accounting/transactions/\(id)/payment", method: "POST", body: body)
+    }
+    
+    func getCompanyDetails() async throws -> CompanyDetailsDto {
+        return try await performRequest(path: "api/accounting/company")
+    }
+    
+    func updateCompanyDetails(details: CompanyDetailsDto) async throws -> CompanyDetailsDto {
+        let body = try JSONEncoder().encode(details)
+        return try await performRequest(path: "api/accounting/company", method: "POST", body: body)
+    }
+    
+    func getAccountingParties(partyType: String? = nil) async throws -> [PartyDto] {
+        let query = (partyType != nil && !partyType!.isEmpty) ? "?partyType=\(partyType!.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? partyType!)" : ""
+        return try await performRequest(path: "api/accounting/parties\(query)")
+    }
+    
+    func createAccountingParty(party: PartyDto) async throws -> PartyDto {
+        let body = try JSONEncoder().encode(party)
+        return try await performRequest(path: "api/accounting/parties", method: "POST", body: body)
+    }
+    
+    func updateAccountingParty(id: String, party: PartyDto) async throws -> PartyDto {
+        let body = try JSONEncoder().encode(party)
+        return try await performRequest(path: "api/accounting/parties/\(id)", method: "PUT", body: body)
+    }
+    
+    func deleteAccountingParty(id: String) async throws -> GeneralResponse {
+        return try await performRequest(path: "api/accounting/parties/\(id)", method: "DELETE")
+    }
+    
+    func getBankStatements() async throws -> [BankStatementDto] {
+        return try await performRequest(path: "api/accounting/bank-statements")
+    }
+    
+    func createBankStatement(statement: BankStatementDto) async throws -> BankStatementDto {
+        let body = try JSONEncoder().encode(statement)
+        return try await performRequest(path: "api/accounting/bank-statements", method: "POST", body: body)
+    }
+    
+    func deleteBankStatement(id: String) async throws -> GeneralResponse {
+        return try await performRequest(path: "api/accounting/bank-statements/\(id)", method: "DELETE")
+    }
+    
+    func tagBankTransaction(statementId: String, request: TagBankTransactionRequest) async throws -> GeneralResponse {
+        let body = try JSONEncoder().encode(request)
+        return try await performRequest(path: "api/accounting/bank-statements/\(statementId)/tag", method: "POST", body: body)
+    }
 }
 
 // AnyCodable helper struct to encode/decode dynamic types in Swift
