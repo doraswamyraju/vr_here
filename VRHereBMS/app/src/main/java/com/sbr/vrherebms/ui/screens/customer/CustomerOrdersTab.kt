@@ -1,5 +1,6 @@
 package com.sbr.vrherebms.ui.screens.customer
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.widget.Toast
@@ -7,6 +8,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -262,7 +265,14 @@ fun CustomerOrdersTab(
 
                     val cardPayments = viewModel.payments.filter { p -> p.order?.id == order.id || p.serviceName.equals(order.serviceName, ignoreCase = true) }
                     val cardPaid = cardPayments.filter { it.status == "Completed" || it.status == "Paid" }.sumOf { it.amount }
-                    val cardBalance = (order.price - cardPaid).coerceAtLeast(0.0)
+                    val unpaidInvoices = order.invoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
+                    val cardBalance = if (unpaidInvoices.isNotEmpty()) {
+                        unpaidInvoices.sumOf { it.amount }
+                    } else if (order.paymentStatus.equals("Paid", ignoreCase = true) || order.paymentId.isNotBlank()) {
+                        0.0
+                    } else {
+                        (order.price - cardPaid).coerceAtLeast(0.0)
+                    }
 
                     Card(
                         modifier = Modifier
@@ -417,7 +427,14 @@ fun CustomerOrdersTab(
         val reqProgressPercentage = if (requirements.isEmpty()) 100 else ((completedRequirements.size.toFloat() / requirements.size.toFloat()) * 100).toInt()
         val orderPayments = viewModel.payments.filter { p -> p.order?.id == order.id || p.serviceName.equals(order.serviceName, ignoreCase = true) }
         val totalPaid = orderPayments.filter { it.status == "Completed" || it.status == "Paid" }.sumOf { it.amount }
-        val balance = (order.price - totalPaid).coerceAtLeast(0.0)
+        val unpaidInvoices = order.invoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
+        val balance = if (unpaidInvoices.isNotEmpty()) {
+            unpaidInvoices.sumOf { it.amount }
+        } else if (order.paymentStatus.equals("Paid", ignoreCase = true) || order.paymentId.isNotBlank()) {
+            0.0
+        } else {
+            (order.price - totalPaid).coerceAtLeast(0.0)
+        }
 
         LazyColumn(
             modifier = Modifier
@@ -999,32 +1016,314 @@ fun CustomerOrdersTab(
                     }
                 }
 
-                // Assigned Lead Expert Card
+                // Assigned Lead Expert / Compliance Advisor Card
                 item {
                     val expert = order.assignedEmployee
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("Assigned Compliance Advisor", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                        Column(
+                            modifier = Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (expert != null) "Assigned Lead Expert" else "Compliance & Advisory Desk",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF0F172A)
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (expert != null) Color(0xFFEEF2FF) else Color(0xFFFEF2F2),
+                                    border = BorderStroke(1.dp, if (expert != null) Color(0xFFC7D2FE) else Color(0xFFFECDD3))
+                                ) {
+                                    Text(
+                                        text = if (expert != null) "VERIFIED" else "OFFICIAL DESK",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = if (expert != null) Color(0xFF4338CA) else Color(0xFFDC2626),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+
                             if (expert != null) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Surface(shape = CircleShape, color = Color(0xFFFEF2F2), modifier = Modifier.size(40.dp)) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFFDC2626))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (!expert.profilePhoto.isNullOrBlank()) {
+                                        AsyncImage(
+                                            model = expert.profilePhoto,
+                                            contentDescription = expert.name,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(RoundedCornerShape(14.dp))
+                                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(14.dp))
+                                        )
+                                    } else {
+                                        Surface(
+                                            shape = RoundedCornerShape(14.dp),
+                                            color = Color(0xFF4F46E5),
+                                            modifier = Modifier.size(46.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(
+                                                    text = if (expert.name.isNotBlank()) expert.name.take(1).uppercase() else "E",
+                                                    fontSize = 18.sp,
+                                                    fontWeight = FontWeight.Black,
+                                                    color = Color.White
+                                                )
+                                            }
                                         }
                                     }
-                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
                                     Column {
-                                        Text(expert.name.ifEmpty { "Compliance Lead" }, fontSize = 13.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
-                                        Text(expert.role.ifEmpty { "CA / Legal Advisor" }.uppercase(), fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
+                                        Text(
+                                            text = expert.name.ifEmpty { "Compliance Lead" },
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color(0xFF0F172A)
+                                        )
+                                        Text(
+                                            text = expert.role.ifEmpty { "Lead Operations Specialist" }.uppercase(),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF4F46E5),
+                                            letterSpacing = 0.5.sp
+                                        )
                                     }
                                 }
+
+                                HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    val expertEmail = expert.email.ifEmpty { "support@vrhere.in" }
+                                    val expertPhone = expert.phone.ifEmpty { "+91 80085 30606" }
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                try {
+                                                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                                        data = Uri.parse("mailto:$expertEmail")
+                                                    }
+                                                    context.startActivity(intent)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Email: $expertEmail", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                            .padding(vertical = 4.dp)
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFFF8FAFC),
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(16.dp))
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(
+                                            text = expertEmail,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF334155),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                try {
+                                                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                                                        data = Uri.parse("tel:$expertPhone")
+                                                    }
+                                                    context.startActivity(intent)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Phone: $expertPhone", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                            .padding(vertical = 4.dp)
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFFF8FAFC),
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(16.dp))
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(
+                                            text = expertPhone,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF334155)
+                                        )
+                                    }
+                                }
+
+                                Button(
+                                    onClick = {
+                                        querySubject = "Query regarding Order #${order.id.takeLast(8).uppercase()}: ${order.serviceName}"
+                                        queryDescription = ""
+                                        showSupportModal = true
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F172A)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp)
+                                ) {
+                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Message Expert", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
                             } else {
-                                Text("Dedicated expert being assigned.", fontSize = 12.sp, color = Color(0xFF64748B))
+                                // Regular Admin & Operations Desk Details when no individual expert is assigned
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(14.dp),
+                                        color = Color(0xFFDC2626),
+                                        modifier = Modifier.size(46.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = "VR",
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = Color.White
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "VR HERE Advisory Desk",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color(0xFF0F172A)
+                                        )
+                                        Text(
+                                            text = "CENTRAL OPERATIONS TEAM",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFDC2626),
+                                            letterSpacing = 0.5.sp
+                                        )
+                                    }
+                                }
+
+                                HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                try {
+                                                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                                        data = Uri.parse("mailto:support@vrhere.in")
+                                                    }
+                                                    context.startActivity(intent)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Email: support@vrhere.in", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                            .padding(vertical = 4.dp)
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFFF8FAFC),
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(16.dp))
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(
+                                            text = "support@vrhere.in",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF334155)
+                                        )
+                                    }
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                try {
+                                                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                                                        data = Uri.parse("tel:+918008530606")
+                                                    }
+                                                    context.startActivity(intent)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Phone: +91 80085 30606", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                            .padding(vertical = 4.dp)
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFFF8FAFC),
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(16.dp))
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(
+                                            text = "+91 80085 30606",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF334155)
+                                        )
+                                    }
+                                }
+
+                                Button(
+                                    onClick = {
+                                        querySubject = "Query regarding Order #${order.id.takeLast(8).uppercase()}: ${order.serviceName}"
+                                        queryDescription = ""
+                                        showSupportModal = true
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F172A)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp)
+                                ) {
+                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Ask Query / Raise Ticket", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
                             }
                         }
                     }

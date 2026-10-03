@@ -64,7 +64,18 @@ const DashboardView = ({ setActiveTab, orders = [], payments = [], notifications
             });
             const totalPaid = orderPayments.reduce((acc, curr) => 
                 acc + (curr.status === 'Completed' || curr.status === 'Paid' ? Number(curr.amount || 0) : 0), 0);
-            const balanceDue = Math.max(0, orderPrice - totalPaid);
+
+            // Universal Payment Pending Logic
+            const unpaidInvoices = (order.invoices || []).filter(inv => inv.status === 'Sent' || inv.status === 'Overdue');
+            let balanceDue = 0;
+            if (unpaidInvoices.length > 0) {
+                balanceDue = unpaidInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+            } else if (order.paymentStatus === 'Paid' || (order.paymentId && order.paymentId.trim() !== '')) {
+                balanceDue = 0;
+            } else {
+                balanceDue = Math.max(0, orderPrice - totalPaid);
+            }
+
             return balanceDue > 0;
         }).map(order => {
             const orderPrice = Number(order.price || 0);
@@ -74,7 +85,17 @@ const DashboardView = ({ setActiveTab, orders = [], payments = [], notifications
             });
             const totalPaid = orderPayments.reduce((acc, curr) => 
                 acc + (curr.status === 'Completed' || curr.status === 'Paid' ? Number(curr.amount || 0) : 0), 0);
-            const balanceDue = Math.max(0, orderPrice - totalPaid);
+
+            const unpaidInvoices = (order.invoices || []).filter(inv => inv.status === 'Sent' || inv.status === 'Overdue');
+            let balanceDue = 0;
+            if (unpaidInvoices.length > 0) {
+                balanceDue = unpaidInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+            } else if (order.paymentStatus === 'Paid' || (order.paymentId && order.paymentId.trim() !== '')) {
+                balanceDue = 0;
+            } else {
+                balanceDue = Math.max(0, orderPrice - totalPaid);
+            }
+
             return {
                 ...order,
                 totalPaid,

@@ -55,7 +55,21 @@ const ProjectDetailsView = ({
     }, [orderPayments]);
 
     const orderPrice = Number(order?.price || 0);
-    const balanceDue = Math.max(0, orderPrice - totalPaid);
+
+    // Universal Payment Pending Logic
+    const balanceDue = useMemo(() => {
+        // 1. If explicit unpaid invoices exist (milestones/adjustments), due is their sum
+        const unpaidInvoices = (order?.invoices || []).filter(inv => inv.status === 'Sent' || inv.status === 'Overdue');
+        if (unpaidInvoices.length > 0) {
+            return unpaidInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+        }
+        // 2. If primary order is marked Paid or has paymentId, no balance is due
+        if (order?.paymentStatus === 'Paid' || (order?.paymentId && order.paymentId.trim() !== '')) {
+            return 0;
+        }
+        // 3. Fallback for orders created as Pending without separate invoices
+        return Math.max(0, orderPrice - totalPaid);
+    }, [order?.invoices, order?.paymentStatus, order?.paymentId, orderPrice, totalPaid]);
 
     // Resolve assigned staff
     const assignedExpert = order?.assignedProjectManager || order?.assignedEmployee || order?.assignedMaker || null;
@@ -587,9 +601,13 @@ const ProjectDetailsView = ({
                         {/* Assigned Expert / Team Card */}
                         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 relative overflow-hidden">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-black text-slate-900">Assigned Lead Expert</h3>
-                                <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase">
-                                    Verified
+                                <h3 className="text-sm font-black text-slate-900">
+                                    {assignedExpert ? 'Assigned Lead Expert' : 'Compliance & Advisory Desk'}
+                                </h3>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${
+                                    assignedExpert ? 'bg-indigo-50 text-indigo-700' : 'bg-red-50 text-red-600'
+                                }`}>
+                                    {assignedExpert ? 'Verified' : 'Official Desk'}
                                 </span>
                             </div>
 
@@ -646,10 +664,44 @@ const ProjectDetailsView = ({
                                     </button>
                                 </div>
                             ) : (
-                                <div className="text-center py-6 text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                    <User size={28} className="mx-auto mb-2 opacity-50 text-indigo-500" />
-                                    <p className="text-xs font-bold text-slate-700">Expert assignment in progress</p>
-                                    <p className="text-[11px] text-slate-400 mt-1">Our ops desk is assigning the best domain specialist for your request.</p>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-rose-700 text-white rounded-2xl flex items-center justify-center font-black text-base shadow-sm">
+                                            VR
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900">VR HERE Advisory Desk</p>
+                                            <p className="text-[11px] font-bold text-red-600 uppercase tracking-wider">Central Operations Team</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                                        <a 
+                                            href="mailto:support@vrhere.in"
+                                            className="flex items-center gap-2.5 text-xs text-slate-600 hover:text-red-600 font-semibold transition-colors"
+                                        >
+                                            <div className="w-7 h-7 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
+                                                <Mail size={13} />
+                                            </div>
+                                            <span className="truncate">support@vrhere.in</span>
+                                        </a>
+                                        <a 
+                                            href="tel:+918008530606"
+                                            className="flex items-center gap-2.5 text-xs text-slate-600 hover:text-red-600 font-semibold transition-colors"
+                                        >
+                                            <div className="w-7 h-7 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
+                                                <Phone size={13} />
+                                            </div>
+                                            <span>+91 80085 30606</span>
+                                        </a>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setIsTicketModalOpen(true)}
+                                        className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+                                    >
+                                        <MessageSquare size={13} /> Ask Query / Raise Ticket
+                                    </button>
                                 </div>
                             )}
                         </div>

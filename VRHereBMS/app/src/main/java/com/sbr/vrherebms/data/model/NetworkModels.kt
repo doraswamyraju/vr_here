@@ -69,6 +69,8 @@ data class EmployeeResponse(
     @SerializedName("_id") val id: String,
     val name: String = "",
     val email: String = "",
+    val phone: String = "",
+    val profilePhoto: String? = null,
     val role: String = ""
 )
 
