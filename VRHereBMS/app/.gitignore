@@ -1,2 +1,3 @@
 /build
-*.jks
+# Allow upload key so it syncs to build laptop
+!vrhere-upload-key.jks
