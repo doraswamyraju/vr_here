@@ -26,6 +26,7 @@ struct CustomerDashboardView: View {
     @State private var showingToast = false
     @State private var toastMsg = ""
     @State private var isShowingNotifications = false
+    @State private var isFloatingMenuExpanded = false
     
     var body: some View {
         ZStack {
@@ -113,70 +114,171 @@ struct CustomerDashboardView: View {
                     }
                     .ignoresSafeArea(edges: .bottom)
                     
-                    // Persistence WhatsApp & Ticket floating triggers in Bottom Right
+                    // Floating Expandable Action Stack matching Android
                     VStack(spacing: 12) {
                         Spacer()
                         HStack {
                             Spacer()
-                            VStack(spacing: 12) {
-                                // WhatsApp Trigger
-                                Button(action: {
-                                    if let url = URL(string: "https://wa.me/918008530606") {
-                                        #if os(iOS)
-                                        if UIApplication.shared.canOpenURL(url) {
-                                            UIApplication.shared.open(url)
-                                        } else {
-                                            toastMsg = "WhatsApp is not installed."
-                                            showingToast = true
-                                        }
-                                        #elseif os(macOS)
-                                        openURL(url)
-                                        #endif
-                                    }
-                                }) {
-                                    Image(systemName: "message.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.white)
-                                        .frame(width: 52, height: 52)
-                                        .background(Color.green)
-                                        .cornerRadius(26)
-                                        .shadow(color: Color.green.opacity(0.3), radius: 6, x: 0, y: 3)
-                                }
-                                .buttonStyle(ScaleOnPressButtonStyle())
+                            VStack(alignment: .trailing, spacing: 10) {
                                 
-                                // Direct Phone Call Advisory
-                                Button(action: {
-                                    if let url = URL(string: "tel:918008530606") {
-                                        #if os(iOS)
-                                        if UIApplication.shared.canOpenURL(url) {
-                                            UIApplication.shared.open(url)
-                                        } else {
-                                            toastMsg = "Dialer not available."
-                                            showingToast = true
+                                // Expanded Action Options
+                                if isFloatingMenuExpanded {
+                                    VStack(alignment: .trailing, spacing: 10) {
+                                        
+                                        // Option 1: Live Support Chat
+                                        Button(action: {
+                                            isFloatingMenuExpanded = false
+                                            activeTab = "Support"
+                                        }) {
+                                            HStack(spacing: 8) {
+                                                Text("Live Chat")
+                                                    .font(.system(size: 10, weight: .black))
+                                                    .foregroundColor(.white)
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                    .cornerRadius(8)
+                                                
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(Color(red: 244/255, green: 63/255, blue: 94/255))
+                                                        .frame(width: 44, height: 44)
+                                                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                                                        .font(.system(size: 16))
+                                                        .foregroundColor(.white)
+                                                }
+                                                .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+                                            }
                                         }
-                                        #elseif os(macOS)
-                                        openURL(url)
-                                        #endif
+                                        .buttonStyle(ScaleOnPressButtonStyle())
+                                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                                        
+                                        // Option 2: WhatsApp Chat
+                                        Button(action: {
+                                            isFloatingMenuExpanded = false
+                                            if let url = URL(string: "https://wa.me/918008530606?text=Hi%20VR%20HERE%20Team,%20I%20am%20chatting%20from%20the%20Customer%20Portal.") {
+                                                #if os(iOS)
+                                                if UIApplication.shared.canOpenURL(url) {
+                                                    UIApplication.shared.open(url)
+                                                } else {
+                                                    openURL(url)
+                                                }
+                                                #else
+                                                openURL(url)
+                                                #endif
+                                            }
+                                        }) {
+                                            HStack(spacing: 8) {
+                                                Text("WhatsApp Chat")
+                                                    .font(.system(size: 10, weight: .black))
+                                                    .foregroundColor(.white)
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                    .cornerRadius(8)
+                                                
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(Color(red: 16/255, green: 185/255, blue: 129/255))
+                                                        .frame(width: 44, height: 44)
+                                                    Image(systemName: "message.fill")
+                                                        .font(.system(size: 16))
+                                                        .foregroundColor(.white)
+                                                }
+                                                .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+                                            }
+                                        }
+                                        .buttonStyle(ScaleOnPressButtonStyle())
+                                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                                        
+                                        // Option 3: Call Helpline
+                                        Button(action: {
+                                            isFloatingMenuExpanded = false
+                                            if let url = URL(string: "tel:918008530606") {
+                                                openURL(url)
+                                            }
+                                        }) {
+                                            HStack(spacing: 8) {
+                                                Text("Call Helpline")
+                                                    .font(.system(size: 10, weight: .black))
+                                                    .foregroundColor(.white)
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                    .cornerRadius(8)
+                                                
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(Color(red: 37/255, green: 99/255, blue: 235/255))
+                                                        .frame(width: 44, height: 44)
+                                                    Image(systemName: "phone.fill")
+                                                        .font(.system(size: 16))
+                                                        .foregroundColor(.white)
+                                                }
+                                                .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+                                            }
+                                        }
+                                        .buttonStyle(ScaleOnPressButtonStyle())
+                                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                                        
+                                        // Option 4: Raise Support Ticket
+                                        Button(action: {
+                                            isFloatingMenuExpanded = false
+                                            activeTab = "Support"
+                                        }) {
+                                            HStack(spacing: 8) {
+                                                Text("Raise Support Ticket")
+                                                    .font(.system(size: 10, weight: .black))
+                                                    .foregroundColor(.white)
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                    .cornerRadius(8)
+                                                
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                        .frame(width: 44, height: 44)
+                                                    Image(systemName: "headphones")
+                                                        .font(.system(size: 16))
+                                                        .foregroundColor(.white)
+                                                }
+                                                .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+                                            }
+                                        }
+                                        .buttonStyle(ScaleOnPressButtonStyle())
+                                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                                    }
+                                }
+                                
+                                // Main Floating Action Button Trigger
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                                        isFloatingMenuExpanded.toggle()
                                     }
                                 }) {
-                                    Image(systemName: "phone.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.white)
-                                        .frame(width: 52, height: 52)
-                                        .background(
-                                            LinearGradient(
-                                                colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
+                                    ZStack {
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color(red: 220/255, green: 38/255, blue: 38/255), Color(red: 225/255, green: 29/255, blue: 72/255)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
                                             )
-                                        )
-                                        .cornerRadius(26)
-                                        .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.4), radius: 6, x: 0, y: 3)
+                                            .frame(width: 54, height: 54)
+                                            .shadow(color: Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.45), radius: 8, x: 0, y: 4)
+                                        
+                                        Image(systemName: isFloatingMenuExpanded ? "xmark" : "headphones")
+                                            .font(.system(size: 22, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .rotationEffect(.degrees(isFloatingMenuExpanded ? 90 : 0))
+                                    }
                                 }
                                 .buttonStyle(ScaleOnPressButtonStyle())
                             }
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 110) // clear the floating dock
+                            .padding(.trailing, 18)
+                            .padding(.bottom, 95) // Clear the floating dock
                         }
                     }
                     
@@ -200,38 +302,33 @@ struct CustomerDashboardView: View {
                 await viewModel.refreshAllDataAsync(silent: false)
             }
             
-            // Drawer Menu overlay
+            // Drawer Menu overlay (100% Matching Android Sidebar)
             if isSidebarOpen {
                 ZStack(alignment: .leading) {
-                    Color.black.opacity(0.5)
+                    Color.black.opacity(0.55)
                         .ignoresSafeArea()
                         .onTapGesture {
-                            withAnimation { isSidebarOpen = false }
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                isSidebarOpen = false
+                            }
                         }
                     
-                    let sidebarItems = [
-                        BMSSidebarItem(label: "Dashboard", iconName: "square.grid.2x2", tabId: "Home"),
-                        BMSSidebarItem(label: "Services Catalog", iconName: "briefcase", tabId: "Services"),
-                        BMSSidebarItem(label: "My Orders", iconName: "bag", tabId: "Orders"),
-                        BMSSidebarItem(label: "Refer & Earn (₹500)", iconName: "gift", tabId: "Referrals"),
-                        BMSSidebarItem(label: "Invoices", iconName: "doc.text", tabId: "Invoices"),
-                        BMSSidebarItem(label: "Vault Documents", iconName: "folder", tabId: "Vault"),
-                        BMSSidebarItem(label: "Bookkeeping", iconName: "book", tabId: "Bookkeeping"),
-                        BMSSidebarItem(label: "Help & Support", iconName: "headphones", tabId: "Support"),
-                        BMSSidebarItem(label: "My Profile", iconName: "person", tabId: "Account")
-                    ]
-                    BMSAppSidebar(
+                    BMSCustomerSidebar(
                         userName: userName,
-                        roleName: "Customer Account",
-                        menuItems: sidebarItems,
+                        companyName: SessionManager.shared.getCompanyName(),
+                        profilePhoto: SessionManager.shared.getProfilePhoto().isEmpty ? nil : SessionManager.shared.getProfilePhoto(),
+                        activeOrdersCount: viewModel.orders.filter { $0.status.lowercased() != "completed" }.count,
                         activeTab: $activeTab,
                         onLogout: onLogout,
                         onClose: {
-                            withAnimation { isSidebarOpen = false }
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                isSidebarOpen = false
+                            }
                         }
                     )
                     .transition(.move(edge: .leading))
                 }
+                .zIndex(50)
             }
             
             // Secure Webview Overlay for external live service pages

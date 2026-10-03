@@ -117,12 +117,14 @@ extension View {
 
 // Polished Horizontal Brand Logo Component
 struct VRLogoView: View {
+    var height: CGFloat = 26
+    
     var body: some View {
         HStack(spacing: 8) {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 26)
+                .frame(height: height)
             
             // Vertical Divider line with a red dot centered on it
             ZStack {
@@ -748,18 +750,18 @@ struct RightRoundedSidebarShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX - 48, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - 24, y: rect.minY))
         path.addArc(
-            center: CGPoint(x: rect.maxX - 48, y: rect.minY + 48),
-            radius: 48,
+            center: CGPoint(x: rect.maxX - 24, y: rect.minY + 24),
+            radius: 24,
             startAngle: Angle(degrees: 270),
             endAngle: Angle(degrees: 0),
             clockwise: false
         )
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 48))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 24))
         path.addArc(
-            center: CGPoint(x: rect.maxX - 48, y: rect.maxY - 48),
-            radius: 48,
+            center: CGPoint(x: rect.maxX - 24, y: rect.maxY - 24),
+            radius: 24,
             startAngle: Angle(degrees: 0),
             endAngle: Angle(degrees: 90),
             clockwise: false
@@ -767,6 +769,344 @@ struct RightRoundedSidebarShape: Shape {
         path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
         path.closeSubpath()
         return path
+    }
+}
+
+// 1:1 Android-Parity Customer Sidebar
+struct BMSCustomerSidebar: View {
+    let userName: String
+    let companyName: String
+    let profilePhoto: String?
+    let activeOrdersCount: Int
+    @Binding var activeTab: String
+    let onLogout: () -> Void
+    let onClose: () -> Void
+    
+    @State private var isBookkeepingExpanded = false
+    @Environment(\.openURL) private var openURL
+    
+    private struct NavItem {
+        let id: String
+        let label: String
+        let icon: String
+        let badge: String?
+        let hasSubItems: Bool
+    }
+    
+    private struct NavGroup {
+        let title: String
+        let items: [NavItem]
+    }
+    
+    private var navGroups: [NavGroup] {
+        [
+            NavGroup(
+                title: "Main Workspace",
+                items: [
+                    NavItem(id: "Home", label: "Overview", icon: "square.grid.2x2.fill", badge: nil, hasSubItems: false),
+                    NavItem(id: "Services", label: "Service Catalog", icon: "briefcase.fill", badge: nil, hasSubItems: false),
+                    NavItem(id: "Orders", label: "Orders & Projects", icon: "bag.fill", badge: activeOrdersCount > 0 ? "\(activeOrdersCount)" : nil, hasSubItems: false),
+                    NavItem(id: "Referrals", label: "Refer & Earn", icon: "gift.fill", badge: "₹500", hasSubItems: false),
+                    NavItem(id: "Invoices", label: "Billing & Invoices", icon: "doc.text.fill", badge: nil, hasSubItems: false)
+                ]
+            ),
+            NavGroup(
+                title: "Compliance & Tools",
+                items: [
+                    NavItem(id: "Vault", label: "Document Vault", icon: "folder.fill", badge: nil, hasSubItems: false),
+                    NavItem(id: "Bookkeeping", label: "Bookkeeping & AaaS", icon: "book.fill", badge: nil, hasSubItems: true)
+                ]
+            ),
+            NavGroup(
+                title: "Help & Settings",
+                items: [
+                    NavItem(id: "Support", label: "Support & Tickets", icon: "headphones", badge: nil, hasSubItems: false),
+                    NavItem(id: "Account", label: "Account Settings", icon: "person.fill", badge: nil, hasSubItems: false)
+                ]
+            )
+        ]
+    }
+    
+    private let bookkeepingSubItems = [
+        ("Executive Dashboard", "square.grid.2x2"),
+        ("Sales Invoices", "doc.plaintext"),
+        ("Purchase Bills", "cart.fill"),
+        ("Income & Expenses", "chart.line.downtrend.xyaxis"),
+        ("Bank Statements", "building.columns.fill"),
+        ("Customers & Vendors", "building.2.fill"),
+        ("Payroll & Timesheets", "person.3.fill"),
+        ("Reports & P&L", "chart.bar.fill")
+    ]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            
+            // 1. Sidebar Brand Header (Pure White Header matching Android)
+            HStack {
+                VRLogoView(height: 28)
+                    .onTapGesture {
+                        activeTab = "Home"
+                        onClose()
+                    }
+                
+                Spacer()
+                
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(Color(red: 30/255, green: 41/255, blue: 59/255))
+                        .frame(width: 30, height: 30)
+                        .background(Color(red: 238/255, green: 242/255, blue: 246/255))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 50)
+            .padding(.bottom, 14)
+            .background(Color.white)
+            
+            Divider()
+                .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+            
+            // 2. Navigation Groups
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    ForEach(navGroups, id: \.title) { group in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(group.title.uppercased())
+                                .font(.system(size: 9.5, weight: .black))
+                                .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                                .tracking(1)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                            
+                            ForEach(group.items, id: \.id) { item in
+                                let isActive = activeTab == item.id
+                                
+                                if item.hasSubItems {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Button(action: {
+                                            if isActive {
+                                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                                    isBookkeepingExpanded.toggle()
+                                                }
+                                            } else {
+                                                activeTab = item.id
+                                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                                    isBookkeepingExpanded = true
+                                                }
+                                            }
+                                        }) {
+                                            HStack {
+                                                HStack(spacing: 12) {
+                                                    Image(systemName: item.icon)
+                                                        .font(.system(size: 15, weight: .semibold))
+                                                        .foregroundColor(isActive ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
+                                                        .frame(width: 20)
+                                                    
+                                                    Text(item.label)
+                                                        .font(.system(size: 12.5, weight: isActive ? .bold : .medium))
+                                                        .foregroundColor(isActive ? .white : Color(red: 226/255, green: 232/255, blue: 240/255))
+                                                }
+                                                
+                                                Spacer()
+                                                
+                                                Image(systemName: isBookkeepingExpanded ? "chevron.down" : "chevron.right")
+                                                    .font(.system(size: 11, weight: .bold))
+                                                    .foregroundColor(isActive ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
+                                            }
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 10)
+                                            .background(isActive ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color.clear)
+                                            .cornerRadius(12)
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                        
+                                        if isBookkeepingExpanded {
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                ForEach(bookkeepingSubItems, id: \.0) { subLabel, subIcon in
+                                                    Button(action: {
+                                                        activeTab = "Bookkeeping"
+                                                        onClose()
+                                                    }) {
+                                                        HStack(spacing: 8) {
+                                                            Image(systemName: subIcon)
+                                                                .font(.system(size: 12))
+                                                                .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                                                                .frame(width: 16)
+                                                            
+                                                            Text(subLabel)
+                                                                .font(.system(size: 11, weight: .medium))
+                                                                .foregroundColor(Color(red: 203/255, green: 213/255, blue: 225/255))
+                                                        }
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 6)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                    }
+                                                    .buttonStyle(PlainButtonStyle())
+                                                }
+                                            }
+                                            .padding(.leading, 24)
+                                            .padding(.vertical, 4)
+                                            .background(Color.white.opacity(0.04))
+                                            .cornerRadius(8)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Button(action: {
+                                        activeTab = item.id
+                                        onClose()
+                                    }) {
+                                        HStack {
+                                            HStack(spacing: 12) {
+                                                Image(systemName: item.icon)
+                                                    .font(.system(size: 15, weight: .semibold))
+                                                    .foregroundColor(isActive ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
+                                                    .frame(width: 20)
+                                                
+                                                Text(item.label)
+                                                    .font(.system(size: 12.5, weight: isActive ? .bold : .medium))
+                                                    .foregroundColor(isActive ? .white : Color(red: 226/255, green: 232/255, blue: 240/255))
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            if let b = item.badge {
+                                                Text(b)
+                                                    .font(.system(size: 9, weight: .black))
+                                                    .foregroundColor(isActive ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(isActive ? Color.white : Color(red: 245/255, green: 158/255, blue: 11/255))
+                                                    .clipShape(Capsule())
+                                            }
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 10)
+                                        .background(isActive ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color.clear)
+                                        .cornerRadius(12)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 16)
+            }
+            
+            Divider()
+                .background(Color.white.opacity(0.10))
+            
+            // 3. Quick Direct Helpline & User Footer matching Android
+            VStack(spacing: 12) {
+                // Direct Helpline Box
+                Button(action: {
+                    if let url = URL(string: "tel:918008530606") {
+                        openURL(url)
+                    }
+                }) {
+                    HStack {
+                        HStack(spacing: 10) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.2))
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: "phone.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(red: 129/255, green: 140/255, blue: 248/255))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Direct Helpline")
+                                    .font(.system(size: 11.5, weight: .bold))
+                                    .foregroundColor(.white)
+                                Text("+91 80085 30606")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                .frame(width: 28, height: 28)
+                            Image(systemName: "phone.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color(red: 30/255, green: 41/255, blue: 59/255))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // User Info & Sign Out Row
+                HStack {
+                    Button(action: {
+                        activeTab = "Account"
+                        onClose()
+                    }) {
+                        HStack(spacing: 10) {
+                            VRAvatarView(
+                                photoUrl: profilePhoto,
+                                name: userName.isEmpty ? "Customer" : userName,
+                                size: 36
+                            )
+                            .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(userName.isEmpty ? "Customer" : userName)
+                                    .font(.system(size: 12.5, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                Text(companyName.isEmpty ? "Verified Customer" : companyName)
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        onClose()
+                        onLogout()
+                    }) {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Color(red: 255/255, green: 128/255, blue: 128/255))
+                            .frame(width: 34, height: 34)
+                            .background(Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.18))
+                            .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(14)
+            .background(Color(red: 11/255, green: 17/255, blue: 32/255))
+        }
+        .frame(width: 300)
+        .background(Color(red: 2/255, green: 6/255, blue: 23/255))
+        .clipShape(RightRoundedSidebarShape())
+        .shadow(color: Color.black.opacity(0.35), radius: 25, x: 8, y: 0)
+        .edgesIgnoringSafeArea(.all)
     }
 }
 
@@ -850,7 +1190,7 @@ struct BMSAppSidebar: View {
                             HStack(spacing: 16) {
                                 Image(systemName: safeSystemIconName(baseName: item.iconName, isSelected: isSelected))
                                     .font(.system(size: 16))
-                                    .foregroundColor(isSelected ? Color(red: 129/255, green: 140/255, blue: 248/255) : Color(red: 160/255, green: 175/255, blue: 195/255))
+                                    .foregroundColor(isSelected ? .white : Color(red: 160/255, green: 175/255, blue: 195/255))
                                     .frame(width: 24)
                                 Text(item.label)
                                     .font(.system(size: 13, weight: isSelected ? .bold : .medium))
@@ -859,12 +1199,8 @@ struct BMSAppSidebar: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                             .frame(height: 44)
-                            .background(isSelected ? Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.20) : Color.clear)
+                            .background(isSelected ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color.clear)
                             .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(isSelected ? Color.white.opacity(0.12) : Color.clear, lineWidth: 1)
-                            )
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
@@ -904,30 +1240,10 @@ struct BMSAppSidebar: View {
         }
         .frame(width: 290)
         .background(
-            ZStack {
-                // Blur material layer
-                Color.clear
-                    .background(.ultraThinMaterial)
-                
-                // Color refraction tint layer (liquid-like soft gradients)
-                LinearGradient(colors: [Color.darkSlate.opacity(0.55), Color(red: 10/255, green: 15/255, blue: 30/255).opacity(0.75)], startPoint: .top, endPoint: .bottom)
-                
-                // Refractive gradient highlights
-                LinearGradient(colors: [.white.opacity(0.03), .purple.opacity(0.05), .blue.opacity(0.05), .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
-                
-                // Specular reflection diagonal stripe
-                LinearGradient(colors: [.clear, .white.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
-                
-                // Glow at top leading corner
-                RadialGradient(colors: [.white.opacity(0.12), .clear], center: .topLeading, startRadius: 0, endRadius: 300)
-            }
+            Color(red: 2/255, green: 6/255, blue: 23/255)
         )
         .clipShape(RightRoundedSidebarShape())
-        .overlay(
-            RightRoundedSidebarShape()
-                .stroke(LinearGradient(colors: [.white.opacity(0.35), .white.opacity(0.08), .white.opacity(0.15), .white.opacity(0.28)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.5)
-        )
-        .shadow(color: Color.black.opacity(0.3), radius: 25, x: 10, y: 0)
+        .shadow(color: Color.black.opacity(0.35), radius: 25, x: 10, y: 0)
         .edgesIgnoringSafeArea(.all)
     }
 }
