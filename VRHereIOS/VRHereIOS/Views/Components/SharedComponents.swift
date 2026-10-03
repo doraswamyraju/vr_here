@@ -83,6 +83,7 @@ extension View {
             "activity",
             "trending.up",
             "doc.badge.checkmark",
+            "phone.badge.checkmark",
             "slider.horizontal.3",
             "arrow.triangle.2.circlepath",
             "signature",
@@ -90,7 +91,7 @@ extension View {
             "headphones"
         ]
         
-        if nonFillableSymbols.contains(baseName) || baseName.hasSuffix(".fill") {
+        if nonFillableSymbols.contains(baseName) || baseName.contains(".badge.") || baseName.hasSuffix(".fill") {
             return baseName
         }
         return baseName + ".fill"
