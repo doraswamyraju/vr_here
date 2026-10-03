@@ -115,57 +115,78 @@ extension View {
     }
 }
 
-// Polished Horizontal Brand Logo Component
-struct VRLogoView: View {
-    var height: CGFloat = 26
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Image("logo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: height)
-            
-            // Vertical Divider line with a red dot centered on it
-            ZStack {
-                Rectangle()
-                    .fill(Color.textMuted.opacity(0.4))
-                    .frame(width: 1, height: 24)
-                
-                Circle()
-                    .fill(Color.primaryRed)
-                    .frame(width: 4.5, height: 4.5)
-            }
-            .frame(width: 6)
-            
-            VStack(alignment: .leading, spacing: 0) {
-                // "Here" with its red underline
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Here")
-                        .font(.custom("Georgia", size: 14).bold())
-                        .foregroundColor(Color.primaryRed)
-                    
-                    Rectangle()
-                        .fill(Color.primaryRed)
-                        .frame(height: 1)
-                }
-                .fixedSize()
-                
-                Spacer(minLength: 1)
-                
-                // "Business Management Solutions" subtitle
-                Text("Business Management Solutions")
-                    .font(.system(size: 6.5, weight: .bold))
-                    .foregroundColor(Color.textDark.opacity(0.85))
-            }
-            .frame(height: 26)
+// Helper for resolving image URLs (including /uploads/ paths)
+extension String {
+    var asImageURL: URL? {
+        let trimmed = self.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+            return URL(string: trimmed)
         }
+        let clean = trimmed.hasPrefix("/") ? String(trimmed.dropFirst()) : trimmed
+        return URL(string: "https://vrhere.in/" + clean)
     }
 }
 
-// Custom Header Style
+// Polished Horizontal Brand Logo Component
+struct VRLogoView: View {
+    var height: CGFloat = 26
+    var onClick: (() -> Void)? = nil
+    
+    var body: some View {
+        Button(action: {
+            onClick?()
+        }) {
+            HStack(spacing: 7) {
+                Image("logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: height)
+                
+                // Vertical Divider line with a red dot centered on it
+                ZStack {
+                    Rectangle()
+                        .fill(Color.textMuted.opacity(0.4))
+                        .frame(width: 1, height: height * 0.88)
+                    
+                    Circle()
+                        .fill(Color.primaryRed)
+                        .frame(width: 4.5, height: 4.5)
+                }
+                .frame(width: 6)
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    // "Here" with its red underline
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Here")
+                            .font(.custom("Georgia", size: height * 0.52).bold())
+                            .foregroundColor(Color.primaryRed)
+                        
+                        Rectangle()
+                            .fill(Color.primaryRed)
+                            .frame(height: 1.2)
+                    }
+                    .fixedSize()
+                    
+                    Spacer(minLength: 1)
+                    
+                    // "Business Management Solutions" subtitle
+                    Text("Business Management Solutions")
+                        .font(.system(size: max(6, height * 0.25), weight: .bold))
+                        .foregroundColor(Color.textDark.opacity(0.85))
+                }
+                .frame(height: height)
+            }
+        }
+        .disabled(onClick == nil)
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// Custom Header Style matching Android VRHeader 1:1
+// [Toggle/Back] [Logo] ---------------- [Notification Bell] [User Avatar] [Logout]
 struct VRHeader: View {
-    let title: String
+    var title: String = "DASHBOARD"
     var showMenu: Bool = false
     var onMenuClick: (() -> Void)? = nil
     var showLogout: Bool = false
@@ -173,8 +194,10 @@ struct VRHeader: View {
     
     var showBack: Bool = false
     var onBackClick: (() -> Void)? = nil
+    var onLogoClick: (() -> Void)? = nil
     var showNotifications: Bool = false
     var hasUnreadNotifications: Bool = false
+    var unreadNotificationsCount: Int = 0
     var onNotificationsClick: (() -> Void)? = nil
     var userProfilePhoto: String? = nil
     var userName: String = ""
@@ -182,78 +205,77 @@ struct VRHeader: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ZStack {
-                // Logo in center
-                VRLogoView()
-                
-                HStack {
-                    // Left side buttons
-                    HStack(spacing: 4) {
-                        if showMenu {
-                            Button(action: { onMenuClick?() }) {
-                                Image(systemName: "line.horizontal.3")
-                                    .font(.title3)
-                                    .foregroundColor(.textMuted)
-                                    .padding(8)
-                            }
-                            .buttonStyle(ScaleOnPressButtonStyle())
+            HStack(alignment: .center) {
+                // LEFT SIDE: Menu Toggle / Back + Official Brand Logo
+                HStack(spacing: 6) {
+                    if showMenu {
+                        Button(action: { onMenuClick?() }) {
+                            Image(systemName: "line.horizontal.3")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
+                                .padding(6)
                         }
-                        
-                        if showBack {
-                            Button(action: { onBackClick?() }) {
-                                Image(systemName: "chevron.left")
-                                    .font(.title3)
-                                    .foregroundColor(.textMuted)
-                                    .padding(8)
-                            }
-                            .buttonStyle(ScaleOnPressButtonStyle())
+                        .buttonStyle(ScaleOnPressButtonStyle())
+                    } else if showBack {
+                        Button(action: { onBackClick?() }) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
+                                .padding(6)
                         }
+                        .buttonStyle(ScaleOnPressButtonStyle())
                     }
                     
-                    Spacer()
-                    
-                    // Right side buttons: Notification Bell + User Profile Pic + Logout Button
-                    HStack(spacing: 6) {
-                        if showNotifications {
-                            Button(action: { onNotificationsClick?() }) {
-                                ZStack(alignment: .topTrailing) {
-                                    Image(systemName: "bell")
-                                        .font(.title3)
-                                        .foregroundColor(.textMuted)
-                                        .padding(8)
-                                    
-                                    if hasUnreadNotifications {
-                                        Circle()
-                                            .fill(Color.red)
-                                            .frame(width: 8, height: 8)
-                                            .offset(x: 4, y: -4)
-                                    }
+                    VRLogoView(height: 26, onClick: onLogoClick)
+                }
+                
+                Spacer()
+                
+                // RIGHT SIDE: Notification Bell + User Profile Pic + Logout Button
+                HStack(spacing: 8) {
+                    if showNotifications {
+                        Button(action: { onNotificationsClick?() }) {
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: "bell")
+                                    .font(.system(size: 19, weight: .medium))
+                                    .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
+                                    .padding(6)
+                                
+                                if hasUnreadNotifications || unreadNotificationsCount > 0 {
+                                    Circle()
+                                        .fill(Color.primaryRed)
+                                        .frame(width: 8, height: 8)
+                                        .offset(x: 2, y: -2)
                                 }
                             }
-                            .buttonStyle(ScaleOnPressButtonStyle())
                         }
+                        .buttonStyle(ScaleOnPressButtonStyle())
+                    }
 
-                        if !userName.isEmpty || userProfilePhoto != nil {
-                            Button(action: { onProfileClick?() }) {
-                                VRAvatarView(photoUrl: userProfilePhoto, name: userName, size: 28)
-                            }
-                            .buttonStyle(ScaleOnPressButtonStyle())
+                    if !userName.isEmpty || userProfilePhoto != nil {
+                        VRAvatarView(
+                            photoUrl: userProfilePhoto,
+                            name: userName.isEmpty ? "Customer" : userName,
+                            size: 30,
+                            borderWidth: 1.5,
+                            borderColor: Color(red: 226/255, green: 232/255, blue: 240/255),
+                            onClick: onProfileClick
+                        )
+                    }
+                    
+                    if showLogout {
+                        Button(action: { onLogoutClick?() }) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(Color.primaryRed)
+                                .padding(6)
                         }
-                        
-                        if showLogout {
-                            Button(action: { onLogoutClick?() }) {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                    .font(.title3)
-                                    .foregroundColor(.red)
-                                    .padding(8)
-                            }
-                            .buttonStyle(ScaleOnPressButtonStyle())
-                        }
+                        .buttonStyle(ScaleOnPressButtonStyle())
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
             .background(Color.white)
             
             Divider()
@@ -267,6 +289,13 @@ struct VRAvatarView: View {
     var photoUrl: String? = nil
     var name: String = ""
     var size: CGFloat = 30
+    var borderWidth: CGFloat = 1.5
+    var borderColor: Color = Color.borderLight
+    var onClick: (() -> Void)? = nil
+    
+    private var resolvedURL: URL? {
+        photoUrl?.asImageURL
+    }
     
     var initials: String {
         let parts = name.split(separator: " ").filter { !$0.isEmpty }
@@ -276,26 +305,32 @@ struct VRAvatarView: View {
     }
     
     var body: some View {
-        ZStack {
-            if let urlStr = photoUrl, let url = URL(string: urlStr), !urlStr.isEmpty {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: size, height: size)
-                            .clipShape(Circle())
-                    default:
-                        fallbackInitials
+        Button(action: {
+            onClick?()
+        }) {
+            ZStack {
+                if let url = resolvedURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: size, height: size)
+                                .clipShape(Circle())
+                        default:
+                            fallbackInitials
+                        }
                     }
+                } else {
+                    fallbackInitials
                 }
-            } else {
-                fallbackInitials
             }
+            .frame(width: size, height: size)
+            .overlay(Circle().stroke(borderColor, lineWidth: borderWidth))
         }
-        .frame(width: size, height: size)
-        .overlay(Circle().stroke(Color.borderLight, lineWidth: 1.5))
+        .disabled(onClick == nil)
+        .buttonStyle(PlainButtonStyle())
     }
     
     private var fallbackInitials: some View {
@@ -871,13 +906,13 @@ struct BMSCustomerSidebar: View {
             
             // 2. Navigation Groups
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 20) {
                     ForEach(navGroups, id: \.title) { group in
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 6) {
                             Text(group.title.uppercased())
-                                .font(.system(size: 9.5, weight: .black))
+                                .font(.system(size: 11, weight: .black))
                                 .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
-                                .tracking(1)
+                                .tracking(1.2)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
                             
@@ -899,60 +934,60 @@ struct BMSCustomerSidebar: View {
                                             }
                                         }) {
                                             HStack {
-                                                HStack(spacing: 12) {
+                                                HStack(spacing: 14) {
                                                     Image(systemName: item.icon)
-                                                        .font(.system(size: 15, weight: .semibold))
+                                                        .font(.system(size: 18, weight: .semibold))
                                                         .foregroundColor(isActive ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
-                                                        .frame(width: 20)
+                                                        .frame(width: 24)
                                                     
                                                     Text(item.label)
-                                                        .font(.system(size: 12.5, weight: isActive ? .bold : .medium))
+                                                        .font(.system(size: 14, weight: isActive ? .bold : .medium))
                                                         .foregroundColor(isActive ? .white : Color(red: 226/255, green: 232/255, blue: 240/255))
                                                 }
                                                 
                                                 Spacer()
                                                 
                                                 Image(systemName: isBookkeepingExpanded ? "chevron.down" : "chevron.right")
-                                                    .font(.system(size: 11, weight: .bold))
+                                                    .font(.system(size: 12, weight: .bold))
                                                     .foregroundColor(isActive ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
                                             }
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 10)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 12)
                                             .background(isActive ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color.clear)
                                             .cornerRadius(12)
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                         
                                         if isBookkeepingExpanded {
-                                            VStack(alignment: .leading, spacing: 2) {
+                                            VStack(alignment: .leading, spacing: 3) {
                                                 ForEach(bookkeepingSubItems, id: \.0) { subLabel, subIcon in
                                                     Button(action: {
                                                         activeTab = "Bookkeeping"
                                                         onClose()
                                                     }) {
-                                                        HStack(spacing: 8) {
+                                                        HStack(spacing: 10) {
                                                             Image(systemName: subIcon)
-                                                                .font(.system(size: 12))
+                                                                .font(.system(size: 14))
                                                                 .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
-                                                                .frame(width: 16)
+                                                                .frame(width: 18)
                                                             
                                                             Text(subLabel)
-                                                                .font(.system(size: 11, weight: .medium))
+                                                                .font(.system(size: 12.5, weight: .medium))
                                                                 .foregroundColor(Color(red: 203/255, green: 213/255, blue: 225/255))
                                                         }
-                                                        .padding(.horizontal, 10)
-                                                        .padding(.vertical, 6)
+                                                        .padding(.horizontal, 12)
+                                                        .padding(.vertical, 8)
                                                         .frame(maxWidth: .infinity, alignment: .leading)
                                                     }
                                                     .buttonStyle(PlainButtonStyle())
                                                 }
                                             }
                                             .padding(.leading, 24)
-                                            .padding(.vertical, 4)
+                                            .padding(.vertical, 6)
                                             .background(Color.white.opacity(0.04))
-                                            .cornerRadius(8)
+                                            .cornerRadius(10)
                                             .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
+                                                RoundedRectangle(cornerRadius: 10)
                                                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
                                             )
                                         }
@@ -963,14 +998,14 @@ struct BMSCustomerSidebar: View {
                                         onClose()
                                     }) {
                                         HStack {
-                                            HStack(spacing: 12) {
+                                            HStack(spacing: 14) {
                                                 Image(systemName: item.icon)
-                                                    .font(.system(size: 15, weight: .semibold))
+                                                    .font(.system(size: 18, weight: .semibold))
                                                     .foregroundColor(isActive ? .white : Color(red: 148/255, green: 163/255, blue: 184/255))
-                                                    .frame(width: 20)
+                                                    .frame(width: 24)
                                                 
                                                 Text(item.label)
-                                                    .font(.system(size: 12.5, weight: isActive ? .bold : .medium))
+                                                    .font(.system(size: 14, weight: isActive ? .bold : .medium))
                                                     .foregroundColor(isActive ? .white : Color(red: 226/255, green: 232/255, blue: 240/255))
                                             }
                                             
@@ -978,16 +1013,16 @@ struct BMSCustomerSidebar: View {
                                             
                                             if let b = item.badge {
                                                 Text(b)
-                                                    .font(.system(size: 9, weight: .black))
+                                                    .font(.system(size: 10, weight: .black))
                                                     .foregroundColor(isActive ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color(red: 15/255, green: 23/255, blue: 42/255))
-                                                    .padding(.horizontal, 6)
-                                                    .padding(.vertical, 2)
+                                                    .padding(.horizontal, 7)
+                                                    .padding(.vertical, 3)
                                                     .background(isActive ? Color.white : Color(red: 245/255, green: 158/255, blue: 11/255))
                                                     .clipShape(Capsule())
                                             }
                                         }
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 10)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 12)
                                         .background(isActive ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color.clear)
                                         .cornerRadius(12)
                                     }
@@ -997,15 +1032,15 @@ struct BMSCustomerSidebar: View {
                         }
                     }
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 16)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 18)
             }
             
             Divider()
                 .background(Color.white.opacity(0.10))
             
             // 3. Quick Direct Helpline & User Footer matching Android
-            VStack(spacing: 12) {
+            VStack(spacing: 14) {
                 // Direct Helpline Box
                 Button(action: {
                     if let url = URL(string: "tel:918008530606") {
@@ -1013,22 +1048,22 @@ struct BMSCustomerSidebar: View {
                     }
                 }) {
                     HStack {
-                        HStack(spacing: 10) {
+                        HStack(spacing: 12) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 10)
                                     .fill(Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.2))
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 36, height: 36)
                                 Image(systemName: "phone.fill")
-                                    .font(.system(size: 14))
+                                    .font(.system(size: 15))
                                     .foregroundColor(Color(red: 129/255, green: 140/255, blue: 248/255))
                             }
                             
-                            VStack(alignment: .leading, spacing: 1) {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text("Direct Helpline")
-                                    .font(.system(size: 11.5, weight: .bold))
+                                    .font(.system(size: 12, weight: .bold))
                                     .foregroundColor(.white)
                                 Text("+91 80085 30606")
-                                    .font(.system(size: 10, weight: .medium))
+                                    .font(.system(size: 10.5, weight: .medium))
                                     .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
                             }
                         }
@@ -1038,18 +1073,18 @@ struct BMSCustomerSidebar: View {
                         ZStack {
                             Circle()
                                 .fill(Color(red: 99/255, green: 102/255, blue: 241/255))
-                                .frame(width: 28, height: 28)
+                                .frame(width: 30, height: 30)
                             Image(systemName: "phone.fill")
-                                .font(.system(size: 12))
+                                .font(.system(size: 13))
                                 .foregroundColor(.white)
                         }
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
                     .background(Color(red: 30/255, green: 41/255, blue: 59/255))
-                    .cornerRadius(12)
+                    .cornerRadius(14)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 14)
                             .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
                 }
@@ -1061,21 +1096,21 @@ struct BMSCustomerSidebar: View {
                         activeTab = "Account"
                         onClose()
                     }) {
-                        HStack(spacing: 10) {
+                        HStack(spacing: 12) {
                             VRAvatarView(
                                 photoUrl: profilePhoto,
                                 name: userName.isEmpty ? "Customer" : userName,
-                                size: 36
+                                size: 38
                             )
                             .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
                             
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(userName.isEmpty ? "Customer" : userName)
-                                    .font(.system(size: 12.5, weight: .bold))
+                                    .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(.white)
                                     .lineLimit(1)
                                 Text(companyName.isEmpty ? "Verified Customer" : companyName)
-                                    .font(.system(size: 10, weight: .medium))
+                                    .font(.system(size: 10.5, weight: .medium))
                                     .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
                                     .lineLimit(1)
                             }
@@ -1090,19 +1125,19 @@ struct BMSCustomerSidebar: View {
                         onLogout()
                     }) {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 15, weight: .bold))
                             .foregroundColor(Color(red: 255/255, green: 128/255, blue: 128/255))
-                            .frame(width: 34, height: 34)
+                            .frame(width: 36, height: 36)
                             .background(Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.18))
-                            .cornerRadius(8)
+                            .cornerRadius(10)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
             }
-            .padding(14)
+            .padding(16)
             .background(Color(red: 11/255, green: 17/255, blue: 32/255))
         }
-        .frame(width: 300)
+        .frame(width: 320)
         .background(Color(red: 2/255, green: 6/255, blue: 23/255))
         .clipShape(RightRoundedSidebarShape())
         .shadow(color: Color.black.opacity(0.35), radius: 25, x: 8, y: 0)

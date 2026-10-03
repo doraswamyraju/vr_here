@@ -225,6 +225,9 @@ struct CustomerAccountTab: View {
             }
         }
         .background(Color(red: 248/255, green: 250/255, blue: 252/255).ignoresSafeArea())
+        .onAppear {
+            loadProfile()
+        }
         .photosPicker(isPresented: $showAvatarPicker, selection: $selectedAvatarItem, matching: .images)
         .photosPicker(isPresented: $showLogoPicker, selection: $selectedLogoItem, matching: .images)
         .onChange(of: selectedAvatarItem) { newItem in
@@ -750,6 +753,41 @@ struct CustomerAccountTab: View {
                 viewModel.toastMessage = "Logo upload failed: \(error.localizedDescription)"
             }
             isUploadingLogo = false
+        }
+    }
+    
+    private func loadProfile() {
+        // 1. Instantly populate from local session
+        userNameInput = SessionManager.shared.getUserName()
+        userEmailInput = SessionManager.shared.getUserEmail()
+        userPhoneInput = SessionManager.shared.getPhone()
+        companyNameInput = SessionManager.shared.getCompanyName()
+        businessTypeInput = SessionManager.shared.getBusinessType()
+        gstinInput = SessionManager.shared.getGstin()
+        panNumberInput = SessionManager.shared.getPanNumber()
+        addressInput = SessionManager.shared.getAddress()
+        profilePhotoUrl = SessionManager.shared.getProfilePhoto()
+        companyLogoUrl = SessionManager.shared.getCompanyLogo()
+        
+        // 2. Actively fetch latest from server
+        Task {
+            do {
+                let profile = try await NetworkManager.shared.getProfile()
+                userNameInput = profile.name
+                userEmailInput = profile.email
+                if let p = profile.phone { userPhoneInput = p; SessionManager.shared.savePhone(p) }
+                if let c = profile.companyName { companyNameInput = c; SessionManager.shared.saveCompanyName(c) }
+                if let b = profile.businessType { businessTypeInput = b; SessionManager.shared.saveBusinessType(b) }
+                if let g = profile.gstin { gstinInput = g; SessionManager.shared.saveGstin(g) }
+                if let pan = profile.panNumber { panNumberInput = pan; SessionManager.shared.savePanNumber(pan) }
+                if let a = profile.address { addressInput = a; SessionManager.shared.saveAddress(a) }
+                if let photo = profile.profilePhoto { profilePhotoUrl = photo; SessionManager.shared.saveProfilePhoto(photo) }
+                if let logo = profile.companyLogo { companyLogoUrl = logo; SessionManager.shared.saveCompanyLogo(logo) }
+                SessionManager.shared.saveUserName(profile.name)
+                SessionManager.shared.saveUserEmail(profile.email)
+            } catch {
+                print("Failed to fetch fresh user profile: \(error)")
+            }
         }
     }
 }

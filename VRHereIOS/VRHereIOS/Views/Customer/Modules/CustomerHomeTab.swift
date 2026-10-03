@@ -1105,7 +1105,7 @@ struct DynamicPromoBannerCard: View {
     var body: some View {
         ZStack {
             // Background Image if present
-            if let imgUrl = offer.bannerImageUrl, let url = URL(string: imgUrl), !imgUrl.isEmpty {
+            if let imgUrl = offer.bannerImageUrl, let url = imgUrl.asImageURL {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let image):
@@ -1221,7 +1221,7 @@ struct DynamicBlogFeedCard: View {
         Button(action: action) {
             HStack(alignment: .top, spacing: 12) {
                 // Cover Thumbnail Image or Icon
-                if let imgUrl = blog.coverImageUrl, let url = URL(string: imgUrl), !imgUrl.isEmpty {
+                if let imgUrl = blog.coverImageUrl, let url = imgUrl.asImageURL {
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
@@ -1312,7 +1312,7 @@ struct BlogReaderSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     // Header Cover Image if available
-                    if let imgUrl = blog.coverImageUrl, let url = URL(string: imgUrl), !imgUrl.isEmpty {
+                    if let imgUrl = blog.coverImageUrl, let url = imgUrl.asImageURL {
                         AsyncImage(url: url) { phase in
                             switch phase {
                             case .success(let image):
