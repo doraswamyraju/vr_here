@@ -256,7 +256,7 @@ fun CustomerAccountTab(
                                         Text("VERIFIED", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFF34D399), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                                     }
                                     Surface(shape = RoundedCornerShape(50), color = Color(0xFF818CF8).copy(alpha = 0.25f)) {
-                                        Text("v1.1", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFFA5B4FC), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                        Text("v1.2", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFFA5B4FC), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                                     }
                                 }
                                 Text(
@@ -532,7 +532,7 @@ fun CustomerAccountTab(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "VR HERE BMS Android • Version 1.1 (Build 2)",
+                                    text = "VR HERE BMS Android • Version 1.2 (Build 3)",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF94A3B8)
