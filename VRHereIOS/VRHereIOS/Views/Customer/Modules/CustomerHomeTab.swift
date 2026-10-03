@@ -131,7 +131,7 @@ struct CustomerHomeTab: View {
             if s == "pending documents" || s == "documents required" {
                 if !order.customerRequirements.isEmpty {
                     return order.customerRequirements.contains { req in
-                        !req.isClientCompleted && (req.uploadedDocumentUrl?.isEmpty ?? true) && (req.documentUrl?.isEmpty ?? true) && (req.clientValue?.isEmpty ?? true) && req.status.lowercased() != "received" && req.status.lowercased() != "verified"
+                        !req.isClientCompleted && req.uploadedDocumentUrl.isEmpty && req.documentUrl.isEmpty && req.clientValue.isEmpty && req.status.lowercased() != "received" && req.status.lowercased() != "verified"
                     }
                 }
                 return false
@@ -209,7 +209,7 @@ struct CustomerHomeTab: View {
     ]
     
     private var promoOffers: [PromoOfferItem] {
-        let dynamic = viewModel.offers.filter { $0.isActive }
+        let dynamic = viewModel.offers.filter { $0.isActive == true }
         if !dynamic.isEmpty {
             return dynamic.map { o in
                 let accent = o.badgeColor != nil && !o.badgeColor!.isEmpty ? Color(hex: o.badgeColor!) : Color.primaryRed
@@ -306,7 +306,7 @@ struct CustomerHomeTab: View {
     }
     
     private var blogPosts: [BlogPostItem] {
-        let dynamic = viewModel.blogs.filter { $0.isPublished }
+        let dynamic = viewModel.blogs.filter { $0.isPublished == true }
         if !dynamic.isEmpty {
             return dynamic.map { b in
                 let catColor = b.categoryColor != nil && !b.categoryColor!.isEmpty ? Color(hex: b.categoryColor!) : Color(red: 37/255, green: 99/255, blue: 235/255)
@@ -316,11 +316,11 @@ struct CustomerHomeTab: View {
                     summary: b.summary,
                     category: b.category,
                     categoryColor: catColor,
-                    readTime: b.readTime?.isEmpty ?? true ? "4 min read" : b.readTime!,
+                    readTime: (b.readTime?.isEmpty ?? true) ? "4 min read" : b.readTime!,
                     publishDate: b.publishedAt != nil ? String(b.publishedAt!.prefix(10)) : "Mar 2026",
                     icon: "doc.text.fill",
                     keyTakeaways: b.keyTakeaways ?? [],
-                    fullArticle: b.fullArticle ?? b.summary,
+                    fullArticle: b.fullArticle.isEmpty ? b.summary : b.fullArticle,
                     coverImageUrl: b.coverImageUrl
                 )
             }
