@@ -36,6 +36,22 @@ import com.sbr.vrherebms.data.model.TransactionSummaryDto
 import com.sbr.vrherebms.ui.screens.customer.bookkeeping.dialogs.GSTInvoicePreviewDialog
 import com.sbr.vrherebms.viewmodel.CustomerDashboardViewModel
 
+data class UnifiedInvoiceItem(
+    val id: String,
+    val orderId: String,
+    val invoiceNumber: String,
+    val serviceName: String,
+    val packageName: String = "Standard Package",
+    val date: String,
+    val dueDate: String? = null,
+    val amount: Double,
+    val status: String,
+    val isPaid: Boolean,
+    val canPayNow: Boolean,
+    val directUrl: String = "",
+    val paymentId: String = ""
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerInvoicesTab(
@@ -47,14 +63,107 @@ fun CustomerInvoicesTab(
     val payments = viewModel.payments
     val orders = viewModel.orders
 
-    val totalSpent = remember(payments) { payments.sumOf { it.amount } }
+    // Aggregate ALL Invoices across Orders, Milestones & Payments
+    val unifiedInvoices = remember(payments, orders) {
+        val list = mutableListOf<UnifiedInvoiceItem>()
+        val processedNumbers = mutableSetOf<String>()
+
+        // 1. Add all explicit milestone invoices from orders (e.g. INV-0310260001)
+        orders.forEach { order ->
+            order.invoices.forEach { inv ->
+                val isPaid = inv.status.equals("Paid", ignoreCase = true) || inv.status.equals("Completed", ignoreCase = true)
+                val canPay = !isPaid && !inv.status.equals("Cancelled", ignoreCase = true) && !inv.status.equals("Draft", ignoreCase = true)
+                val invNum = if (inv.number.isNotBlank()) inv.number else "INV-${inv.id.takeLast(6).uppercase()}"
+                if (processedNumbers.add(invNum.uppercase())) {
+                    list.add(
+                        UnifiedInvoiceItem(
+                            id = inv.id.ifBlank { "inv_${order.id}_${inv.number}" },
+                            orderId = order.id,
+                            invoiceNumber = invNum,
+                            serviceName = order.serviceName,
+                            packageName = order.packageName,
+                            date = if (inv.createdAt.length >= 10) inv.createdAt.substring(0, 10) else (if (order.createdAt.length >= 10) order.createdAt.substring(0, 10) else "Recent"),
+                            dueDate = inv.dueDate,
+                            amount = inv.amount,
+                            status = inv.status,
+                            isPaid = isPaid,
+                            canPayNow = canPay,
+                            directUrl = inv.url
+                        )
+                    )
+                }
+            }
+        }
+
+        // 2. Add orders that have an unpaid balance and NO separate milestone invoices
+        orders.forEach { order ->
+            val hasMilestoneInvoices = order.invoices.isNotEmpty()
+            if (!hasMilestoneInvoices) {
+                val orderPayments = payments.filter { p -> 
+                    p.order?.id == order.id || (p.paymentId.isNotBlank() && p.paymentId == order.paymentId) 
+                }
+                val paidForOrder = orderPayments.filter { it.status.equals("Completed", ignoreCase = true) || it.status.equals("Paid", ignoreCase = true) }.sumOf { it.amount }
+                val isOrderPaid = order.paymentStatus.equals("Paid", ignoreCase = true) || (order.paymentId.isNotBlank() && paidForOrder >= order.price)
+                val balance = if (isOrderPaid) 0.0 else maxOf(0.0, order.price - paidForOrder)
+                val invNum = "INV-${order.id.takeLast(8).uppercase()}"
+
+                if (!isOrderPaid && balance > 0.0 && processedNumbers.add(invNum.uppercase())) {
+                    list.add(
+                        UnifiedInvoiceItem(
+                            id = order.id,
+                            orderId = order.id,
+                            invoiceNumber = invNum,
+                            serviceName = order.serviceName,
+                            packageName = order.packageName,
+                            date = if (order.createdAt.length >= 10) order.createdAt.substring(0, 10) else "Recent",
+                            amount = balance,
+                            status = if (paidForOrder > 0.0) "Partially Paid" else "Pending",
+                            isPaid = false,
+                            canPayNow = true,
+                            directUrl = ""
+                        )
+                    )
+                }
+            }
+        }
+
+        // 3. Add all recorded payments
+        payments.forEach { p ->
+            val pInvNumber = "INV-${(p.paymentId.ifBlank { p.id }).takeLast(8).uppercase()}"
+            val isPaid = p.status.equals("Completed", ignoreCase = true) || p.status.equals("Paid", ignoreCase = true)
+            if (processedNumbers.add(pInvNumber.uppercase())) {
+                list.add(
+                    UnifiedInvoiceItem(
+                        id = p.id,
+                        orderId = p.order?.id ?: "",
+                        invoiceNumber = pInvNumber,
+                        serviceName = p.serviceName.ifBlank { p.order?.serviceName ?: "Professional Compliance & Legal Services" },
+                        packageName = p.packageName.ifBlank { "Standard Package" },
+                        date = if (p.createdAt.length >= 10) p.createdAt.substring(0, 10) else "Recent",
+                        amount = p.amount,
+                        status = if (isPaid) "Paid" else p.status,
+                        isPaid = isPaid,
+                        canPayNow = !isPaid && !p.status.equals("Cancelled", ignoreCase = true),
+                        directUrl = p.invoiceUrl ?: "",
+                        paymentId = p.paymentId
+                    )
+                )
+            }
+        }
+
+        list
+    }
+
+    val totalSpent = remember(unifiedInvoices) {
+        unifiedInvoices.filter { it.isPaid }.sumOf { it.amount }
+    }
 
     // GST Invoice Modal View State
-    var selectedInvoicePayment by remember { mutableStateOf<PaymentResponse?>(null) }
+    var selectedInvoiceItem by remember { mutableStateOf<UnifiedInvoiceItem?>(null) }
     var showInvoiceModal by remember { mutableStateOf(false) }
 
     // Payment Settlement Sheet State
-    var selectedPaymentForCheckout by remember { mutableStateOf<PaymentResponse?>(null) }
+    var selectedInvoiceForCheckout by remember { mutableStateOf<UnifiedInvoiceItem?>(null) }
     var showCheckoutSheet by remember { mutableStateOf(false) }
 
     if (isEmbedded) {
@@ -63,15 +172,15 @@ fun CustomerInvoicesTab(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             CustomerInvoicesContent(
-                payments = payments,
+                invoices = unifiedInvoices,
                 orders = orders,
                 totalSpent = totalSpent,
                 onSelectInvoice = {
-                    selectedInvoicePayment = it
+                    selectedInvoiceItem = it
                     showInvoiceModal = true
                 },
                 onPayNow = {
-                    selectedPaymentForCheckout = it
+                    selectedInvoiceForCheckout = it
                     showCheckoutSheet = true
                 },
                 context = context,
@@ -88,15 +197,15 @@ fun CustomerInvoicesTab(
         ) {
             item {
                 CustomerInvoicesContent(
-                    payments = payments,
+                    invoices = unifiedInvoices,
                     orders = orders,
                     totalSpent = totalSpent,
                     onSelectInvoice = {
-                        selectedInvoicePayment = it
+                        selectedInvoiceItem = it
                         showInvoiceModal = true
                     },
                     onPayNow = {
-                        selectedPaymentForCheckout = it
+                        selectedInvoiceForCheckout = it
                         showCheckoutSheet = true
                     },
                     context = context
@@ -108,21 +217,18 @@ fun CustomerInvoicesTab(
         }
     }
 
-    // --- GST TAX INVOICE PREVIEW DIALOG (Bookkeeping Standard) ---
-    if (showInvoiceModal && selectedInvoicePayment != null) {
-        val inv = selectedInvoicePayment!!
-        val userName = (sessionManager.getUserName() ?: "").ifEmpty { inv.customerName.ifEmpty { "Customer" } }
-        val userEmail = (sessionManager.getUserEmail() ?: "").ifEmpty { inv.email }
-        val userPhone = sessionManager.getPhone().ifEmpty { inv.phone }
+    // --- GST TAX INVOICE PREVIEW DIALOG (A4 Standard) ---
+    if (showInvoiceModal && selectedInvoiceItem != null) {
+        val inv = selectedInvoiceItem!!
+        val userName = (sessionManager.getUserName() ?: "").ifEmpty { "Valued Customer" }
+        val userEmail = (sessionManager.getUserEmail() ?: "").ifEmpty { "support@vrhere.in" }
+        val userPhone = sessionManager.getPhone().ifEmpty { "+91 80085 30606" }
         val compName = (sessionManager.getCompanyName() ?: "").ifEmpty { userName }
 
         val subtotal = inv.amount / 1.18
         val gstTax = inv.amount - subtotal
         val cgst = gstTax / 2.0
         val sgst = gstTax / 2.0
-
-        val invoiceDateStr = if (inv.createdAt.length >= 10) inv.createdAt.substring(0, 10) else "2026-09-30"
-        val invoiceNoStr = "INV-${inv.id.takeLast(6).uppercase()}"
 
         val vrHereSellerDetails = CompanyDetailsDto(
             companyName = "VR HERE BUSINESS MANAGEMENT SOLUTIONS PRIVATE LIMITED",
@@ -146,9 +252,10 @@ fun CustomerInvoicesTab(
             id = inv.id,
             transactionType = "Sales",
             copyType = "Original for Recipient",
-            docNumber = invoiceNoStr,
-            docDate = invoiceDateStr,
-            paymentMode = inv.method.ifEmpty { "Razorpay / Online" },
+            docNumber = inv.invoiceNumber,
+            docDate = inv.date,
+            dueDate = inv.dueDate,
+            paymentMode = "Razorpay / Online",
             partyName = compName,
             partyEmail = userEmail,
             partyPhone = userPhone,
@@ -179,8 +286,8 @@ fun CustomerInvoicesTab(
                 totalIgst = 0.0,
                 totalAmount = inv.amount
             ),
-            paymentStatus = if (inv.status.equals("Paid", ignoreCase = true) || inv.status.equals("Completed", ignoreCase = true)) "Paid" else inv.status,
-            paidAmount = inv.amount,
+            paymentStatus = if (inv.isPaid) "Paid" else inv.status,
+            paidAmount = if (inv.isPaid) inv.amount else 0.0,
             status = "Verified"
         )
 
@@ -192,15 +299,15 @@ fun CustomerInvoicesTab(
     }
 
     // --- PAYMENT SETTLEMENT CHECKOUT SHEET ---
-    if (showCheckoutSheet && selectedPaymentForCheckout != null) {
-        val p = selectedPaymentForCheckout!!
+    if (showCheckoutSheet && selectedInvoiceForCheckout != null) {
+        val inv = selectedInvoiceForCheckout!!
         CustomPaymentBottomSheet(
             key = "rzp_live_51P...",
-            orderId = p.paymentId,
-            amount = (p.amount * 100).toLong(),
-            currency = p.currency.ifEmpty { "INR" },
-            serviceName = p.serviceName,
-            packageName = p.packageName.ifEmpty { "Standard Package" },
+            orderId = inv.orderId.ifEmpty { inv.id },
+            amount = (inv.amount * 100).toLong(),
+            currency = "INR",
+            serviceName = inv.serviceName,
+            packageName = inv.packageName,
             customerName = (sessionManager.getUserName() ?: "").ifEmpty { "Customer" },
             customerEmail = (sessionManager.getUserEmail() ?: "").ifEmpty { "customer@vrhere.in" },
             customerPhone = "918008530606",
@@ -219,11 +326,11 @@ fun CustomerInvoicesTab(
 
 @Composable
 private fun CustomerInvoicesContent(
-    payments: List<PaymentResponse>,
+    invoices: List<UnifiedInvoiceItem>,
     orders: List<OrderResponse>,
     totalSpent: Double,
-    onSelectInvoice: (PaymentResponse) -> Unit,
-    onPayNow: (PaymentResponse) -> Unit,
+    onSelectInvoice: (UnifiedInvoiceItem) -> Unit,
+    onPayNow: (UnifiedInvoiceItem) -> Unit,
     context: Context,
     isEmbedded: Boolean = false
 ) {
@@ -262,66 +369,66 @@ private fun CustomerInvoicesContent(
             colors = CardDefaults.cardColors(containerColor = Color.Transparent),
             modifier = Modifier.fillMaxWidth()
         ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.linearGradient(
-                                listOf(Color(0xFF0F172A), Color(0xFF1E293B))
-                            ),
-                            shape = RoundedCornerShape(24.dp)
-                        )
-                        .padding(20.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.linearGradient(
+                            listOf(Color(0xFF0F172A), Color(0xFF1E293B))
+                        ),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(20.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("TOTAL VERIFIED INVESTMENT", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8), letterSpacing = 0.5.sp)
+                            Text("₹${String.format("%,.0f", totalSpent)}", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.White)
+                        }
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White.copy(alpha = 0.1f)
                         ) {
-                            Column {
-                                Text("TOTAL VERIFIED INVESTMENT", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8), letterSpacing = 0.5.sp)
-                                Text("₹${String.format("%,.0f", totalSpent)}", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.White)
-                            }
-                            Surface(
-                                shape = CircleShape,
-                                color = Color.White.copy(alpha = 0.1f)
-                            ) {
-                                Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color(0xFF34D399), modifier = Modifier.padding(10.dp).size(22.dp))
+                            Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color(0xFF34D399), modifier = Modifier.padding(10.dp).size(22.dp))
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White.copy(alpha = 0.05f),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("INVOICES & RECEIPTS", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
+                                Text("${invoices.size}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
                             }
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White.copy(alpha = 0.05f),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color.White.copy(alpha = 0.05f),
-                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Column(modifier = Modifier.padding(10.dp)) {
-                                    Text("TRANSACTIONS", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-                                    Text("${payments.size}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
-                                }
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color.White.copy(alpha = 0.05f),
-                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Column(modifier = Modifier.padding(10.dp)) {
-                                    Text("ACTIVE ORDERS", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-                                    Text("${orders.size}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
-                                }
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("ACTIVE ORDERS", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
+                                Text("${orders.size}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
                             }
                         }
                     }
                 }
             }
+        }
 
         // --- 2. INVOICE LIST SECTION ---
         Row(
@@ -330,10 +437,10 @@ private fun CustomerInvoicesContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Invoices & Payment Records", fontSize = 15.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
-            Text("${payments.size} Total", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
+            Text("${invoices.size} Total", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
         }
 
-        if (payments.isEmpty()) {
+        if (invoices.isEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
@@ -353,14 +460,15 @@ private fun CustomerInvoicesContent(
                 }
             }
         } else {
-            payments.forEach { payment ->
-                val isPaid = payment.status == "Completed" || payment.status == "Paid"
-                val isCancelled = payment.status == "Cancelled"
+            invoices.forEach { invoice ->
+                val isPaid = invoice.isPaid
+                val isCancelled = invoice.status.equals("Cancelled", ignoreCase = true)
+                val isPendingOrSent = invoice.status.equals("Sent", ignoreCase = true) || invoice.status.equals("Pending", ignoreCase = true) || invoice.status.equals("Overdue", ignoreCase = true) || invoice.status.equals("Partially Paid", ignoreCase = true)
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onSelectInvoice(payment) },
+                        .clickable { onSelectInvoice(invoice) },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
@@ -379,7 +487,7 @@ private fun CustomerInvoicesContent(
                                 ) {
                                     Text("TAX INVOICE", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF4338CA), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                                 }
-                                Text("#${payment.id.takeLast(8).uppercase()}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
+                                Text("#${invoice.invoiceNumber}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
                             }
 
                             Surface(
@@ -387,7 +495,7 @@ private fun CustomerInvoicesContent(
                                 color = if (isPaid) Color(0xFFD1FAE5) else if (isCancelled) Color(0xFFFEF2F2) else Color(0xFFFEF3C7)
                             ) {
                                 Text(
-                                    text = payment.status.uppercase(),
+                                    text = invoice.status.uppercase(),
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Black,
                                     color = if (isPaid) Color(0xFF047857) else if (isCancelled) Color(0xFFBE123C) else Color(0xFFB45309),
@@ -403,19 +511,19 @@ private fun CustomerInvoicesContent(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = payment.serviceName.ifEmpty { "Business Compliance Service" },
+                                    text = invoice.serviceName.ifEmpty { "Business Compliance Service" },
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Black,
                                     color = Color(0xFF0F172A)
                                 )
                                 Text(
-                                    text = "Date: ${if (payment.createdAt.length >= 10) payment.createdAt.substring(0, 10) else "Recent"} • ${payment.method}",
+                                    text = "Date: ${invoice.date}${if (!invoice.dueDate.isNullOrBlank()) " • Due: ${invoice.dueDate}" else ""}",
                                     fontSize = 11.sp,
                                     color = Color(0xFF64748B)
                                 )
                             }
 
-                            Text("₹${payment.amount.toInt()}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                            Text("₹${invoice.amount.toInt()}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
                         }
 
                         HorizontalDivider(color = Color(0xFFF1F5F9))
@@ -426,7 +534,7 @@ private fun CustomerInvoicesContent(
                         ) {
                             // View GST Invoice Template Dialog Button
                             Button(
-                                onClick = { onSelectInvoice(payment) },
+                                onClick = { onSelectInvoice(invoice) },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F172A)),
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.weight(1f),
@@ -438,9 +546,9 @@ private fun CustomerInvoicesContent(
                             }
 
                             // Download / View direct PDF link if available
-                            if (!payment.invoiceUrl.isNullOrEmpty()) {
+                            if (invoice.directUrl.isNotBlank()) {
                                 OutlinedButton(
-                                    onClick = { openDocumentUrl(context, payment.invoiceUrl) },
+                                    onClick = { openDocumentUrl(context, invoice.directUrl) },
                                     shape = RoundedCornerShape(10.dp),
                                     modifier = Modifier.weight(1f),
                                     contentPadding = PaddingValues(vertical = 6.dp)
@@ -451,13 +559,13 @@ private fun CustomerInvoicesContent(
                                 }
                             }
 
-                            // Pay Now if pending
-                            if (!isPaid && !isCancelled) {
+                            // Pay Now if pending / sent / overdue
+                            if (invoice.canPayNow) {
                                 Button(
-                                    onClick = { onPayNow(payment) },
+                                    onClick = { onPayNow(invoice) },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
                                     shape = RoundedCornerShape(10.dp),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Text("Pay Now", fontSize = 10.sp, fontWeight = FontWeight.Black)
                                 }

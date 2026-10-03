@@ -453,6 +453,19 @@ struct ChecklistItem: Codable, Identifiable {
 
 // --- PAYMENT DATA CLASSES ---
 
+struct PaymentOrderSummary: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let serviceName: String?
+    let packageName: String?
+    let status: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case serviceName, packageName, status
+    }
+}
+
 struct PaymentResponse: Codable, Identifiable {
     var id: String { idVal }
     let idVal: String
@@ -469,10 +482,12 @@ struct PaymentResponse: Codable, Identifiable {
     let packageName: String
     let invoiceUrl: String?
     let createdAt: String
+    let order: PaymentOrderSummary?
+    let orderId: String?
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
-        case amount, currency, paymentId, razorpayOrderId, status, method, customerName, email, phone, serviceName, packageName, invoiceUrl, createdAt
+        case amount, currency, paymentId, razorpayOrderId, status, method, customerName, email, phone, serviceName, packageName, invoiceUrl, createdAt, order
     }
     
     init(from decoder: Decoder) throws {
@@ -491,6 +506,17 @@ struct PaymentResponse: Codable, Identifiable {
         packageName = try container.decodeIfPresent(String.self, forKey: .packageName) ?? ""
         invoiceUrl = try container.decodeIfPresent(String.self, forKey: .invoiceUrl)
         createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        
+        if let orderObj = try? container.decodeIfPresent(PaymentOrderSummary.self, forKey: .order) {
+            order = orderObj
+            orderId = orderObj.idVal
+        } else if let ordStr = try? container.decodeIfPresent(String.self, forKey: .order) {
+            order = PaymentOrderSummary(idVal: ordStr, serviceName: nil, packageName: nil, status: nil)
+            orderId = ordStr
+        } else {
+            order = nil
+            orderId = nil
+        }
     }
 }
 

@@ -425,12 +425,14 @@ fun CustomerOrdersTab(
         }
 
         val reqProgressPercentage = if (requirements.isEmpty()) 100 else ((completedRequirements.size.toFloat() / requirements.size.toFloat()) * 100).toInt()
-        val orderPayments = viewModel.payments.filter { p -> p.order?.id == order.id || p.serviceName.equals(order.serviceName, ignoreCase = true) }
-        val totalPaid = orderPayments.filter { it.status == "Completed" || it.status == "Paid" }.sumOf { it.amount }
+        val orderPayments = viewModel.payments.filter { p -> 
+            p.order?.id == order.id || (p.paymentId.isNotBlank() && p.paymentId == order.paymentId)
+        }
+        val totalPaid = orderPayments.filter { it.status.equals("Completed", ignoreCase = true) || it.status.equals("Paid", ignoreCase = true) }.sumOf { it.amount }
         val unpaidInvoices = order.invoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
         val balance = if (unpaidInvoices.isNotEmpty()) {
             unpaidInvoices.sumOf { it.amount }
-        } else if (order.paymentStatus.equals("Paid", ignoreCase = true) || order.paymentId.isNotBlank()) {
+        } else if (order.paymentStatus.equals("Paid", ignoreCase = true) || (order.paymentId.isNotBlank() && totalPaid >= order.price)) {
             0.0
         } else {
             (order.price - totalPaid).coerceAtLeast(0.0)
@@ -1845,9 +1847,16 @@ fun CustomerOrdersTab(
 
     // --- RAZORPAY PAYMENT BOTTOM SHEET INTEGRATION ---
     if (showPaymentBottomSheet && selectedOrder != null) {
-        val orderPayments = viewModel.payments.filter { p -> p.order?.id == selectedOrder.id || p.serviceName.equals(selectedOrder.serviceName, ignoreCase = true) }
-        val totalPaid = orderPayments.filter { it.status == "Completed" || it.status == "Paid" }.sumOf { it.amount }
-        val balance = (selectedOrder.price - totalPaid).coerceAtLeast(0.0)
+        val orderPayments = viewModel.payments.filter { p -> 
+            p.order?.id == selectedOrder.id || (p.paymentId.isNotBlank() && p.paymentId == selectedOrder.paymentId)
+        }
+        val totalPaid = orderPayments.filter { it.status.equals("Completed", ignoreCase = true) || it.status.equals("Paid", ignoreCase = true) }.sumOf { it.amount }
+        val unpaidInvoices = selectedOrder.invoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
+        val balance = if (unpaidInvoices.isNotEmpty()) {
+            unpaidInvoices.sumOf { it.amount }
+        } else {
+            (selectedOrder.price - totalPaid).coerceAtLeast(0.0)
+        }
         CustomPaymentBottomSheet(
             key = "rzp_live_51P...",
             orderId = selectedOrder.id,
