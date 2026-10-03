@@ -47,7 +47,7 @@ struct CustomerDashboardView: View {
                     hasUnreadNotifications: viewModel.notifications.contains(where: { !$0.isRead }),
                     unreadNotificationsCount: viewModel.notifications.filter { !$0.isRead }.count,
                     onNotificationsClick: { isShowingNotifications = true },
-                    userProfilePhoto: SessionManager.shared.getProfilePhoto().isEmpty ? nil : SessionManager.shared.getProfilePhoto(),
+                    userProfilePhoto: (viewModel.userProfile?.profilePhoto ?? SessionManager.shared.getProfilePhoto()).isEmpty ? nil : (viewModel.userProfile?.profilePhoto ?? SessionManager.shared.getProfilePhoto()),
                     userName: userName,
                     onProfileClick: { withAnimation { activeTab = "Account" } }
                 )
@@ -319,7 +319,7 @@ struct CustomerDashboardView: View {
                     BMSCustomerSidebar(
                         userName: userName,
                         companyName: SessionManager.shared.getCompanyName(),
-                        profilePhoto: SessionManager.shared.getProfilePhoto().isEmpty ? nil : SessionManager.shared.getProfilePhoto(),
+                        profilePhoto: (viewModel.userProfile?.profilePhoto ?? SessionManager.shared.getProfilePhoto()).isEmpty ? nil : (viewModel.userProfile?.profilePhoto ?? SessionManager.shared.getProfilePhoto()),
                         activeOrdersCount: viewModel.orders.filter { $0.status.lowercased() != "completed" }.count,
                         activeTab: $activeTab,
                         onLogout: onLogout,
@@ -384,7 +384,7 @@ struct CustomerDashboardView: View {
             }
             
             // Secure Razorpay WebView payment interface overlay
-            if let order = checkoutOrderData, let payload = checkoutPayloadData {
+            if let order = viewModel.checkoutOrderData ?? checkoutOrderData, let payload = viewModel.checkoutPayloadData ?? checkoutPayloadData {
                 CustomerPaymentWebView(
                     key: order.key,
                     orderId: order.orderId,
@@ -396,6 +396,8 @@ struct CustomerDashboardView: View {
                     customerEmail: payload.email,
                     customerPhone: payload.phone,
                     onSuccess: { paymentId, ordId, signature in
+                        viewModel.checkoutOrderData = nil
+                        viewModel.checkoutPayloadData = nil
                         checkoutOrderData = nil
                         checkoutPayloadData = nil
                         activeServiceKey = nil
@@ -435,12 +437,16 @@ struct CustomerDashboardView: View {
                         }
                     },
                     onFailure: { errorMsg in
+                        viewModel.checkoutOrderData = nil
+                        viewModel.checkoutPayloadData = nil
                         checkoutOrderData = nil
                         checkoutPayloadData = nil
                         toastMsg = "Payment failed: \(errorMsg)"
                         showingToast = true
                     },
                     onClose: {
+                        viewModel.checkoutOrderData = nil
+                        viewModel.checkoutPayloadData = nil
                         checkoutOrderData = nil
                         checkoutPayloadData = nil
                         toastMsg = "Payment closed"

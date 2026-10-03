@@ -31,6 +31,37 @@ class CustomerDashboardViewModel: ObservableObject {
     @Published var toastMessage: String? = nil
     @Published var ticketCreatedEvent = false
     
+    @Published var checkoutOrderData: CheckoutOrderResponse? = nil
+    @Published var checkoutPayloadData: CheckoutPayload? = nil
+    
+    func initiateCheckout(serviceName: String, packageName: String, amount: Double) {
+        let name = SessionManager.shared.getUserName().isEmpty ? "Customer" : SessionManager.shared.getUserName()
+        let email = SessionManager.shared.getUserEmail()
+        let phone = SessionManager.shared.getPhone()
+        
+        let payload = CheckoutPayload(
+            serviceName: serviceName,
+            packageName: packageName,
+            amount: amount,
+            customerName: name,
+            email: email,
+            phone: phone,
+            referralCode: ""
+        )
+        
+        toastMessage = "Connecting to secure payment gateway..."
+        
+        Task {
+            do {
+                let order = try await NetworkManager.shared.checkoutOrder(payload: payload)
+                self.checkoutPayloadData = payload
+                self.checkoutOrderData = order
+            } catch {
+                self.toastMessage = "Gateway connection error: \(error.localizedDescription)"
+            }
+        }
+    }
+    
     func dismissBanner() {
         activeBannerNotification = nil
     }

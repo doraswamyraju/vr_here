@@ -116,14 +116,32 @@ extension View {
     }
 }
 
-// Helper for resolving image URLs (including /uploads/ paths)
+// Helper for resolving image URLs (including Google Drive links, /uploads/ paths, etc.)
 extension String {
     var asImageURL: URL? {
         let trimmed = self.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
-            return URL(string: trimmed)
+        guard !trimmed.isEmpty, trimmed != "null", trimmed != "undefined" else { return nil }
+        
+        // Google Drive conversion matching Android formatImageUrl
+        if trimmed.contains("drive.google.com/file/d/") {
+            if let match = trimmed.range(of: #"(?<=/file/d/)[a-zA-Z0-9_-]+"#, options: .regularExpression) {
+                let fileId = String(trimmed[match])
+                return URL(string: "https://lh3.googleusercontent.com/d/\(fileId)")
+            }
         }
+        if trimmed.contains("drive.google.com/open?id=") || trimmed.contains("drive.google.com/uc?id=") {
+            if let match = trimmed.range(of: #"(?<=id=)[a-zA-Z0-9_-]+"#, options: .regularExpression) {
+                let fileId = String(trimmed[match])
+                return URL(string: "https://lh3.googleusercontent.com/d/\(fileId)")
+            }
+        }
+        
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+            let fixed = trimmed.replacingOccurrences(of: "http://localhost:5000", with: "https://vrhere.in")
+                               .replacingOccurrences(of: "http://127.0.0.1:5000", with: "https://vrhere.in")
+            return URL(string: fixed)
+        }
+        
         let clean = trimmed.hasPrefix("/") ? String(trimmed.dropFirst()) : trimmed
         return URL(string: "https://vrhere.in/" + clean)
     }

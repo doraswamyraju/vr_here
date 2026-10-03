@@ -134,7 +134,7 @@ class NetworkManager {
         return try await performRequest(path: "api/auth/profile", method: "PUT", body: data)
     }
     
-    func uploadAvatar(imageData: Data, fileName: String = "avatar.jpg", mimeType: String = "image/jpeg") async throws -> [String: String] {
+    func uploadAvatar(imageData: Data, fileName: String = "avatar.jpg", mimeType: String = "image/jpeg") async throws -> [String: Any] {
         guard let url = URL(string: "\(baseURL)api/auth/upload-avatar") else {
             throw NetworkError.invalidURL
         }
@@ -162,10 +162,10 @@ class NetworkManager {
             let errorMsg = String(data: data, encoding: .utf8) ?? "Upload failed"
             throw NetworkError.serverError(errorMsg)
         }
-        return (try? JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:]
+        return (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
     }
     
-    func uploadCompanyLogo(imageData: Data, fileName: String = "logo.png", mimeType: String = "image/png") async throws -> [String: String] {
+    func uploadCompanyLogo(imageData: Data, fileName: String = "logo.png", mimeType: String = "image/png") async throws -> [String: Any] {
         guard let url = URL(string: "\(baseURL)api/auth/upload-logo") else {
             throw NetworkError.invalidURL
         }
@@ -193,7 +193,7 @@ class NetworkManager {
             let errorMsg = String(data: data, encoding: .utf8) ?? "Upload failed"
             throw NetworkError.serverError(errorMsg)
         }
-        return (try? JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:]
+        return (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
     }
     
     // --- ORDERS ---

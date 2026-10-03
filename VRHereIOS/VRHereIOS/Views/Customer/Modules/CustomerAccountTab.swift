@@ -655,7 +655,11 @@ struct CustomerAccountTab: View {
                                 .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                             
                             Button(action: {
-                                onSelectTab("invoices")
+                                viewModel.initiateCheckout(
+                                    serviceName: order.serviceName,
+                                    packageName: "Annual Renewal • \(order.packageName.isEmpty ? "Standard" : order.packageName)",
+                                    amount: order.price
+                                )
                             }) {
                                 Text("Pay Renewal")
                                     .font(.system(size: 9, weight: .black))
@@ -737,7 +741,7 @@ struct CustomerAccountTab: View {
             do {
                 if let data = try? await item.loadTransferable(type: Data.self) {
                     let res = try await NetworkManager.shared.uploadAvatar(imageData: data)
-                    if let url = res["url"] {
+                    if let url = res["url"] as? String, !url.isEmpty {
                         profilePhotoUrl = url
                         SessionManager.shared.saveProfilePhoto(url)
                         viewModel.toastMessage = "Profile photo updated!"
@@ -757,7 +761,7 @@ struct CustomerAccountTab: View {
             do {
                 if let data = try? await item.loadTransferable(type: Data.self) {
                     let res = try await NetworkManager.shared.uploadCompanyLogo(imageData: data)
-                    if let url = res["url"] {
+                    if let url = res["url"] as? String, !url.isEmpty {
                         companyLogoUrl = url
                         SessionManager.shared.saveCompanyLogo(url)
                         viewModel.toastMessage = "Company logo updated!"

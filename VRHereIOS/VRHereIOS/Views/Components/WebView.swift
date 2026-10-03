@@ -34,10 +34,16 @@ struct SwiftUIWebView: ViewRepresentable {
     
     private func updateWebView(_ webView: WKWebView, context: Context) {
         if let html = htmlContent {
-            webView.loadHTMLString(html, baseURL: URL(string: "https://api.razorpay.com"))
+            if context.coordinator.loadedHtml != html {
+                context.coordinator.loadedHtml = html
+                webView.loadHTMLString(html, baseURL: URL(string: "https://api.razorpay.com"))
+            }
         } else if let url = URL(string: urlString) {
-            let request = URLRequest(url: url)
-            webView.load(request)
+            if context.coordinator.loadedUrl != urlString {
+                context.coordinator.loadedUrl = urlString
+                let request = URLRequest(url: url)
+                webView.load(request)
+            }
         }
     }
     
@@ -64,6 +70,9 @@ struct SwiftUIWebView: ViewRepresentable {
     }
     
     class Coordinator: NSObject, WKNavigationDelegate {
+        var loadedHtml: String? = nil
+        var loadedUrl: String? = nil
+        
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             print("WebView did finish navigation")
         }

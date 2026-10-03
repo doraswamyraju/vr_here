@@ -1076,7 +1076,13 @@ struct CustomerHomeTab: View {
                                 
                                 Spacer()
                                 
-                                Button(action: { onOpenProject(order.id) }) {
+                                Button(action: {
+                                    viewModel.initiateCheckout(
+                                        serviceName: order.serviceName,
+                                        packageName: order.packageName.isEmpty ? "Balance Payment" : order.packageName,
+                                        amount: Double(balanceDue)
+                                    )
+                                }) {
                                     Text("Pay ₹\(balanceDue)")
                                         .font(.system(size: 10.5, weight: .black))
                                         .foregroundColor(.white)

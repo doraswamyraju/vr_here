@@ -376,7 +376,11 @@ struct CustomerInvoicesTab: View {
                 
                 if invoice.canPayNow {
                     Button(action: {
-                        viewModel.toastMessage = "Opening payment checkout for ₹\(Int(invoice.amount))..."
+                        viewModel.initiateCheckout(
+                            serviceName: invoice.serviceName.isEmpty ? "Statutory Compliance Service" : invoice.serviceName,
+                            packageName: "Invoice #\(invoice.invoiceNumber)",
+                            amount: invoice.amount
+                        )
                     }) {
                         Text("Pay Now")
                             .font(.system(size: 10.5, weight: .black))

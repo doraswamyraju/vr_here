@@ -741,6 +741,28 @@ struct CustomerOrdersTab: View {
                                     }
                                 }
                             }
+                            
+                            if balance > 0 {
+                                Button(action: {
+                                    viewModel.initiateCheckout(
+                                        serviceName: order.serviceName,
+                                        packageName: order.packageName.isEmpty ? "Balance Payment" : order.packageName,
+                                        amount: balance
+                                    )
+                                }) {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "creditcard.fill")
+                                        Text("Pay Outstanding Balance • ₹\(Int(balance))")
+                                    }
+                                    .font(.system(size: 12.5, weight: .black))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 42)
+                                    .background(Color.primaryRed)
+                                    .cornerRadius(12)
+                                }
+                                .padding(.top, 4)
+                            }
                         }
                         .padding(20)
                         .background(Color(red: 236/255, green: 253/255, blue: 245/255))
