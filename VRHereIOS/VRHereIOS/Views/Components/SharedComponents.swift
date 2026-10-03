@@ -931,3 +931,20 @@ struct BMSAppSidebar: View {
         .edgesIgnoringSafeArea(.all)
     }
 }
+
+extension Int {
+    func formattedWithSeparator() -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: self)) ?? "\(self)"
+    }
+}
+
+extension Double {
+    func formattedWithSeparator() -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: self)) ?? "\(self)"
+    }
+}

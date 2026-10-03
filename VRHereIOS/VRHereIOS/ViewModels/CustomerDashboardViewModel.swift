@@ -136,11 +136,38 @@ class CustomerDashboardViewModel: ObservableObject {
             }
         }
         
-        // 8. Sync User Profile (phone, name, email)
+        // 8. Sync User Profile (phone, name, email, company, photos)
         do {
             let profile = try await NetworkManager.shared.getProfile()
             if let p = profile.phone, !p.isEmpty {
                 SessionManager.shared.savePhone(p)
+            }
+            if !profile.name.isEmpty {
+                SessionManager.shared.saveUserName(profile.name)
+            }
+            if !profile.email.isEmpty {
+                SessionManager.shared.saveUserEmail(profile.email)
+            }
+            if let cName = profile.companyName, !cName.isEmpty {
+                SessionManager.shared.saveCompanyName(cName)
+            }
+            if let bType = profile.businessType, !bType.isEmpty {
+                SessionManager.shared.saveBusinessType(bType)
+            }
+            if let g = profile.gstin, !g.isEmpty {
+                SessionManager.shared.saveGstin(g)
+            }
+            if let pan = profile.panNumber, !pan.isEmpty {
+                SessionManager.shared.savePanNumber(pan)
+            }
+            if let addr = profile.address, !addr.isEmpty {
+                SessionManager.shared.saveAddress(addr)
+            }
+            if let photo = profile.profilePhoto, !photo.isEmpty {
+                SessionManager.shared.saveProfilePhoto(photo)
+            }
+            if let logo = profile.companyLogo, !logo.isEmpty {
+                SessionManager.shared.saveCompanyLogo(logo)
             }
         } catch {
             // Non-blocking
@@ -166,7 +193,7 @@ class CustomerDashboardViewModel: ObservableObject {
                 category: "Corporate & Legal",
                 categoryColor: "#DC2626",
                 readTime: "3 min read",
-                coverImageUrl: nil,
+                coverImageUrl: "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800&auto=format&fit=crop&q=80",
                 keyTakeaways: [
                     "Applies to all private & public limited directorships starting April 2026.",
                     "Existing directors must complete aadhaar-linked facial authentication on V3 portal.",
@@ -182,7 +209,7 @@ class CustomerDashboardViewModel: ObservableObject {
                 category: "GST & Direct Taxes",
                 categoryColor: "#2563EB",
                 readTime: "4 min read",
-                coverImageUrl: nil,
+                coverImageUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80",
                 keyTakeaways: [
                     "B2B invoices must generate IRN via IRP portal in real time.",
                     "Mandatory 6-digit HSN code verification for all outward supplies.",
@@ -198,7 +225,7 @@ class CustomerDashboardViewModel: ObservableObject {
                 category: "Startups & Funding",
                 categoryColor: "#16A34A",
                 readTime: "5 min read",
-                coverImageUrl: nil,
+                coverImageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&auto=format&fit=crop&q=80",
                 keyTakeaways: [
                     "Grants up to ₹20 Lakhs for proof of concept and prototype development.",
                     "Convertible debentures up to ₹50 Lakhs for market entry and commercialization.",
@@ -217,6 +244,7 @@ class CustomerDashboardViewModel: ObservableObject {
                 subtitle: "ROC Filings, AGM, Director KYC & Statutory Audit Sign-off bundled",
                 badgeTag: "SAVE ₹12,000",
                 badgeColor: "#DC2626",
+                bannerImageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1000&auto=format&fit=crop&q=80",
                 targetServiceKey: "pvt_ltd_compliance",
                 discountAmount: 12000,
                 originalPrice: 29999,
@@ -232,6 +260,7 @@ class CustomerDashboardViewModel: ObservableObject {
                 subtitle: "Search, Filing, Power of Attorney & Objection Management",
                 badgeTag: "ALL-INCLUSIVE",
                 badgeColor: "#4F46E5",
+                bannerImageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1000&auto=format&fit=crop&q=80",
                 targetServiceKey: "trademark_filing",
                 discountAmount: 3000,
                 originalPrice: 9999,
@@ -247,6 +276,7 @@ class CustomerDashboardViewModel: ObservableObject {
                 subtitle: "GSTR-1, GSTR-3B, Vendor Reconciliation & Tally Voucher Export",
                 badgeTag: "FLAT 40% OFF",
                 badgeColor: "#059669",
+                bannerImageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1000&auto=format&fit=crop&q=80",
                 targetServiceKey: "gst_filing",
                 discountAmount: 4000,
                 originalPrice: 10000,

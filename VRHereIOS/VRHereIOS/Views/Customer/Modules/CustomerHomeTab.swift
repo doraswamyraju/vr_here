@@ -46,14 +46,11 @@ struct CustomerHomeTab: View {
     }
     
     private var pendingRequirements: [CustomerRequirement] {
-        viewModel.orders.flatMap { $0.customerRequirements }.filter { $0.status.lowercased() != "verified" }
+        viewModel.orders.flatMap { $0.customerRequirements }.filter { $0.status.lowercased() != "verified" && !$0.isClientCompleted }
     }
     
     private var hasPendingDocuments: Bool {
-        !pendingRequirements.isEmpty || activeOrders.contains(where: {
-            let s = $0.status.lowercased()
-            return s.contains("pending") || s.contains("document") || s.contains("awaiting")
-        })
+        !pendingRequirements.isEmpty
     }
     
     private var complianceScore: Int {
@@ -73,22 +70,12 @@ struct CustomerHomeTab: View {
                 // ==========================================
                 VStack(spacing: 12) {
                     HStack(alignment: .center, spacing: 12) {
-                        // User Avatar with Gradient Ring & Initials
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 168/255, green: 85/255, blue: 247/255)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 44, height: 44)
-                            
-                            Text(String(cleanDisplayName.prefix(1)).uppercased())
-                                .font(.system(size: 18, weight: .black))
-                                .foregroundColor(.white)
-                        }
+                        // User Avatar with Photo / Initials
+                        VRAvatarView(
+                            photoUrl: SessionManager.shared.getProfilePhoto().isEmpty ? nil : SessionManager.shared.getProfilePhoto(),
+                            name: cleanDisplayName,
+                            size: 46
+                        )
                         .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.25), radius: 6, y: 2)
                         
                         VStack(alignment: .leading, spacing: 2) {
@@ -289,9 +276,9 @@ struct CustomerHomeTab: View {
                             Spacer()
                         }
                         
-                        let firstOrderWithPending = activeOrders.first(where: {
-                            $0.status.lowercased().contains("pending") || $0.status.lowercased().contains("document")
-                        }) ?? activeOrders.first
+                        let firstOrderWithPending = activeOrders.first(where: { order in
+                            order.customerRequirements.contains(where: { $0.status.lowercased() != "verified" && !$0.isClientCompleted })
+                        })
                         
                         let orderIdToOpen = firstOrderWithPending?.id ?? ""
                         let orderTitle = firstOrderWithPending?.serviceName ?? "Active Service"
@@ -1005,7 +992,7 @@ struct HighlightedOrderTrackerCard: View {
     }
 }
 
-// Creative Modern Service Card
+// Redesigned Modern Core Service Card
 struct CreativeServiceCard: View {
     let title: String
     let subtitle: String
@@ -1023,48 +1010,56 @@ struct CreativeServiceCard: View {
             action()
         }) {
             VStack(alignment: .leading, spacing: 10) {
-                // Top Row: Icon + Tag Pill
+                // Top Row: Glowing Icon Badge + Authority Tag Pill
                 HStack(alignment: .center) {
                     ZStack {
-                        Circle()
-                            .fill(themeColor.opacity(0.14))
-                            .frame(width: 38, height: 38)
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: [themeColor.opacity(0.18), themeColor.opacity(0.08)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 40, height: 40)
+                            .shadow(color: themeColor.opacity(0.2), radius: 4, y: 2)
+                        
                         Image(systemName: icon)
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(themeColor)
                     }
                     
                     Spacer()
                     
                     Text(tag)
-                        .font(.system(size: 8.5, weight: .black))
+                        .font(.system(size: 9, weight: .black))
                         .foregroundColor(themeColor)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2.5)
-                        .background(themeColor.opacity(0.1))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3.5)
+                        .background(themeColor.opacity(0.12))
                         .cornerRadius(6)
                 }
                 
-                // Title & Subtitle
-                VStack(alignment: .leading, spacing: 2) {
+                // Title & Subtitle with Turnaround SLA
+                VStack(alignment: .leading, spacing: 3) {
                     Text(title)
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 13.5, weight: .black))
                         .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .lineLimit(1)
                     Text(subtitle)
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 10.5, weight: .semibold))
                         .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
                         .lineLimit(1)
                 }
                 
-                // Bottom Row: Price Chip + Circle Arrow
+                // Bottom Row: Starting Price Pill + Arrow
                 HStack {
                     Text("From \(price)")
-                        .font(.system(size: 10.5, weight: .black))
+                        .font(.system(size: 11, weight: .black))
                         .foregroundColor(themeColor)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(themeColor.opacity(0.08))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3.5)
+                        .background(themeColor.opacity(0.09))
                         .cornerRadius(6)
                     
                     Spacer()
@@ -1072,26 +1067,26 @@ struct CreativeServiceCard: View {
                     ZStack {
                         Circle()
                             .fill(Color.white)
-                            .frame(width: 22, height: 22)
-                            .shadow(color: Color.black.opacity(0.05), radius: 2, y: 1)
+                            .frame(width: 24, height: 24)
+                            .shadow(color: Color.black.opacity(0.06), radius: 3, y: 1)
                         Image(systemName: "arrow.up.right")
-                            .font(.system(size: 9, weight: .black))
-                            .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                            .font(.system(size: 9.5, weight: .black))
+                            .foregroundColor(themeColor)
                     }
                 }
             }
-            .padding(12)
+            .padding(13)
             .background(
                 LinearGradient(colors: bgGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
             )
             .cornerRadius(18)
             .overlay(
                 RoundedRectangle(cornerRadius: 18)
-                    .stroke(themeColor.opacity(0.18), lineWidth: 1)
+                    .stroke(themeColor.opacity(0.2), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.02), radius: 4, y: 2)
+            .shadow(color: themeColor.opacity(0.06), radius: 6, y: 2)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(ScaleOnPressButtonStyle())
     }
 }
 
@@ -1109,7 +1104,28 @@ struct DynamicPromoBannerCard: View {
     
     var body: some View {
         ZStack {
-            LinearGradient(colors: bannerGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Background Image if present
+            if let imgUrl = offer.bannerImageUrl, let url = URL(string: imgUrl), !imgUrl.isEmpty {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    default:
+                        LinearGradient(colors: bannerGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                    }
+                }
+                
+                // Readability Gradient
+                LinearGradient(
+                    colors: [Color.black.opacity(0.45), Color.black.opacity(0.88)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            } else {
+                LinearGradient(colors: bannerGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+            }
             
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -1117,10 +1133,10 @@ struct DynamicPromoBannerCard: View {
                         Text(tag.uppercased())
                             .font(.system(size: 8.5, weight: .black))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3.5)
                             .background(Color.white.opacity(0.25))
-                            .cornerRadius(4)
+                            .cornerRadius(5)
                     }
                     Spacer()
                     if let disc = offer.discountedPrice, disc > 0 {
@@ -1136,19 +1152,19 @@ struct DynamicPromoBannerCard: View {
                                 .foregroundColor(.white)
                         }
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.black.opacity(0.2))
+                        .padding(.vertical, 3.5)
+                        .background(Color.black.opacity(0.35))
                         .cornerRadius(6)
                     }
                 }
                 
                 Text(offer.title)
-                    .font(.system(size: 14, weight: .black))
+                    .font(.system(size: 14.5, weight: .black))
                     .foregroundColor(.white)
                     .lineLimit(1)
                 
                 Text(offer.subtitle)
-                    .font(.system(size: 10.5, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color.white.opacity(0.92))
                     .lineLimit(2)
                     .lineSpacing(2)
@@ -1159,7 +1175,7 @@ struct DynamicPromoBannerCard: View {
                     if let eligibility = offer.eligibilityText, !eligibility.isEmpty {
                         Text(eligibility)
                             .font(.system(size: 9.5, weight: .bold))
-                            .foregroundColor(Color.white.opacity(0.85))
+                            .foregroundColor(Color.white.opacity(0.88))
                             .lineLimit(1)
                     }
                     
@@ -1168,16 +1184,16 @@ struct DynamicPromoBannerCard: View {
                     Button(action: action) {
                         HStack(spacing: 4) {
                             Text(offer.ctaText ?? "Claim Offer →")
-                                .font(.system(size: 10.5, weight: .black))
+                                .font(.system(size: 11, weight: .black))
                             Image(systemName: "arrow.right")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 9.5, weight: .bold))
                         }
                         .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .padding(.vertical, 6.5)
                         .background(Color.white)
                         .cornerRadius(8)
-                        .shadow(color: Color.black.opacity(0.08), radius: 3, y: 1)
+                        .shadow(color: Color.black.opacity(0.12), radius: 4, y: 2)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
@@ -1185,7 +1201,8 @@ struct DynamicPromoBannerCard: View {
             .padding(14)
         }
         .cornerRadius(18)
-        .shadow(color: bannerGradient.first?.opacity(0.25) ?? Color.clear, radius: 8, y: 4)
+        .clipped()
+        .shadow(color: Color.black.opacity(0.08), radius: 8, y: 4)
     }
 }
 
@@ -1202,66 +1219,69 @@ struct DynamicBlogFeedCard: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .center) {
-                    Text(blog.category.uppercased())
-                        .font(.system(size: 8.5, weight: .black))
-                        .foregroundColor(categoryColor)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(categoryColor.opacity(0.12))
-                        .cornerRadius(6)
-                    
-                    if let readTime = blog.readTime, !readTime.isEmpty {
-                        HStack(spacing: 3) {
-                            Image(systemName: "clock")
-                                .font(.system(size: 8.5))
-                            Text(readTime)
-                                .font(.system(size: 9, weight: .bold))
+            HStack(alignment: .top, spacing: 12) {
+                // Cover Thumbnail Image or Icon
+                if let imgUrl = blog.coverImageUrl, let url = URL(string: imgUrl), !imgUrl.isEmpty {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        default:
+                            ZStack {
+                                categoryColor.opacity(0.12)
+                                Image(systemName: "doc.text.fill")
+                                    .foregroundColor(categoryColor)
+                            }
                         }
-                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
                     }
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 3) {
-                        Text("Read Article")
-                            .font(.system(size: 9.5, weight: .black))
-                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 8.5, weight: .bold))
-                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                    }
+                    .frame(width: 72, height: 72)
+                    .cornerRadius(14)
+                    .clipped()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(categoryColor.opacity(0.2), lineWidth: 1)
+                    )
                 }
                 
-                Text(blog.title)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                
-                Text(blog.summary)
-                    .font(.system(size: 11))
-                    .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                
-                if let takeaways = blog.keyTakeaways, !takeaways.isEmpty {
-                    HStack(spacing: 5) {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
-                        Text("\(takeaways.count) Key Action Points Included")
-                            .font(.system(size: 9.5, weight: .bold))
-                            .foregroundColor(Color(red: 5/255, green: 150/255, blue: 105/255))
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(alignment: .center) {
+                        Text(blog.category.uppercased())
+                            .font(.system(size: 8.5, weight: .black))
+                            .foregroundColor(categoryColor)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(categoryColor.opacity(0.12))
+                            .cornerRadius(6)
+                        
+                        if let readTime = blog.readTime, !readTime.isEmpty {
+                            HStack(spacing: 3) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 8.5))
+                                Text(readTime)
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                            .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                        }
+                        
+                        Spacer()
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color(red: 236/255, green: 253/255, blue: 245/255))
-                    .cornerRadius(6)
+                    
+                    Text(blog.title)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    
+                    Text(blog.summary)
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                        .lineLimit(1)
+                        .multilineTextAlignment(.leading)
                 }
             }
-            .padding(14)
+            .padding(12)
             .background(Color.white)
             .cornerRadius(16)
             .overlay(
@@ -1291,6 +1311,25 @@ struct BlogReaderSheet: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
+                    // Header Cover Image if available
+                    if let imgUrl = blog.coverImageUrl, let url = URL(string: imgUrl), !imgUrl.isEmpty {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                            default:
+                                EmptyView()
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 180)
+                        .cornerRadius(18)
+                        .clipped()
+                        .shadow(color: Color.black.opacity(0.08), radius: 6, y: 2)
+                    }
+                    
                     // Header Meta Bar
                     HStack(spacing: 8) {
                         Text(blog.category.uppercased())

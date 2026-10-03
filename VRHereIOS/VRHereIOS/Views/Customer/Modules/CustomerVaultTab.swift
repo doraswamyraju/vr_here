@@ -11,6 +11,7 @@ struct MasterKYCSlot: Identifiable {
 
 struct CustomerVaultTab: View {
     @ObservedObject var viewModel: CustomerDashboardViewModel
+    var isEmbedded: Bool = false
     @Environment(\.openURL) private var openURL
     
     @State private var selectedTab = "Master KYC"
@@ -39,17 +40,19 @@ struct CustomerVaultTab: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 18) {
-                // Header
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Document Vault & KYC")
-                        .font(.system(size: 20, weight: .black))
-                        .foregroundColor(.textDark)
-                    Text("Central repository for master business identity documents & deliverables.")
-                        .font(.system(size: 12))
-                        .foregroundColor(.textMuted)
+                if !isEmbedded {
+                    // Header
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Document Vault & KYC")
+                            .font(.system(size: 20, weight: .black))
+                            .foregroundColor(.textDark)
+                        Text("Central repository for master business identity documents & deliverables.")
+                            .font(.system(size: 12))
+                            .foregroundColor(.textMuted)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
                 
                 // Segmented Switcher
                 Picker("Vault Category", selection: $selectedTab) {

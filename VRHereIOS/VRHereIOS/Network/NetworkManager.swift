@@ -121,12 +121,79 @@ class NetworkManager {
         return try await performRequest(path: "api/auth/profile", method: "GET")
     }
     
+    func updateProfile(request: UpdateProfileRequest) async throws -> UserProfile {
+        let data = try JSONEncoder().encode(request)
+        return try await performRequest(path: "api/auth/profile", method: "PUT", body: data)
+    }
+    
     func updatePhone(phone: String) async throws -> UserProfile {
         struct UpdatePhonePayload: Codable {
             let phone: String
         }
         let data = try JSONEncoder().encode(UpdatePhonePayload(phone: phone))
         return try await performRequest(path: "api/auth/profile", method: "PUT", body: data)
+    }
+    
+    func uploadAvatar(imageData: Data, fileName: String = "avatar.jpg", mimeType: String = "image/jpeg") async throws -> [String: String] {
+        guard let url = URL(string: "\(baseURL)api/auth/upload-avatar") else {
+            throw NetworkError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        if let token = SessionManager.shared.getAuthToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"image\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = body
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            let errorMsg = String(data: data, encoding: .utf8) ?? "Upload failed"
+            throw NetworkError.serverError(errorMsg)
+        }
+        return (try? JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:]
+    }
+    
+    func uploadCompanyLogo(imageData: Data, fileName: String = "logo.png", mimeType: String = "image/png") async throws -> [String: String] {
+        guard let url = URL(string: "\(baseURL)api/auth/upload-logo") else {
+            throw NetworkError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        if let token = SessionManager.shared.getAuthToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"image\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = body
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            let errorMsg = String(data: data, encoding: .utf8) ?? "Upload failed"
+            throw NetworkError.serverError(errorMsg)
+        }
+        return (try? JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:]
     }
     
     // --- ORDERS ---

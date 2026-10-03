@@ -60,19 +60,49 @@ struct UserProfile: Codable, Identifiable {
     let phone: String?
     let role: String
     let isActive: Bool
+    let companyName: String?
+    let businessType: String?
+    let gstin: String?
+    let panNumber: String?
+    let address: String?
+    let profilePhoto: String?
+    let companyLogo: String?
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case name, email, phone, role, isActive
+        case companyName, businessType, gstin, panNumber, address
+        case profilePhoto, companyLogo
     }
     
-    init(idVal: String = "", name: String = "", email: String = "", phone: String? = nil, role: String = "", isActive: Bool = false) {
+    init(
+        idVal: String = "",
+        name: String = "",
+        email: String = "",
+        phone: String? = nil,
+        role: String = "",
+        isActive: Bool = false,
+        companyName: String? = nil,
+        businessType: String? = nil,
+        gstin: String? = nil,
+        panNumber: String? = nil,
+        address: String? = nil,
+        profilePhoto: String? = nil,
+        companyLogo: String? = nil
+    ) {
         self.idVal = idVal
         self.name = name
         self.email = email
         self.phone = phone
         self.role = role
         self.isActive = isActive
+        self.companyName = companyName
+        self.businessType = businessType
+        self.gstin = gstin
+        self.panNumber = panNumber
+        self.address = address
+        self.profilePhoto = profilePhoto
+        self.companyLogo = companyLogo
     }
     
     init(from decoder: Decoder) throws {
@@ -84,6 +114,13 @@ struct UserProfile: Codable, Identifiable {
             self.phone = nil
             self.role = ""
             self.isActive = false
+            self.companyName = nil
+            self.businessType = nil
+            self.gstin = nil
+            self.panNumber = nil
+            self.address = nil
+            self.profilePhoto = nil
+            self.companyLogo = nil
             return
         }
         
@@ -94,7 +131,25 @@ struct UserProfile: Codable, Identifiable {
         phone = try container.decodeIfPresent(String.self, forKey: .phone)
         role = try container.decodeIfPresent(String.self, forKey: .role) ?? ""
         isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? false
+        companyName = try container.decodeIfPresent(String.self, forKey: .companyName)
+        businessType = try container.decodeIfPresent(String.self, forKey: .businessType)
+        gstin = try container.decodeIfPresent(String.self, forKey: .gstin)
+        panNumber = try container.decodeIfPresent(String.self, forKey: .panNumber)
+        address = try container.decodeIfPresent(String.self, forKey: .address)
+        profilePhoto = try container.decodeIfPresent(String.self, forKey: .profilePhoto)
+        companyLogo = try container.decodeIfPresent(String.self, forKey: .companyLogo)
     }
+}
+
+struct UpdateProfileRequest: Codable {
+    let name: String?
+    let email: String?
+    let phone: String?
+    let companyName: String?
+    let businessType: String?
+    let gstin: String?
+    let panNumber: String?
+    let address: String?
 }
 
 // --- ORDER DATA CLASSES ---
