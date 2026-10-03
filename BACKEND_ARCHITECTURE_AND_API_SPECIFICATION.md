@@ -311,7 +311,19 @@ The backend operates 32 Mongoose models under `backend/models/`:
 
 ---
 
-### 5.5 Payments & Checkout Engine (`/api/payments`)
+### 5.5 Invoicing & Client Billing Engine (`/api/finance`)
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/finance` | `protect` | Create client invoice, estimate, or tax receipt |
+| `GET` | `/api/finance` | `protect` | Get billing records (merges formal invoices & `order.invoices`) |
+| `GET` | `/api/finance/:id` | `protect` | Get individual invoice details by ID |
+| `PUT` | `/api/finance/:id` | `protect` | Update invoice status (`Sent`, `Paid`, `Cancelled`) |
+| `DELETE` | `/api/finance/:id` | `protect, admin` | Delete invoice or billing record |
+
+---
+
+### 5.6 Payments & Checkout Engine (`/api/payments`)
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
