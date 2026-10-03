@@ -10,12 +10,14 @@ struct LoginRequest: Codable {
 struct GoogleAuthRequest: Codable {
     let idToken: String?
     let credential: String?
+    let accessToken: String?
     let code: String?
     let redirectUri: String?
     
-    init(idToken: String? = nil, credential: String? = nil, code: String? = nil, redirectUri: String? = nil) {
+    init(idToken: String? = nil, credential: String? = nil, accessToken: String? = nil, code: String? = nil, redirectUri: String? = nil) {
         self.idToken = idToken
         self.credential = credential
+        self.accessToken = accessToken
         self.code = code
         self.redirectUri = redirectUri
     }

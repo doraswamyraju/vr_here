@@ -1,49 +1,187 @@
 import SwiftUI
-import Combine
+import WebKit
 
-struct LetsTrackMessage: Identifiable, Equatable {
-    let id: String
-    let senderName: String
-    let senderType: String // "Visitor" | "Agent" | "System"
-    let text: String
-    let timestamp: String
+// MARK: - Dedicated LetsTrack Live Chat WebView (Connecting to livechat.vrhere.in)
+struct LetsTrackWebView: UIViewRepresentable {
+    let customerName: String
+    let customerEmail: String
+    @Binding var isLoading: Bool
     
-    init(
-        id: String = UUID().uuidString,
-        senderName: String,
-        senderType: String,
-        text: String,
-        timestamp: String = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)
-    ) {
-        self.id = id
-        self.senderName = senderName
-        self.senderType = senderType
-        self.text = text
-        self.timestamp = timestamp
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+        
+        // Setup preferences
+        let prefs = WKWebpagePreferences()
+        prefs.allowsContentJavaScript = true
+        config.defaultWebpagePreferences = prefs
+        
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        webView.isOpaque = false
+        webView.backgroundColor = UIColor(red: 15/255, green: 23/255, blue: 42/255, alpha: 1.0)
+        webView.scrollView.isScrollEnabled = true
+        webView.scrollView.bounces = false
+        
+        // Load the official LetsTrack Live Chat Engine HTML
+        let visitorName = customerName.isEmpty ? "Customer" : customerName.replacingOccurrences(of: "\"", with: "\\\"")
+        let visitorEmail = customerEmail.isEmpty ? "customer@vrhere.in" : customerEmail.replacingOccurrences(of: "\"", with: "\\\"")
+        
+        let htmlContent = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+          <title>VR HERE Live Chat</title>
+          <style>
+            * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+            html, body {
+              margin: 0;
+              padding: 0;
+              width: 100%;
+              height: 100%;
+              background: #0F172A;
+              color: #F8FAFC;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              overflow: hidden;
+            }
+            #loading-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: #0F172A;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              z-index: 99999;
+              transition: opacity 0.3s ease;
+            }
+            .spinner {
+              width: 36px;
+              height: 36px;
+              border: 3px solid rgba(255, 255, 255, 0.1);
+              border-top-color: #DC2626;
+              border-radius: 50%;
+              animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+            .loading-text {
+              margin-top: 14px;
+              font-size: 13px;
+              font-weight: 700;
+              color: #94A3B8;
+              letter-spacing: 0.3px;
+            }
+          </style>
+          
+          <script>
+            // Shadow DOM hook matching web index.html
+            (function() {
+              var origAttachShadow = Element.prototype.attachShadow;
+              if (origAttachShadow) {
+                Element.prototype.attachShadow = function(init) {
+                  var shadow = origAttachShadow.call(this, Object.assign({}, init, { mode: 'open' }));
+                  if (this.id === 'letstrack-widget-root') {
+                    window.__letsTrackShadowRoot = shadow;
+                  }
+                  return shadow;
+                };
+              }
+            })();
+
+            window.LetsTrackConfig = {
+              websiteId: "lt_6a9347d5410be8335e42db43949caf95",
+              visitorName: "\(visitorName)",
+              visitorEmail: "\(visitorEmail)",
+              openByDefault: true
+            };
+
+            // Auto-trigger widget open when ready
+            function triggerWidgetOpen() {
+              setTimeout(function() {
+                var overlay = document.getElementById('loading-overlay');
+                if (overlay) overlay.style.display = 'none';
+
+                // Click the launcher or dispatch open event
+                try {
+                  if (window.LetsTrack && typeof window.LetsTrack.open === 'function') {
+                    window.LetsTrack.open();
+                  } else {
+                    var btn = document.querySelector('#letstrack-launcher, .letstrack-launcher-btn, [data-letstrack-launcher]');
+                    if (btn) btn.click();
+                  }
+                } catch(e) {}
+              }, 1200);
+            }
+          </script>
+          <script src="https://livechat.vrhere.in/widget.js" async onload="triggerWidgetOpen()"></script>
+        </head>
+        <body>
+          <div id="loading-overlay">
+            <div class="spinner"></div>
+            <div class="loading-text">Connecting to Live Compliance Desk...</div>
+          </div>
+        </body>
+        </html>
+        """
+        
+        webView.loadHTMLString(htmlContent, baseURL: URL(string: "https://livechat.vrhere.in/"))
+        return webView
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, WKNavigationDelegate {
+        let parent: LetsTrackWebView
+        
+        init(_ parent: LetsTrackWebView) {
+            self.parent = parent
+        }
+        
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            DispatchQueue.main.async {
+                self.parent.isLoading = true
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                self.parent.isLoading = false
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            DispatchQueue.main.async {
+                self.parent.isLoading = false
+            }
+        }
     }
 }
 
+// MARK: - Native Container Sheet for LetsTrack Live Chat
 struct LetsTrackChatDialog: View {
     @Binding var isOpen: Bool
     let customerName: String
     let customerEmail: String
     
-    @State private var inputText: String = ""
-    @State private var isAgentTyping: Bool = false
-    @State private var isConnected: Bool = true
-    @State private var messages: [LetsTrackMessage] = []
-    
-    private let quickPrompts = [
-        "📋 Track My Filing Status",
-        "📑 Download Tax Invoice",
-        "💼 MSME / GST Query",
-        "📞 Speak with an Expert"
-    ]
+    @State private var isLoadingWeb = true
+    @State private var webViewId = UUID()
     
     var body: some View {
         if isOpen {
             ZStack {
-                Color.black.opacity(0.55)
+                Color.black.opacity(0.65)
                     .ignoresSafeArea()
                     .onTapGesture {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -52,311 +190,127 @@ struct LetsTrackChatDialog: View {
                     }
                 
                 VStack(spacing: 0) {
-                    // Top Header matching Android LetsTrackChatDialog
-                    HStack(spacing: 12) {
-                        ZStack(alignment: .bottomTrailing) {
-                            ZStack {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.primaryRed, Color(red: 180/255, green: 20/255, blue: 20/255)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
+                    Spacer().frame(height: 30)
+                    
+                    // Main Chat Window Container
+                    VStack(spacing: 0) {
+                        // Header Bar
+                        HStack(spacing: 12) {
+                            ZStack(alignment: .bottomTrailing) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color(red: 220/255, green: 38/255, blue: 38/255), Color(red: 185/255, green: 28/255, blue: 28/255)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
                                         )
-                                    )
-                                    .frame(width: 42, height: 42)
-                                Image(systemName: "headphones")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Circle()
-                                .fill(Color(red: 34/255, green: 197/255, blue: 94/255))
-                                .frame(width: 10, height: 10)
-                                .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                Text("VR HERE Live Support")
-                                    .font(.system(size: 15, weight: .black))
-                                    .foregroundColor(.white)
+                                        .frame(width: 42, height: 42)
+                                    Image(systemName: "headphones")
+                                        .font(.system(size: 18, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
                                 
-                                Text("ONLINE")
-                                    .font(.system(size: 8, weight: .black))
-                                    .foregroundColor(Color(red: 34/255, green: 197/255, blue: 94/255))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.2))
-                                    .clipShape(Capsule())
+                                Circle()
+                                    .fill(Color(red: 34/255, green: 197/255, blue: 94/255))
+                                    .frame(width: 10, height: 10)
+                                    .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
                             }
                             
-                            Text("Dedicated CA & Compliance Desk")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                isOpen = false
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 6) {
+                                    Text("VR HERE Live Support")
+                                        .font(.system(size: 15, weight: .black))
+                                        .foregroundColor(.white)
+                                    
+                                    Text("ONLINE")
+                                        .font(.system(size: 8.5, weight: .black))
+                                        .foregroundColor(Color(red: 34/255, green: 197/255, blue: 94/255))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.2))
+                                        .clipShape(Capsule())
+                                }
+                                
+                                Text("Real-Time CA & Compliance Desk")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
                             }
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.white.opacity(0.12))
+                            
+                            Spacer()
+                            
+                            // Reload Button
+                            Button(action: {
+                                webViewId = UUID()
+                            }) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.white)
                                     .frame(width: 32, height: 32)
+                                    .background(Color.white.opacity(0.12))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            // Close Button
+                            Button(action: {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                    isOpen = false
+                                }
+                            }) {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 12, weight: .bold))
                                     .foregroundColor(.white)
+                                    .frame(width: 32, height: 32)
+                                    .background(Color.white.opacity(0.12))
+                                    .clipShape(Circle())
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                    .padding(16)
-                    .background(Color.darkSlate)
-                    
-                    // Chat Message Stream
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            VStack(spacing: 12) {
-                                ForEach(messages) { msg in
-                                    let isMe = msg.senderType.lowercased() == "visitor"
-                                    HStack(alignment: .bottom, spacing: 8) {
-                                        if isMe { Spacer(minLength: 40) }
-                                        
-                                        if !isMe {
-                                            ZStack {
-                                                Circle()
-                                                    .fill(Color.primaryRed.opacity(0.15))
-                                                    .frame(width: 28, height: 28)
-                                                Image(systemName: "person.badge.shield.checkmark.fill")
-                                                    .font(.system(size: 12))
-                                                    .foregroundColor(.primaryRed)
-                                            }
-                                        }
-                                        
-                                        VStack(alignment: isMe ? .trailing : .leading, spacing: 3) {
-                                            if !isMe {
-                                                Text(msg.senderName)
-                                                    .font(.system(size: 10, weight: .black))
-                                                    .foregroundColor(Color.textMuted)
-                                                    .padding(.leading, 4)
-                                            }
-                                            
-                                            Text(msg.text)
-                                                .font(.system(size: 13, weight: .medium))
-                                                .foregroundColor(isMe ? .white : Color.textDark)
-                                                .padding(.horizontal, 14)
-                                                .padding(.vertical, 10)
-                                                .background(isMe ? Color.primaryRed : Color.white)
-                                                .cornerRadius(16)
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 16)
-                                                        .stroke(isMe ? Color.clear : Color.borderLight, lineWidth: 1)
-                                                )
-                                                .shadow(color: Color.black.opacity(0.04), radius: 4, y: 1)
-                                            
-                                            Text(msg.timestamp)
-                                                .font(.system(size: 9))
-                                                .foregroundColor(Color.textMuted)
-                                                .padding(.horizontal, 4)
-                                        }
-                                        
-                                        if !isMe { Spacer(minLength: 40) }
-                                    }
-                                    .id(msg.id)
-                                }
-                                
-                                if isAgentTyping {
-                                    HStack {
-                                        HStack(spacing: 4) {
-                                            Circle().fill(Color.textMuted).frame(width: 5, height: 5)
-                                            Circle().fill(Color.textMuted).frame(width: 5, height: 5)
-                                            Circle().fill(Color.textMuted).frame(width: 5, height: 5)
-                                        }
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 8)
-                                        .background(Color.white)
-                                        .cornerRadius(12)
-                                        Spacer()
-                                    }
-                                }
-                            }
-                            .padding(16)
-                        }
-                        .onChange(of: messages.count) { _ in
-                            if let last = messages.last {
-                                withAnimation {
-                                    proxy.scrollTo(last.id, anchor: .bottom)
-                                }
-                            }
-                        }
-                    }
-                    .background(Color.bgLight)
-                    
-                    // Quick Action Prompts
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(quickPrompts, id: \.self) { prompt in
-                                Button(action: {
-                                    sendQuickPrompt(prompt)
-                                }) {
-                                    Text(prompt)
-                                        .font(.system(size: 11, weight: .bold))
-                                        .foregroundColor(Color.textDark)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 7)
-                                        .background(Color.white)
-                                        .cornerRadius(20)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 20)
-                                                .stroke(Color.borderLight, lineWidth: 1)
-                                        )
-                                        .shadow(color: Color.black.opacity(0.02), radius: 2, y: 1)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                    }
-                    .background(Color.white)
-                    
-                    Divider().background(Color.borderLight)
-                    
-                    // Bottom Input Row
-                    HStack(spacing: 10) {
-                        TextField("Type your query or requirement...", text: $inputText)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(Color.textDark)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Color.bgInput)
-                            .cornerRadius(20)
-                            .onSubmit {
-                                sendMessage()
-                            }
+                        .padding(16)
+                        .background(Color(red: 15/255, green: 23/255, blue: 42/255))
                         
-                        Button(action: {
-                            sendMessage()
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(inputText.trimmingCharacters(in: .whitespaces).isEmpty ? Color.textMuted.opacity(0.4) : Color.primaryRed)
-                                    .frame(width: 38, height: 38)
-                                Image(systemName: "paperplane.fill")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white)
+                        // Live Web Chat View
+                        ZStack {
+                            LetsTrackWebView(
+                                customerName: customerName,
+                                customerEmail: customerEmail,
+                                isLoading: $isLoadingWeb
+                            )
+                            .id(webViewId)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            
+                            if isLoadingWeb {
+                                VStack(spacing: 12) {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: Color(red: 220/255, green: 38/255, blue: 38/255)))
+                                        .scaleEffect(1.2)
+                                    Text("Connecting to live support agents...")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(Color(red: 15/255, green: 23/255, blue: 42/255))
                             }
                         }
-                        .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .buttonStyle(PlainButtonStyle())
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Color.white)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 520)
-                .background(Color.white)
-                .cornerRadius(24)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(Color.borderLight, lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.25), radius: 20, y: 8)
-                .padding(.horizontal, 14)
-            }
-            .transition(.opacity.combined(with: .scale(scale: 0.95)))
-            .onAppear {
-                if messages.isEmpty {
-                    let dName = customerName.isEmpty ? "Valued Client" : customerName
-                    messages.append(
-                        LetsTrackMessage(
-                            senderName: "VR HERE Assistant",
-                            senderType: "System",
-                            text: "Welcome to VR HERE Live Support! How can our compliance advisors assist you today, \(dName)?"
-                        )
+                    .frame(maxWidth: .infinity)
+                    .frame(height: UIScreen.main.bounds.height * 0.78)
+                    .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                    .cornerRadius(24)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
                     )
+                    .shadow(color: Color.black.opacity(0.45), radius: 25, y: 10)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 20)
                 }
             }
-        }
-    }
-    
-    private func sendMessage() {
-        let text = inputText.trimmingCharacters(in: .whitespaces)
-        guard !text.isEmpty else { return }
-        
-        let clientMsg = LetsTrackMessage(
-            senderName: customerName.isEmpty ? "You" : customerName,
-            senderType: "Visitor",
-            text: text
-        )
-        messages.append(clientMsg)
-        inputText = ""
-        
-        // Automated intelligent response
-        isAgentTyping = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            isAgentTyping = false
-            let replyText = generateBotReply(for: text)
-            let botMsg = LetsTrackMessage(
-                senderName: "VR HERE Advisor",
-                senderType: "Agent",
-                text: replyText
-            )
-            messages.append(botMsg)
-        }
-    }
-    
-    private func sendQuickPrompt(_ prompt: String) {
-        let cleanText = prompt.replacingOccurrences(of: "📋 ", with: "")
-            .replacingOccurrences(of: "📑 ", with: "")
-            .replacingOccurrences(of: "💼 ", with: "")
-            .replacingOccurrences(of: "📞 ", with: "")
-        
-        let clientMsg = LetsTrackMessage(
-            senderName: customerName.isEmpty ? "You" : customerName,
-            senderType: "Visitor",
-            text: cleanText
-        )
-        messages.append(clientMsg)
-        
-        isAgentTyping = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            isAgentTyping = false
-            let replyText: String
-            if prompt.contains("Track My Filing") {
-                replyText = "You can view real-time stage progress for your active filings in the Orders tab. Our team updates MCA & GST portal filing reference numbers immediately upon submission."
-            } else if prompt.contains("Download Tax Invoice") {
-                replyText = "All GST-compliant invoices with IRN and QR codes are available in your Invoices tab. You can download PDF copies or share them with your accounting department."
-            } else if prompt.contains("MSME / GST") {
-                replyText = "We assist with new GST/MSME registrations, amendment filings, and monthly return reconciliations. Check the Services catalog to initiate a new registration."
-            } else {
-                replyText = "Our Senior Chartered Accountant and legal advocates are available directly via WhatsApp (+91 80085 30606) or phone dialer for priority consultation."
-            }
-            
-            let botMsg = LetsTrackMessage(
-                senderName: "VR HERE Advisory Team",
-                senderType: "Agent",
-                text: replyText
-            )
-            messages.append(botMsg)
-        }
-    }
-    
-    private func generateBotReply(for query: String) -> String {
-        let q = query.lowercased()
-        if q.contains("status") || q.contains("order") || q.contains("filing") {
-            return "Your ongoing filings are synced in real-time with the MCA & GST portals. Please check the 'Orders' tab to view your current milestone status or upload requested documents."
-        } else if q.contains("invoice") || q.contains("payment") || q.contains("bill") || q.contains("gst") {
-            return "Invoices and payment receipts are available for instant download in the 'Invoices' tab. All filings include 100% compliant GST tax invoices."
-        } else if q.contains("call") || q.contains("contact") || q.contains("phone") || q.contains("advisor") || q.contains("expert") {
-            return "You can reach our dedicated advisory helpline directly at +91 80085 30606 or tap the WhatsApp button to chat instantly with your assigned compliance manager."
-        } else {
-            return "Thank you for contacting VR HERE Support! Our operations team has received your query and will assist you shortly. You can also explore our full service catalog in the app."
+            .transition(.opacity.combined(with: .move(edge: .bottom)))
+            .zIndex(9999)
         }
     }
 }

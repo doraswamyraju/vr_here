@@ -76,7 +76,7 @@ class AuthViewModel: ObservableObject {
             guard let self = self else { return }
             switch result {
             case .success(let res):
-                self.googleLogin(idToken: res.idToken, code: res.code)
+                self.googleLogin(idToken: res.idToken, accessToken: res.accessToken)
             case .failure(let error):
                 // User cancelled or network error
                 if (error as NSError).code != ASWebAuthenticationSessionError.canceledLogin.rawValue {
@@ -88,12 +88,11 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    func googleLogin(idToken: String? = nil, code: String? = nil) {
+    func googleLogin(idToken: String? = nil, accessToken: String? = nil) {
         authState = .loading
         Task {
             do {
-                let redirectUri = "https://vrhere.in/auth/google/callback"
-                let authData = try await NetworkManager.shared.googleLogin(idToken: idToken, code: code, redirectUri: redirectUri)
+                let authData = try await NetworkManager.shared.googleLogin(idToken: idToken, accessToken: accessToken)
                 SessionManager.shared.saveSession(
                     token: authData.token,
                     userId: authData.id,

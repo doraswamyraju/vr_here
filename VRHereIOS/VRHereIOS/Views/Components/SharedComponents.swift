@@ -310,6 +310,8 @@ struct VRAvatarView: View {
     var size: CGFloat = 30
     var borderWidth: CGFloat = 1.5
     var borderColor: Color = Color.borderLight
+    var isSquare: Bool = false
+    var cornerRadius: CGFloat = 12
     var onClick: (() -> Void)? = nil
     
     private var resolvedURL: URL? {
@@ -336,8 +338,19 @@ struct VRAvatarView: View {
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: size, height: size)
-                                .clipShape(Circle())
-                        default:
+                                .background(Color.white)
+                                .clipShape(RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2))
+                        case .empty:
+                            ZStack {
+                                Color.white
+                                ProgressView()
+                                    .scaleEffect(0.6)
+                            }
+                            .frame(width: size, height: size)
+                            .clipShape(RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2))
+                        case .failure:
+                            fallbackInitials
+                        @unknown default:
                             fallbackInitials
                         }
                     }
@@ -346,7 +359,11 @@ struct VRAvatarView: View {
                 }
             }
             .frame(width: size, height: size)
-            .overlay(Circle().stroke(borderColor, lineWidth: borderWidth))
+            .overlay(
+                RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2)
+                    .stroke(borderColor, lineWidth: borderWidth)
+            )
+            .shadow(color: Color.black.opacity(0.1), radius: 3, y: 1)
         }
         .disabled(onClick == nil)
         .buttonStyle(PlainButtonStyle())
@@ -354,17 +371,17 @@ struct VRAvatarView: View {
     
     private var fallbackInitials: some View {
         ZStack {
-            Circle()
+            RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2)
                 .fill(
                     LinearGradient(
-                        colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 79/255, green: 70/255, blue: 229/255)],
+                        colors: [Color(red: 220/255, green: 38/255, blue: 38/255), Color(red: 185/255, green: 28/255, blue: 28/255)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
             
             Text(initials)
-                .font(.system(size: size * 0.4, weight: .bold))
+                .font(.system(size: max(10, size * 0.38), weight: .black))
                 .foregroundColor(.white)
         }
     }

@@ -68,11 +68,9 @@ struct CustomerAccountTab: View {
                                 VRAvatarView(
                                     photoUrl: profilePhotoUrl.isEmpty ? nil : profilePhotoUrl,
                                     name: userNameInput.isEmpty ? "Client" : userNameInput,
-                                    size: 58
-                                )
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color(red: 129/255, green: 140/255, blue: 248/255), lineWidth: 2)
+                                    size: 64,
+                                    borderWidth: 2.5,
+                                    borderColor: Color.white
                                 )
                                 
                                 Button(action: {
@@ -81,9 +79,9 @@ struct CustomerAccountTab: View {
                                     ZStack {
                                         Circle()
                                             .fill(Color(red: 220/255, green: 38/255, blue: 38/255))
-                                            .frame(width: 22, height: 22)
+                                            .frame(width: 24, height: 24)
                                         Image(systemName: "camera.fill")
-                                            .font(.system(size: 10, weight: .bold))
+                                            .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.white)
                                     }
                                 }
@@ -323,11 +321,15 @@ struct CustomerAccountTab: View {
                         VRAvatarView(
                             photoUrl: companyLogoUrl.isEmpty ? nil : companyLogoUrl,
                             name: companyNameInput.isEmpty ? "Company" : companyNameInput,
-                            size: 46
+                            size: 52,
+                            borderWidth: 1.5,
+                            borderColor: Color(red: 226/255, green: 232/255, blue: 240/255),
+                            isSquare: true,
+                            cornerRadius: 14
                         )
                         
                         Text("Company Logo")
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.system(size: 12, weight: .black))
                             .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         
                         if isUploadingLogo {
@@ -339,22 +341,23 @@ struct CustomerAccountTab: View {
                             Button(action: {
                                 showLogoPicker = true
                             }) {
-                                Text(companyLogoUrl.isEmpty ? "Upload" : "Change")
-                                    .font(.system(size: 10, weight: .bold))
+                                Text(companyLogoUrl.isEmpty ? "Upload Logo" : "Change Logo")
+                                    .font(.system(size: 10, weight: .black))
                                     .foregroundColor(.white)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 5)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 6)
                                     .background(Color(red: 15/255, green: 23/255, blue: 42/255))
-                                    .cornerRadius(6)
+                                    .cornerRadius(8)
                             }
+                            .buttonStyle(ScaleOnPressButtonStyle())
                         }
                     }
-                    .padding(12)
+                    .padding(14)
                     .frame(maxWidth: .infinity)
                     .background(Color(red: 248/255, green: 250/255, blue: 252/255))
-                    .cornerRadius(14)
+                    .cornerRadius(16)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 16)
                             .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
                     )
                 }

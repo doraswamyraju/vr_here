@@ -720,8 +720,6 @@ const googleAuth = asyncHandler(async (req, res) => {
 
             if (tokens.error) {
                 console.error('[Google Auth] Token exchange error from Google:', tokens.error, tokens.error_description);
-                res.status(400);
-                throw new Error(`Google authentication failed: ${tokens.error_description || tokens.error}`);
             } else {
                 if (tokens.access_token) {
                     try {
@@ -736,7 +734,12 @@ const googleAuth = asyncHandler(async (req, res) => {
                     try {
                         const ticket = await googleClient.verifyIdToken({
                             idToken: tokens.id_token,
-                            audience: clientId ? [clientId] : undefined
+                            audience: [
+                                process.env.GOOGLE_CLIENT_ID,
+                                '674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com',
+                                '674627570227-0hds8k55egipj5g6tai0kqrvm8cse9v1.apps.googleusercontent.com',
+                                '674627570227-tdaif2sht51ejtkisle8e4odjc9mfufp.apps.googleusercontent.com'
+                            ].filter(Boolean)
                         });
                         payload = ticket.getPayload();
                     } catch (verifyErr) {
@@ -746,9 +749,6 @@ const googleAuth = asyncHandler(async (req, res) => {
             }
         } catch (codeErr) {
             console.error('OAuth code exchange error:', codeErr);
-            if (codeErr.message && codeErr.message.includes('Google authentication failed')) {
-                throw codeErr;
-            }
         }
     }
 
@@ -775,7 +775,12 @@ const googleAuth = asyncHandler(async (req, res) => {
         try {
             const ticket = await googleClient.verifyIdToken({
                 idToken: tokenToVerify,
-                audience: process.env.GOOGLE_CLIENT_ID ? [process.env.GOOGLE_CLIENT_ID] : undefined
+                audience: [
+                    process.env.GOOGLE_CLIENT_ID,
+                    '674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com',
+                    '674627570227-0hds8k55egipj5g6tai0kqrvm8cse9v1.apps.googleusercontent.com',
+                    '674627570227-tdaif2sht51ejtkisle8e4odjc9mfufp.apps.googleusercontent.com'
+                ].filter(Boolean)
             });
             payload = ticket.getPayload();
         } catch (err) {
