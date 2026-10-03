@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 struct MasterKYCSlot: Identifiable {
     let id: String
@@ -16,11 +17,13 @@ struct CustomerVaultTab: View {
     @State private var vaultDocuments: [UserVaultDocument] = []
     @State private var isLoading = true
     
-    // Photo Picker
-    @State private var selectedSlot: MasterKYCSlot? = nil
+    // Pickers
+    @State private var activeSlotForUpload: MasterKYCSlot? = nil
+    @State private var showUploadOptions = false
+    @State private var showPhotoPicker = false
+    @State private var showDocPicker = false
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var isUploading = false
-    @State private var searchQuery = ""
     
     private let kycSlots = [
         MasterKYCSlot(id: "PAN Card", title: "PAN Card (Director/Company)", desc: "Permanent Account Number proof", iconName: "creditcard.fill"),
@@ -116,7 +119,8 @@ struct CustomerVaultTab: View {
                                         }
                                         
                                         Button(action: {
-                                            selectedSlot = slot
+                                            activeSlotForUpload = slot
+                                            showUploadOptions = true
                                         }) {
                                             Text("Replace")
                                                 .font(.system(size: 10, weight: .bold))
@@ -128,11 +132,12 @@ struct CustomerVaultTab: View {
                                     .cornerRadius(8)
                                 } else {
                                     Button(action: {
-                                        selectedSlot = slot
+                                        activeSlotForUpload = slot
+                                        showUploadOptions = true
                                     }) {
                                         HStack {
                                             Image(systemName: "arrow.up.circle.fill")
-                                            Text("Upload Document Photo / Scan")
+                                            Text("Upload Document (PDF / Scan)")
                                         }
                                         .font(.system(size: 11, weight: .bold))
                                         .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
@@ -213,12 +218,32 @@ struct CustomerVaultTab: View {
         }
         .background(Color(red: 248/255, green: 250/255, blue: 252/255).ignoresSafeArea())
         .onAppear(perform: loadVaultDocs)
-        .photosPicker(isPresented: Binding(
-            get: { selectedSlot != nil },
-            set: { if !$0 { selectedSlot = nil } }
-        ), selection: $selectedPhotoItem, matching: .images)
+        .confirmationDialog(
+            "Upload \(activeSlotForUpload?.title ?? "Document")",
+            isPresented: $showUploadOptions,
+            titleVisibility: .visible
+        ) {
+            Button("Choose File / PDF from Files") {
+                showDocPicker = true
+            }
+            Button("Choose from Photo Library") {
+                showPhotoPicker = true
+            }
+            Button("Cancel", role: .cancel) {
+                activeSlotForUpload = nil
+            }
+        }
+        .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhotoItem, matching: .images)
+        .sheet(isPresented: $showDocPicker) {
+            #if os(iOS)
+            DocumentPickerView(allowedContentTypes: [.pdf, .image, .data]) { fileURL in
+                guard let slot = activeSlotForUpload else { return }
+                uploadDocumentFromFile(slot: slot, url: fileURL)
+            }
+            #endif
+        }
         .onChange(of: selectedPhotoItem) { newItem in
-            guard let item = newItem, let slot = selectedSlot else { return }
+            guard let item = newItem, let slot = activeSlotForUpload else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self) {
                     do {
@@ -235,8 +260,41 @@ struct CustomerVaultTab: View {
                     }
                 }
                 selectedPhotoItem = nil
-                selectedSlot = nil
+                activeSlotForUpload = nil
             }
+        }
+    }
+    
+    private func uploadDocumentFromFile(slot: MasterKYCSlot, url: URL) {
+        guard url.startAccessingSecurityScopedResource() else {
+            // If not security scoped, attempt direct data read
+            performFileUpload(slot: slot, url: url)
+            return
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+        performFileUpload(slot: slot, url: url)
+    }
+    
+    private func performFileUpload(slot: MasterKYCSlot, url: URL) {
+        Task {
+            do {
+                let data = try Data(contentsOf: url)
+                let ext = url.pathExtension.lowercased()
+                let mime = ext == "pdf" ? "application/pdf" : (ext == "png" ? "image/png" : "image/jpeg")
+                let safeName = "\(slot.id.replacingOccurrences(of: " ", with: "_")).\(ext.isEmpty ? "pdf" : ext)"
+                
+                _ = try await NetworkManager.shared.uploadUserVaultDocument(
+                    docType: slot.id,
+                    fileData: data,
+                    fileName: safeName,
+                    mimeType: mime
+                )
+                viewModel.toastMessage = "\(slot.title) uploaded to vault!"
+                loadVaultDocs()
+            } catch {
+                viewModel.toastMessage = "Upload failed: \(error.localizedDescription)"
+            }
+            activeSlotForUpload = nil
         }
     }
     

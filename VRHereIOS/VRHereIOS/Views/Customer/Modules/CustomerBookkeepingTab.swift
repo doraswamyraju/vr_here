@@ -1,5 +1,7 @@
 import SwiftUI
 import PhotosUI
+import Contacts
+import ContactsUI
 
 // MARK: - Bookkeeping Models for Mobile
 
@@ -385,44 +387,250 @@ private struct BookkeepingBankView: View {
 
 private struct BookkeepingPartiesView: View {
     let parties: [BookkeepingPartyItem]
+    @State private var partyList: [BookkeepingPartyItem] = []
+    @State private var showContactPicker = false
+    @State private var showNewPartyModal = false
+    @State private var importedName = ""
+    @State private var importedPhone = ""
+    @State private var importedEmail = ""
+    @State private var newPartyGstin = ""
+    @State private var newPartyType = "Customer"
+    @State private var toastMessage: String? = nil
     
     var body: some View {
-        VStack(spacing: 10) {
-            ForEach(parties) { p in
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(p.type == "Customer" ? Color.green.opacity(0.12) : Color.blue.opacity(0.12))
-                            .frame(width: 38, height: 38)
-                        Image(systemName: p.type == "Customer" ? "person.crop.circle.badge.plus" : "building.2.fill")
-                            .foregroundColor(p.type == "Customer" ? .green : .blue)
+        VStack(spacing: 12) {
+            // Action Bar for Parties
+            HStack(spacing: 10) {
+                Button(action: {
+                    showContactPicker = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.crop.circle.badge.plus")
+                            .font(.system(size: 12))
+                        Text("Import from Contacts")
+                            .font(.system(size: 11.5, weight: .bold))
+                    }
+                    .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(red: 238/255, green: 242/255, blue: 255/255))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
+                
+                Button(action: {
+                    importedName = ""
+                    importedPhone = ""
+                    importedEmail = ""
+                    newPartyGstin = ""
+                    showNewPartyModal = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                        Text("Add Party")
+                    }
+                    .font(.system(size: 11.5, weight: .black))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(ScaleOnPressButtonStyle())
+            }
+            .padding(.horizontal, 20)
+            
+            let allParties = partyList.isEmpty ? parties : partyList
+            
+            ForEach(allParties) { p in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(p.type == "Customer" ? Color.green.opacity(0.12) : Color.blue.opacity(0.12))
+                                .frame(width: 38, height: 38)
+                            Image(systemName: p.type == "Customer" ? "person.crop.circle.badge.plus" : "building.2.fill")
+                                .foregroundColor(p.type == "Customer" ? .green : .blue)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(p.name)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.textDark)
+                            Text(p.gstin.isEmpty ? p.phone : "GSTIN: \(p.gstin)")
+                                .font(.system(size: 10))
+                                .foregroundColor(.textMuted)
+                        }
+                        Spacer()
+                        
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(p.type.uppercased())
+                                .font(.system(size: 8, weight: .black))
+                                .foregroundColor(.gray)
+                            Text(p.balance > 0 ? "₹\(Int(p.balance)) Due" : "Settled")
+                                .font(.system(size: 11, weight: .black))
+                                .foregroundColor(p.balance > 0 ? .red : .green)
+                        }
                     }
                     
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(p.name)
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.textDark)
-                        Text(p.gstin.isEmpty ? p.phone : "GSTIN: \(p.gstin)")
-                            .font(.system(size: 10))
-                            .foregroundColor(.textMuted)
-                    }
-                    Spacer()
+                    Divider().background(Color(red: 241/255, green: 245/255, blue: 249/255))
                     
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text(p.type.uppercased())
-                            .font(.system(size: 8, weight: .black))
-                            .foregroundColor(.gray)
-                        Text(p.balance > 0 ? "₹\(Int(p.balance)) Due" : "Settled")
-                            .font(.system(size: 11, weight: .black))
-                            .foregroundColor(p.balance > 0 ? .red : .green)
+                    // Quick Action Micro Row
+                    HStack(spacing: 12) {
+                        if !p.phone.isEmpty {
+                            Button(action: {
+                                let clean = p.phone.replacingOccurrences(of: " ", with: "")
+                                if let url = URL(string: "tel:\(clean)") {
+                                    UIApplication.shared.open(url)
+                                }
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "phone.fill")
+                                        .font(.system(size: 10))
+                                    Text("Call")
+                                        .font(.system(size: 10, weight: .bold))
+                                }
+                                .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            exportPartyToContacts(party: p)
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "square.and.arrow.down.fill")
+                                    .font(.system(size: 10))
+                                Text("Save to Contacts")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
-                .padding(12)
+                .padding(14)
                 .background(Color.white)
                 .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+                )
             }
         }
         .padding(.horizontal, 20)
+        .sheet(isPresented: $showContactPicker) {
+            ContactPickerView(
+                selectedName: $importedName,
+                selectedPhone: $importedPhone,
+                selectedEmail: $importedEmail,
+                onSelected: {
+                    showContactPicker = false
+                    showNewPartyModal = true
+                }
+            )
+        }
+        .sheet(isPresented: $showNewPartyModal) {
+            NavigationView {
+                Form {
+                    Section(header: Text("Party Details")) {
+                        TextField("Full Name / Business Name", text: $importedName)
+                        TextField("Phone Number", text: $importedPhone)
+                        TextField("Email Address", text: $importedEmail)
+                        TextField("GSTIN (Optional)", text: $newPartyGstin)
+                        Picker("Party Role", selection: $newPartyType) {
+                            Text("Customer").tag("Customer")
+                            Text("Vendor").tag("Vendor")
+                        }
+                    }
+                    
+                    Section {
+                        Button(action: {
+                            guard !importedName.isEmpty else { return }
+                            let newParty = BookkeepingPartyItem(
+                                id: UUID().uuidString,
+                                name: importedName,
+                                type: newPartyType,
+                                gstin: newPartyGstin,
+                                phone: importedPhone,
+                                balance: 0.0
+                            )
+                            if partyList.isEmpty {
+                                partyList = parties
+                            }
+                            partyList.append(newParty)
+                            showNewPartyModal = false
+                        }) {
+                            Text("Save Party")
+                                .font(.system(size: 14, weight: .black))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                        .listRowBackground(Color(red: 15/255, green: 23/255, blue: 42/255))
+                    }
+                }
+                .navigationTitle("Add Party")
+                .navigationBarItems(trailing: Button("Cancel") { showNewPartyModal = false })
+            }
+        }
+    }
+    
+    private func exportPartyToContacts(party: BookkeepingPartyItem) {
+        let store = CNContactStore()
+        store.requestAccess(for: .contacts) { granted, _ in
+            guard granted else { return }
+            let contact = CNMutableContact()
+            contact.givenName = party.name
+            contact.organizationName = party.name
+            if !party.phone.isEmpty {
+                contact.phoneNumbers = [CNLabeledValue(label: CNLabelWork, value: CNPhoneNumber(stringValue: party.phone))]
+            }
+            let req = CNSaveRequest()
+            req.add(contact, toContainerWithIdentifier: nil)
+            _ = try? store.execute(req)
+        }
+    }
+}
+
+// MARK: - Native Contact Picker Representable
+struct ContactPickerView: UIViewControllerRepresentable {
+    @Binding var selectedName: String
+    @Binding var selectedPhone: String
+    @Binding var selectedEmail: String
+    var onSelected: () -> Void
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    func makeUIViewController(context: Context) -> CNContactPickerViewController {
+        let picker = CNContactPickerViewController()
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: CNContactPickerViewController, context: Context) {}
+    
+    class Coordinator: NSObject, CNContactPickerDelegate {
+        var parent: ContactPickerView
+        init(_ parent: ContactPickerView) { self.parent = parent }
+        
+        func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
+            let fullName = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
+            let phone = contact.phoneNumbers.first?.value.stringValue ?? ""
+            let email = (contact.emailAddresses.first?.value as String?) ?? ""
+            
+            DispatchQueue.main.async {
+                self.parent.selectedName = fullName.isEmpty ? "Contact" : fullName
+                self.parent.selectedPhone = phone
+                self.parent.selectedEmail = email
+                self.parent.onSelected()
+            }
+        }
     }
 }
 

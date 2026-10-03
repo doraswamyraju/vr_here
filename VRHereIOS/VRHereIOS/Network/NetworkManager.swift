@@ -167,8 +167,8 @@ class NetworkManager {
         return try await performRequest(path: "api/tickets", method: "GET")
     }
     
-    func createTicket(subject: String, description: String, priority: String) async throws -> TicketResponse {
-        let requestObj = CreateTicketRequest(subject: subject, description: description, priority: priority)
+    func createTicket(category: String = "Service", subject: String, description: String, priority: String) async throws -> TicketResponse {
+        let requestObj = CreateTicketRequest(category: category, subject: subject, description: description, priority: priority)
         let data = try JSONEncoder().encode(requestObj)
         return try await performRequest(path: "api/tickets", method: "POST", body: data)
     }
@@ -370,6 +370,28 @@ class NetworkManager {
     
     func getDynamicServices() async throws -> [MobileServiceDetail] {
         return try await performRequest(path: "api/service-pages", method: "GET")
+    }
+    
+    // --- BLOGS & REGULATORY INSIGHTS CMS ---
+    
+    func getBlogs() async throws -> [BlogResponse] {
+        return try await performRequest(path: "api/blogs", method: "GET")
+    }
+    
+    func getBlogBySlug(slug: String) async throws -> BlogResponse {
+        return try await performRequest(path: "api/blogs/\(slug)", method: "GET")
+    }
+    
+    // --- PROMOTIONAL OFFERS & SCHEMES ---
+    
+    func getOffers() async throws -> [OfferResponse] {
+        return try await performRequest(path: "api/offers", method: "GET")
+    }
+    
+    // --- FINANCE & BILLING RECORDS ---
+    
+    func getFinanceRecords() async throws -> [FinanceRecordResponse] {
+        return try await performRequest(path: "api/finance", method: "GET")
     }
     
     func getAdminFreelancers() async throws -> [FreelancerResponse] {

@@ -455,29 +455,67 @@ struct CustomerOrdersTab: View {
                         .padding(20)
                         .glassCard()
                         
-                        // 5. Assigned Expert Card
+                        // 5. Assigned Compliance Advisor Card
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Assigned Expert")
-                                .font(.system(size: 15, weight: .black))
-                                .foregroundColor(.textDark)
+                            HStack {
+                                Text("Assigned Compliance Advisor")
+                                    .font(.system(size: 15, weight: .black))
+                                    .foregroundColor(.textDark)
+                                Spacer()
+                                if order.assignedEmployee != nil {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
+                                        Text("VERIFIED")
+                                            .font(.system(size: 9, weight: .black))
+                                            .foregroundColor(Color(red: 5/255, green: 150/255, blue: 105/255))
+                                    }
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color(red: 236/255, green: 253/255, blue: 245/255))
+                                    .cornerRadius(6)
+                                } else {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "shield.fill")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                        Text("OFFICIAL DESK")
+                                            .font(.system(size: 9, weight: .black))
+                                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                    }
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color(red: 238/255, green: 242/255, blue: 255/255))
+                                    .cornerRadius(6)
+                                }
+                            }
                             
                             if let expert = order.assignedEmployee {
                                 HStack(spacing: 12) {
                                     ZStack {
                                         Circle()
-                                            .fill(Color(red: 238/255, green: 242/255, blue: 246/255))
-                                            .frame(width: 44, height: 44)
-                                        Image(systemName: "person.fill")
-                                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 168/255, green: 85/255, blue: 247/255)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                            .frame(width: 46, height: 46)
+                                        Text(String((expert.name.isEmpty ? "E" : expert.name).prefix(1)).uppercased())
+                                            .font(.system(size: 18, weight: .black))
+                                            .foregroundColor(.white)
                                     }
+                                    .shadow(color: Color(red: 99/255, green: 102/255, blue: 241/255).opacity(0.2), radius: 6, y: 2)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(expert.name.isEmpty ? "Compliance Expert" : expert.name)
+                                        Text(expert.name.isEmpty ? "Senior Compliance Advisor" : expert.name)
                                             .font(.system(size: 14, weight: .black))
                                             .foregroundColor(.textDark)
-                                        Text(expert.role.isEmpty ? "Assigned Expert" : expert.role.uppercased())
-                                            .font(.system(size: 9, weight: .black))
-                                            .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                                        Text(expert.role.isEmpty ? "COMPLIANCE SPECIALIST" : expert.role.uppercased())
+                                            .font(.system(size: 9.5, weight: .black))
+                                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
                                     }
                                 }
                                 
@@ -492,15 +530,79 @@ struct CustomerOrdersTab: View {
                                         }) {
                                             HStack(spacing: 8) {
                                                 Image(systemName: "envelope.fill")
-                                                    .font(.system(size: 14))
-                                                    .foregroundColor(.textMuted)
+                                                    .font(.system(size: 13))
+                                                    .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
                                                 Text(expert.email)
-                                                    .font(.system(size: 12))
+                                                    .font(.system(size: 12, weight: .bold))
                                                     .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
                                             }
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                     }
+                                    
+                                    let phoneNo = expert.phone ?? "+91 80085 30606"
+                                    Button(action: {
+                                        let cleanPhone = phoneNo.replacingOccurrences(of: " ", with: "")
+                                        if let url = URL(string: "tel:\(cleanPhone)") {
+                                            UIApplication.shared.open(url)
+                                        }
+                                    }) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "phone.fill")
+                                                .font(.system(size: 13))
+                                                .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
+                                            Text(phoneNo)
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                                        }
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            } else {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color(red: 15/255, green: 23/255, blue: 42/255), Color(red: 51/255, green: 65/255, blue: 85/255)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                            .frame(width: 46, height: 46)
+                                        Image(systemName: "shield.lefthalf.filled")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(.white)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("VR HERE Advisory Desk")
+                                            .font(.system(size: 14, weight: .black))
+                                            .foregroundColor(.textDark)
+                                        Text("Direct legal, tax & ROC statutory desk")
+                                            .font(.system(size: 10, weight: .semibold))
+                                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                                    }
+                                }
+                                
+                                Divider().background(Color.borderLight)
+                                
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Button(action: {
+                                        if let url = URL(string: "mailto:support@vrhere.in") {
+                                            UIApplication.shared.open(url)
+                                        }
+                                    }) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "envelope.fill")
+                                                .font(.system(size: 13))
+                                                .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                                            Text("support@vrhere.in")
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                                        }
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
                                     
                                     Button(action: {
                                         if let url = URL(string: "tel:918008530606") {
@@ -509,50 +611,83 @@ struct CustomerOrdersTab: View {
                                     }) {
                                         HStack(spacing: 8) {
                                             Image(systemName: "phone.fill")
-                                                .font(.system(size: 14))
-                                                .foregroundColor(.textMuted)
+                                                .font(.system(size: 13))
+                                                .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
                                             Text("+91 80085 30606")
-                                                .font(.system(size: 12))
+                                                .font(.system(size: 12, weight: .bold))
                                                 .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
                                         }
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                 }
-                            } else {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "person.fill")
-                                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
-                                    Text("Expert assignment pending.")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.textMuted)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.vertical, 8)
                             }
+                            
+                            Button(action: {
+                                viewModel.ticketSubject = "Query regarding Order #\(order.id.suffix(6).uppercased()) (\(order.serviceName))"
+                                viewModel.ticketPriority = "Medium"
+                                onSelectTab("Support")
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "message.badge.filled.fill")
+                                        .font(.system(size: 12))
+                                    Text("Ask Query / Message Desk")
+                                        .font(.system(size: 11.5, weight: .black))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                .cornerRadius(12)
+                            }
+                            .buttonStyle(ScaleOnPressButtonStyle())
+                            .padding(.top, 4)
                         }
                         .padding(20)
                         .glassCard()
                         
-                        // 6. Financial Summary Card
+                        // 6. Universal Financial Summary Card
                         let orderPayments = viewModel.payments.filter {
                             $0.serviceName == order.serviceName && $0.packageName == order.packageName
                         }
-                        let totalPaid = orderPayments.filter { $0.status == "Completed" }.reduce(0.0) { $0 + $1.amount }
-                        let balance = max(0.0, order.price - totalPaid)
+                        let totalPaid = orderPayments.filter { $0.status == "Completed" || $0.status == "Paid" }.reduce(0.0) { $0 + $1.amount }
+                        let hasSentInvoices = order.invoices.filter { $0.status.lowercased() == "sent" || $0.status.lowercased() == "overdue" }
+                        let invoiceDue = hasSentInvoices.reduce(0.0) { $0 + $1.amount }
+                        let isPrimaryPaid = order.paymentStatus.lowercased() == "paid" || !(order.paymentId ?? "").isEmpty
+                        let balance: Double = {
+                            if !hasSentInvoices.isEmpty {
+                                return invoiceDue
+                            } else if isPrimaryPaid {
+                                return 0.0
+                            } else {
+                                return max(0.0, order.price - totalPaid)
+                            }
+                        }()
                         
                         VStack(alignment: .leading, spacing: 14) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "receipt")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(Color(red: 4/255, green: 120/255, blue: 87/255))
-                                Text("Financial Summary")
-                                    .font(.system(size: 15, weight: .black))
-                                    .foregroundColor(Color(red: 6/255, green: 78/255, blue: 59/255))
+                            HStack {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "receipt")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(Color(red: 4/255, green: 120/255, blue: 87/255))
+                                    Text("Financial Summary")
+                                        .font(.system(size: 15, weight: .black))
+                                        .foregroundColor(Color(red: 6/255, green: 78/255, blue: 59/255))
+                                }
+                                Spacer()
+                                if balance <= 0 {
+                                    Text("PAID IN FULL")
+                                        .font(.system(size: 9, weight: .black))
+                                        .foregroundColor(Color(red: 4/255, green: 120/255, blue: 87/255))
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(Color(red: 209/255, green: 250/255, blue: 229/255))
+                                        .cornerRadius(6)
+                                }
                             }
                             
                             VStack(spacing: 8) {
                                 HStack {
-                                    Text("Total Price")
+                                    Text("Total Service Fee")
                                         .font(.system(size: 13, weight: .bold))
                                         .foregroundColor(Color(red: 6/255, green: 95/255, blue: 70/255))
                                     Spacer()
@@ -562,25 +697,25 @@ struct CustomerOrdersTab: View {
                                 }
                                 
                                 HStack {
-                                    Text("Amount Paid")
+                                    Text("Paid to Date")
                                         .font(.system(size: 13))
                                         .foregroundColor(Color(red: 4/255, green: 120/255, blue: 87/255))
                                     Spacer()
                                     Text("₹\(Int(totalPaid))")
                                         .font(.system(size: 13, weight: .black))
-                                        .foregroundColor(Color(red: 6/255, green: 78/255, blue: 59/255))
+                                        .foregroundColor(Color(red: 4/255, green: 120/255, blue: 87/255))
                                 }
                                 
                                 Divider().background(Color(red: 167/255, green: 243/255, blue: 208/255))
                                 
                                 HStack {
-                                    Text("Balance Due")
+                                    Text("Outstanding Balance")
                                         .font(.system(size: 13, weight: .black))
                                         .foregroundColor(Color(red: 6/255, green: 78/255, blue: 59/255))
                                     Spacer()
                                     Text("₹\(Int(balance))")
-                                        .font(.system(size: 13, weight: .black))
-                                        .foregroundColor(Color(red: 6/255, green: 78/255, blue: 59/255))
+                                        .font(.system(size: 14, weight: .black))
+                                        .foregroundColor(balance > 0 ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color(red: 6/255, green: 78/255, blue: 59/255))
                                 }
                             }
                             

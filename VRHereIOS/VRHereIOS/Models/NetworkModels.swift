@@ -105,17 +105,23 @@ struct EmployeeResponse: Codable, Identifiable {
     let name: String
     let email: String
     let role: String
+    let phone: String?
+    let profilePhoto: String?
+    let designation: String?
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
-        case name, email, role
+        case name, email, role, phone, profilePhoto, designation
     }
     
-    init(idVal: String = "", name: String = "", email: String = "", role: String = "") {
+    init(idVal: String = "", name: String = "", email: String = "", role: String = "", phone: String? = nil, profilePhoto: String? = nil, designation: String? = nil) {
         self.idVal = idVal
         self.name = name
         self.email = email
         self.role = role
+        self.phone = phone
+        self.profilePhoto = profilePhoto
+        self.designation = designation
     }
     
     init(from decoder: Decoder) throws {
@@ -125,6 +131,9 @@ struct EmployeeResponse: Codable, Identifiable {
             self.name = ""
             self.email = ""
             self.role = ""
+            self.phone = nil
+            self.profilePhoto = nil
+            self.designation = nil
             return
         }
         
@@ -133,6 +142,9 @@ struct EmployeeResponse: Codable, Identifiable {
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
         email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
         role = try container.decodeIfPresent(String.self, forKey: .role) ?? ""
+        phone = try container.decodeIfPresent(String.self, forKey: .phone)
+        profilePhoto = try container.decodeIfPresent(String.self, forKey: .profilePhoto)
+        designation = try container.decodeIfPresent(String.self, forKey: .designation)
     }
 }
 
@@ -537,9 +549,17 @@ struct TicketMessage: Codable, Identifiable {
 }
 
 struct CreateTicketRequest: Codable {
+    let category: String?
     let subject: String
     let description: String
     let priority: String
+    
+    init(category: String? = "Service", subject: String, description: String, priority: String) {
+        self.category = category
+        self.subject = subject
+        self.description = description
+        self.priority = priority
+    }
 }
 
 struct AddMessageRequest: Codable {
@@ -1023,10 +1043,11 @@ struct FinanceRecordResponse: Codable, Identifiable {
     let totals: FinanceTotals
     let status: String
     let notes: String?
+    let url: String?
     
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
-        case type, number, date, dueDate, client, items, totals, status, notes
+        case type, number, date, dueDate, client, items, totals, status, notes, url
     }
 }
 
@@ -1048,6 +1069,9 @@ struct FinanceItem: Codable {
 struct FinanceTotals: Codable {
     let subtotal: Double
     let total: Double
+    let cgst: Double?
+    let sgst: Double?
+    let igst: Double?
 }
 
 struct UserResponse: Codable, Identifiable {
@@ -1194,6 +1218,119 @@ struct UserVaultDocumentsResponse: Codable {
     let data: [UserVaultDocument]
 }
 
+// --- BLOG / REGULATORY INSIGHTS CMS MODELS ---
 
+struct BlogResponse: Codable, Identifiable, Equatable {
+    var id: String { idVal }
+    let idVal: String
+    let title: String
+    let slug: String
+    let summary: String
+    let category: String
+    let categoryColor: String?
+    let readTime: String?
+    let coverImageUrl: String?
+    let keyTakeaways: [String]?
+    let fullArticle: String
+    let isPublished: Bool?
+    let priority: Int?
+    let author: String?
+    let publishedAt: String?
 
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case title, slug, summary, category, categoryColor, readTime, coverImageUrl, keyTakeaways, fullArticle, isPublished, priority, author, publishedAt
+    }
+    
+    init(
+        idVal: String = UUID().uuidString,
+        title: String = "",
+        slug: String = "",
+        summary: String = "",
+        category: String = "Corporate & Legal",
+        categoryColor: String? = "#3B82F6",
+        readTime: String? = "4 min read",
+        coverImageUrl: String? = nil,
+        keyTakeaways: [String]? = nil,
+        fullArticle: String = "",
+        isPublished: Bool? = true,
+        priority: Int? = 0,
+        author: String? = "VR HERE Advisory Team",
+        publishedAt: String? = nil
+    ) {
+        self.idVal = idVal
+        self.title = title
+        self.slug = slug
+        self.summary = summary
+        self.category = category
+        self.categoryColor = categoryColor
+        self.readTime = readTime
+        self.coverImageUrl = coverImageUrl
+        self.keyTakeaways = keyTakeaways
+        self.fullArticle = fullArticle
+        self.isPublished = isPublished
+        self.priority = priority
+        self.author = author
+        self.publishedAt = publishedAt
+    }
+}
 
+// --- PROMOTIONAL OFFERS & SCHEMES MODELS ---
+
+struct OfferResponse: Codable, Identifiable, Equatable {
+    var id: String { idVal }
+    let idVal: String
+    let title: String
+    let subtitle: String
+    let badgeTag: String?
+    let badgeColor: String?
+    let bannerImageUrl: String?
+    let targetServiceKey: String?
+    let targetUrl: String?
+    let discountAmount: Double?
+    let originalPrice: Double?
+    let discountedPrice: Double?
+    let eligibilityText: String?
+    let ctaText: String?
+    let isActive: Bool?
+    let priority: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case title, subtitle, badgeTag, badgeColor, bannerImageUrl, targetServiceKey, targetUrl, discountAmount, originalPrice, discountedPrice, eligibilityText, ctaText, isActive, priority
+    }
+    
+    init(
+        idVal: String = UUID().uuidString,
+        title: String = "",
+        subtitle: String = "",
+        badgeTag: String? = "EXCLUSIVE OFFER",
+        badgeColor: String? = "#DC2626",
+        bannerImageUrl: String? = nil,
+        targetServiceKey: String? = nil,
+        targetUrl: String? = nil,
+        discountAmount: Double? = nil,
+        originalPrice: Double? = nil,
+        discountedPrice: Double? = nil,
+        eligibilityText: String? = "Tap to view eligibility & claim",
+        ctaText: String? = "Explore Offer →",
+        isActive: Bool? = true,
+        priority: Int? = 0
+    ) {
+        self.idVal = idVal
+        self.title = title
+        self.subtitle = subtitle
+        self.badgeTag = badgeTag
+        self.badgeColor = badgeColor
+        self.bannerImageUrl = bannerImageUrl
+        self.targetServiceKey = targetServiceKey
+        self.targetUrl = targetUrl
+        self.discountAmount = discountAmount
+        self.originalPrice = originalPrice
+        self.discountedPrice = discountedPrice
+        self.eligibilityText = eligibilityText
+        self.ctaText = ctaText
+        self.isActive = isActive
+        self.priority = priority
+    }
+}

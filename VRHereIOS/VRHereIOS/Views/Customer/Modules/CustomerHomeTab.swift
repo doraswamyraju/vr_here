@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct CustomerHomeTab: View {
     @ObservedObject var viewModel: CustomerDashboardViewModel
@@ -11,6 +12,11 @@ struct CustomerHomeTab: View {
     
     @State private var showNotifications = false
     @State private var promoBannerIndex = 0
+    @State private var selectedBlogForReading: BlogResponse? = nil
+    @State private var showBlogReaderSheet = false
+    @State private var selectedBlogCategory = "All"
+    
+    let carouselTimer = Timer.publish(every: 4.5, on: .main, in: .common).autoconnect()
     
     // Greeting based on time of day
     private var greetingTimeText: String {
@@ -662,83 +668,109 @@ struct CustomerHomeTab: View {
                 }
                 
                 // ==========================================
-                // 7. PROMOTIONAL CAROUSEL & GOVT SCHEMES
+                // 7. PROMOTIONAL CAROUSEL & GOVT SCHEMES (DYNAMIC)
                 // ==========================================
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Featured Schemes & Incentives")
-                        .font(.system(size: 15, weight: .black))
-                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                let displayOffers = viewModel.offers.filter { $0.isActive ?? true }
+                if !displayOffers.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Featured Schemes & Incentives")
+                                    .font(.system(size: 15, weight: .black))
+                                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                Text("Exclusive Govt subsidies & bundled packages")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                            }
+                            Spacer()
+                        }
                         .padding(.horizontal, 20)
-                    
-                    TabView(selection: $promoBannerIndex) {
-                        PromoBannerCard(
-                            tag: "MCA IMMUNITY SCHEME",
-                            title: "Companies Compliance Scheme (CCFS 2026)",
-                            desc: "Regularize pending ROC filings with up to 40% fee waiver and avoid strike-off notices.",
-                            btnText: "File Under CCFS",
-                            gradient: [Color(red: 79/255, green: 70/255, blue: 229/255), Color(red: 124/255, green: 58/255, blue: 237/255)]
-                        ) {
-                            onOpenLiveService("Companies Compliance Scheme 2026", "https://vrhere.in/compliance-scheme-2026")
-                        }
-                        .tag(0)
                         
-                        PromoBannerCard(
-                            tag: "STARTUP INDIA DPIIT",
-                            title: "3-Year 100% Tax Exemption (Sec 80-IAC)",
-                            desc: "Fast-track DPIIT certificate, angel tax relief, and priority access to Govt tenders.",
-                            btnText: "Apply for DPIIT",
-                            gradient: [Color(red: 225/255, green: 29/255, blue: 72/255), Color(red: 244/255, green: 63/255, blue: 94/255)]
-                        ) {
-                            onOpenLiveService("Startup India Registration", "https://vrhere.in/startup-india-registration")
+                        TabView(selection: $promoBannerIndex) {
+                            ForEach(Array(displayOffers.enumerated()), id: \.element.id) { index, offer in
+                                DynamicPromoBannerCard(offer: offer) {
+                                    if let url = offer.targetUrl, !url.isEmpty {
+                                        onOpenLiveService(offer.title, url)
+                                    } else if let sKey = offer.targetServiceKey, !sKey.isEmpty {
+                                        onOpenLiveService(offer.title, "https://vrhere.in/services/\(sKey)")
+                                    } else {
+                                        onSelectTab("Services")
+                                    }
+                                }
+                                .tag(index)
+                            }
                         }
-                        .tag(1)
-                        
-                        PromoBannerCard(
-                            tag: "INTELLECTUAL PROPERTY",
-                            title: "Instant Trademark TM Application in 24 Hrs",
-                            desc: "Safeguard your brand name and logo legally before someone else claims it.",
-                            btnText: "Secure Brand TM",
-                            gradient: [Color(red: 13/255, green: 148/255, blue: 136/255), Color(red: 20/255, green: 184/255, blue: 166/255)]
-                        ) {
-                            onOpenLiveService("Trademark Registration", "https://vrhere.in/trademark-registration")
+                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+                        .frame(height: 175)
+                        .padding(.horizontal, 20)
+                        .onReceive(carouselTimer) { _ in
+                            if !displayOffers.isEmpty {
+                                withAnimation(.easeInOut(duration: 0.6)) {
+                                    promoBannerIndex = (promoBannerIndex + 1) % displayOffers.count
+                                }
+                            }
                         }
-                        .tag(2)
                     }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
-                    .frame(height: 165)
-                    .padding(.horizontal, 20)
                 }
                 
                 // ==========================================
-                // 8. STATUTORY & COMPLIANCE FEED
+                // 8. REGULATORY & STATUTORY INSIGHTS (DYNAMIC CMS)
                 // ==========================================
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Statutory & Compliance News")
-                        .font(.system(size: 15, weight: .black))
-                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                let displayBlogs = viewModel.blogs.filter { $0.isPublished ?? true }
+                if !displayBlogs.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Regulatory & Compliance Insights")
+                                    .font(.system(size: 15, weight: .black))
+                                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                Text("Real-time notifications from MCA, CBIC & DPIIT")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                            }
+                            Spacer()
+                        }
                         .padding(.horizontal, 20)
-                    
-                    VStack(spacing: 10) {
-                        NewsFeedCard(
-                            tag: "MCA UPDATE",
-                            title: "Annual ROC Return Filing Timelines (AOC-4 & MGT-7)",
-                            desc: "Ensure board resolution approval before statutory cutoff to avoid ₹100/day penalties.",
-                            time: "Updated Today"
-                        )
-                        NewsFeedCard(
-                            tag: "GST NOTIFICATION",
-                            title: "Mandatory E-Invoicing Thresholds for Commercial Entities",
-                            desc: "B2B transactions must be validated via IRP portal. Connect with our tax desk for automated sync.",
-                            time: "Yesterday"
-                        )
-                        NewsFeedCard(
-                            tag: "MSME SUBSIDY",
-                            title: "PMEGP & ZED Scheme 35% Capital Subsidy Portal Open",
-                            desc: "Manufacturing and service units can claim capital reimbursement on verified machinery.",
-                            time: "3 days ago"
-                        )
+                        
+                        // Category Pills Filter
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                let categories = ["All", "Corporate & Legal", "GST & Direct Taxes", "Startups & Funding"]
+                                ForEach(categories, id: \.self) { cat in
+                                    let isSel = selectedBlogCategory == cat
+                                    Button(action: { selectedBlogCategory = cat }) {
+                                        Text(cat)
+                                            .font(.system(size: 11, weight: isSel ? .black : .bold))
+                                            .foregroundColor(isSel ? .white : Color(red: 71/255, green: 85/255, blue: 105/255))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(isSel ? Color(red: 99/255, green: 102/255, blue: 241/255) : Color.white)
+                                            .cornerRadius(10)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .stroke(isSel ? Color.clear : Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+                                            )
+                                    }
+                                    .buttonStyle(ScaleOnPressButtonStyle())
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                        
+                        let filteredBlogs = displayBlogs.filter {
+                            selectedBlogCategory == "All" || $0.category.lowercased() == selectedBlogCategory.lowercased()
+                        }
+                        
+                        VStack(spacing: 12) {
+                            ForEach(filteredBlogs) { blog in
+                                DynamicBlogFeedCard(blog: blog) {
+                                    selectedBlogForReading = blog
+                                    showBlogReaderSheet = true
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.horizontal, 20)
                 }
                 
                 // Extra clearance so content scrolls cleanly above the floating bottom dock
@@ -746,6 +778,18 @@ struct CustomerHomeTab: View {
             }
         }
         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+        .sheet(item: $selectedBlogForReading) { blog in
+            BlogReaderSheet(
+                blog: blog,
+                onConsultAction: {
+                    showBlogReaderSheet = false
+                    onSelectTab("Support")
+                },
+                onDismiss: {
+                    selectedBlogForReading = nil
+                }
+            )
+        }
     }
 }
 
@@ -1051,105 +1095,340 @@ struct CreativeServiceCard: View {
     }
 }
 
-struct PromoBannerCard: View {
-    let tag: String
-    let title: String
-    let desc: String
-    let btnText: String
-    let gradient: [Color]
+struct DynamicPromoBannerCard: View {
+    let offer: OfferResponse
     let action: () -> Void
+    
+    var bannerGradient: [Color] {
+        if let hex = offer.badgeColor, !hex.isEmpty {
+            let base = Color(hex: hex)
+            return [base, base.opacity(0.85)]
+        }
+        return [Color(red: 79/255, green: 70/255, blue: 229/255), Color(red: 124/255, green: 58/255, blue: 237/255)]
+    }
     
     var body: some View {
         ZStack {
-            LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: bannerGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text(tag)
-                        .font(.system(size: 8.5, weight: .black))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(Color.white.opacity(0.25))
-                        .cornerRadius(4)
+                    if let tag = offer.badgeTag, !tag.isEmpty {
+                        Text(tag.uppercased())
+                            .font(.system(size: 8.5, weight: .black))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Color.white.opacity(0.25))
+                            .cornerRadius(4)
+                    }
                     Spacer()
+                    if let disc = offer.discountedPrice, disc > 0 {
+                        HStack(spacing: 4) {
+                            if let orig = offer.originalPrice, orig > disc {
+                                Text("₹\(Int(orig))")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(Color.white.opacity(0.7))
+                                    .strikethrough()
+                            }
+                            Text("₹\(Int(disc))")
+                                .font(.system(size: 13, weight: .black))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.black.opacity(0.2))
+                        .cornerRadius(6)
+                    }
                 }
                 
-                Text(title)
+                Text(offer.title)
                     .font(.system(size: 14, weight: .black))
                     .foregroundColor(.white)
                     .lineLimit(1)
                 
-                Text(desc)
+                Text(offer.subtitle)
                     .font(.system(size: 10.5, weight: .medium))
-                    .foregroundColor(Color.white.opacity(0.9))
+                    .foregroundColor(Color.white.opacity(0.92))
                     .lineLimit(2)
                     .lineSpacing(2)
                 
                 Spacer()
                 
-                Button(action: action) {
-                    HStack(spacing: 4) {
-                        Text(btnText)
-                            .font(.system(size: 10.5, weight: .black))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 9, weight: .bold))
+                HStack {
+                    if let eligibility = offer.eligibilityText, !eligibility.isEmpty {
+                        Text(eligibility)
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundColor(Color.white.opacity(0.85))
+                            .lineLimit(1)
                     }
-                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.white)
-                    .cornerRadius(8)
+                    
+                    Spacer()
+                    
+                    Button(action: action) {
+                        HStack(spacing: 4) {
+                            Text(offer.ctaText ?? "Claim Offer →")
+                                .font(.system(size: 10.5, weight: .black))
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 9, weight: .bold))
+                        }
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.white)
+                        .cornerRadius(8)
+                        .shadow(color: Color.black.opacity(0.08), radius: 3, y: 1)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .buttonStyle(PlainButtonStyle())
             }
             .padding(14)
         }
         .cornerRadius(18)
-        .shadow(color: gradient.first?.opacity(0.3) ?? Color.clear, radius: 8, y: 4)
+        .shadow(color: bannerGradient.first?.opacity(0.25) ?? Color.clear, radius: 8, y: 4)
     }
 }
 
-struct NewsFeedCard: View {
-    let tag: String
-    let title: String
-    let desc: String
-    let time: String
+struct DynamicBlogFeedCard: View {
+    let blog: BlogResponse
+    let action: () -> Void
+    
+    var categoryColor: Color {
+        if let hex = blog.categoryColor, !hex.isEmpty {
+            return Color(hex: hex)
+        }
+        return Color(red: 99/255, green: 102/255, blue: 241/255)
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(tag)
-                    .font(.system(size: 8.5, weight: .black))
-                    .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color(red: 238/255, green: 242/255, blue: 255/255))
-                    .cornerRadius(4)
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .center) {
+                    Text(blog.category.uppercased())
+                        .font(.system(size: 8.5, weight: .black))
+                        .foregroundColor(categoryColor)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(categoryColor.opacity(0.12))
+                        .cornerRadius(6)
+                    
+                    if let readTime = blog.readTime, !readTime.isEmpty {
+                        HStack(spacing: 3) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 8.5))
+                            Text(readTime)
+                                .font(.system(size: 9, weight: .bold))
+                        }
+                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                    }
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 3) {
+                        Text("Read Article")
+                            .font(.system(size: 9.5, weight: .black))
+                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 8.5, weight: .bold))
+                            .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+                    }
+                }
                 
-                Spacer()
+                Text(blog.title)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
                 
-                Text(time)
-                    .font(.system(size: 9.5, weight: .medium))
-                    .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                Text(blog.summary)
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                
+                if let takeaways = blog.keyTakeaways, !takeaways.isEmpty {
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
+                        Text("\(takeaways.count) Key Action Points Included")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundColor(Color(red: 5/255, green: 150/255, blue: 105/255))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color(red: 236/255, green: 253/255, blue: 245/255))
+                    .cornerRadius(6)
+                }
             }
-            
-            Text(title)
-                .font(.system(size: 12.5, weight: .bold))
-                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
-            
-            Text(desc)
-                .font(.system(size: 11))
-                .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                .lineLimit(2)
+            .padding(14)
+            .background(Color.white)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.02), radius: 4, y: 1)
         }
-        .padding(12)
-        .background(Color.white)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.02), radius: 3, y: 1)
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Interactive Blog / Insight Reader Sheet
+struct BlogReaderSheet: View {
+    let blog: BlogResponse
+    let onConsultAction: () -> Void
+    let onDismiss: () -> Void
+    
+    var categoryColor: Color {
+        if let hex = blog.categoryColor, !hex.isEmpty {
+            return Color(hex: hex)
+        }
+        return Color(red: 99/255, green: 102/255, blue: 241/255)
+    }
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    // Header Meta Bar
+                    HStack(spacing: 8) {
+                        Text(blog.category.uppercased())
+                            .font(.system(size: 9, weight: .black))
+                            .foregroundColor(categoryColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(categoryColor.opacity(0.12))
+                            .cornerRadius(6)
+                        
+                        if let readTime = blog.readTime, !readTime.isEmpty {
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 9))
+                                Text(readTime)
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                        }
+                        
+                        Spacer()
+                        
+                        if let author = blog.author, !author.isEmpty {
+                            Text(author)
+                                .font(.system(size: 9.5, weight: .bold))
+                                .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                        }
+                    }
+                    
+                    // Title
+                    Text(blog.title)
+                        .font(.system(size: 20, weight: .black))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                        .lineSpacing(2)
+                    
+                    // Summary Lead
+                    Text(blog.summary)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                        .lineSpacing(3)
+                        .padding(14)
+                        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+                        .cornerRadius(12)
+                    
+                    // Key Takeaways Highlight Box
+                    if let takeaways = blog.keyTakeaways, !takeaways.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(Color(red: 217/255, green: 119/255, blue: 6/255))
+                                Text("Key Regulatory Takeaways")
+                                    .font(.system(size: 12.5, weight: .black))
+                                    .foregroundColor(Color(red: 146/255, green: 64/255, blue: 14/255))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                ForEach(takeaways, id: \.self) { point in
+                                    HStack(alignment: .top, spacing: 8) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
+                                            .padding(.top, 2)
+                                        Text(point)
+                                            .font(.system(size: 11.5, weight: .semibold))
+                                            .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
+                                            .lineSpacing(2)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(14)
+                        .background(Color(red: 254/255, green: 252/255, blue: 232/255))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color(red: 254/255, green: 240/255, blue: 138/255), lineWidth: 1)
+                        )
+                    }
+                    
+                    // Full Article Content
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Detailed Advisory Analysis")
+                            .font(.system(size: 13.5, weight: .black))
+                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                        
+                        Text(blog.fullArticle)
+                            .font(.system(size: 12.5))
+                            .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
+                            .lineSpacing(4)
+                    }
+                    .padding(.top, 4)
+                    
+                    // Expert Assistance Action Banner
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Need Advisory on this Regulation?")
+                            .font(.system(size: 13, weight: .black))
+                            .foregroundColor(.white)
+                        Text("Connect with our senior compliance specialists for direct filing and strategy.")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.white.opacity(0.88))
+                        
+                        Button(action: onConsultAction) {
+                            HStack {
+                                Image(systemName: "headphones")
+                                Text("Ask Compliance Desk")
+                                    .font(.system(size: 11.5, weight: .black))
+                            }
+                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(Color.white)
+                            .cornerRadius(10)
+                        }
+                    }
+                    .padding(16)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 15/255, green: 23/255, blue: 42/255), Color(red: 30/255, green: 41/255, blue: 59/255)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .cornerRadius(16)
+                    .padding(.top, 8)
+                    
+                    Spacer().frame(height: 40)
+                }
+                .padding(20)
+            }
+            .navigationBarTitle("Compliance Insight", displayMode: .inline)
+            .navigationBarItems(
+                trailing: Button("Done") {
+                    onDismiss()
+                }
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(Color(red: 99/255, green: 102/255, blue: 241/255))
+            )
+        }
     }
 }
