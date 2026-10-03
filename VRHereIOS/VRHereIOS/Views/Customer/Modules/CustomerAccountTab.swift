@@ -221,7 +221,7 @@ struct CustomerAccountTab: View {
                     profileFormView
                 }
                 
-                Spacer().frame(height: 90)
+                Spacer().frame(height: 140)
             }
         }
         .background(Color(red: 248/255, green: 250/255, blue: 252/255).ignoresSafeArea())
@@ -381,6 +381,7 @@ struct CustomerAccountTab: View {
                         .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
                     TextField("Enter full legal name", text: $userNameInput)
                         .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .padding(10)
                         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                         .cornerRadius(10)
@@ -396,6 +397,7 @@ struct CustomerAccountTab: View {
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
                         .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .padding(10)
                         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                         .cornerRadius(10)
@@ -410,6 +412,7 @@ struct CustomerAccountTab: View {
                     TextField("Enter 10-digit mobile number", text: $userPhoneInput)
                         .keyboardType(.phonePad)
                         .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .padding(10)
                         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                         .cornerRadius(10)
@@ -423,6 +426,7 @@ struct CustomerAccountTab: View {
                         .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
                     TextField("Registered entity or firm name", text: $companyNameInput)
                         .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .padding(10)
                         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                         .cornerRadius(10)
@@ -464,6 +468,7 @@ struct CustomerAccountTab: View {
                     TextField("e.g. 36AAACG1234F1Z5", text: $gstinInput)
                         .autocapitalization(.allCharacters)
                         .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .padding(10)
                         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                         .cornerRadius(10)
@@ -478,6 +483,7 @@ struct CustomerAccountTab: View {
                     TextField("e.g. ABCDE1234F", text: $panNumberInput)
                         .autocapitalization(.allCharacters)
                         .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .padding(10)
                         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                         .cornerRadius(10)
@@ -492,6 +498,7 @@ struct CustomerAccountTab: View {
                     TextField("Official business address with pincode", text: $addressInput, axis: .vertical)
                         .lineLimit(2...4)
                         .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
                         .padding(10)
                         .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                         .cornerRadius(10)
