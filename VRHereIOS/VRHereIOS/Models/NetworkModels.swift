@@ -52,7 +52,7 @@ struct AuthResponse: Codable {
     }
 }
 
-struct UserProfile: Codable, Identifiable {
+struct UserProfile: Codable, Identifiable, Equatable {
     var id: String { idVal }
     let idVal: String
     let name: String

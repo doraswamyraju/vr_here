@@ -227,6 +227,14 @@ struct CustomerAccountTab: View {
         .background(Color(red: 248/255, green: 250/255, blue: 252/255).ignoresSafeArea())
         .onAppear {
             loadProfile()
+            if let prof = viewModel.userProfile {
+                populateFromProfile(prof)
+            }
+        }
+        .onChange(of: viewModel.userProfile) { newProfile in
+            if let prof = newProfile {
+                populateFromProfile(prof)
+            }
         }
         .photosPicker(isPresented: $showAvatarPicker, selection: $selectedAvatarItem, matching: .images)
         .photosPicker(isPresented: $showLogoPicker, selection: $selectedLogoItem, matching: .images)
@@ -756,6 +764,19 @@ struct CustomerAccountTab: View {
         }
     }
     
+    private func populateFromProfile(_ profile: UserProfile) {
+        if !profile.name.isEmpty { userNameInput = profile.name }
+        if !profile.email.isEmpty { userEmailInput = profile.email }
+        if let p = profile.phone, !p.isEmpty { userPhoneInput = p }
+        if let c = profile.companyName, !c.isEmpty { companyNameInput = c }
+        if let b = profile.businessType, !b.isEmpty { businessTypeInput = b }
+        if let g = profile.gstin, !g.isEmpty { gstinInput = g }
+        if let pan = profile.panNumber, !pan.isEmpty { panNumberInput = pan }
+        if let a = profile.address, !a.isEmpty { addressInput = a }
+        if let photo = profile.profilePhoto, !photo.isEmpty { profilePhotoUrl = photo }
+        if let logo = profile.companyLogo, !logo.isEmpty { companyLogoUrl = logo }
+    }
+    
     private func loadProfile() {
         // 1. Instantly populate from local session
         userNameInput = SessionManager.shared.getUserName()
@@ -769,22 +790,28 @@ struct CustomerAccountTab: View {
         profilePhotoUrl = SessionManager.shared.getProfilePhoto()
         companyLogoUrl = SessionManager.shared.getCompanyLogo()
         
-        // 2. Actively fetch latest from server
+        // 2. If viewModel already holds live profile, populate immediately
+        if let existing = viewModel.userProfile {
+            populateFromProfile(existing)
+        }
+        
+        // 3. Actively fetch latest from server
         Task {
             do {
                 let profile = try await NetworkManager.shared.getProfile()
-                userNameInput = profile.name
-                userEmailInput = profile.email
-                if let p = profile.phone { userPhoneInput = p; SessionManager.shared.savePhone(p) }
-                if let c = profile.companyName { companyNameInput = c; SessionManager.shared.saveCompanyName(c) }
-                if let b = profile.businessType { businessTypeInput = b; SessionManager.shared.saveBusinessType(b) }
-                if let g = profile.gstin { gstinInput = g; SessionManager.shared.saveGstin(g) }
-                if let pan = profile.panNumber { panNumberInput = pan; SessionManager.shared.savePanNumber(pan) }
-                if let a = profile.address { addressInput = a; SessionManager.shared.saveAddress(a) }
-                if let photo = profile.profilePhoto { profilePhotoUrl = photo; SessionManager.shared.saveProfilePhoto(photo) }
-                if let logo = profile.companyLogo { companyLogoUrl = logo; SessionManager.shared.saveCompanyLogo(logo) }
+                viewModel.userProfile = profile
+                populateFromProfile(profile)
+                
                 SessionManager.shared.saveUserName(profile.name)
                 SessionManager.shared.saveUserEmail(profile.email)
+                if let p = profile.phone { SessionManager.shared.savePhone(p) }
+                if let c = profile.companyName { SessionManager.shared.saveCompanyName(c) }
+                if let b = profile.businessType { SessionManager.shared.saveBusinessType(b) }
+                if let g = profile.gstin { SessionManager.shared.saveGstin(g) }
+                if let pan = profile.panNumber { SessionManager.shared.savePanNumber(pan) }
+                if let a = profile.address { SessionManager.shared.saveAddress(a) }
+                if let photo = profile.profilePhoto { SessionManager.shared.saveProfilePhoto(photo) }
+                if let logo = profile.companyLogo { SessionManager.shared.saveCompanyLogo(logo) }
             } catch {
                 print("Failed to fetch fresh user profile: \(error)")
             }

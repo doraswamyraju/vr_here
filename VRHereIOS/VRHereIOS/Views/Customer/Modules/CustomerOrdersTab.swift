@@ -652,7 +652,7 @@ struct CustomerOrdersTab: View {
                         let totalPaid = orderPayments.filter { $0.status == "Completed" || $0.status == "Paid" }.reduce(0.0) { $0 + $1.amount }
                         let hasSentInvoices = order.invoices.filter { $0.status.lowercased() == "sent" || $0.status.lowercased() == "overdue" }
                         let invoiceDue = hasSentInvoices.reduce(0.0) { $0 + $1.amount }
-                        let isPrimaryPaid = order.paymentStatus.lowercased() == "paid" || (!(order.paymentId ?? "").isEmpty && totalPaid >= order.price)
+                        let isPrimaryPaid = order.paymentStatus.lowercased() == "paid" || (!order.paymentId.isEmpty && totalPaid >= order.price)
                         let balance: Double = {
                             if !hasSentInvoices.isEmpty {
                                 return invoiceDue

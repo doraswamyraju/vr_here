@@ -19,6 +19,7 @@ class CustomerDashboardViewModel: ObservableObject {
     @Published var blogs: [BlogResponse] = []
     @Published var offers: [OfferResponse] = []
     @Published var financeRecords: [FinanceRecordResponse] = []
+    @Published var userProfile: UserProfile? = nil
     
     @Published var activeBannerNotification: NotificationResponse? = nil
     
@@ -139,6 +140,7 @@ class CustomerDashboardViewModel: ObservableObject {
         // 8. Sync User Profile (phone, name, email, company, photos)
         do {
             let profile = try await NetworkManager.shared.getProfile()
+            userProfile = profile
             if let p = profile.phone, !p.isEmpty {
                 SessionManager.shared.savePhone(p)
             }

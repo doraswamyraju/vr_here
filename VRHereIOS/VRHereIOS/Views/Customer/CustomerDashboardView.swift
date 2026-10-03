@@ -27,6 +27,7 @@ struct CustomerDashboardView: View {
     @State private var toastMsg = ""
     @State private var isShowingNotifications = false
     @State private var isFloatingMenuExpanded = false
+    @State private var isLetsTrackChatOpen = false
     
     var body: some View {
         ZStack {
@@ -130,7 +131,7 @@ struct CustomerDashboardView: View {
                                         // Option 1: Live Support Chat
                                         Button(action: {
                                             isFloatingMenuExpanded = false
-                                            activeTab = "Support"
+                                            isLetsTrackChatOpen = true
                                         }) {
                                             HStack(spacing: 8) {
                                                 Text("Live Chat")
@@ -490,6 +491,16 @@ struct CustomerDashboardView: View {
                     }
                 }
                 .zIndex(20)
+            }
+            
+            // Live Real-Time Customer Chat Dialog (100% Matching Android LetsTrackChatDialog)
+            if isLetsTrackChatOpen {
+                LetsTrackChatDialog(
+                    isOpen: $isLetsTrackChatOpen,
+                    customerName: userName,
+                    customerEmail: SessionManager.shared.getUserEmail()
+                )
+                .zIndex(60)
             }
         }
         .onAppear {
