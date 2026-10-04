@@ -35,6 +35,9 @@ struct CustomerAccountTab: View {
     @State private var showingSaveSuccessAlert = false
     @State private var saveErrorMessage: String? = nil
     
+    @State private var isLinkingApple = false
+    @State private var isAppleLinked = false
+    
     private var totalSpent: Double {
         viewModel.payments.reduce(0) { $0 + $1.amount }
     }
@@ -539,6 +542,84 @@ struct CustomerAccountTab: View {
             )
             .padding(.horizontal, 16)
             
+            // --- Single Sign-On & Linked Accounts Card ---
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Single Sign-On & Linked Accounts")
+                    .font(.system(size: 14, weight: .black))
+                    .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                
+                Text("Link your Apple ID to enable instant, one-tap biometric login to this account.")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                
+                HStack {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.black)
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "applelogo")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Apple Sign In")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            Text(isAppleLinked ? "Connected to this profile" : "Not linked yet")
+                                .font(.system(size: 10))
+                                .foregroundColor(isAppleLinked ? Color(red: 16/255, green: 185/255, blue: 129/255) : Color.textMuted)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    if isAppleLinked {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
+                            Text("Linked")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.1))
+                        .cornerRadius(8)
+                    } else {
+                        Button(action: linkAppleAccount) {
+                            if isLinkingApple {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.7)
+                                    .frame(width: 80, height: 30)
+                            } else {
+                                Text("Link Apple ID")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.black)
+                                    .cornerRadius(8)
+                            }
+                        }
+                        .disabled(isLinkingApple)
+                    }
+                }
+                .padding(12)
+                .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+                .cornerRadius(12)
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+            )
+            .padding(.horizontal, 16)
+            
             // --- Support & Official Helpline Card ---
             VStack(alignment: .leading, spacing: 10) {
                 Text("Support & Business Helpline")
@@ -789,6 +870,39 @@ struct CustomerAccountTab: View {
         if let a = profile.address, !a.isEmpty { addressInput = a }
         if let photo = profile.profilePhoto, !photo.isEmpty { profilePhotoUrl = photo }
         if let logo = profile.companyLogo, !logo.isEmpty { companyLogoUrl = logo }
+        if let aid = profile.appleId, !aid.isEmpty {
+            isAppleLinked = true
+        } else {
+            isAppleLinked = false
+        }
+    }
+    
+    private func linkAppleAccount() {
+        isLinkingApple = true
+        AppleSignInManager.shared.startAppleSignIn { result in
+            switch result {
+            case .success(let res):
+                Task {
+                    do {
+                        _ = try await NetworkManager.shared.linkAppleAccount(
+                            identityToken: res.identityToken,
+                            userIdentifier: res.userIdentifier
+                        )
+                        isAppleLinked = true
+                        viewModel.toastMessage = "Apple ID successfully linked to your account!"
+                        viewModel.refreshAllData(silent: true)
+                    } catch {
+                        viewModel.toastMessage = "Failed to link Apple ID: \(error.localizedDescription)"
+                    }
+                    isLinkingApple = false
+                }
+            case .failure(let error):
+                isLinkingApple = false
+                if (error as NSError).code != 1001 { // ASAuthorizationError.canceled
+                    viewModel.toastMessage = "Apple authorization failed: \(error.localizedDescription)"
+                }
+            }
+        }
     }
     
     private func loadProfile() {

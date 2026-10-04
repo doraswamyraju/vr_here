@@ -22,6 +22,13 @@ class AuthViewModel: ObservableObject {
     
     @Published var toastMessage: String? = nil
     
+    // Apple Account Linking State
+    @Published var showAppleLinkPrompt = false
+    @Published var pendingAppleResult: AppleSignInResult? = nil
+    @Published var linkEmailInput = ""
+    @Published var linkPasswordInput = ""
+    @Published var isLinkingWithPassword = false
+    
     init() {
         if SessionManager.shared.isLoggedIn() {
             let role = SessionManager.shared.getUserRole()
@@ -143,16 +150,79 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    func appleLogin(result: AppleSignInResult) {
+    func appleLogin(result: AppleSignInResult, confirmNewAccount: Bool = false) {
         authState = .loading
         Task {
             do {
-                let authData = try await NetworkManager.shared.appleLogin(
+                let res = try await NetworkManager.shared.appleLogin(
                     identityToken: result.identityToken,
                     userIdentifier: result.userIdentifier,
                     email: result.email,
-                    fullName: result
+                    fullName: result,
+                    confirmNewAccount: confirmNewAccount
                 )
+                
+                // If it's a first-time user with an unlinked Apple ID, prompt them to link or create new
+                if res.isNewUser == true {
+                    self.pendingAppleResult = result
+                    self.showAppleLinkPrompt = true
+                    self.authState = .idle
+                    return
+                }
+                
+                guard let token = res.token, let id = res.id, let name = res.name, let email = res.email, let role = res.role else {
+                    throw NetworkError.serverError("Incomplete user credentials from Apple Sign In")
+                }
+                
+                SessionManager.shared.saveSession(
+                    token: token,
+                    userId: id,
+                    name: name,
+                    email: email,
+                    role: role,
+                    isActive: res.isActive ?? true
+                )
+                SessionManager.shared.savePhone(res.phone ?? "")
+                
+                if let fcmToken = SessionManager.shared.getFcmToken() {
+                    _ = try? await NetworkManager.shared.updateFcmToken(token: fcmToken)
+                }
+                
+                self.showAppleLinkPrompt = false
+                self.pendingAppleResult = nil
+                self.authState = .success(role: role)
+                self.toastMessage = "Welcome, \(name)!"
+            } catch {
+                let errorMsg = error.localizedDescription
+                self.authState = .error(message: errorMsg)
+                self.toastMessage = errorMsg
+            }
+        }
+    }
+    
+    func confirmCreateNewAppleAccount() {
+        guard let result = pendingAppleResult else { return }
+        showAppleLinkPrompt = false
+        appleLogin(result: result, confirmNewAccount: true)
+    }
+    
+    func linkAppleWithExistingPassword() {
+        guard let appleResult = pendingAppleResult else { return }
+        guard !linkEmailInput.isEmpty && !linkPasswordInput.isEmpty else {
+            toastMessage = "Please enter your existing email and password"
+            return
+        }
+        
+        authState = .loading
+        Task {
+            do {
+                let authData = try await NetworkManager.shared.linkAppleToExistingAccount(
+                    identityToken: appleResult.identityToken,
+                    userIdentifier: appleResult.userIdentifier,
+                    email: linkEmailInput,
+                    password: linkPasswordInput
+                )
+                
                 SessionManager.shared.saveSession(
                     token: authData.token,
                     userId: authData.id,
@@ -167,12 +237,67 @@ class AuthViewModel: ObservableObject {
                     _ = try? await NetworkManager.shared.updateFcmToken(token: token)
                 }
                 
-                authState = .success(role: authData.role)
-                toastMessage = "Welcome, \(authData.name)!"
+                self.showAppleLinkPrompt = false
+                self.pendingAppleResult = nil
+                self.authState = .success(role: authData.role)
+                self.toastMessage = "Apple ID successfully linked to \(authData.email)!"
             } catch {
                 let errorMsg = error.localizedDescription
-                authState = .error(message: errorMsg)
-                toastMessage = errorMsg
+                self.authState = .error(message: errorMsg)
+                self.toastMessage = errorMsg
+            }
+        }
+    }
+    
+    func linkAppleWithGoogle() {
+        guard let appleResult = pendingAppleResult else { return }
+        
+        GoogleOAuthManager.shared.startGoogleSignIn { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let googleIdToken = res.idToken else {
+                    self.toastMessage = "Google verification failed"
+                    return
+                }
+                self.authState = .loading
+                Task {
+                    do {
+                        let authData = try await NetworkManager.shared.linkAppleToExistingAccount(
+                            identityToken: appleResult.identityToken,
+                            userIdentifier: appleResult.userIdentifier,
+                            googleIdToken: googleIdToken
+                        )
+                        
+                        SessionManager.shared.saveSession(
+                            token: authData.token,
+                            userId: authData.id,
+                            name: authData.name,
+                            email: authData.email,
+                            role: authData.role,
+                            isActive: authData.isActive
+                        )
+                        SessionManager.shared.savePhone(authData.phone ?? "")
+                        
+                        if let token = SessionManager.shared.getFcmToken() {
+                            _ = try? await NetworkManager.shared.updateFcmToken(token: token)
+                        }
+                        
+                        self.showAppleLinkPrompt = false
+                        self.pendingAppleResult = nil
+                        self.authState = .success(role: authData.role)
+                        self.toastMessage = "Apple ID linked to your Google account (\(authData.email))!"
+                    } catch {
+                        let errorMsg = error.localizedDescription
+                        self.authState = .error(message: errorMsg)
+                        self.toastMessage = errorMsg
+                    }
+                }
+            case .failure(let error):
+                if (error as NSError).code != ASWebAuthenticationSessionError.canceledLogin.rawValue {
+                    let errorMsg = error.localizedDescription
+                    self.toastMessage = errorMsg
+                }
             }
         }
     }

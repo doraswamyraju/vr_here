@@ -28,11 +28,44 @@ struct AppleAuthRequest: Codable {
     let userIdentifier: String?
     let email: String?
     let fullName: AppleFullNamePayload?
+    let confirmNewAccount: Bool?
     
     struct AppleFullNamePayload: Codable {
         let givenName: String?
         let familyName: String?
     }
+}
+
+struct AppleLinkExistingRequest: Codable {
+    let identityToken: String?
+    let userIdentifier: String?
+    let email: String?
+    let password: String?
+    let googleIdToken: String?
+}
+
+struct AppleAuthResponse: Codable {
+    let id: String?
+    let name: String?
+    let email: String?
+    let phone: String?
+    let role: String?
+    let isActive: Bool?
+    let token: String?
+    let isNewUser: Bool?
+    let appleId: String?
+    let message: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case name, email, phone, role, isActive, token, isNewUser, appleId, message
+    }
+}
+
+struct SimpleSuccessResponse: Codable {
+    let success: Bool?
+    let message: String?
+    let appleId: String?
 }
 
 struct RegisterRequest: Codable {
@@ -81,12 +114,13 @@ struct UserProfile: Codable, Identifiable, Equatable {
     let address: String?
     let profilePhoto: String?
     let companyLogo: String?
+    let appleId: String?
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case name, email, phone, role, isActive
         case companyName, businessType, gstin, panNumber, address
-        case profilePhoto, companyLogo
+        case profilePhoto, companyLogo, appleId
     }
     
     init(
@@ -102,7 +136,8 @@ struct UserProfile: Codable, Identifiable, Equatable {
         panNumber: String? = nil,
         address: String? = nil,
         profilePhoto: String? = nil,
-        companyLogo: String? = nil
+        companyLogo: String? = nil,
+        appleId: String? = nil
     ) {
         self.idVal = idVal
         self.name = name
@@ -117,6 +152,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
         self.address = address
         self.profilePhoto = profilePhoto
         self.companyLogo = companyLogo
+        self.appleId = appleId
     }
     
     init(from decoder: Decoder) throws {
@@ -135,6 +171,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
             self.address = nil
             self.profilePhoto = nil
             self.companyLogo = nil
+            self.appleId = nil
             return
         }
         
@@ -152,6 +189,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
         address = try container.decodeIfPresent(String.self, forKey: .address)
         profilePhoto = try container.decodeIfPresent(String.self, forKey: .profilePhoto)
         companyLogo = try container.decodeIfPresent(String.self, forKey: .companyLogo)
+        appleId = try container.decodeIfPresent(String.self, forKey: .appleId)
     }
 }
 

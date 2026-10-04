@@ -4,6 +4,8 @@ import {
     authUser,
     googleAuth,
     appleAuth,
+    linkAppleAccount,
+    linkAppleToExistingAccount,
     registerUser,
     registerPartner,
     forgotPassword,
@@ -29,6 +31,8 @@ router.post('/register-partner', registerPartner);
 router.post('/login', authUser);
 router.post('/google', googleAuth);
 router.post('/apple', appleAuth);
+router.post('/link-apple', protect, linkAppleAccount);
+router.post('/apple/link-existing', linkAppleToExistingAccount);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resetToken', resetPassword);
 router.route('/profile')

@@ -925,8 +925,20 @@ const appleAuth = asyncHandler(async (req, res) => {
             await user.save();
         }
     } else {
+        const { confirmNewAccount } = req.body;
         const finalEmail = email || `${appleId}@privaterelay.appleid.com`;
         const finalName = (name && name.length > 0) ? name : (email ? email.split('@')[0] : 'Apple User');
+
+        // If user didn't explicitly confirm creating a new account, prompt them on iOS
+        if (!confirmNewAccount) {
+            return res.status(200).json({
+                isNewUser: true,
+                appleId,
+                email: finalEmail,
+                name: finalName,
+                message: 'No existing account found with this Apple ID.'
+            });
+        }
 
         user = await User.create({
             name: finalName,
@@ -970,10 +982,141 @@ const appleAuth = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Link Apple ID to currently authenticated user profile
+// @route   POST /api/auth/link-apple
+// @access  Private
+const linkAppleAccount = asyncHandler(async (req, res) => {
+    const { identityToken, userIdentifier } = req.body;
+    let appleId = userIdentifier;
+    if (identityToken) {
+        try {
+            const decoded = jwt.decode(identityToken, { complete: true });
+            if (decoded?.payload?.sub) {
+                appleId = decoded.payload.sub;
+            }
+        } catch (e) {}
+    }
+    if (!appleId) {
+        res.status(400);
+        throw new Error('Apple user identifier is required');
+    }
+
+    const existingWithApple = await User.findOne({ appleId, _id: { $ne: req.user._id } });
+    if (existingWithApple) {
+        res.status(400);
+        throw new Error(`This Apple ID is already linked to another account (${existingWithApple.email})`);
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    user.appleId = appleId;
+    await user.save();
+
+    res.json({
+        success: true,
+        message: 'Apple ID successfully linked to your account',
+        appleId: user.appleId
+    });
+});
+
+// @desc    Link Apple ID to existing account using email/password or Google verification
+// @route   POST /api/auth/apple/link-existing
+// @access  Public
+const linkAppleToExistingAccount = asyncHandler(async (req, res) => {
+    const { identityToken, userIdentifier, email, password, googleIdToken } = req.body;
+    let appleId = userIdentifier;
+    if (identityToken) {
+        try {
+            const decoded = jwt.decode(identityToken, { complete: true });
+            if (decoded?.payload?.sub) {
+                appleId = decoded.payload.sub;
+            }
+        } catch (e) {}
+    }
+    if (!appleId) {
+        res.status(400);
+        throw new Error('Apple user identifier is required');
+    }
+
+    let user = null;
+    if (email && password) {
+        user = await User.findOne({ email });
+        if (!user || !(await user.matchPassword(password))) {
+            res.status(401);
+            throw new Error('Invalid email or password for existing account');
+        }
+    } else if (googleIdToken) {
+        try {
+            const ticket = await googleClient.verifyIdToken({
+                idToken: googleIdToken,
+                audience: [
+                    process.env.GOOGLE_CLIENT_ID,
+                    '674627570227-vt8ub6924het3d49j57ep1fh6k42c9p0.apps.googleusercontent.com',
+                    '674627570227-0hds8k55egipj5g6tai0kqrvm8cse9v1.apps.googleusercontent.com',
+                    '674627570227-tdaif2sht51ejtkisle8e4odjc9mfufp.apps.googleusercontent.com'
+                ].filter(Boolean)
+            });
+            const payload = ticket.getPayload();
+            if (payload?.email) {
+                user = await User.findOne({ email: payload.email });
+            }
+        } catch (err) {
+            // Fallback tokeninfo check
+            const payload = await httpGetJson(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
+            if (payload?.email) {
+                user = await User.findOne({ email: payload.email });
+            }
+        }
+
+        if (!user) {
+            res.status(404);
+            throw new Error('Existing account with this Google email was not found');
+        }
+    } else {
+        res.status(400);
+        throw new Error('Please provide email/password or Google verification to link your account');
+    }
+
+    if (!user.isActive) {
+        res.status(403);
+        throw new Error('User account is inactive. Contact admin.');
+    }
+
+    user.appleId = appleId;
+    await user.save();
+
+    res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',
+        role: user.role,
+        profilePhoto: user.profilePhoto || null,
+        companyLogo: user.companyLogo || null,
+        companyName: user.companyName || '',
+        businessType: user.businessType || '',
+        gstin: user.gstin || '',
+        panNumber: user.panNumber || '',
+        address: user.address || '',
+        requiresPhone: !user.phone,
+        isActive: user.isActive,
+        isClockedIn: user.isClockedIn || false,
+        activeOrderId: user.activeOrderId || null,
+        assignedTicketCategories: user.assignedTicketCategories || [],
+        token: generateToken(user._id)
+    });
+});
+
 export {
     authUser,
     googleAuth,
     appleAuth,
+    linkAppleAccount,
+    linkAppleToExistingAccount,
     registerUser,
     registerPartner,
     forgotPassword,

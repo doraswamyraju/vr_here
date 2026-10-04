@@ -107,7 +107,15 @@ class NetworkManager {
         return try await performRequest(path: "api/auth/google", method: "POST", body: data)
     }
     
-    func appleLogin(identityToken: String?, userIdentifier: String?, email: String?, fullName: AppleSignInResult? = nil, givenName: String? = nil, familyName: String? = nil) async throws -> AuthResponse {
+    func appleLogin(
+        identityToken: String?,
+        userIdentifier: String?,
+        email: String?,
+        fullName: AppleSignInResult? = nil,
+        givenName: String? = nil,
+        familyName: String? = nil,
+        confirmNewAccount: Bool = false
+    ) async throws -> AppleAuthResponse {
         var fullNamePayload: AppleAuthRequest.AppleFullNamePayload? = nil
         if let gn = givenName ?? fullName?.fullName?.givenName, let fn = familyName ?? fullName?.fullName?.familyName {
             fullNamePayload = AppleAuthRequest.AppleFullNamePayload(givenName: gn, familyName: fn)
@@ -119,10 +127,38 @@ class NetworkManager {
             identityToken: identityToken,
             userIdentifier: userIdentifier,
             email: email,
-            fullName: fullNamePayload
+            fullName: fullNamePayload,
+            confirmNewAccount: confirmNewAccount
         )
         let data = try JSONEncoder().encode(reqObj)
         return try await performRequest(path: "api/auth/apple", method: "POST", body: data)
+    }
+    
+    func linkAppleAccount(identityToken: String?, userIdentifier: String?) async throws -> SimpleSuccessResponse {
+        struct LinkPayload: Codable {
+            let identityToken: String?
+            let userIdentifier: String?
+        }
+        let data = try JSONEncoder().encode(LinkPayload(identityToken: identityToken, userIdentifier: userIdentifier))
+        return try await performRequest(path: "api/auth/link-apple", method: "POST", body: data)
+    }
+    
+    func linkAppleToExistingAccount(
+        identityToken: String?,
+        userIdentifier: String?,
+        email: String? = nil,
+        password: String? = nil,
+        googleIdToken: String? = nil
+    ) async throws -> AuthResponse {
+        let reqObj = AppleLinkExistingRequest(
+            identityToken: identityToken,
+            userIdentifier: userIdentifier,
+            email: email,
+            password: password,
+            googleIdToken: googleIdToken
+        )
+        let data = try JSONEncoder().encode(reqObj)
+        return try await performRequest(path: "api/auth/apple/link-existing", method: "POST", body: data)
     }
     
     func register(request: RegisterRequest) async throws -> AuthResponse {

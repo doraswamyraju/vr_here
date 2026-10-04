@@ -230,6 +230,9 @@ struct LoginView: View {
                 onLoginSuccess(role)
             }
         }
+        .sheet(isPresented: $viewModel.showAppleLinkPrompt) {
+            AppleAccountLinkSheet(viewModel: viewModel)
+        }
     }
 }
 

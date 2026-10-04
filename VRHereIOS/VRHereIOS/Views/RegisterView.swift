@@ -225,5 +225,8 @@ struct RegisterView: View {
         .onAppear {
             viewModel.roleInput = "client"
         }
+        .sheet(isPresented: $viewModel.showAppleLinkPrompt) {
+            AppleAccountLinkSheet(viewModel: viewModel)
+        }
     }
 }
