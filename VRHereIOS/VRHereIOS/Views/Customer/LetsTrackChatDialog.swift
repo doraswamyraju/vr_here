@@ -1,187 +1,310 @@
 import SwiftUI
 import WebKit
+import Combine
 
-// MARK: - Dedicated LetsTrack Live Chat WebView (Connecting to livechat.vrhere.in)
-struct LetsTrackWebView: UIViewRepresentable {
-    let customerName: String
-    let customerEmail: String
-    @Binding var isLoading: Bool
+// MARK: - LetsTrack Message Model matching Android
+struct LetsTrackMessage: Identifiable, Equatable {
+    let id: String
+    let senderName: String
+    let senderType: String // "Visitor" | "Agent" | "System"
+    let text: String
+    let timestamp: String
     
-    func makeUIView(context: Context) -> WKWebView {
-        let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
-        
-        // Setup preferences
-        let prefs = WKWebpagePreferences()
-        prefs.allowsContentJavaScript = true
-        config.defaultWebpagePreferences = prefs
-        
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = context.coordinator
-        webView.isOpaque = false
-        webView.backgroundColor = UIColor(red: 15/255, green: 23/255, blue: 42/255, alpha: 1.0)
-        webView.scrollView.isScrollEnabled = true
-        webView.scrollView.bounces = false
-        
-        // Load the official LetsTrack Live Chat Engine HTML
-        let visitorName = customerName.isEmpty ? "Customer" : customerName.replacingOccurrences(of: "\"", with: "\\\"")
-        let visitorEmail = customerEmail.isEmpty ? "customer@vrhere.in" : customerEmail.replacingOccurrences(of: "\"", with: "\\\"")
-        
-        let htmlContent = """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-          <title>VR HERE Live Chat</title>
-          <style>
-            * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-            html, body {
-              margin: 0;
-              padding: 0;
-              width: 100%;
-              height: 100%;
-              background: #0F172A;
-              color: #F8FAFC;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              overflow: hidden;
-            }
-            #loading-overlay {
-              position: fixed;
-              top: 0;
-              left: 0;
-              width: 100%;
-              height: 100%;
-              background: #0F172A;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              z-index: 99999;
-              transition: opacity 0.3s ease;
-            }
-            .spinner {
-              width: 36px;
-              height: 36px;
-              border: 3px solid rgba(255, 255, 255, 0.1);
-              border-top-color: #DC2626;
-              border-radius: 50%;
-              animation: spin 0.8s linear infinite;
-            }
-            @keyframes spin {
-              to { transform: rotate(360deg); }
-            }
-            .loading-text {
-              margin-top: 14px;
-              font-size: 13px;
-              font-weight: 700;
-              color: #94A3B8;
-              letter-spacing: 0.3px;
-            }
-          </style>
-          
-          <script>
-            // Shadow DOM hook matching web index.html
-            (function() {
-              var origAttachShadow = Element.prototype.attachShadow;
-              if (origAttachShadow) {
-                Element.prototype.attachShadow = function(init) {
-                  var shadow = origAttachShadow.call(this, Object.assign({}, init, { mode: 'open' }));
-                  if (this.id === 'letstrack-widget-root') {
-                    window.__letsTrackShadowRoot = shadow;
-                  }
-                  return shadow;
-                };
-              }
-            })();
-
-            window.LetsTrackConfig = {
-              websiteId: "lt_6a9347d5410be8335e42db43949caf95",
-              visitorName: "\(visitorName)",
-              visitorEmail: "\(visitorEmail)",
-              openByDefault: true
-            };
-
-            // Auto-trigger widget open when ready
-            function triggerWidgetOpen() {
-              setTimeout(function() {
-                var overlay = document.getElementById('loading-overlay');
-                if (overlay) overlay.style.display = 'none';
-
-                // Click the launcher or dispatch open event
-                try {
-                  if (window.LetsTrack && typeof window.LetsTrack.open === 'function') {
-                    window.LetsTrack.open();
-                  } else {
-                    var btn = document.querySelector('#letstrack-launcher, .letstrack-launcher-btn, [data-letstrack-launcher]');
-                    if (btn) btn.click();
-                  }
-                } catch(e) {}
-              }, 1200);
-            }
-          </script>
-          <script src="https://livechat.vrhere.in/widget.js" async onload="triggerWidgetOpen()"></script>
-        </head>
-        <body>
-          <div id="loading-overlay">
-            <div class="spinner"></div>
-            <div class="loading-text">Connecting to Live Compliance Desk...</div>
-          </div>
-        </body>
-        </html>
-        """
-        
-        webView.loadHTMLString(htmlContent, baseURL: URL(string: "https://livechat.vrhere.in/"))
-        return webView
-    }
-    
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, WKNavigationDelegate {
-        let parent: LetsTrackWebView
-        
-        init(_ parent: LetsTrackWebView) {
-            self.parent = parent
-        }
-        
-        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            DispatchQueue.main.async {
-                self.parent.isLoading = true
-            }
-        }
-        
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                self.parent.isLoading = false
-            }
-        }
-        
-        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            DispatchQueue.main.async {
-                self.parent.isLoading = false
-            }
+    init(id: String = UUID().uuidString, senderName: String, senderType: String, text: String, timestamp: String? = nil) {
+        self.id = id
+        self.senderName = senderName
+        self.senderType = senderType
+        self.text = text
+        if let ts = timestamp {
+            self.timestamp = ts
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mm a"
+            self.timestamp = formatter.string(from: Date())
         }
     }
 }
 
-// MARK: - Native Container Sheet for LetsTrack Live Chat
+// MARK: - Headless Socket.IO Engine Coordinator for LetsTrack
+class LetsTrackSocketCoordinator: NSObject, ObservableObject, WKScriptMessageHandler {
+    @Published var isConnected = false
+    @Published var isAgentTyping = false
+    @Published var messages: [LetsTrackMessage] = []
+    
+    private var webView: WKWebView?
+    private let customerName: String
+    private let customerEmail: String
+    private let customerPhone: String
+    private let visitorId: String
+    
+    init(customerName: String, customerEmail: String, customerPhone: String = "") {
+        self.customerName = customerName.isEmpty ? "Valued Customer" : customerName
+        self.customerEmail = customerEmail
+        self.customerPhone = customerPhone
+        
+        // Persistent visitor UUID matching Android SharedPreferences
+        if let storedId = UserDefaults.standard.string(forKey: "letstrack_visitor_uuid"), !storedId.isEmpty {
+            self.visitorId = storedId
+        } else {
+            let newId = "v_" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(18)
+            UserDefaults.standard.set(newId, forKey: "letstrack_visitor_uuid")
+            self.visitorId = newId
+        }
+        
+        super.init()
+        
+        // Initial welcome system message
+        self.messages = [
+            LetsTrackMessage(
+                senderName: "VR HERE Assistant",
+                senderType: "System",
+                text: "Welcome to VR HERE Live Support! How can we assist you today, \(self.customerName)?"
+            )
+        ]
+        
+        setupHeadlessSocket()
+    }
+    
+    private func setupHeadlessSocket() {
+        let contentController = WKUserContentController()
+        contentController.add(self, name: "chatBridge")
+        
+        let config = WKWebViewConfiguration()
+        config.userContentController = contentController
+        
+        let web = WKWebView(frame: .zero, configuration: config)
+        self.webView = web
+        
+        let sanitizedName = customerName.replacingOccurrences(of: "\"", with: "\\\"")
+        let sanitizedEmail = customerEmail.replacingOccurrences(of: "\"", with: "\\\"")
+        let sanitizedPhone = customerPhone.replacingOccurrences(of: "\"", with: "\\\"")
+        
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+          <script>
+            var socket = null;
+            var apiKey = "lt_6a9347d5410be8335e42db43949caf95";
+            var visitorId = "\(visitorId)";
+            var visitorName = "\(sanitizedName)";
+            var visitorEmail = "\(sanitizedEmail)";
+            var visitorPhone = "\(sanitizedPhone)";
+
+            // Store in localStorage for web/widget persistence
+            try {
+              localStorage.setItem('letstrack_visitor_uuid', visitorId);
+              if (visitorName) localStorage.setItem('letstrack_visitor_name', visitorName);
+              if (visitorEmail) localStorage.setItem('letstrack_visitor_email', visitorEmail);
+              if (visitorPhone) localStorage.setItem('letstrack_visitor_phone', visitorPhone);
+            } catch (e) {}
+
+            function post(type, data) {
+              if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.chatBridge) {
+                window.webkit.messageHandlers.chatBridge.postMessage({ type: type, data: data || {} });
+              }
+            }
+
+            function initSocket() {
+              try {
+                socket = io("https://livechat.vrhere.in/visitor", {
+                  transports: ["websocket", "polling"],
+                  reconnection: true,
+                  reconnectionAttempts: 15,
+                  reconnectionDelay: 1000
+                });
+
+                socket.on("connect", function() {
+                  post("connected", {});
+                  socket.emit("visitor-init", {
+                    apiKey: apiKey,
+                    visitorId: visitorId,
+                    currentUrl: "/customer/app",
+                    referrer: "VRHere iOS App",
+                    name: visitorName,
+                    email: visitorEmail,
+                    phoneNumber: visitorPhone,
+                    phone: visitorPhone,
+                    browser: "VRHere iOS App",
+                    os: "iOS",
+                    deviceType: "Mobile"
+                  });
+                });
+
+                socket.on("disconnect", function() {
+                  post("disconnected", {});
+                });
+
+                socket.on("connect_error", function(err) {
+                  post("disconnected", { error: err ? err.message : "" });
+                });
+
+                socket.on("visitor-init-success", function(d) {
+                  post("connected", d || {});
+                });
+
+                socket.on("chat-history", function(d) {
+                  post("chat-history", d || {});
+                });
+
+                socket.on("msg-received", function(d) {
+                  post("msg-received", d || {});
+                });
+
+                socket.on("agent-typing", function(d) {
+                  post("agent-typing", d || {});
+                });
+              } catch(e) {
+                post("error", { message: e.toString() });
+              }
+            }
+
+            function sendVisitorMsg(text) {
+              if (socket) {
+                socket.emit("visitor-msg", { text: text });
+                socket.emit("visitor-typing", { isTyping: false });
+              }
+            }
+
+            function setVisitorTyping(isTyping) {
+              if (socket) {
+                socket.emit("visitor-typing", { isTyping: isTyping });
+              }
+            }
+
+            window.onload = initSocket;
+          </script>
+        </head>
+        <body></body>
+        </html>
+        """
+        
+        web.loadHTMLString(html, baseURL: URL(string: "https://livechat.vrhere.in/"))
+    }
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard let dict = message.body as? [String: Any],
+              let type = dict["type"] as? String else { return }
+        let data = dict["data"] as? [String: Any] ?? [:]
+        
+        DispatchQueue.main.async {
+            switch type {
+            case "connected":
+                self.isConnected = true
+            case "disconnected":
+                self.isConnected = false
+            case "chat-history":
+                if let msgs = data["messages"] as? [[String: Any]] {
+                    for m in msgs {
+                        let text = m["text"] as? String ?? ""
+                        if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            let sType = m["senderType"] as? String ?? "Agent"
+                            let sName = m["senderName"] as? String ?? (sType == "Visitor" ? self.customerName : "Support Officer")
+                            let msgId = m["_id"] as? String ?? UUID().uuidString
+                            if !self.messages.contains(where: { $0.id == msgId }) {
+                                self.messages.append(
+                                    LetsTrackMessage(
+                                        id: msgId,
+                                        senderName: sName,
+                                        senderType: sType,
+                                        text: text
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            case "msg-received":
+                let text = data["text"] as? String ?? ""
+                if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    let sType = data["senderType"] as? String ?? "Agent"
+                    let sName = data["senderName"] as? String ?? "Support Officer"
+                    let msgId = data["_id"] as? String ?? UUID().uuidString
+                    self.isAgentTyping = false
+                    if !self.messages.contains(where: { $0.id == msgId }) {
+                        self.messages.append(
+                            LetsTrackMessage(
+                                id: msgId,
+                                senderName: sName,
+                                senderType: sType,
+                                text: text
+                            )
+                        )
+                    }
+                }
+            case "agent-typing":
+                self.isAgentTyping = data["isTyping"] as? Bool ?? false
+            default:
+                break
+            }
+        }
+    }
+    
+    func send(text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        let newMsg = LetsTrackMessage(
+            senderName: customerName,
+            senderType: "Visitor",
+            text: trimmed
+        )
+        messages.append(newMsg)
+        
+        let escaped = trimmed
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "")
+        
+        webView?.evaluateJavaScript("sendVisitorMsg(\"\(escaped)\");", completionHandler: nil)
+    }
+    
+    func setTyping(isTyping: Bool) {
+        webView?.evaluateJavaScript("setVisitorTyping(\(isTyping));", completionHandler: nil)
+    }
+    
+    func cleanup() {
+        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "chatBridge")
+        webView?.stopLoading()
+        webView = nil
+    }
+}
+
+// MARK: - Native LetsTrack Live Support Chat Dialog (1:1 with Android)
 struct LetsTrackChatDialog: View {
     @Binding var isOpen: Bool
     let customerName: String
     let customerEmail: String
+    var customerPhone: String = ""
     
-    @State private var isLoadingWeb = true
-    @State private var webViewId = UUID()
+    @StateObject private var socketCoordinator: LetsTrackSocketCoordinator
+    @State private var inputText: String = ""
+    
+    private let quickPrompts = [
+        "📋 Track My Filing Status",
+        "📑 Download Tax Invoice",
+        "💼 MSME / GST Query",
+        "📞 Speak with an Expert"
+    ]
+    
+    init(isOpen: Binding<Bool>, customerName: String, customerEmail: String, customerPhone: String = "") {
+        self._isOpen = isOpen
+        self.customerName = customerName
+        self.customerEmail = customerEmail
+        self.customerPhone = customerPhone
+        self._socketCoordinator = StateObject(
+            wrappedValue: LetsTrackSocketCoordinator(customerName: customerName, customerEmail: customerEmail, customerPhone: customerPhone)
+        )
+    }
     
     var body: some View {
         if isOpen {
-            ZStack {
-                Color.black.opacity(0.65)
+            ZStack(alignment: .bottom) {
+                // Dimmed Backdrop
+                Color.black.opacity(0.55)
                     .ignoresSafeArea()
                     .onTapGesture {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -189,128 +312,262 @@ struct LetsTrackChatDialog: View {
                         }
                     }
                 
+                // Floating Chat Card matching Android LetsTrackChatDialog
                 VStack(spacing: 0) {
-                    Spacer().frame(height: 30)
-                    
-                    // Main Chat Window Container
-                    VStack(spacing: 0) {
-                        // Header Bar
-                        HStack(spacing: 12) {
-                            ZStack(alignment: .bottomTrailing) {
-                                ZStack {
-                                    Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [Color(red: 220/255, green: 38/255, blue: 38/255), Color(red: 185/255, green: 28/255, blue: 28/255)],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                        .frame(width: 42, height: 42)
-                                    Image(systemName: "headphones")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(.white)
-                                }
-                                
+                    // Header Bar with VR HERE Crimson-to-Navy Gradient
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("VR HERE Live Support")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            HStack(spacing: 6) {
                                 Circle()
-                                    .fill(Color(red: 34/255, green: 197/255, blue: 94/255))
-                                    .frame(width: 10, height: 10)
-                                    .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
+                                    .fill(socketCoordinator.isConnected ? Color(red: 16/255, green: 185/255, blue: 129/255) : Color(red: 245/255, green: 158/255, blue: 11/255))
+                                    .frame(width: 8, height: 8)
+                                    .shadow(color: (socketCoordinator.isConnected ? Color.green : Color.orange).opacity(0.6), radius: 3)
+                                
+                                Text(socketCoordinator.isConnected ? "Online • Connected to LetsTrack" : "Connecting...")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(Color.white.opacity(0.9))
                             }
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack(spacing: 6) {
-                                    Text("VR HERE Live Support")
-                                        .font(.system(size: 15, weight: .black))
-                                        .foregroundColor(.white)
+                        }
+                        
+                        Spacer()
+                        
+                        // Close Button
+                        Button(action: {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                isOpen = false
+                            }
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 30, height: 30)
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 220/255, green: 38/255, blue: 38/255), Color(red: 49/255, green: 46/255, blue: 129/255)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    
+                    // Messages Thread Area
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                ForEach(socketCoordinator.messages) { msg in
+                                    let isVisitor = msg.senderType == "Visitor"
+                                    let isSystem = msg.senderType == "System"
                                     
-                                    Text("ONLINE")
-                                        .font(.system(size: 8.5, weight: .black))
-                                        .foregroundColor(Color(red: 34/255, green: 197/255, blue: 94/255))
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.2))
-                                        .clipShape(Capsule())
+                                    VStack(alignment: isVisitor ? .trailing : .leading, spacing: 3) {
+                                        if !isVisitor {
+                                            Text(msg.senderName)
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                                                .padding(.leading, 6)
+                                        }
+                                        
+                                        VStack(alignment: isVisitor ? .trailing : .leading, spacing: 4) {
+                                            Text(msg.text)
+                                                .font(.system(size: 13.5))
+                                                .lineSpacing(3)
+                                                .foregroundColor(
+                                                    isVisitor ? .white : (isSystem ? Color(red: 146/255, green: 64/255, blue: 14/255) : Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                )
+                                            
+                                            Text(msg.timestamp)
+                                                .font(.system(size: 9.5, weight: .medium))
+                                                .foregroundColor(
+                                                    isVisitor ? Color.white.opacity(0.75) : (isSystem ? Color(red: 180/255, green: 83/255, blue: 9/255).opacity(0.8) : Color(red: 100/255, green: 116/255, blue: 139/255))
+                                                )
+                                        }
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 10)
+                                        .background(
+                                            isVisitor ? Color(red: 220/255, green: 38/255, blue: 38/255) :
+                                            (isSystem ? Color(red: 254/255, green: 243/255, blue: 199/255) : Color(red: 226/255, green: 232/255, blue: 240/255))
+                                        )
+                                        .cornerRadius(16)
+                                        .shadow(color: isVisitor ? Color.black.opacity(0.08) : Color.clear, radius: 4, y: 2)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: isVisitor ? .trailing : .leading)
+                                    .id(msg.id)
                                 }
                                 
-                                Text("Real-Time CA & Compliance Desk")
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
-                            }
-                            
-                            Spacer()
-                            
-                            // Reload Button
-                            Button(action: {
-                                webViewId = UUID()
-                            }) {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 32, height: 32)
-                                    .background(Color.white.opacity(0.12))
-                                    .clipShape(Circle())
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            
-                            // Close Button
-                            Button(action: {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                    isOpen = false
+                                // Agent Typing Indicator
+                                if socketCoordinator.isAgentTyping {
+                                    HStack(spacing: 5) {
+                                        AgentTypingDotsView()
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                    .background(Color(red: 226/255, green: 232/255, blue: 240/255))
+                                    .cornerRadius(14)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .id("typing_indicator")
                                 }
-                            }) {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 32, height: 32)
-                                    .background(Color.white.opacity(0.12))
-                                    .clipShape(Circle())
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
                         }
-                        .padding(16)
-                        .background(Color(red: 15/255, green: 23/255, blue: 42/255))
-                        
-                        // Live Web Chat View
-                        ZStack {
-                            LetsTrackWebView(
-                                customerName: customerName,
-                                customerEmail: customerEmail,
-                                isLoading: $isLoadingWeb
-                            )
-                            .id(webViewId)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(red: 15/255, green: 23/255, blue: 42/255))
-                            
-                            if isLoadingWeb {
-                                VStack(spacing: 12) {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: Color(red: 220/255, green: 38/255, blue: 38/255)))
-                                        .scaleEffect(1.2)
-                                    Text("Connecting to live support agents...")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(Color(red: 148/255, green: 163/255, blue: 184/255))
+                        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+                        .onChange(of: socketCoordinator.messages.count) { _ in
+                            if let last = socketCoordinator.messages.last {
+                                withAnimation {
+                                    proxy.scrollTo(last.id, anchor: .bottom)
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .background(Color(red: 15/255, green: 23/255, blue: 42/255))
+                            }
+                        }
+                        .onChange(of: socketCoordinator.isAgentTyping) { typing in
+                            if typing {
+                                withAnimation {
+                                    proxy.scrollTo("typing_indicator", anchor: .bottom)
+                                }
                             }
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: UIScreen.main.bounds.height * 0.78)
-                    .background(Color(red: 15/255, green: 23/255, blue: 42/255))
-                    .cornerRadius(24)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(0.45), radius: 25, y: 10)
+                    
+                    // Quick Suggestion Chips Row
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(quickPrompts, id: \.self) { prompt in
+                                Button(action: {
+                                    socketCoordinator.send(text: prompt)
+                                }) {
+                                    Text(prompt)
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
+                                        .padding(.horizontal, 11)
+                                        .padding(.vertical, 6)
+                                        .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                                        .cornerRadius(14)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(Color(red: 203/255, green: 213/255, blue: 225/255), lineWidth: 1)
+                                        )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                    }
+                    .background(Color.white)
+                    
+                    // Input Bar
+                    HStack(spacing: 10) {
+                        TextField("Type your message...", text: $inputText)
+                            .font(.system(size: 13.5))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+                            .cornerRadius(22)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 22)
+                                    .stroke(Color(red: 203/255, green: 213/255, blue: 225/255), lineWidth: 1)
+                            )
+                            .onChange(of: inputText) { val in
+                                socketCoordinator.setTyping(isTyping: !val.isEmpty)
+                            }
+                            .onSubmit {
+                                if !inputText.isEmpty {
+                                    socketCoordinator.send(text: inputText)
+                                    inputText = ""
+                                }
+                            }
+                        
+                        // Send Button
+                        Button(action: {
+                            if !inputText.isEmpty {
+                                socketCoordinator.send(text: inputText)
+                                inputText = ""
+                            }
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color(red: 220/255, green: 38/255, blue: 38/255), Color(red: 225/255, green: 29/255, blue: 72/255)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 40, height: 40)
+                                    .shadow(color: Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.35), radius: 4, y: 2)
+                                
+                                Image(systemName: "paperplane.fill")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
                     .padding(.horizontal, 12)
-                    .padding(.bottom, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.white)
+                    .overlay(
+                        Divider(), alignment: .top
+                    )
+                    
+                    // LetsTrack Branding Footer
+                    HStack {
+                        Spacer()
+                        Text("⚡ Powered by LetsTrack™")
+                            .font(.system(size: 9.5, weight: .semibold))
+                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                        Spacer()
+                    }
+                    .padding(.vertical, 5)
+                    .background(Color(red: 241/255, green: 245/255, blue: 249/255))
                 }
+                .frame(maxWidth: .infinity)
+                .frame(height: min(UIScreen.main.bounds.height * 0.72, 580))
+                .background(Color.white)
+                .cornerRadius(20)
+                .shadow(color: Color.black.opacity(0.3), radius: 20, y: 8)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 12)
             }
             .transition(.opacity.combined(with: .move(edge: .bottom)))
             .zIndex(9999)
+        }
+    }
+}
+
+// MARK: - Animated Typing Indicator Dots
+struct AgentTypingDotsView: View {
+    @State private var dotPhase = 0
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(Color(red: 100/255, green: 116/255, blue: 139/255))
+                .frame(width: 5, height: 5)
+                .opacity(dotPhase == 0 ? 1.0 : 0.3)
+            
+            Circle()
+                .fill(Color(red: 100/255, green: 116/255, blue: 139/255))
+                .frame(width: 5, height: 5)
+                .opacity(dotPhase == 1 ? 1.0 : 0.3)
+            
+            Circle()
+                .fill(Color(red: 100/255, green: 116/255, blue: 139/255))
+                .frame(width: 5, height: 5)
+                .opacity(dotPhase == 2 ? 1.0 : 0.3)
+        }
+        .onAppear {
+            Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { timer in
+                dotPhase = (dotPhase + 1) % 3
+            }
         }
     }
 }

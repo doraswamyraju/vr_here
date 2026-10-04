@@ -153,52 +153,60 @@ struct VRLogoView: View {
     var onClick: (() -> Void)? = nil
     
     var body: some View {
-        Button(action: {
-            onClick?()
-        }) {
-            HStack(spacing: 7) {
-                Image("logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: height)
-                
-                // Vertical Divider line with a red dot centered on it
-                ZStack {
-                    Rectangle()
-                        .fill(Color.textMuted.opacity(0.4))
-                        .frame(width: 1, height: height * 0.88)
-                    
-                    Circle()
-                        .fill(Color.primaryRed)
-                        .frame(width: 4.5, height: 4.5)
+        Group {
+            if let onClick = onClick {
+                Button(action: onClick) {
+                    content
                 }
-                .frame(width: 6)
-                
-                VStack(alignment: .leading, spacing: 0) {
-                    // "Here" with its red underline
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Here")
-                            .font(.custom("Georgia", size: height * 0.52).bold())
-                            .foregroundColor(Color.primaryRed)
-                        
-                        Rectangle()
-                            .fill(Color.primaryRed)
-                            .frame(height: 1.2)
-                    }
-                    .fixedSize()
-                    
-                    Spacer(minLength: 1)
-                    
-                    // "Business Management Solutions" subtitle
-                    Text("Business Management Solutions")
-                        .font(.system(size: max(6, height * 0.25), weight: .bold))
-                        .foregroundColor(Color.textDark.opacity(0.85))
-                }
-                .frame(height: height)
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                content
             }
         }
-        .disabled(onClick == nil)
-        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var content: some View {
+        HStack(spacing: 7) {
+            Image("logo")
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(height: height)
+            
+            // Vertical Divider line with a red dot centered on it
+            ZStack {
+                Rectangle()
+                    .fill(Color.textMuted.opacity(0.4))
+                    .frame(width: 1, height: height * 0.88)
+                
+                Circle()
+                    .fill(Color.primaryRed)
+                    .frame(width: 4.5, height: 4.5)
+            }
+            .frame(width: 6)
+            
+            VStack(alignment: .leading, spacing: 0) {
+                // "Here" with its red underline
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Here")
+                        .font(.custom("Georgia", size: height * 0.52).bold())
+                        .foregroundColor(Color.primaryRed)
+                    
+                    Rectangle()
+                        .fill(Color.primaryRed)
+                        .frame(height: 1.2)
+                }
+                .fixedSize()
+                
+                Spacer(minLength: 1)
+                
+                // "Business Management Solutions" subtitle
+                Text("Business Management Solutions")
+                    .font(.system(size: max(6, height * 0.25), weight: .bold))
+                    .foregroundColor(Color.textDark)
+            }
+            .frame(height: height)
+        }
     }
 }
 
@@ -326,47 +334,55 @@ struct VRAvatarView: View {
     }
     
     var body: some View {
-        Button(action: {
-            onClick?()
-        }) {
-            ZStack {
-                if let url = resolvedURL {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: size, height: size)
-                                .background(Color.white)
-                                .clipShape(RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2))
-                        case .empty:
-                            ZStack {
-                                Color.white
-                                ProgressView()
-                                    .scaleEffect(0.6)
-                            }
-                            .frame(width: size, height: size)
-                            .clipShape(RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2))
-                        case .failure:
-                            fallbackInitials
-                        @unknown default:
-                            fallbackInitials
-                        }
-                    }
-                } else {
-                    fallbackInitials
+        Group {
+            if let onClick = onClick {
+                Button(action: onClick) {
+                    avatarContent
                 }
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                avatarContent
             }
-            .frame(width: size, height: size)
-            .overlay(
-                RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2)
-                    .stroke(borderColor, lineWidth: borderWidth)
-            )
-            .shadow(color: Color.black.opacity(0.1), radius: 3, y: 1)
         }
-        .disabled(onClick == nil)
-        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var avatarContent: some View {
+        ZStack {
+            if let url = resolvedURL {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .renderingMode(.original)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: size, height: size)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2))
+                    case .empty:
+                        ZStack {
+                            Color.white
+                            ProgressView()
+                                .scaleEffect(0.6)
+                        }
+                        .frame(width: size, height: size)
+                        .clipShape(RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2))
+                    case .failure:
+                        fallbackInitials
+                    @unknown default:
+                        fallbackInitials
+                    }
+                }
+            } else {
+                fallbackInitials
+            }
+        }
+        .frame(width: size, height: size)
+        .overlay(
+            RoundedRectangle(cornerRadius: isSquare ? cornerRadius : size / 2)
+                .stroke(borderColor, lineWidth: borderWidth)
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 3, y: 1)
     }
     
     private var fallbackInitials: some View {
@@ -391,17 +407,50 @@ struct VRAvatarView: View {
 struct NotificationsSheet: View {
     let notifications: [NotificationResponse]
     let onMarkAsRead: (String) -> Void
+    var onMarkAllAsRead: (() -> Void)? = nil
+    var onNotificationClick: ((NotificationResponse) -> Void)? = nil
     let onClose: () -> Void
+    
+    private var unreadCount: Int {
+        notifications.filter { !$0.isRead }.count
+    }
     
     var body: some View {
         VStack(spacing: 0) {
             // Header bar
-            HStack {
+            HStack(spacing: 8) {
                 Text("Notifications")
                     .font(.system(size: 18, weight: .black))
                     .foregroundColor(.textDark)
                 
+                if unreadCount > 0 {
+                    Text("\(unreadCount) new")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.primaryRed)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.primaryRed.opacity(0.12))
+                        .clipShape(Capsule())
+                }
+                
                 Spacer()
+                
+                if unreadCount > 0, let onMarkAllAsRead = onMarkAllAsRead {
+                    Button(action: onMarkAllAsRead) {
+                        Text("Mark all read")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.textDark)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.white)
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.borderLight, lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(ScaleOnPressButtonStyle())
+                }
                 
                 Button(action: onClose) {
                     Image(systemName: "xmark")
@@ -438,6 +487,7 @@ struct NotificationsSheet: View {
                         ForEach(notifications) { item in
                             Button(action: {
                                 onMarkAsRead(item.id)
+                                onNotificationClick?(item)
                             }) {
                                 HStack(spacing: 14) {
                                     Circle()
@@ -467,6 +517,10 @@ struct NotificationsSheet: View {
                                             .fill(Color.blue)
                                             .frame(width: 6, height: 6)
                                     }
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundColor(Color.textMuted.opacity(0.5))
                                 }
                                 .padding(14)
                                 .background(Color.white)

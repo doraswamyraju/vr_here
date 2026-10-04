@@ -73,6 +73,8 @@ class CustomerDashboardViewModel: ObservableObject {
     }
     
     func refreshAllDataAsync(silent: Bool = false) async {
+        guard SessionManager.shared.isLoggedIn() else { return }
+        
         if !silent {
             dashboardState = .loading
         }
@@ -80,37 +82,37 @@ class CustomerDashboardViewModel: ObservableObject {
         var hasErrors = false
         var lastErrorMessage = ""
         
+        func handleSyncError(_ error: Error, tag: String) {
+            if let netErr = error as? NetworkError, case .unauthorized = netErr {
+                NotificationCenter.default.post(name: NSNotification.Name("SessionExpiredNotification"), object: nil)
+                return
+            }
+            if !error.isCancellationError {
+                hasErrors = true
+                lastErrorMessage = "\(tag): \(error.localizedDescription)"
+                print("\(tag) sync failed: \(error)")
+            }
+        }
+        
         // 1. Fetch Orders
         do {
             orders = try await NetworkManager.shared.getOrders()
         } catch {
-            if !error.isCancellationError {
-                hasErrors = true
-                lastErrorMessage = "Orders: \(error.localizedDescription)"
-                print("Orders sync failed: \(error)")
-            }
+            handleSyncError(error, tag: "Orders")
         }
         
         // 2. Fetch Payments
         do {
             payments = try await NetworkManager.shared.getPayments()
         } catch {
-            if !error.isCancellationError {
-                hasErrors = true
-                lastErrorMessage = "Payments: \(error.localizedDescription)"
-                print("Payments sync failed: \(error)")
-            }
+            handleSyncError(error, tag: "Payments")
         }
         
         // 3. Fetch Tickets
         do {
             tickets = try await NetworkManager.shared.getTickets()
         } catch {
-            if !error.isCancellationError {
-                hasErrors = true
-                lastErrorMessage = "Tickets: \(error.localizedDescription)"
-                print("Tickets sync failed: \(error)")
-            }
+            handleSyncError(error, tag: "Tickets")
         }
         
         // 4. Fetch Blogs & Regulatory Insights
@@ -125,7 +127,6 @@ class CustomerDashboardViewModel: ObservableObject {
             if blogs.isEmpty {
                 blogs = defaultBlogs()
             }
-            print("Blogs sync failed, using fallbacks: \(error)")
         }
         
         // 5. Fetch Promotional Offers
@@ -140,14 +141,13 @@ class CustomerDashboardViewModel: ObservableObject {
             if offers.isEmpty {
                 offers = defaultOffers()
             }
-            print("Offers sync failed, using fallbacks: \(error)")
         }
         
         // 6. Fetch Finance Records
         do {
             financeRecords = try await NetworkManager.shared.getFinanceRecords()
         } catch {
-            print("Finance records sync failed: \(error)")
+            handleSyncError(error, tag: "Finance records")
         }
         
         // 7. Fetch Notifications
@@ -163,9 +163,7 @@ class CustomerDashboardViewModel: ObservableObject {
             }
             notifications = newNotifications
         } catch {
-            if !error.isCancellationError {
-                print("Notifications sync failed: \(error)")
-            }
+            handleSyncError(error, tag: "Notifications")
         }
         
         // 8. Sync User Profile (phone, name, email, company, photos)
@@ -405,6 +403,28 @@ class CustomerDashboardViewModel: ObservableObject {
                 }
             } catch {
                 print("Failed to mark notification \(id) as read: \(error)")
+            }
+        }
+    }
+    
+    func markAllNotificationsAsRead() {
+        // Optimistic UI update
+        for index in 0..<notifications.count {
+            let n = notifications[index]
+            notifications[index] = NotificationResponse(
+                idVal: n.idVal,
+                title: n.title,
+                message: n.message,
+                type: n.type,
+                isRead: true,
+                createdAt: n.createdAt
+            )
+        }
+        Task {
+            do {
+                _ = try await NetworkManager.shared.markAllNotificationsAsRead()
+            } catch {
+                print("Failed to mark all notifications as read: \(error)")
             }
         }
     }

@@ -14,6 +14,19 @@ export const AuthProvider = ({ children }) => {
     });
     const [loading, setLoading] = useState(true);
 
+    const syncLetsTrack = (userData) => {
+        try {
+            if (typeof window !== 'undefined' && window.syncLetsTrackProfile) {
+                window.syncLetsTrackProfile();
+            } else if (userData && typeof localStorage !== 'undefined') {
+                if (userData.name) localStorage.setItem('letstrack_visitor_name', userData.name);
+                if (userData.email) localStorage.setItem('letstrack_visitor_email', userData.email);
+                const p = userData.phone || userData.phoneNumber;
+                if (p) localStorage.setItem('letstrack_visitor_phone', p);
+            }
+        } catch (e) {}
+    };
+
     const checkUserLoggedIn = async () => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -25,6 +38,7 @@ export const AuthProvider = ({ children }) => {
                 const fullUser = { ...data, token };
                 setUser(fullUser);
                 localStorage.setItem('userInfo', JSON.stringify(fullUser));
+                syncLetsTrack(fullUser);
             } catch (error) {
                 if (error.response?.status === 401 || error.response?.status === 403) {
                     console.error("Session expired or invalid token");
@@ -48,6 +62,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('userInfo', JSON.stringify(data));
         setUser(data);
+        syncLetsTrack(data);
         return data; // Return user data for redirect logic
     };
 
@@ -66,6 +81,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('userInfo', JSON.stringify(data));
         setUser(data);
+        syncLetsTrack(data);
         return data;
     };
 
@@ -76,6 +92,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('token', data.token);
             localStorage.setItem('userInfo', JSON.stringify(data));
             setUser(data);
+            syncLetsTrack(data);
             return data;
         } catch (error) {
             console.error("Registration failed:", error.response ? error.response.data : error.message);
@@ -86,6 +103,9 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userInfo');
+        localStorage.removeItem('letstrack_visitor_name');
+        localStorage.removeItem('letstrack_visitor_email');
+        localStorage.removeItem('letstrack_visitor_phone');
         setUser(null);
     };
 

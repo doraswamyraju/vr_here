@@ -36,9 +36,36 @@
       };
     })();
 
-    window.LetsTrackConfig = {
-      websiteId: "lt_6a9347d5410be8335e42db43949caf95" // Tenant API Key from https://livechat.vrhere.in
-    };
+    (function() {
+      // Sync logged in user profile with LetsTrack
+      function syncProfile() {
+        try {
+          var raw = localStorage.getItem('userInfo');
+          if (raw) {
+            var user = JSON.parse(raw);
+            if (user && typeof user === 'object') {
+              if (user.name) localStorage.setItem('letstrack_visitor_name', user.name);
+              if (user.email) localStorage.setItem('letstrack_visitor_email', user.email);
+              var phone = user.phone || user.phoneNumber || '';
+              if (phone) localStorage.setItem('letstrack_visitor_phone', phone);
+              return { name: user.name || '', email: user.email || '', phone: phone };
+            }
+          }
+        } catch(e) {}
+        return { name: '', email: '', phone: '' };
+      }
+      
+      var profile = syncProfile();
+      window.syncLetsTrackProfile = syncProfile;
+
+      window.LetsTrackConfig = {
+        websiteId: "lt_6a9347d5410be8335e42db43949caf95", // Tenant API Key from https://livechat.vrhere.in
+        visitorName: profile.name,
+        visitorEmail: profile.email,
+        visitorPhone: profile.phone
+      };
+    })();
+
     (function () {
       var d = document, s = d.createElement('script');
       s.src = "https://livechat.vrhere.in/widget.js"; // Pointing to your live VPS subdomain!

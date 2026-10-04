@@ -33,6 +33,15 @@ class AuthViewModel: ObservableObject {
                 }
             }
         }
+        
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("SessionExpiredNotification"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.logout()
+            self?.toastMessage = "Session expired. Please sign in again."
+        }
     }
     
     func login() {

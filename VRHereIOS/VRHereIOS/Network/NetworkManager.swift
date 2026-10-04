@@ -256,6 +256,10 @@ class NetworkManager {
         return try await performRequest(path: "api/notifications/\(id)/read", method: "PUT")
     }
     
+    func markAllNotificationsAsRead() async throws -> [String: AnyCodable] {
+        return try await performRequest(path: "api/notifications/readall", method: "PUT")
+    }
+    
     func updateFcmToken(token: String) async throws -> [String: AnyCodable] {
         let payload = ["fcmToken": token, "token": token]
         let data = try JSONSerialization.data(withJSONObject: payload)

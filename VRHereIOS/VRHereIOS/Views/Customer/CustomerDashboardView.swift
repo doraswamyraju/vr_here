@@ -29,6 +29,22 @@ struct CustomerDashboardView: View {
     @State private var isFloatingMenuExpanded = false
     @State private var isLetsTrackChatOpen = false
     
+    private var resolvedCustomerName: String {
+        if let name = viewModel.userProfile?.name, !name.isEmpty { return name }
+        if !userName.isEmpty { return userName }
+        return SessionManager.shared.getUserName()
+    }
+    
+    private var resolvedCustomerEmail: String {
+        if let email = viewModel.userProfile?.email, !email.isEmpty { return email }
+        return SessionManager.shared.getUserEmail()
+    }
+    
+    private var resolvedCustomerPhone: String {
+        if let phone = viewModel.userProfile?.phone, !phone.isEmpty { return phone }
+        return SessionManager.shared.getPhone()
+    }
+    
     var body: some View {
         ZStack {
             // Main Scaffold
@@ -503,8 +519,9 @@ struct CustomerDashboardView: View {
             if isLetsTrackChatOpen {
                 LetsTrackChatDialog(
                     isOpen: $isLetsTrackChatOpen,
-                    customerName: userName,
-                    customerEmail: SessionManager.shared.getUserEmail()
+                    customerName: resolvedCustomerName,
+                    customerEmail: resolvedCustomerEmail,
+                    customerPhone: resolvedCustomerPhone
                 )
                 .zIndex(60)
             }
@@ -537,6 +554,42 @@ struct CustomerDashboardView: View {
             NotificationsSheet(
                 notifications: viewModel.notifications,
                 onMarkAsRead: { viewModel.markNotificationAsRead(id: $0) },
+                onMarkAllAsRead: { viewModel.markAllNotificationsAsRead() },
+                onNotificationClick: { notif in
+                    viewModel.markNotificationAsRead(id: notif.id)
+                    isShowingNotifications = false
+                    
+                    let typeLower = notif.type.lowercased()
+                    let titleLower = notif.title.lowercased()
+                    let msgLower = notif.message.lowercased()
+                    
+                    withAnimation {
+                        if typeLower == "order" || titleLower.contains("order") || msgLower.contains("order") {
+                            if let matchedOrder = viewModel.orders.first(where: { ord in
+                                let idSuffix = String(ord.id.suffix(8))
+                                return (!idSuffix.isEmpty && (notif.message.localizedCaseInsensitiveContains(idSuffix) || notif.title.localizedCaseInsensitiveContains(idSuffix))) ||
+                                       notif.message.localizedCaseInsensitiveContains(ord.id) ||
+                                       notif.title.localizedCaseInsensitiveContains(ord.id) ||
+                                       (!ord.serviceName.isEmpty && (notif.title.localizedCaseInsensitiveContains(ord.serviceName) || notif.message.localizedCaseInsensitiveContains(ord.serviceName)))
+                            }) {
+                                selectedOrderId = matchedOrder.id
+                            }
+                            activeTab = "Orders"
+                        } else if typeLower == "ticket" || titleLower.contains("ticket") || msgLower.contains("ticket") || titleLower.contains("support") || msgLower.contains("support") {
+                            activeTab = "Support"
+                        } else if typeLower == "payment" || titleLower.contains("invoice") || msgLower.contains("invoice") || titleLower.contains("payment") || msgLower.contains("payment") {
+                            activeTab = "Invoices"
+                        } else if typeLower.contains("bookkeeping") || titleLower.contains("bookkeeping") || msgLower.contains("bookkeeping") {
+                            activeTab = "Bookkeeping"
+                        } else if typeLower.contains("vault") || titleLower.contains("vault") || titleLower.contains("document") || msgLower.contains("document") {
+                            activeTab = "Vault"
+                        } else if typeLower.contains("referral") || titleLower.contains("referral") {
+                            activeTab = "Referrals"
+                        } else {
+                            activeTab = "Home"
+                        }
+                    }
+                },
                 onClose: { isShowingNotifications = false }
             )
         }

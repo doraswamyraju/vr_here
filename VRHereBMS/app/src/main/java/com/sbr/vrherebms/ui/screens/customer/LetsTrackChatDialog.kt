@@ -58,6 +58,7 @@ fun LetsTrackChatDialog(
     isOpen: Boolean,
     customerName: String = "",
     customerEmail: String = "",
+    customerPhone: String = "",
     onClose: () -> Unit
 ) {
     if (!isOpen) return
@@ -127,6 +128,8 @@ fun LetsTrackChatDialog(
                     put("referrer", "VRHere Android App")
                     put("name", displayName)
                     put("email", customerEmail)
+                    put("phoneNumber", customerPhone)
+                    put("phone", customerPhone)
                     put("browser", "VRHere App")
                     put("os", "Android")
                     put("deviceType", "Mobile")
