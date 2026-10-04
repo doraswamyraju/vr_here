@@ -155,6 +155,28 @@ struct RegisterView: View {
                     }
                     .buttonStyle(ScaleOnPressButtonStyle())
                     
+                    Spacer().frame(height: 12)
+                    
+                    // Apple Sign Up Button
+                    Button(action: {
+                        viewModel.signInWithApple()
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "applelogo")
+                                .font(.system(size: 19, weight: .semibold))
+                                .foregroundColor(.white)
+                            Text("Sign up with Apple")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(Color.black)
+                        .cornerRadius(14)
+                        .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
+                    }
+                    .buttonStyle(ScaleOnPressButtonStyle())
+                    
                     Spacer().frame(height: 24)
                     
                     // 5. Back to Login switcher

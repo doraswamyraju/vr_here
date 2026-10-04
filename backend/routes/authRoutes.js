@@ -3,6 +3,7 @@ const router = express.Router();
 import {
     authUser,
     googleAuth,
+    appleAuth,
     registerUser,
     registerPartner,
     forgotPassword,
@@ -27,6 +28,7 @@ router.post('/register', registerUser);
 router.post('/register-partner', registerPartner);
 router.post('/login', authUser);
 router.post('/google', googleAuth);
+router.post('/apple', appleAuth);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resetToken', resetPassword);
 router.route('/profile')

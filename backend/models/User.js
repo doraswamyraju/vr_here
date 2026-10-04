@@ -20,9 +20,14 @@ const userSchema = mongoose.Schema({
         sparse: true,
         default: null
     },
+    appleId: {
+        type: String,
+        sparse: true,
+        default: null
+    },
     authProvider: {
         type: String,
-        enum: ['local', 'google'],
+        enum: ['local', 'google', 'apple'],
         default: 'local'
     },
     phone: {

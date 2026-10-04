@@ -164,6 +164,28 @@ struct LoginView: View {
                 }
                 .buttonStyle(ScaleOnPressButtonStyle())
                 
+                Spacer().frame(height: 12)
+                
+                // Apple Sign In Button
+                Button(action: {
+                    viewModel.signInWithApple()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "applelogo")
+                            .font(.system(size: 19, weight: .semibold))
+                            .foregroundColor(.white)
+                        Text("Sign in with Apple")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(Color.black)
+                    .cornerRadius(14)
+                    .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
+                }
+                .buttonStyle(ScaleOnPressButtonStyle())
+                
                 Spacer()
                 
                 // 7. Sign Up Switcher

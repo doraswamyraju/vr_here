@@ -23,6 +23,18 @@ struct GoogleAuthRequest: Codable {
     }
 }
 
+struct AppleAuthRequest: Codable {
+    let identityToken: String?
+    let userIdentifier: String?
+    let email: String?
+    let fullName: AppleFullNamePayload?
+    
+    struct AppleFullNamePayload: Codable {
+        let givenName: String?
+        let familyName: String?
+    }
+}
+
 struct RegisterRequest: Codable {
     let name: String
     let email: String

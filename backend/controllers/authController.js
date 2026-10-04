@@ -865,9 +865,115 @@ const googleAuth = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Auth with Apple (iOS / Web)
+// @route   POST /api/auth/apple
+// @access  Public
+const appleAuth = asyncHandler(async (req, res) => {
+    const { identityToken, userIdentifier, fullName, email: providedEmail } = req.body;
+
+    if (!identityToken && !userIdentifier) {
+        res.status(400);
+        throw new Error('Apple identityToken or userIdentifier is required');
+    }
+
+    let appleId = userIdentifier;
+    let email = providedEmail;
+    let name = fullName ? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() : null;
+
+    if (identityToken) {
+        try {
+            const decoded = jwt.decode(identityToken, { complete: true });
+            if (decoded && decoded.payload) {
+                if (decoded.payload.sub) {
+                    appleId = decoded.payload.sub;
+                }
+                if (decoded.payload.email && !email) {
+                    email = decoded.payload.email;
+                }
+            }
+        } catch (jwtErr) {
+            console.error('[Apple Auth] JWT decode error:', jwtErr);
+        }
+    }
+
+    if (!appleId && !email) {
+        res.status(400);
+        throw new Error('Could not identify user from Apple credentials');
+    }
+
+    // Lookup existing user by appleId or email
+    let user = null;
+    if (appleId) {
+        user = await User.findOne({ appleId });
+    }
+    if (!user && email) {
+        user = await User.findOne({ email });
+    }
+
+    if (user) {
+        if (!user.isActive) {
+            res.status(403);
+            const message = user.role === 'partner' 
+                ? 'Your partner account is pending validation. Please wait for admin approval.' 
+                : 'User account is inactive. Contact admin.';
+            throw new Error(message);
+        }
+
+        if (!user.appleId && appleId) {
+            user.appleId = appleId;
+            user.authProvider = user.authProvider || 'apple';
+            await user.save();
+        }
+    } else {
+        const finalEmail = email || `${appleId}@privaterelay.appleid.com`;
+        const finalName = (name && name.length > 0) ? name : (email ? email.split('@')[0] : 'Apple User');
+
+        user = await User.create({
+            name: finalName,
+            email: finalEmail,
+            appleId,
+            authProvider: 'apple',
+            role: 'client',
+            isActive: true
+        });
+
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Welcome to VR HERE Business Solutions',
+                message: `<h1>Welcome ${user.name}!</h1><p>Thank you for signing in with Apple at VR HERE.</p>`
+            });
+        } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError.message);
+        }
+    }
+
+    res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',
+        role: user.role,
+        profilePhoto: user.profilePhoto || null,
+        companyLogo: user.companyLogo || null,
+        companyName: user.companyName || '',
+        businessType: user.businessType || '',
+        gstin: user.gstin || '',
+        panNumber: user.panNumber || '',
+        address: user.address || '',
+        requiresPhone: !user.phone,
+        isActive: user.isActive,
+        isClockedIn: user.isClockedIn || false,
+        activeOrderId: user.activeOrderId || null,
+        assignedTicketCategories: user.assignedTicketCategories || [],
+        token: generateToken(user._id)
+    });
+});
+
 export {
     authUser,
     googleAuth,
+    appleAuth,
     registerUser,
     registerPartner,
     forgotPassword,

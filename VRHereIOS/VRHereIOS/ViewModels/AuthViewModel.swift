@@ -126,6 +126,57 @@ class AuthViewModel: ObservableObject {
         }
     }
     
+    func signInWithApple() {
+        AppleSignInManager.shared.startAppleSignIn { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                self.appleLogin(result: res)
+            case .failure(let error):
+                // If user cancelled, don't show error toast
+                if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
+                    let errorMsg = error.localizedDescription
+                    self.authState = .error(message: errorMsg)
+                    self.toastMessage = errorMsg
+                }
+            }
+        }
+    }
+    
+    func appleLogin(result: AppleSignInResult) {
+        authState = .loading
+        Task {
+            do {
+                let authData = try await NetworkManager.shared.appleLogin(
+                    identityToken: result.identityToken,
+                    userIdentifier: result.userIdentifier,
+                    email: result.email,
+                    fullName: result
+                )
+                SessionManager.shared.saveSession(
+                    token: authData.token,
+                    userId: authData.id,
+                    name: authData.name,
+                    email: authData.email,
+                    role: authData.role,
+                    isActive: authData.isActive
+                )
+                SessionManager.shared.savePhone(authData.phone ?? "")
+                
+                if let token = SessionManager.shared.getFcmToken() {
+                    _ = try? await NetworkManager.shared.updateFcmToken(token: token)
+                }
+                
+                authState = .success(role: authData.role)
+                toastMessage = "Welcome, \(authData.name)!"
+            } catch {
+                let errorMsg = error.localizedDescription
+                authState = .error(message: errorMsg)
+                toastMessage = errorMsg
+            }
+        }
+    }
+    
     func register() {
         guard !nameInput.isEmpty && !emailInput.isEmpty && !phoneInput.isEmpty && !passwordInput.isEmpty else {
             toastMessage = "Please fill in all details"

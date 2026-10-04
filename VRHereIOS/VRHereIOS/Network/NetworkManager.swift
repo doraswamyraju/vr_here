@@ -107,6 +107,24 @@ class NetworkManager {
         return try await performRequest(path: "api/auth/google", method: "POST", body: data)
     }
     
+    func appleLogin(identityToken: String?, userIdentifier: String?, email: String?, fullName: AppleSignInResult? = nil, givenName: String? = nil, familyName: String? = nil) async throws -> AuthResponse {
+        var fullNamePayload: AppleAuthRequest.AppleFullNamePayload? = nil
+        if let gn = givenName ?? fullName?.fullName?.givenName, let fn = familyName ?? fullName?.fullName?.familyName {
+            fullNamePayload = AppleAuthRequest.AppleFullNamePayload(givenName: gn, familyName: fn)
+        } else if let gn = givenName ?? fullName?.fullName?.givenName {
+            fullNamePayload = AppleAuthRequest.AppleFullNamePayload(givenName: gn, familyName: nil)
+        }
+        
+        let reqObj = AppleAuthRequest(
+            identityToken: identityToken,
+            userIdentifier: userIdentifier,
+            email: email,
+            fullName: fullNamePayload
+        )
+        let data = try JSONEncoder().encode(reqObj)
+        return try await performRequest(path: "api/auth/apple", method: "POST", body: data)
+    }
+    
     func register(request: RegisterRequest) async throws -> AuthResponse {
         let data = try JSONEncoder().encode(request)
         return try await performRequest(path: "api/auth/register", method: "POST", body: data)
