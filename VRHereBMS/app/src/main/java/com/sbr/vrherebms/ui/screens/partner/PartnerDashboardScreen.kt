@@ -38,14 +38,20 @@ fun PartnerDashboardScreen(
     val context = LocalContext.current
 
     LaunchedEffect(key1 = true) {
-        viewModel.refreshAllData()
-        viewModel.eventFlow.collect { event ->
-            when (event) {
-                is PartnerDashboardViewModel.UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-                is PartnerDashboardViewModel.UiEvent.ProfileUpdated -> {
-                    // Profile updated successfully
+        try {
+            viewModel.refreshAllData()
+        } catch (t: Throwable) {
+            android.util.Log.e("PartnerDashboard", "Error during partner dashboard refresh", t)
+        }
+        launch {
+            viewModel.eventFlow.collect { event ->
+                when (event) {
+                    is PartnerDashboardViewModel.UiEvent.ShowToast -> {
+                        Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    }
+                    is PartnerDashboardViewModel.UiEvent.ProfileUpdated -> {
+                        // Profile updated successfully
+                    }
                 }
             }
         }

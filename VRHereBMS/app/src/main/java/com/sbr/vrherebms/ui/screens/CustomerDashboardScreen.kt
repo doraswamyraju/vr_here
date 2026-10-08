@@ -80,13 +80,21 @@ fun CustomerDashboardScreen(
 
     LaunchedEffect(key1 = true) {
         // Initial full-screen load
-        viewModel.refreshAllData(silent = false)
+        try {
+            viewModel.refreshAllData(silent = false)
+        } catch (t: Throwable) {
+            android.util.Log.e("CustomerDashboard", "Error during initial data refresh", t)
+        }
 
         // Silent periodic background polling every 15 seconds
         launch {
             while (true) {
                 kotlinx.coroutines.delay(15000)
-                viewModel.refreshAllData(silent = true)
+                try {
+                    viewModel.refreshAllData(silent = true)
+                } catch (t: Throwable) {
+                    android.util.Log.e("CustomerDashboard", "Error during silent data refresh", t)
+                }
             }
         }
 
@@ -98,14 +106,16 @@ fun CustomerDashboardScreen(
                 if (response.isSuccessful && response.body() != null) {
                     ServiceCatalog.updateFromApi(response.body()!!)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 android.util.Log.e("ServiceCatalog", "Failed loading dynamic catalog sync", e)
             }
         }
 
-        viewModel.eventFlow.collect { event ->
-            if (event is CustomerDashboardViewModel.UiEvent.ShowToast) {
-                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+        launch {
+            viewModel.eventFlow.collect { event ->
+                if (event is CustomerDashboardViewModel.UiEvent.ShowToast) {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

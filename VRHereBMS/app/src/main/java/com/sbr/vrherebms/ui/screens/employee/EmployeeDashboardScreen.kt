@@ -43,10 +43,16 @@ fun EmployeeDashboardScreen(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = true) {
-        viewModel.syncDashboardData()
-        viewModel.eventFlow.collect { event ->
-            if (event is EmployeeDashboardViewModel.UiEvent.ShowToast) {
-                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+        try {
+            viewModel.syncDashboardData()
+        } catch (t: Throwable) {
+            android.util.Log.e("EmployeeDashboard", "Error during dashboard sync", t)
+        }
+        launch {
+            viewModel.eventFlow.collect { event ->
+                if (event is EmployeeDashboardViewModel.UiEvent.ShowToast) {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

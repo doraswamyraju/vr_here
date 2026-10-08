@@ -21,43 +21,62 @@ import com.razorpay.PaymentResultWithDataListener
 import com.sbr.vrherebms.utils.RazorpayPaymentManager
 
 class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        android.util.Log.d("MainActivity", "Notification permission result: $isGranted")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Preload Razorpay Checkout resources for instantaneous native launch
-        RazorpayPaymentManager.preload(this)
-        
-        // Request notification permission at runtime for Android 13+
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            val requestPermissionLauncher = registerForActivityResult(
-                androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
-            ) { _ -> }
-            
-            if (androidx.core.content.ContextCompat.checkSelfPermission(
-                    this,
-                    android.Manifest.permission.POST_NOTIFICATIONS
-                ) != android.content.pm.PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
-
-        // Initialize Notification Channel (safely registers channel for system alerts)
-        com.sbr.vrherebms.utils.NotificationHelper.createNotificationChannel(applicationContext)
-
-        // Retrieve and sync FCM token on launch
+        // 1. Preload Razorpay Checkout safely (catch all Throwables including UnsatisfiedLinkError)
         try {
-            com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                if (task.isSuccessful && task.result != null) {
-                    val token = task.result
-                    android.util.Log.d("MainActivity", "FCM token fetched successfully on launch: $token")
-                    com.sbr.vrherebms.utils.FcmTokenHelper.uploadFcmToken(applicationContext, token)
-                } else {
-                    android.util.Log.e("MainActivity", "FCM token fetch failed on launch", task.exception)
+            RazorpayPaymentManager.preload(this)
+        } catch (t: Throwable) {
+            android.util.Log.e("MainActivity", "Razorpay preload skipped/failed", t)
+        }
+        
+        // 2. Request notification permission at runtime for Android 13+ safely
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                if (androidx.core.content.ContextCompat.checkSelfPermission(
+                        this,
+                        android.Manifest.permission.POST_NOTIFICATIONS
+                    ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) {
+                    notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Failed to initialize Firebase Messaging on launch", e)
+        } catch (t: Throwable) {
+            android.util.Log.e("MainActivity", "Notification permission check failed", t)
+        }
+
+        // 3. Initialize Notification Channel safely
+        try {
+            com.sbr.vrherebms.utils.NotificationHelper.createNotificationChannel(applicationContext)
+        } catch (t: Throwable) {
+            android.util.Log.e("MainActivity", "Notification Channel setup failed", t)
+        }
+
+        // 4. Retrieve and sync FCM token on launch safely
+        try {
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                try {
+                    if (task.isSuccessful && task.result != null) {
+                        val token = task.result
+                        android.util.Log.d("MainActivity", "FCM token fetched successfully on launch: $token")
+                        com.sbr.vrherebms.utils.FcmTokenHelper.uploadFcmToken(applicationContext, token)
+                    } else {
+                        android.util.Log.e("MainActivity", "FCM token fetch failed on launch", task.exception)
+                    }
+                } catch (t: Throwable) {
+                    android.util.Log.e("MainActivity", "Error handling FCM token result", t)
+                }
+            }
+        } catch (t: Throwable) {
+            android.util.Log.e("MainActivity", "Failed to initialize Firebase Messaging on launch", t)
         }
 
         enableEdgeToEdge()

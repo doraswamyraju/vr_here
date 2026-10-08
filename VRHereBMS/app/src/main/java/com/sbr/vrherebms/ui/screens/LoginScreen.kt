@@ -297,14 +297,20 @@ fun LoginScreen(
             ) {
                 Surface(
                     onClick = {
-                        val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
-                            com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
-                        )
-                            .requestIdToken(webClientId)
-                            .requestEmail()
-                            .build()
-                        val googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
-                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                        try {
+                            val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                                com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                            )
+                                .requestIdToken(webClientId)
+                                .requestEmail()
+                                .build()
+                            val googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+                            googleSignInClient.signOut().addOnCompleteListener {
+                                googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Failed to launch Google Sign-In: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                        }
                     },
                     modifier = Modifier.fillMaxSize(),
                     shape = RoundedCornerShape(14.dp),
