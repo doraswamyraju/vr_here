@@ -35,14 +35,13 @@ class VRHereApplication : Application() {
             Log.e("CrashShield", "CRASH INTERCEPTED on thread ${thread.name}: ${throwable.localizedMessage}", throwable)
             throwable.printStackTrace()
 
-            // If it's a non-fatal UI/background exception, recover gracefully to prevent force-close
-            Handler(Looper.getMainLooper()).post {
-                try {
-                    Log.w("CrashShield", "Application state preserved by Crash Shield")
-                } catch (recoveryEx: Throwable) {
-                    defaultHandler?.uncaughtException(thread, throwable)
-                }
+            try {
+                com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(throwable)
+            } catch (ignored: Throwable) {
             }
+
+            // Forward to default OS handler so Play Console & Firebase Crashlytics capture full crash dump
+            defaultHandler?.uncaughtException(thread, throwable)
         }
     }
 }
