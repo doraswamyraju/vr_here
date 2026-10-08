@@ -11,9 +11,9 @@ object RazorpayPaymentManager {
     private var currentSuccessCallback: ((paymentId: String, orderId: String, signature: String) -> Unit)? = null
     private var currentFailureCallback: ((errorMsg: String) -> Unit)? = null
 
-    fun preload(activity: Activity) {
+    fun preload(context: android.content.Context) {
         try {
-            Checkout.preload(activity.applicationContext)
+            Checkout.preload(context.applicationContext)
         } catch (e: Exception) {
             android.util.Log.e("RazorpayManager", "Failed to preload checkout", e)
         }

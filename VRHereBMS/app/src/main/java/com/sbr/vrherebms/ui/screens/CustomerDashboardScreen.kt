@@ -458,7 +458,7 @@ fun CustomerDashboardScreen(
             if (isLetsTrackChatOpen) {
                 val sessionManager = remember { com.sbr.vrherebms.data.local.SessionManager(context) }
                 val customerEmail = sessionManager.getUserEmail() ?: ""
-                val customerPhone = sessionManager.getPhone() ?: viewModel.userProfile?.phone ?: ""
+                val customerPhone = sessionManager.getPhone()
                 LetsTrackChatDialog(
                     isOpen = isLetsTrackChatOpen,
                     customerName = userName,
