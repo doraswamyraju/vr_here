@@ -352,8 +352,24 @@ const createOrder = asyncHandler(async (req, res) => {
         throw new Error('Payment ID is required');
     }
 
+    const targetUserId = req.body.userId || req.user._id;
+    let autoReferralPartner = req.body.referralPartner || null;
+    let autoPartnerCommission = req.body.partnerCommissionAmount || 0;
+
+    if (!autoReferralPartner && targetUserId) {
+        try {
+            const customerObj = await User.findById(targetUserId).populate('referredByPartner');
+            if (customerObj && customerObj.referredByPartner && customerObj.referredByPartner.role === 'partner' && customerObj.referredByPartner.isActive) {
+                autoReferralPartner = customerObj.referredByPartner._id;
+                autoPartnerCommission = Math.round((Number(price) || 0) * (customerObj.referredByPartner.commissionPercentage || 10) / 100);
+            }
+        } catch (e) {
+            console.error('Error finding referredByPartner for customer order:', e.message);
+        }
+    }
+
     const order = new Order({
-        user: req.body.userId || req.user._id, // Allow admin to specify customer
+        user: targetUserId, // Allow admin to specify customer
         clientName: clientName || (req.body.userId ? '' : (req.user.name || '')), // Use provided name or user name
         email: email || (req.body.userId ? '' : (req.user.email || '')),
         phone: phone || (req.body.userId ? '' : (req.user.phone || '')),
@@ -364,7 +380,9 @@ const createOrder = asyncHandler(async (req, res) => {
         razorpayOrderId,
         paymentSignature,
         paymentStatus: paymentId ? paymentStatus : 'Pending', // Default to Pending if manual (to allow Razorpay link generation)
-        assignedEmployee: req.body.assignedEmployee || null
+        assignedEmployee: req.body.assignedEmployee || null,
+        referralPartner: autoReferralPartner,
+        partnerCommissionAmount: autoPartnerCommission
     });
 
     const createdOrder = await order.save();

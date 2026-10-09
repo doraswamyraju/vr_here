@@ -293,6 +293,16 @@ export const verifyPayment = async (req, res) => {
                 referralPartnerId = partner._id;
                 partnerCommissionAmount = Math.round(parsedAmount * (partner.commissionPercentage || 10) / 100);
             }
+        } else {
+            // Check if client is already linked to a referral partner
+            const linkedPartnerId = customerUser?.referredByPartner || req.user?.referredByPartner;
+            if (linkedPartnerId) {
+                const partner = await User.findById(linkedPartnerId);
+                if (partner && partner.isActive && partner.role === 'partner') {
+                    referralPartnerId = partner._id;
+                    partnerCommissionAmount = Math.round(parsedAmount * (partner.commissionPercentage || 10) / 100);
+                }
+            }
         }
 
         const createdOrder = await Order.create({

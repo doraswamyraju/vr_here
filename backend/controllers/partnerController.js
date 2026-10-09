@@ -48,7 +48,16 @@ const getPartnerOrders = asyncHandler(async (req, res) => {
         throw new Error('Access denied. Only partners can view this data.');
     }
 
-    const orders = await Order.find({ referralPartner: req.user._id })
+    // Find all customers linked directly to this partner
+    const partnerCustomers = await User.find({ referredByPartner: req.user._id }).select('_id').lean();
+    const partnerCustomerIds = partnerCustomers.map(c => c._id);
+
+    const orders = await Order.find({
+        $or: [
+            { referralPartner: req.user._id },
+            { user: { $in: partnerCustomerIds } }
+        ]
+    })
         .populate('user', 'name email phone companyName gstin')
         .select('serviceName packageName clientName email phone price status paymentStatus partnerCommissionAmount createdAt invoices')
         .sort({ createdAt: -1 });
@@ -65,21 +74,36 @@ const getPartnerEarnings = asyncHandler(async (req, res) => {
         throw new Error('Access denied. Only partners can view this data.');
     }
 
-    const orders = await Order.find({ referralPartner: req.user._id })
+    const partnerCustomers = await User.find({ referredByPartner: req.user._id }).select('_id').lean();
+    const partnerCustomerIds = partnerCustomers.map(c => c._id);
+
+    const orders = await Order.find({
+        $or: [
+            { referralPartner: req.user._id },
+            { user: { $in: partnerCustomerIds } }
+        ]
+    })
         .populate('user', 'name email phone companyName gstin')
         .select('serviceName packageName clientName email phone price status paymentStatus partnerCommissionAmount createdAt invoices')
         .sort({ createdAt: -1 });
 
     const payouts = await PartnerPayout.find({ partner: req.user._id }).sort({ createdAt: -1 });
+    const commRate = req.user.commissionPercentage || 10;
 
     const lifetimeRevenue = orders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
     const totalCommissionEarned = orders
         .filter(o => o.paymentStatus === 'Paid')
-        .reduce((sum, o) => sum + (Number(o.partnerCommissionAmount) || 0), 0);
+        .reduce((sum, o) => {
+            const comm = Number(o.partnerCommissionAmount) || Math.round((Number(o.price) || 0) * commRate / 100);
+            return sum + comm;
+        }, 0);
 
     const pendingOrdersCommission = orders
         .filter(o => o.paymentStatus !== 'Paid')
-        .reduce((sum, o) => sum + (Number(o.partnerCommissionAmount) || 0), 0);
+        .reduce((sum, o) => {
+            const comm = Number(o.partnerCommissionAmount) || Math.round((Number(o.price) || 0) * commRate / 100);
+            return sum + comm;
+        }, 0);
 
     const paidPayouts = payouts
         .filter(p => p.status === 'Paid')
