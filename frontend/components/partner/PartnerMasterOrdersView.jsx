@@ -93,80 +93,84 @@ const PartnerMasterOrdersView = ({ userInfo, initialSelectedCustomer, onClearIni
             setLoadingConfig(true);
             const slug = selectedService.slug || getServiceLink(selectedService.title).replace(/^\//, '');
             try {
-                const apiData = await fetchServicePageConfig(slug);
-                if (isMounted && apiData && apiData.packages && apiData.packages.length > 0) {
-                    setServiceConfig(apiData);
-                    setSelectedPackage(apiData.packages.find(p => p.isPopular) || apiData.packages[0]);
-                    setCustomPrice(String(apiData.packages[0].price || ''));
-                    setCustomPackageName(apiData.packages[0].name || 'Standard');
-                    return;
-                }
-            } catch (e) {
-                // Ignore and check local catalog
-            }
-
-            // Fallback from static SERVICE_CATALOG or default generated packages
-            if (SERVICE_CATALOG[slug]) {
-                const catalogData = SERVICE_CATALOG[slug];
-                if (isMounted) {
-                    setServiceConfig(catalogData);
-                    setSelectedPackage(catalogData.packages[0]);
-                    setCustomPrice(String(catalogData.packages[0].price || ''));
-                    setCustomPackageName(catalogData.packages[0].name || 'Standard');
-                }
-            } else {
-                // Generate default 3 package tiers (Consultation, Standard, Enterprise)
-                const basePrice = 4999;
-                const defaultPackages = [
-                    {
-                        id: 'consultation',
-                        name: 'Expert CA/CS Consultation',
-                        price: 499,
-                        isAdjustable: true,
-                        description: `30 Mins direct consultation call & document eligibility assessment for ${selectedService.title}.`,
-                        features: ['30 Mins Expert Call', 'Document Checklist Review', 'Filing Strategy & Roadmap', 'Fee 100% Adjusted in Final Order']
-                    },
-                    {
-                        id: 'standard',
-                        name: 'Standard Package',
-                        price: basePrice,
-                        isPopular: true,
-                        description: `Complete standard registration, filing & certificate delivery for ${selectedService.title}.`,
-                        features: [
-                            'Complete Application Preparation & Drafting',
-                            'Government Portal Filing & Document Submission',
-                            'Dedicated CA Review & Compliance Check',
-                            'Official Government Certificate Delivery',
-                            'Standard Email & Call Support'
-                        ]
-                    },
-                    {
-                        id: 'premium',
-                        name: 'Premium Fast-Track Enterprise',
-                        price: basePrice * 2 + 1000,
-                        description: 'All-inclusive VIP fast-track processing with allied licenses and priority support.',
-                        features: [
-                            'Fast-Track Priority Processing (24-48 Hrs)',
-                            'Dedicated Senior CA & CS Manager',
-                            'Allied License & MSME Registration Included',
-                            'Permanent Digital Document Vault Storage',
-                            '1-Year Free Annual Compliance Roadmap'
-                        ]
+                let resolvedConfig = null;
+                try {
+                    const apiData = await fetchServicePageConfig(slug);
+                    if (apiData && apiData.packages && apiData.packages.length > 0) {
+                        resolvedConfig = apiData;
                     }
-                ];
+                } catch (e) {
+                    // fallback to local catalog
+                }
+
+                if (!resolvedConfig && SERVICE_CATALOG[slug]) {
+                    resolvedConfig = SERVICE_CATALOG[slug];
+                }
+
+                if (!resolvedConfig) {
+                    const basePrice = 4999;
+                    const defaultPackages = [
+                        {
+                            id: 'consultation',
+                            name: 'Expert CA/CS Consultation',
+                            price: 499,
+                            isAdjustable: true,
+                            description: `30 Mins direct consultation call & document eligibility assessment for ${selectedService.title}.`,
+                            features: ['30 Mins Expert Call', 'Document Checklist Review', 'Filing Strategy & Roadmap', 'Fee 100% Adjusted in Final Order']
+                        },
+                        {
+                            id: 'standard',
+                            name: 'Standard Package',
+                            price: basePrice,
+                            isPopular: true,
+                            description: `Complete standard registration, filing & certificate delivery for ${selectedService.title}.`,
+                            features: [
+                                'Complete Application Preparation & Drafting',
+                                'Government Portal Filing & Document Submission',
+                                'Dedicated CA Review & Compliance Check',
+                                'Official Government Certificate Delivery',
+                                'Standard Email & Call Support'
+                            ]
+                        },
+                        {
+                            id: 'premium',
+                            name: 'Premium Fast-Track Enterprise',
+                            price: basePrice * 2 + 1000,
+                            description: 'All-inclusive VIP fast-track processing with allied licenses and priority support.',
+                            features: [
+                                'Fast-Track Priority Processing (24-48 Hrs)',
+                                'Dedicated Senior CA & CS Manager',
+                                'Allied License & MSME Registration Included',
+                                'Permanent Digital Document Vault Storage',
+                                '1-Year Free Annual Compliance Roadmap'
+                            ]
+                        }
+                    ];
+                    resolvedConfig = { packages: defaultPackages, title: selectedService.title };
+                }
+
+                if (isMounted && resolvedConfig) {
+                    setServiceConfig(resolvedConfig);
+                    const defaultPkg = (resolvedConfig.packages || []).find(p => p.isPopular) || (resolvedConfig.packages || [])[0];
+                    if (defaultPkg) {
+                        setSelectedPackage(defaultPkg);
+                        setCustomPrice(String(defaultPkg.price || ''));
+                        setCustomPackageName(defaultPkg.name || 'Standard');
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load service packages:', err);
+            } finally {
                 if (isMounted) {
-                    setServiceConfig({ packages: defaultPackages, title: selectedService.title });
-                    setSelectedPackage(defaultPackages[1]);
-                    setCustomPrice(String(defaultPackages[1].price));
-                    setCustomPackageName(defaultPackages[1].name);
+                    setLoadingConfig(false);
                 }
             }
-            if (isMounted) setLoadingConfig(false);
         };
 
         loadServiceConfig();
         return () => { isMounted = false; };
     }, [selectedService]);
+
 
     const handleSelectPackageTier = (pkg) => {
         setSelectedPackage(pkg);
