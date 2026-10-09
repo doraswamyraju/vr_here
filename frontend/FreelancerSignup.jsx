@@ -209,11 +209,11 @@ const FreelancerSignup = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Resume / Portfolio Link</label>
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Resume / Portfolio Link <span className="text-slate-400 font-normal lowercase">(optional)</span></label>
                                         <div className="relative group">
                                             <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
                                             <input 
-                                                name="resumeUrl" required placeholder="https://drive.google.com/..." value={formData.resumeUrl} onChange={handleChange}
+                                                name="resumeUrl" placeholder="https://drive.google.com/... (Optional)" value={formData.resumeUrl} onChange={handleChange}
                                                 className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all font-semibold"
                                             />
                                         </div>
