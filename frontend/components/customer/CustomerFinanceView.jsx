@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Eye, Download, Printer, FileText, Clock, CheckCircle2, XCircle, AlertCircle, Search, CreditCard } from 'lucide-react';
+import { Eye, Download, Printer, FileText, Clock, CheckCircle2, XCircle, AlertCircle, Search, CreditCard, RefreshCw } from 'lucide-react';
 import GSTInvoiceTemplate from '../admin/finance/GSTInvoiceTemplate';
 import { launchRazorpayCheckout } from '../../utils/razorpayCheckout';
 
-const CustomerFinanceView = ({ token, userInfo }) => {
+const CustomerFinanceView = ({ token, userInfo, refreshTrigger }) => {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
@@ -30,11 +30,11 @@ const CustomerFinanceView = ({ token, userInfo }) => {
             const unifiedList = [];
             const processedKeys = new Set();
 
-            // 1. Add all explicit milestone invoices from orders (e.g. INV-0310260001)
+            // 1. Add all explicit milestone / primary invoices from orders (e.g. INV-0910260006)
             orders.forEach(order => {
                 const invoices = order.invoices || [];
                 invoices.forEach(inv => {
-                    const invNumber = inv.number || `INV-${(inv._id || inv.id || 'INV').slice(-6).toUpperCase()}`;
+                    const invNumber = inv.invoiceNumber || inv.number || `INV-${(inv._id || inv.id || 'INV').slice(-6).toUpperCase()}`;
                     const key = invNumber.toUpperCase();
                     if (!processedKeys.has(key)) {
                         processedKeys.add(key);
@@ -53,19 +53,19 @@ const CustomerFinanceView = ({ token, userInfo }) => {
                             orderId: order._id,
                             type: 'TAX INVOICE',
                             number: invNumber,
-                            date: inv.createdAt || inv.date || order.createdAt || new Date().toISOString(),
+                            date: inv.createdAt || inv.sentAt || inv.date || order.createdAt || new Date().toISOString(),
                             dueDate: inv.dueDate,
                             serviceName: order.serviceName,
                             client: {
-                                name: order.customerName || order.user?.name || userInfo?.name || 'Valued Client',
-                                email: order.customerEmail || order.user?.email || userInfo?.email || '',
-                                phone: order.customerPhone || order.user?.phone || userInfo?.phone || '',
+                                name: order.customerName || order.clientName || order.user?.name || userInfo?.name || 'Valued Client',
+                                email: order.customerEmail || order.email || order.user?.email || userInfo?.email || '',
+                                phone: order.customerPhone || order.phone || order.user?.phone || userInfo?.phone || '',
                                 address: order.companyDetails?.address || 'Registered Office / Business Premises',
                                 gstin: order.companyDetails?.gstin || 'URP / N/A'
                             },
                             items: [
                                 {
-                                    description: inv.description || `${order.serviceName} - Milestone Compliance Invoice`,
+                                    description: inv.notes || inv.description || `${order.serviceName} (${order.packageName || 'Compliance Service'})`,
                                     hsn: '998311',
                                     qty: 1,
                                     rate: valSub,
@@ -79,10 +79,10 @@ const CustomerFinanceView = ({ token, userInfo }) => {
                                 sgst: valSgst,
                                 total: valAmount
                             },
-                            status: inv.status,
+                            status: inv.status || 'Sent',
                             isPaid,
                             canPayNow: canPay,
-                            url: inv.url || inv.fileUrl || ''
+                            url: inv.url || inv.fileUrl || inv.paymentLinkUrl || ''
                         });
                     }
                 });
@@ -200,10 +200,19 @@ const CustomerFinanceView = ({ token, userInfo }) => {
 
             // 4. Add any standalone custom finance records from /api/finance
             financeDocs.forEach(f => {
-                const invNumber = f.number || `INV-${(f._id || 'FIN').slice(-8).toUpperCase()}`;
-                if (!processedKeys.has(invNumber.toUpperCase())) {
-                    processedKeys.add(invNumber.toUpperCase());
-                    unifiedList.push(f);
+                const invNumber = f.number || f.invoiceNumber || `INV-${(f._id || 'FIN').slice(-8).toUpperCase()}`;
+                const key = invNumber.toUpperCase();
+                if (!processedKeys.has(key)) {
+                    processedKeys.add(key);
+                    const isPaid = f.status === 'Paid' || f.status === 'Completed';
+                    const canPay = f.canPayNow ?? (!isPaid && f.status !== 'Cancelled' && f.status !== 'Draft');
+                    unifiedList.push({
+                        ...f,
+                        number: invNumber,
+                        type: f.type || 'TAX INVOICE',
+                        isPaid,
+                        canPayNow: canPay
+                    });
                 }
             });
 
@@ -219,10 +228,14 @@ const CustomerFinanceView = ({ token, userInfo }) => {
 
     useEffect(() => {
         fetchRecords();
-    }, [token]);
+    }, [token, refreshTrigger]);
 
     const handlePayNow = async (record) => {
         try {
+            if (record.url && (record.url.startsWith('https://rzp.io') || record.url.includes('razorpay') || record.url.startsWith('http'))) {
+                window.open(record.url, '_blank');
+                return;
+            }
             setPayingId(record._id);
             await launchRazorpayCheckout({
                 amount: record.totals?.total || record.amount,
@@ -300,6 +313,15 @@ const CustomerFinanceView = ({ token, userInfo }) => {
                     <p className="text-xs text-slate-500 font-medium">View and download your service estimates, proforma, milestone, and GST tax invoices.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={fetchRecords}
+                        disabled={loading}
+                        className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold shadow-2xs disabled:opacity-50"
+                        title="Refresh Invoices"
+                    >
+                        <RefreshCw size={13} className={loading ? 'animate-spin text-red-600' : ''} />
+                        <span>Refresh</span>
+                    </button>
                     <div className="relative">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input

@@ -4,7 +4,7 @@ import {
    Wallet, Headphones, User, Bell, LogOut,
    Menu, MessageSquare, Plus, X, Phone, BookOpen,
    ChevronDown, ChevronRight, ShoppingCart, ArrowDownRight,
-   Landmark, Building2, BarChart3, Users, Gift
+   Landmark, Building2, BarChart3, Users, Gift, RefreshCw
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -145,6 +145,9 @@ export default function CustomerApp() {
       }
    };
 
+   const [isRefreshing, setIsRefreshing] = useState(false);
+   const [refreshKey, setRefreshKey] = useState(0);
+
    // -- Data Fetching --
    const fetchData = useCallback(async () => {
       if (!userInfo) return;
@@ -160,6 +163,29 @@ export default function CustomerApp() {
          console.error("Failed to fetch data:", error);
       }
    }, [userInfo]);
+
+   const handleRefreshAll = useCallback(async () => {
+      if (!userInfo) return;
+      setIsRefreshing(true);
+      try {
+         await fetchData();
+         setRefreshKey((prev) => prev + 1);
+         if (userInfo?.token) {
+            const { data } = await axios.get('/api/auth/profile', {
+               headers: { Authorization: `Bearer ${userInfo.token}` }
+            });
+            if (data) {
+               const updated = { ...userInfo, ...data, token: userInfo.token };
+               setUserInfo(updated);
+               localStorage.setItem('userInfo', JSON.stringify(updated));
+            }
+         }
+      } catch (err) {
+         console.error('Failed to refresh customer dashboard data:', err);
+      } finally {
+         setTimeout(() => setIsRefreshing(false), 500);
+      }
+   }, [userInfo, fetchData]);
 
    useEffect(() => {
       if (userInfo) {
@@ -207,7 +233,7 @@ export default function CustomerApp() {
                 payments={payments}
                 notifications={notifications}
                 userInfo={userInfo}
-                refreshOrders={fetchData}
+                refreshOrders={handleRefreshAll}
                 onOpenProject={(orderId) => {
                    setSelectedOrderId(orderId);
                    setActiveTab('Orders');
@@ -262,17 +288,17 @@ export default function CustomerApp() {
                onOpenVault={() => setActiveTab('Documents')}
                setActiveTab={setActiveTab}
                userInfo={userInfo}
-               refreshOrders={fetchData}
+               refreshOrders={handleRefreshAll}
             />
          );
-         case 'Documents': return <DocumentsView orders={orders} refreshOrders={fetchData} userInfo={userInfo} notifications={notifications} />;
-         case 'Invoices': return <CustomerFinanceView token={userInfo?.token} />;
+         case 'Documents': return <DocumentsView orders={orders} refreshOrders={handleRefreshAll} userInfo={userInfo} notifications={notifications} />;
+         case 'Invoices': return <CustomerFinanceView token={userInfo?.token} userInfo={userInfo} refreshTrigger={refreshKey} />;
          case 'Referrals': return <ReferralView userInfo={userInfo} />;
          case 'Bookkeeping': return <BookkeepingView token={userInfo?.token} userInfo={userInfo} activeSubTab={bookkeepingSubTab} onSubTabChange={setBookkeepingSubTab} />;
          case 'Account': return <AccountsView orders={orders} payments={payments} userInfo={userInfo} token={userInfo?.token} />;
          case 'New': return <SupportView userInfo={userInfo} />;
          default: 
-            return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} onSelectService={(serviceObj) => { setSelectedService(serviceObj); setActiveTab('Services'); }} />;
+            return <DashboardView setActiveTab={setActiveTab} orders={orders} notifications={notifications} userInfo={userInfo} refreshOrders={handleRefreshAll} onSelectService={(serviceObj) => { setSelectedService(serviceObj); setActiveTab('Services'); }} />;
       }
    };
 
@@ -535,7 +561,15 @@ export default function CustomerApp() {
                   <img src="/logo.png" alt="VR Here" className="h-8 w-auto object-contain" />
                   <span className="font-black text-slate-900 text-sm tracking-tight uppercase">Portal</span>
                </div>
-               <div className="flex items-center gap-2">
+               <div className="flex items-center gap-1.5">
+                  <button 
+                     onClick={handleRefreshAll} 
+                     disabled={isRefreshing}
+                     className="p-2 text-slate-700 hover:text-red-600 rounded-xl transition-all disabled:opacity-50"
+                     title="Refresh Information"
+                  >
+                     <RefreshCw size={18} className={isRefreshing ? 'animate-spin text-red-600' : ''} />
+                  </button>
                   <button onClick={() => setIsNotificationOpen(true)} className="p-2 text-slate-700 relative">
                      <Bell size={20} />
                      {unreadCount > 0 && (
@@ -559,7 +593,18 @@ export default function CustomerApp() {
                   </span>
                </div>
 
-               <div className="flex items-center gap-4">
+               <div className="flex items-center gap-3">
+                  {/* Refresh Button */}
+                  <button
+                     onClick={handleRefreshAll}
+                     disabled={isRefreshing}
+                     className="px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-red-600 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-xl transition-all flex items-center gap-2 shadow-2xs disabled:opacity-50"
+                     title="Fetch latest updates & information"
+                  >
+                     <RefreshCw size={14} className={isRefreshing ? 'animate-spin text-red-600' : 'text-slate-500'} />
+                     <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+                  </button>
+
                   {/* Quick Website Switcher */}
                   <a
                      href="/"
