@@ -21,6 +21,7 @@ import HRMSModule from './modules/hrms/v1.1/index.jsx';
 import ServicesMasterView from './components/admin/ServicesMasterView';
 import AdminBookkeepingView from './components/admin/AdminBookkeepingView';
 import LeadsManagerView from './components/admin/LeadsManagerView';
+import ComplianceModule from './components/admin/compliance/ComplianceModule';
 import AccountSettingsModal from './components/employee/AccountSettingsModal';
 
 const ACTIVE_TASK_STORAGE_KEY = 'employee_active_task_v2';
@@ -186,7 +187,20 @@ const EmployeeApp = () => {
     fetchTodos();
     fetchExtras();
     fetchAttendanceStatus();
-  }, [userInfo, fetchOrders, fetchTodos, fetchExtras, fetchAttendanceStatus]);
+
+    // Sync latest permissions (e.g. canManageCompliance) from server
+    if (authConfig) {
+      axios.get('/api/auth/profile', authConfig).then(({ data }) => {
+        if (data) {
+          setUserInfo(prev => {
+            const updated = { ...prev, ...data, token: prev.token };
+            localStorage.setItem('userInfo', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      }).catch(() => {});
+    }
+  }, [userInfo?.token, fetchOrders, fetchTodos, fetchExtras, fetchAttendanceStatus]);
 
   useEffect(() => {
     const rawTask = localStorage.getItem(ACTIVE_TASK_STORAGE_KEY);
@@ -544,6 +558,8 @@ const EmployeeApp = () => {
         return <CommercialsModule selectedOrder={selectedOrder} />;
       case 'finance':
         return <FinanceModule token={userInfo?.token} />;
+      case 'compliance':
+        return <ComplianceModule token={userInfo?.token} />;
       case 'bookkeeping':
         return <AdminBookkeepingView token={userInfo?.token} />;
       case 'hrms':

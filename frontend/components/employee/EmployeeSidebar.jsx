@@ -22,6 +22,9 @@ const EmployeeSidebar = ({
     if (item.id === 'commercials' || item.id === 'finance') {
       return isPMOrAdmin;
     }
+    if (item.id === 'compliance') {
+      return Boolean(userInfo?.canManageCompliance) || userInfo?.role === 'admin';
+    }
     return true;
   });
 

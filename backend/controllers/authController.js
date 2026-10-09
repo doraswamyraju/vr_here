@@ -131,6 +131,7 @@ const authUser = asyncHandler(async (req, res) => {
         isActive: user.isActive,
         isClockedIn: user.isClockedIn || false,
         activeOrderId: user.activeOrderId || null,
+        canManageCompliance: Boolean(user.canManageCompliance),
         assignedTicketCategories: user.assignedTicketCategories || [],
         token: generateToken(user._id)
     });
@@ -337,6 +338,8 @@ const getUserProfile = asyncHandler(async (req, res) => {
             isActive: user.isActive,
             isClockedIn: user.isClockedIn || false,
             activeOrderId: user.activeOrderId || null,
+            canManageCompliance: Boolean(user.canManageCompliance),
+            assignedTicketCategories: user.assignedTicketCategories || [],
             skills: user.skills,
             yearsOfExperience: user.yearsOfExperience,
             resumeUrl: user.resumeUrl,
@@ -861,6 +864,8 @@ const googleAuth = asyncHandler(async (req, res) => {
         isActive: user.isActive,
         isClockedIn: user.isClockedIn || false,
         activeOrderId: user.activeOrderId || null,
+        canManageCompliance: Boolean(user.canManageCompliance),
+        assignedTicketCategories: user.assignedTicketCategories || [],
         token: generateToken(user._id)
     });
 });
