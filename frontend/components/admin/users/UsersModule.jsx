@@ -56,6 +56,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
   const config = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
   const employeeUsers = useMemo(() => users.filter((item) => item.role === 'employee'), [users]);
+  const partnerUsers = useMemo(() => users.filter((item) => item.role === 'partner'), [users]);
   const filteredUsers = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
 
@@ -64,7 +65,16 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
       if (!roleMatches) return false;
       if (!normalizedSearch) return true;
 
-      const haystack = [item.name, item.email, item.phone, item.role, item.companyName, item.gstin]
+      const haystack = [
+        item.name, 
+        item.email, 
+        item.phone, 
+        item.role, 
+        item.companyName, 
+        item.gstin,
+        item.referredByPartner?.name,
+        item.referredByPartner?.phone
+      ]
         .map((value) => String(value || '').toLowerCase())
         .join(' ');
 
@@ -82,7 +92,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
     setIsCreating(true);
     try {
       await axios.post('/api/auth/users', createDraft, config);
-      setCreateDraft({ name: '', email: '', phone: '', role: 'employee', assignedTicketCategories: [] });
+      setCreateDraft({ name: '', email: '', phone: '', role: 'employee', referredByPartner: '', assignedTicketCategories: [] });
       await onRefresh();
       await loadSummary();
       alert('User created and password setup email sent.');
@@ -100,6 +110,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
       email: user.email || '',
       role: user.role || 'employee',
       phone: user.phone || '',
+      referredByPartner: user.referredByPartner?._id || user.referredByPartner || '',
       assignedTicketCategories: user.assignedTicketCategories || []
     });
   };
@@ -110,6 +121,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
     await onRefresh();
     await loadSummary();
   };
+
 
   const toggleActive = async (user) => {
     await axios.patch(`/api/auth/users/${user._id}/toggle-active`, {}, config);
@@ -185,7 +197,13 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
 
       {subTab === 'app-users' ? (
         <div className="space-y-4">
-          <AddUserForm draft={createDraft} setDraft={setCreateDraft} onCreateUser={createUser} isCreating={isCreating} />
+          <AddUserForm 
+            draft={createDraft} 
+            setDraft={setCreateDraft} 
+            onCreateUser={createUser} 
+            isCreating={isCreating} 
+            partners={partnerUsers}
+          />
           <UsersFilters
             roleFilter={roleFilter}
             setRoleFilter={setRoleFilter}
@@ -197,6 +215,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
 
           <UsersTable
             users={filteredUsers}
+            partners={partnerUsers}
             editingUserId={editingUserId}
             editDraft={editDraft}
             setEditDraft={setEditDraft}
@@ -302,6 +321,54 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
                 </div>
               </div>
 
+              {/* Referral Partner Card for Clients */}
+              {viewingUser.role === 'client' && (
+                <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-amber-800">
+                        🤝 Assigned Referral Partner
+                      </p>
+                      <p className="text-xs font-bold text-slate-800 mt-1">
+                        {viewingUser.referredByPartner?.name 
+                          ? `${viewingUser.referredByPartner.name} (${viewingUser.referredByPartner.phone || viewingUser.referredByPartner.email})` 
+                          : 'Direct Customer (No Partner Linked)'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={viewingUser.referredByPartner?._id || viewingUser.referredByPartner || ''}
+                        onChange={async (e) => {
+                          const partnerId = e.target.value;
+                          try {
+                            const { data } = await axios.put(`/api/auth/users/${viewingUser._id}`, {
+                              referredByPartner: partnerId || null
+                            }, config);
+                            setViewingUser(prev => ({
+                              ...prev,
+                              referredByPartner: data.user.referredByPartner
+                            }));
+                            await onRefresh();
+                            alert('Referral partner successfully updated.');
+                          } catch (err) {
+                            alert('Failed to update referral partner');
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-400"
+                      >
+                        <option value="">-- No Partner (Direct) --</option>
+                        {partnerUsers.map(p => (
+                          <option key={p._id} value={p._id}>
+                            {p.name} ({p.phone || p.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Business & Account Information */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-200/60 text-xs">
                 <div>
@@ -334,6 +401,7 @@ const UsersModule = ({ token, users, orders, onRefresh }) => {
                 </div>
               </div>
             </div>
+
 
             {/* Footer */}
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">

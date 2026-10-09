@@ -490,8 +490,6 @@ const getEmployees = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get all users
-// @route   GET /api/auth/users
-// @access  Private/Admin
 const getUsers = asyncHandler(async (req, res) => {
     const { role = '', active = '' } = req.query;
     const query = {};
@@ -499,7 +497,10 @@ const getUsers = asyncHandler(async (req, res) => {
     if (role) query.role = role;
     if (active) query.isActive = String(active).toLowerCase() === 'true';
 
-    const users = await User.find(query).select('-password').sort({ createdAt: -1 });
+    const users = await User.find(query)
+        .select('-password')
+        .populate('referredByPartner', 'name phone email commissionPercentage')
+        .sort({ createdAt: -1 });
     res.json(users);
 });
 
@@ -507,7 +508,7 @@ const getUsers = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/users
 // @access  Private/Admin
 const createUserByAdmin = asyncHandler(async (req, res) => {
-    const { name, email, phone = '', role = 'employee' } = req.body;
+    const { name, email, phone = '', role = 'employee', referredByPartner = null } = req.body;
 
     if (!name || !email) {
         res.status(400);
@@ -527,6 +528,7 @@ const createUserByAdmin = asyncHandler(async (req, res) => {
         email,
         phone,
         role,
+        referredByPartner: referredByPartner || null,
         password: tempPassword,
         isActive: true
     });
@@ -542,6 +544,7 @@ const createUserByAdmin = asyncHandler(async (req, res) => {
             email: user.email,
             phone: user.phone,
             role: user.role,
+            referredByPartner: user.referredByPartner,
             isActive: user.isActive,
             createdAt: user.createdAt
         }
@@ -552,7 +555,7 @@ const createUserByAdmin = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/users/:id
 // @access  Private/Admin
 const updateUserByAdmin = asyncHandler(async (req, res) => {
-    const { name, email, phone, role, isActive, commissionPercentage, panCard, canManageCompliance, assignedTicketCategories } = req.body;
+    const { name, email, phone, role, isActive, commissionPercentage, panCard, canManageCompliance, assignedTicketCategories, referredByPartner } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -568,11 +571,15 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
     if (canManageCompliance !== undefined) user.canManageCompliance = Boolean(canManageCompliance);
     if (commissionPercentage !== undefined) user.commissionPercentage = Number(commissionPercentage);
     if (panCard !== undefined) user.panCard = panCard;
+    if (referredByPartner !== undefined) {
+        user.referredByPartner = (referredByPartner && referredByPartner !== '' && referredByPartner !== 'none') ? referredByPartner : null;
+    }
     if (assignedTicketCategories !== undefined) {
         user.assignedTicketCategories = Array.isArray(assignedTicketCategories) ? assignedTicketCategories : [];
     }
 
     await user.save();
+    await user.populate('referredByPartner', 'name phone email commissionPercentage');
 
     res.json({
         message: 'User updated',
@@ -586,12 +593,14 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
             canManageCompliance: user.canManageCompliance,
             commissionPercentage: user.commissionPercentage,
             panCard: user.panCard,
+            referredByPartner: user.referredByPartner,
             assignedTicketCategories: user.assignedTicketCategories,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         }
     });
 });
+
 
 // @desc    Toggle user active status
 // @route   PATCH /api/auth/users/:id/toggle-active

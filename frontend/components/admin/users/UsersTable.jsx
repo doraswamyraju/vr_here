@@ -18,14 +18,29 @@ const formatImageUrl = (url) => {
   return url;
 };
 
-const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onViewDetails, onStartEdit, onSaveEdit, onCancelEdit, onToggleActive, onToggleComplianceAccess, onSendPasswordLink, onDeleteUser }) => (
+const UsersTable = ({ 
+  users, 
+  partners = [],
+  editingUserId, 
+  editDraft, 
+  setEditDraft, 
+  onViewDetails, 
+  onStartEdit, 
+  onSaveEdit, 
+  onCancelEdit, 
+  onToggleActive, 
+  onToggleComplianceAccess, 
+  onSendPasswordLink, 
+  onDeleteUser 
+}) => (
   <div className="rounded-xl border border-slate-200 bg-white overflow-x-auto">
-    <table className="w-full text-sm min-w-[880px]">
+    <table className="w-full text-sm min-w-[980px]">
       <thead className="bg-slate-100 text-slate-600 text-xs uppercase">
         <tr>
           <th className="text-left px-4 py-3">Name</th>
           <th className="text-left px-4 py-3">Email</th>
           <th className="text-left px-4 py-3">Role</th>
+          <th className="text-left px-4 py-3">Referral Partner</th>
           <th className="text-left px-4 py-3">Ticket Queues</th>
           <th className="text-left px-4 py-3">Status</th>
           <th className="text-left px-4 py-3">Actions</th>
@@ -34,7 +49,7 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onViewDetai
       <tbody className="divide-y divide-slate-100">
         {!users.length && (
           <tr>
-            <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
+            <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
               No users found for selected filters.
             </td>
           </tr>
@@ -42,6 +57,7 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onViewDetai
         {users.map((user) => {
           const isEditing = editingUserId === user._id;
           const avatarUrl = formatImageUrl(user.profilePhoto || user.companyLogo);
+          const partnerObj = user.referredByPartner;
           return (
             <tr key={user._id} className="hover:bg-slate-50/60 transition-colors">
               <td className="px-4 py-3">
@@ -102,6 +118,42 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onViewDetai
                       <span className="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase" title="Authorized Compliance Manager">
                         Compliance
                       </span>
+                    )}
+                  </div>
+                )}
+              </td>
+              {/* REFERRAL PARTNER COLUMN */}
+              <td className="px-4 py-3">
+                {isEditing ? (
+                  editDraft.role === 'client' ? (
+                    <select
+                      value={editDraft.referredByPartner || ''}
+                      onChange={(e) => setEditDraft(prev => ({ ...prev, referredByPartner: e.target.value }))}
+                      className="p-1.5 border rounded border-slate-300 text-xs w-full font-semibold bg-white"
+                    >
+                      <option value="">-- No Partner (Direct) --</option>
+                      {partners.map(p => (
+                        <option key={p._id} value={p._id}>
+                          {p.name} ({p.phone || p.email})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-slate-400 text-xs">-</span>
+                  )
+                ) : (
+                  <div>
+                    {user.role === 'client' ? (
+                      partnerObj ? (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
+                          <span>🤝 {partnerObj.name || 'Partner'}</span>
+                          {partnerObj.phone && <span className="text-[10px] text-amber-600 font-semibold">({partnerObj.phone})</span>}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">Direct Client</span>
+                      )
+                    ) : (
+                      <span className="text-slate-300 text-xs">-</span>
                     )}
                   </div>
                 )}
@@ -207,5 +259,6 @@ const UsersTable = ({ users, editingUserId, editDraft, setEditDraft, onViewDetai
     </table>
   </div>
 );
+
 
 export default UsersTable;
