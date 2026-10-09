@@ -752,15 +752,15 @@ const DashboardView = ({ setActiveTab, orders = [], payments = [], notifications
                                 <Gift size={20} />
                             </div>
                             <div>
-                                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900">Refer & Earn ₹1,000</h4>
+                                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900">Refer & Earn ₹500</h4>
                                 <p className="text-[10px] text-amber-700 font-medium">Instant wallet credits per referral</p>
                             </div>
                         </div>
                         <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                            Refer another founder for company registration or ISO certification and receive ₹1,000 credit on your next filing.
+                            Refer another founder for company registration or compliance filing and receive ₹500 credit or direct payout.
                         </p>
                         <button
-                            onClick={() => setActiveTab('Account')}
+                            onClick={() => setActiveTab('Referrals')}
                             className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition-all"
                         >
                             Get Referral Link
