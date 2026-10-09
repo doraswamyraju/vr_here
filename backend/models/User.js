@@ -112,6 +112,15 @@ const userSchema = mongoose.Schema({
         ifscCode: { type: String, default: '' },
         bankName: { type: String, default: '' }
     },
+    upiId: {
+        type: String,
+        default: ''
+    },
+    referredByPartner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
     isActive: {
         type: Boolean,
         default: true

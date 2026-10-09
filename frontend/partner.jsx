@@ -2,17 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, Users, LogOut, Menu, X, 
-    Bell, User as UserIcon, Settings, ChevronRight, DollarSign
+    Bell, User as UserIcon, Settings, ChevronRight, 
+    DollarSign, ShoppingBag, UserPlus
 } from 'lucide-react';
 import PartnerOverviewView from './components/partner/PartnerOverviewView';
 import PartnerSettingsView from './components/partner/PartnerSettingsView';
-import CustomerFinanceView from './components/customer/CustomerFinanceView';
+import PartnerEarningsView from './components/partner/PartnerEarningsView';
+import PartnerCustomersView from './components/partner/PartnerCustomersView';
+import PartnerMasterOrdersView from './components/partner/PartnerMasterOrdersView';
 
 const PartnerDashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('Overview');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
+    const [selectedCustomerForOrder, setSelectedCustomerForOrder] = useState(null);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
@@ -36,10 +40,16 @@ const PartnerDashboard = () => {
 
     const sidebarItems = [
         { name: 'Overview', icon: LayoutDashboard },
-        { name: 'Referrals', icon: Users },
-        { name: 'Earnings', icon: DollarSign },
+        { name: 'Customers', icon: Users },
+        { name: 'Master Orders', icon: ShoppingBag },
+        { name: 'Earnings & Payouts', icon: DollarSign },
         { name: 'Settings', icon: Settings }
     ];
+
+    const handleSelectCustomerForOrder = (customer) => {
+        setSelectedCustomerForOrder(customer);
+        setActiveTab('Master Orders');
+    };
 
     if (!userInfo) return null;
 
@@ -158,8 +168,20 @@ const PartnerDashboard = () => {
                 <div className="flex-grow overflow-y-auto custom-scrollbar bg-slate-50/50">
                     <div className="max-w-[1400px] mx-auto p-6 lg:p-10">
                         {activeTab === 'Overview' && <PartnerOverviewView userInfo={userInfo} mode="overview" />}
-                        {activeTab === 'Referrals' && <PartnerOverviewView userInfo={userInfo} mode="referrals" />}
-                        {activeTab === 'Earnings' && <CustomerFinanceView token={userInfo?.token} />}
+                        {activeTab === 'Customers' && (
+                            <PartnerCustomersView 
+                                userInfo={userInfo} 
+                                onSelectCustomerForOrder={handleSelectCustomerForOrder} 
+                            />
+                        )}
+                        {activeTab === 'Master Orders' && (
+                            <PartnerMasterOrdersView 
+                                userInfo={userInfo}
+                                initialSelectedCustomer={selectedCustomerForOrder}
+                                onClearInitialCustomer={() => setSelectedCustomerForOrder(null)}
+                            />
+                        )}
+                        {activeTab === 'Earnings & Payouts' && <PartnerEarningsView userInfo={userInfo} />}
                         {activeTab === 'Settings' && (
                             <PartnerSettingsView 
                                 userInfo={userInfo} 
@@ -174,3 +196,4 @@ const PartnerDashboard = () => {
 };
 
 export default PartnerDashboard;
+
