@@ -1434,7 +1434,7 @@ fun BMSQuickActionFAB(
     )
 
     Column(
-        modifier = modifier.padding(end = 16.dp, bottom = 80.dp),
+        modifier = modifier,
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -1451,29 +1451,32 @@ fun BMSQuickActionFAB(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.clickable {
-                        isOpen = false
-                        onNewOrder()
-                    }
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            isOpen = false
+                            onNewOrder()
+                        }
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
                 ) {
                     Surface(
-                        color = Color(0xCC000000),
+                        color = Color(0xDD0F172A),
                         shape = RoundedCornerShape(8.dp),
-                        shadowElevation = 4.dp
+                        shadowElevation = 6.dp
                     ) {
                         Text(
                             text = "New Order",
                             color = Color.White,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Black,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                         )
                     }
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
-                            .background(Color(0xFF10B981), CircleShape)
-                            .shadow(6.dp, CircleShape, spotColor = Color(0xFF10B981)),
+                            .size(46.dp)
+                            .shadow(8.dp, CircleShape, spotColor = Color(0xFF10B981))
+                            .background(Color(0xFF10B981), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -1489,29 +1492,32 @@ fun BMSQuickActionFAB(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.clickable {
-                        isOpen = false
-                        onNewTodo()
-                    }
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            isOpen = false
+                            onNewTodo()
+                        }
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
                 ) {
                     Surface(
-                        color = Color(0xCC000000),
+                        color = Color(0xDD0F172A),
                         shape = RoundedCornerShape(8.dp),
-                        shadowElevation = 4.dp
+                        shadowElevation = 6.dp
                     ) {
                         Text(
                             text = "New Task",
                             color = Color.White,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Black,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                         )
                     }
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
-                            .background(Color(0xFF3B82F6), CircleShape)
-                            .shadow(6.dp, CircleShape, spotColor = Color(0xFF3B82F6)),
+                            .size(46.dp)
+                            .shadow(8.dp, CircleShape, spotColor = Color(0xFF2563EB))
+                            .background(Color(0xFF2563EB), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -1529,17 +1535,18 @@ fun BMSQuickActionFAB(
         Box(
             modifier = Modifier
                 .size(56.dp)
+                .shadow(12.dp, CircleShape, spotColor = Color(0xFF4F46E5))
+                .clip(CircleShape)
                 .background(
                     if (isOpen) Color(0xFF1E293B) else Color(0xFF4F46E5),
                     CircleShape
                 )
-                .shadow(10.dp, CircleShape, spotColor = Color(0xFF4F46E5))
                 .clickable { isOpen = !isOpen },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Actions",
+                contentDescription = "Quick Actions",
                 tint = Color.White,
                 modifier = Modifier
                     .size(26.dp)

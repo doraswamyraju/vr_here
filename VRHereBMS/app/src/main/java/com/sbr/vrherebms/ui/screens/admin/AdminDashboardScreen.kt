@@ -35,8 +35,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.window.DialogProperties
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -191,7 +193,7 @@ fun AdminDashboardScreen(
                 }
             },
             floatingActionButton = {
-                if (adminViewModel.selectedOrderId == null && activeTab == "Dashboard") {
+                if (adminViewModel.selectedOrderId == null) {
                     com.sbr.vrherebms.ui.components.BMSQuickActionFAB(
                         onNewOrder = { showNewOrderDialog = true },
                         onNewTodo = { showNewTodoDialog = true }
@@ -430,201 +432,574 @@ fun AdminDashboardScreen(
     }
 }
 
-    // A. PREMIUM MANUAL SERVICE ORDER DIALOG FORM
+    // A. 1:1 WEB MATCHING MANUAL SERVICE ORDER DIALOG (NewOrderModal.jsx)
     if (showNewOrderDialog) {
-        Dialog(onDismissRequest = { showNewOrderDialog = false }) {
+        Dialog(
+            onDismissRequest = { showNewOrderDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                    .fillMaxWidth(0.94f)
+                    .padding(vertical = 16.dp)
+                    .heightIn(max = 680.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Register Manual Service",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                        color = textDark
-                    )
+                    // Modal Header
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF8FAFC))
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Manual Order Placement",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFF0F172A)
+                            )
+                            Text(
+                                text = "Create a new order record directly in the system.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        IconButton(
+                            onClick = { showNewOrderDialog = false },
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(Color(0xFFE2E8F0), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color(0xFF475569),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
+
+                    // Form Body
+                    var clientSearchTerm by remember { mutableStateOf("") }
+                    var selectedUser by remember { mutableStateOf<com.sbr.vrherebms.data.model.UserProfile?>(null) }
+                    var isRegisteringClient by remember { mutableStateOf(false) }
 
                     var clientName by remember { mutableStateOf("") }
                     var email by remember { mutableStateOf("") }
                     var phone by remember { mutableStateOf("") }
-                    var serviceName by remember { mutableStateOf("") }
+
+                    var serviceSearchTerm by remember { mutableStateOf("") }
+                    var expandedServiceSuggestions by remember { mutableStateOf(false) }
                     var packageName by remember { mutableStateOf("Standard Plan") }
                     var price by remember { mutableStateOf("") }
-                    
-                    var expandedService by remember { mutableStateOf(false) }
-                    val serviceOptions = listOf(
-                        "Private Limited Company Registration",
-                        "GST Registration",
-                        "GST Return Filing",
-                        "Income Tax Return",
-                        "MSME / Udyam Registration",
-                        "Trademark Registration",
-                        "Company Annual Compliances"
-                    )
 
                     var expandedEmployee by remember { mutableStateOf(false) }
                     var selectedEmployeeId by remember { mutableStateOf<String?>(null) }
                     var selectedEmployeeName by remember { mutableStateOf("Select Specialist (Optional)") }
 
-                    OutlinedTextField(
-                        value = clientName,
-                        onValueChange = { clientName = it },
-                        label = { Text("Client Full Name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                    // Recurring state
+                    var isRecurring by remember { mutableStateOf(false) }
+                    var recurringFrequency by remember { mutableStateOf("Monthly") }
+                    var dayOfMonth by remember { mutableStateOf("1") }
+                    var dayOfWeek by remember { mutableStateOf("Monday") }
+
+                    val allServiceCatalog = listOf(
+                        "Private Limited Company Registration",
+                        "GST Registration",
+                        "GST Return Filing",
+                        "Income Tax Return (ITR)",
+                        "MSME / Udyam Registration",
+                        "Trademark Registration",
+                        "Company Annual Compliances",
+                        "Bookkeeping & Accounting Audit",
+                        "Import Export Code (IEC)",
+                        "FSSAI Food License",
+                        "Payroll & HRMS Management",
+                        "Virtual Office Setup"
                     )
 
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Client Email") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                    )
+                    val filteredUsers = remember(clientSearchTerm, adminViewModel.users) {
+                        if (clientSearchTerm.isBlank()) emptyList()
+                        else adminViewModel.users.filter {
+                            it.name.contains(clientSearchTerm, ignoreCase = true) ||
+                            it.email.contains(clientSearchTerm, ignoreCase = true) ||
+                            (it.phone ?: "").contains(clientSearchTerm)
+                        }.take(5)
+                    }
 
-                    OutlinedTextField(
-                        value = phone,
-                        onValueChange = { phone = it },
-                        label = { Text("Client Phone") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState())
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Section 1: Customer Selection
+                        Text(
+                            text = "SELECT CUSTOMER",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF64748B),
+                            letterSpacing = 1.sp
+                        )
 
-                    // Service Dropdown
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
-                            value = serviceName,
-                            onValueChange = { serviceName = it },
-                            label = { Text("Service Name") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            trailingIcon = {
-                                IconButton(onClick = { expandedService = true }) {
-                                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
+                        if (selectedUser != null) {
+                            // Selected User Chip / Card
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFFEEF2FF), RoundedCornerShape(14.dp))
+                                    .border(1.dp, Color(0xFFC7D2FE), RoundedCornerShape(14.dp))
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .background(Color(0xFF4F46E5), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            text = selectedUser!!.name,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF1E1B4B)
+                                        )
+                                        Text(
+                                            text = "${selectedUser!!.email}${if (!selectedUser!!.phone.isNullOrBlank()) " | ${selectedUser!!.phone}" else ""}",
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF6366F1)
+                                        )
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        selectedUser = null
+                                        clientName = ""
+                                        email = ""
+                                        phone = ""
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove",
+                                        tint = Color(0xFFEF4444),
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
-                        )
-                        DropdownMenu(
-                            expanded = expandedService,
-                            onDismissRequest = { expandedService = false },
-                            modifier = Modifier.fillMaxWidth(0.9f)
-                        ) {
-                            serviceOptions.forEach { service ->
-                                DropdownMenuItem(
-                                    text = { Text(service) },
-                                    onClick = {
-                                        serviceName = service
-                                        expandedService = false
+                        } else {
+                            // Search existing client
+                            OutlinedTextField(
+                                value = clientSearchTerm,
+                                onValueChange = { clientSearchTerm = it },
+                                label = { Text("Search client by name, email or phone...") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF94A3B8))
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                singleLine = true
+                            )
+
+                            // Dropdown search results
+                            if (filteredUsers.isNotEmpty()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                                ) {
+                                    Column {
+                                        filteredUsers.forEach { user ->
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable {
+                                                        selectedUser = user
+                                                        clientName = user.name
+                                                        email = user.email
+                                                        phone = user.phone ?: ""
+                                                        clientSearchTerm = ""
+                                                    }
+                                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(user.name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF0F172A))
+                                                    Text("${user.email} | ${user.phone ?: ""}", fontSize = 11.sp, color = Color(0xFF64748B))
+                                                }
+                                            }
+                                            HorizontalDivider(color = Color(0xFFF1F5F9))
+                                        }
                                     }
+                                }
+                            }
+
+                            // Register New Client Checkbox
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.clickable { isRegisteringClient = !isRegisteringClient }
+                            ) {
+                                Checkbox(
+                                    checked = isRegisteringClient,
+                                    onCheckedChange = { isRegisteringClient = it },
+                                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4F46E5))
+                                )
+                                Text(
+                                    text = "Register as New Client",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF4F46E5)
+                                )
+                            }
+
+                            // Manual client input fields
+                            OutlinedTextField(
+                                value = clientName,
+                                onValueChange = { clientName = it },
+                                label = { Text("Client Full Name *") },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = email,
+                                    onValueChange = { email = it },
+                                    label = { Text("Email Address *") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                                )
+                                OutlinedTextField(
+                                    value = phone,
+                                    onValueChange = { phone = it },
+                                    label = { Text("Phone Number") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                                 )
                             }
                         }
-                    }
 
-                    OutlinedTextField(
-                        value = packageName,
-                        onValueChange = { packageName = it },
-                        label = { Text("Package Plan") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                        HorizontalDivider(color = Color(0xFFF1F5F9))
 
-                    OutlinedTextField(
-                        value = price,
-                        onValueChange = { price = it },
-                        label = { Text("Valuation Price (INR)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-
-                    // Employee Dropdown Assignment
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
-                            value = selectedEmployeeName,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Assign Specialist") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            trailingIcon = {
-                                IconButton(onClick = { expandedEmployee = true }) {
-                                    Icon(Icons.Default.Person, contentDescription = "Dropdown")
-                                }
-                            }
+                        // Section 2: Service Details
+                        Text(
+                            text = "SERVICE DETAILS",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF64748B),
+                            letterSpacing = 1.sp
                         )
-                        DropdownMenu(
-                            expanded = expandedEmployee,
-                            onDismissRequest = { expandedEmployee = false },
-                            modifier = Modifier.fillMaxWidth(0.9f)
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Unassigned") },
-                                onClick = {
-                                    selectedEmployeeId = null
-                                    selectedEmployeeName = "Unassigned"
-                                    expandedEmployee = false
+
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = serviceSearchTerm,
+                                onValueChange = {
+                                    serviceSearchTerm = it
+                                    expandedServiceSuggestions = it.isNotBlank()
+                                },
+                                label = { Text("Service Name (Type or Select) *") },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                trailingIcon = {
+                                    IconButton(onClick = { expandedServiceSuggestions = !expandedServiceSuggestions }) {
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Suggestions")
+                                    }
                                 }
                             )
-                            adminViewModel.employees.forEach { emp ->
+
+                            DropdownMenu(
+                                expanded = expandedServiceSuggestions,
+                                onDismissRequest = { expandedServiceSuggestions = false },
+                                modifier = Modifier.fillMaxWidth(0.88f)
+                            ) {
+                                allServiceCatalog
+                                    .filter { it.contains(serviceSearchTerm, ignoreCase = true) || serviceSearchTerm.isBlank() }
+                                    .forEach { svc ->
+                                        DropdownMenuItem(
+                                            text = { Text(svc, fontSize = 13.sp) },
+                                            onClick = {
+                                                serviceSearchTerm = svc
+                                                expandedServiceSuggestions = false
+                                            }
+                                        )
+                                    }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = packageName,
+                                onValueChange = { packageName = it },
+                                label = { Text("Package Plan") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            OutlinedTextField(
+                                value = price,
+                                onValueChange = { price = it },
+                                label = { Text("Price (₹ INR) *") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            )
+                        }
+
+                        // Specialist Assignment
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = selectedEmployeeName,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Assign Specialist (Optional)") },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                trailingIcon = {
+                                    IconButton(onClick = { expandedEmployee = true }) {
+                                        Icon(Icons.Default.Person, contentDescription = "Dropdown")
+                                    }
+                                }
+                            )
+                            DropdownMenu(
+                                expanded = expandedEmployee,
+                                onDismissRequest = { expandedEmployee = false },
+                                modifier = Modifier.fillMaxWidth(0.88f)
+                            ) {
                                 DropdownMenuItem(
-                                    text = { Text("${emp.name} (${emp.role})") },
+                                    text = { Text("Unassigned") },
                                     onClick = {
-                                        selectedEmployeeId = emp.id
-                                        selectedEmployeeName = emp.name
+                                        selectedEmployeeId = null
+                                        selectedEmployeeName = "Unassigned"
                                         expandedEmployee = false
                                     }
                                 )
+                                adminViewModel.employees.forEach { emp ->
+                                    DropdownMenuItem(
+                                        text = { Text("${emp.name} (${emp.role})", fontSize = 13.sp) },
+                                        onClick = {
+                                            selectedEmployeeId = emp.id
+                                            selectedEmployeeName = emp.name
+                                            expandedEmployee = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(color = Color(0xFFF1F5F9))
+
+                        // Section 3: Recurring Service Options (1:1 Web)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.clickable { isRecurring = !isRecurring }
+                        ) {
+                            Checkbox(
+                                checked = isRecurring,
+                                onCheckedChange = { isRecurring = it },
+                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4F46E5))
+                            )
+                            Text(
+                                text = "Schedule as Recurring Service",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                        }
+
+                        if (isRecurring) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Text(
+                                        text = "Frequency & Schedule Date",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF475569)
+                                    )
+
+                                    val frequencies = listOf("Monthly", "Weekly", "Quarterly", "Half-Yearly", "Yearly")
+                                    var expandedFreq by remember { mutableStateOf(false) }
+
+                                    Box(modifier = Modifier.fillMaxWidth()) {
+                                        OutlinedTextField(
+                                            value = recurringFrequency,
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            label = { Text("Frequency") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(10.dp),
+                                            trailingIcon = {
+                                                IconButton(onClick = { expandedFreq = true }) {
+                                                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Frequency")
+                                                }
+                                            }
+                                        )
+                                        DropdownMenu(
+                                            expanded = expandedFreq,
+                                            onDismissRequest = { expandedFreq = false }
+                                        ) {
+                                            frequencies.forEach { freq ->
+                                                DropdownMenuItem(
+                                                    text = { Text(freq) },
+                                                    onClick = {
+                                                        recurringFrequency = freq
+                                                        expandedFreq = false
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    if (recurringFrequency == "Weekly") {
+                                        val days = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+                                        var expandedDay by remember { mutableStateOf(false) }
+                                        Box(modifier = Modifier.fillMaxWidth()) {
+                                            OutlinedTextField(
+                                                value = dayOfWeek,
+                                                onValueChange = {},
+                                                readOnly = true,
+                                                label = { Text("Day of Week") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(10.dp),
+                                                trailingIcon = {
+                                                    IconButton(onClick = { expandedDay = true }) {
+                                                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Day")
+                                                    }
+                                                }
+                                            )
+                                            DropdownMenu(
+                                                expanded = expandedDay,
+                                                onDismissRequest = { expandedDay = false }
+                                            ) {
+                                                days.forEach { d ->
+                                                    DropdownMenuItem(
+                                                        text = { Text(d) },
+                                                        onClick = {
+                                                            dayOfWeek = d
+                                                            expandedDay = false
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        OutlinedTextField(
+                                            value = dayOfMonth,
+                                            onValueChange = { dayOfMonth = it },
+                                            label = { Text("Day of Month (1 - 31)") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(10.dp),
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
 
+                    // Modal Footer
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF8FAFC))
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         TextButton(onClick = { showNewOrderDialog = false }) {
-                            Text("Cancel", color = textMuted)
+                            Text("Cancel", color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Button(
                             onClick = {
-                                if (clientName.isBlank() || serviceName.isBlank() || price.isBlank()) {
-                                    Toast.makeText(context, "Please fill Client Name, Service Name, and Price", Toast.LENGTH_SHORT).show()
+                                val finalClientName = selectedUser?.name ?: clientName
+                                val finalEmail = selectedUser?.email ?: email
+                                val finalPhone = selectedUser?.phone ?: phone
+                                val finalService = serviceSearchTerm.trim()
+
+                                if (finalService.isBlank() || price.isBlank() || (selectedUser == null && finalClientName.isBlank())) {
+                                    Toast.makeText(context, "Please fill Service Name, Price, and Customer details.", Toast.LENGTH_SHORT).show()
                                     return@Button
                                 }
                                 val priceValue = price.toDoubleOrNull() ?: 0.0
+
                                 val payload = mutableMapOf<String, Any>(
-                                    "clientName" to clientName,
-                                    "email" to email,
-                                    "phone" to phone,
-                                    "serviceName" to serviceName,
+                                    "clientName" to finalClientName,
+                                    "email" to finalEmail,
+                                    "phone" to finalPhone,
+                                    "serviceName" to finalService,
                                     "packageName" to packageName,
-                                    "price" to priceValue
+                                    "price" to priceValue,
+                                    "isRecurring" to isRecurring,
+                                    "frequency" to recurringFrequency,
+                                    "dayOfMonth" to (dayOfMonth.toIntOrNull() ?: 1),
+                                    "dayOfWeek" to dayOfWeek
                                 )
+                                selectedUser?.id?.let { payload["userId"] = it }
                                 selectedEmployeeId?.let { payload["assignedEmployee"] = it }
 
-                                adminViewModel.createOrder(payload) { success ->
+                                adminViewModel.createOrderWithClientRegistration(
+                                    body = payload,
+                                    isRegisteringClient = isRegisteringClient,
+                                    clientName = finalClientName,
+                                    email = finalEmail,
+                                    phone = finalPhone
+                                ) { success ->
                                     if (success) showNewOrderDialog = false
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
+                            Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text("Create Order", fontWeight = FontWeight.Bold)
                         }
                     }
@@ -633,163 +1008,416 @@ fun AdminDashboardScreen(
         }
     }
 
-    // B. PREMIUM MANUALLY CREATED TO-DO DIALOG FORM
+    // B. 1:1 WEB MATCHING TO-DO / TASK DIALOG (NewTodoModal.jsx)
     if (showNewTodoDialog) {
-        Dialog(onDismissRequest = { showNewTodoDialog = false }) {
+        Dialog(
+            onDismissRequest = { showNewTodoDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                    .fillMaxWidth(0.94f)
+                    .padding(vertical = 16.dp)
+                    .heightIn(max = 680.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Create Admin task",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                        color = textDark
-                    )
+                    // Modal Header
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF8FAFC))
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Assign New Task",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFF0F172A)
+                            )
+                            Text(
+                                text = "Direct task assignment to your team.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        IconButton(
+                            onClick = { showNewTodoDialog = false },
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(Color(0xFFE2E8F0), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color(0xFF475569),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
 
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
+
+                    var taskType by remember { mutableStateOf("standalone") } // "standalone" or "order"
                     var title by remember { mutableStateOf("") }
                     var description by remember { mutableStateOf("") }
                     var priority by remember { mutableStateOf("Medium") }
-                    
-                    var expandedPriority by remember { mutableStateOf(false) }
-                    val priorityOptions = listOf("Low", "Medium", "High")
+                    var dueDate by remember { mutableStateOf("") }
 
-                    var expandedEmployee by remember { mutableStateOf(false) }
-                    var selectedEmployeeId by remember { mutableStateOf<String?>(null) }
-                    var selectedEmployeeName by remember { mutableStateOf("Assign Employee (Optional)") }
+                    // Order link state
+                    var selectedOrder by remember { mutableStateOf<com.sbr.vrherebms.data.model.OrderResponse?>(null) }
+                    var orderSearchTerm by remember { mutableStateOf("") }
+                    var expandedOrderResults by remember { mutableStateOf(false) }
 
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Task Title") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                    // Assignee state
+                    var selectedAssigneeId by remember { mutableStateOf<String?>(null) }
+                    var selectedAssigneeName by remember { mutableStateOf("Unassigned") }
+                    var expandedAssignee by remember { mutableStateOf(false) }
 
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text("Detailed Instructions") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        minLines = 3
-                    )
+                    val filteredOrders = remember(orderSearchTerm, adminViewModel.orders) {
+                        if (orderSearchTerm.isBlank()) emptyList()
+                        else adminViewModel.orders.filter {
+                            it.serviceName.contains(orderSearchTerm, ignoreCase = true) ||
+                            it.clientName.contains(orderSearchTerm, ignoreCase = true)
+                        }.take(6)
+                    }
 
-                    // Priority dropdown
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
-                            value = priority,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Priority Level") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            trailingIcon = {
-                                IconButton(onClick = { expandedPriority = true }) {
-                                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
-                                }
-                            }
-                        )
-                        DropdownMenu(
-                            expanded = expandedPriority,
-                            onDismissRequest = { expandedPriority = false }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState())
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Task Type Segmented Switch (1:1 Web)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFF1F5F9), RoundedCornerShape(14.dp))
+                                .padding(4.dp)
                         ) {
-                            priorityOptions.forEach { level ->
-                                DropdownMenuItem(
-                                    text = { Text(level) },
-                                    onClick = {
-                                        priority = level
-                                        expandedPriority = false
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (taskType == "standalone") Color.White else Color.Transparent)
+                                    .clickable {
+                                        taskType = "standalone"
+                                        selectedOrder = null
                                     }
+                                    .padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Standalone Task",
+                                    fontSize = 13.sp,
+                                    fontWeight = if (taskType == "standalone") FontWeight.Black else FontWeight.Bold,
+                                    color = if (taskType == "standalone") Color(0xFF4F46E5) else Color(0xFF64748B)
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (taskType == "order") Color.White else Color.Transparent)
+                                    .clickable { taskType = "order" }
+                                    .padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Link to Order",
+                                    fontSize = 13.sp,
+                                    fontWeight = if (taskType == "order") FontWeight.Black else FontWeight.Bold,
+                                    color = if (taskType == "order") Color(0xFF4F46E5) else Color(0xFF64748B)
                                 )
                             }
                         }
-                    }
 
-                    // Employee dropdown assignment
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
-                            value = selectedEmployeeName,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Assign Staff") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            trailingIcon = {
-                                IconButton(onClick = { expandedEmployee = true }) {
-                                    Icon(Icons.Default.Person, contentDescription = "Dropdown")
+                        // If Link to Order chosen
+                        if (taskType == "order") {
+                            Text(
+                                text = "SELECT RELATED ORDER",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFF64748B),
+                                letterSpacing = 1.sp
+                            )
+
+                            if (selectedOrder != null) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFFEEF2FF), RoundedCornerShape(12.dp))
+                                        .border(1.dp, Color(0xFFC7D2FE), RoundedCornerShape(12.dp))
+                                        .padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = selectedOrder!!.serviceName,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = Color(0xFF1E1B4B)
+                                        )
+                                        Text(
+                                            text = "Client: ${selectedOrder!!.clientName}",
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF6366F1)
+                                        )
+                                    }
+                                    TextButton(onClick = { selectedOrder = null }) {
+                                        Text("Change", color = Color(0xFFEF4444), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            } else {
+                                OutlinedTextField(
+                                    value = orderSearchTerm,
+                                    onValueChange = {
+                                        orderSearchTerm = it
+                                        expandedOrderResults = it.isNotBlank()
+                                    },
+                                    label = { Text("Search order by service or client name...") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF94A3B8))
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+
+                                if (filteredOrders.isNotEmpty()) {
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                                    ) {
+                                        Column {
+                                            filteredOrders.forEach { ord ->
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clickable {
+                                                            selectedOrder = ord
+                                                            orderSearchTerm = ""
+                                                            expandedOrderResults = false
+                                                        }
+                                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(ord.serviceName, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF0F172A))
+                                                        Text(ord.clientName, fontSize = 11.sp, color = Color(0xFF64748B))
+                                                    }
+                                                }
+                                                HorizontalDivider(color = Color(0xFFF1F5F9))
+                                            }
+                                        }
+                                    }
                                 }
                             }
+                        }
+
+                        // Task Title
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text("Task Title *") },
+                            placeholder = { Text("What needs to be done?") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true
                         )
-                        DropdownMenu(
-                            expanded = expandedEmployee,
-                            onDismissRequest = { expandedEmployee = false },
-                            modifier = Modifier.fillMaxWidth(0.9f)
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Unassigned") },
-                                onClick = {
-                                    selectedEmployeeId = null
-                                    selectedEmployeeName = "Unassigned"
-                                    expandedEmployee = false
+
+                        // Task Description
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("Task Description (Optional)") },
+                            placeholder = { Text("Additional details...") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            minLines = 3
+                        )
+
+                        // Assign Staff / Specialist
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = selectedAssigneeName,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Assign Team Member") },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                trailingIcon = {
+                                    IconButton(onClick = { expandedAssignee = true }) {
+                                        Icon(Icons.Default.Person, contentDescription = "Dropdown")
+                                    }
                                 }
                             )
-                            adminViewModel.employees.forEach { emp ->
+                            DropdownMenu(
+                                expanded = expandedAssignee,
+                                onDismissRequest = { expandedAssignee = false },
+                                modifier = Modifier.fillMaxWidth(0.88f)
+                            ) {
                                 DropdownMenuItem(
-                                    text = { Text("${emp.name} (${emp.role})") },
+                                    text = { Text("Unassigned") },
                                     onClick = {
-                                        selectedEmployeeId = emp.id
-                                        selectedEmployeeName = emp.name
-                                        expandedEmployee = false
+                                        selectedAssigneeId = null
+                                        selectedAssigneeName = "Unassigned"
+                                        expandedAssignee = false
                                     }
                                 )
+                                adminViewModel.employees.forEach { emp ->
+                                    DropdownMenuItem(
+                                        text = { Text("${emp.name} (${emp.role})", fontSize = 13.sp) },
+                                        onClick = {
+                                            selectedAssigneeId = emp.id
+                                            selectedAssigneeName = emp.name
+                                            expandedAssignee = false
+                                        }
+                                    )
+                                }
+                                adminViewModel.freelancers.forEach { free ->
+                                    DropdownMenuItem(
+                                        text = { Text("${free.name} (Freelancer - ${free.specialization ?: "Partner"})", fontSize = 13.sp) },
+                                        onClick = {
+                                            selectedAssigneeId = free.id
+                                            selectedAssigneeName = free.name
+                                            expandedAssignee = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Due Date Input + Quick helpers
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            OutlinedTextField(
+                                value = dueDate,
+                                onValueChange = { dueDate = it },
+                                label = { Text("Due Date (YYYY-MM-DD)") },
+                                placeholder = { Text("e.g. 2026-10-25") },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf("Today", "Tomorrow", "1 Week").forEach { label ->
+                                    val now = java.time.LocalDate.now()
+                                    val dateStr = when (label) {
+                                        "Today" -> now.toString()
+                                        "Tomorrow" -> now.plusDays(1).toString()
+                                        else -> now.plusWeeks(1).toString()
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (dueDate == dateStr) Color(0xFF4F46E5) else Color(0xFFF1F5F9))
+                                            .clickable { dueDate = dateStr }
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (dueDate == dateStr) Color.White else Color(0xFF475569)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Priority Chips (1:1 Web: Low, Medium, High, Urgent)
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "PRIORITY",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFF64748B),
+                                letterSpacing = 1.sp
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf("Low", "Medium", "High", "Urgent").forEach { p ->
+                                    val isSelected = priority == p
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(if (isSelected) Color(0xFF0F172A) else Color.White)
+                                            .border(
+                                                1.dp,
+                                                if (isSelected) Color(0xFF0F172A) else Color(0xFFE2E8F0),
+                                                RoundedCornerShape(10.dp)
+                                            )
+                                            .clickable { priority = p }
+                                            .padding(vertical = 10.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = p,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                                            color = if (isSelected) Color.White else Color(0xFF64748B)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
 
+                    // Modal Footer
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF8FAFC))
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         TextButton(onClick = { showNewTodoDialog = false }) {
-                            Text("Cancel", color = textMuted)
+                            Text("Cancel", color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Button(
                             onClick = {
                                 if (title.isBlank()) {
-                                    Toast.makeText(context, "Task Title is required", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Task Title is required.", Toast.LENGTH_SHORT).show()
                                     return@Button
                                 }
                                 val request = CreateTodoRequest(
-                                    title = title,
-                                    description = if (description.isBlank()) null else description,
+                                    title = title.trim(),
+                                    description = if (description.isBlank()) null else description.trim(),
                                     priority = priority,
-                                    assignedTo = selectedEmployeeId,
-                                    orderId = null,
-                                    dueDate = null
+                                    assignedTo = selectedAssigneeId,
+                                    orderId = selectedOrder?.id,
+                                    dueDate = if (dueDate.isBlank()) null else dueDate
                                 )
-
                                 adminViewModel.createTodo(request) { success ->
                                     if (success) showNewTodoDialog = false
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Add Task", fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Assign Task", fontWeight = FontWeight.Bold)
                         }
                     }
                 }

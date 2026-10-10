@@ -343,6 +343,58 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    // 1:1 Web NewOrderModal: register client if requested, then create order
+    fun createOrderWithClientRegistration(
+        body: Map<String, Any>,
+        isRegisteringClient: Boolean,
+        clientName: String,
+        email: String,
+        phone: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        isLoading = true
+        viewModelScope.launch {
+            try {
+                val orderPayload = body.toMutableMap()
+                var finalUserId = (orderPayload["userId"] as? String) ?: ""
+
+                if (isRegisteringClient && finalUserId.isBlank()) {
+                    try {
+                        val userCall = api.createAdminUser(
+                            mapOf(
+                                "name" to clientName,
+                                "email" to email,
+                                "phone" to phone,
+                                "role" to "client"
+                            )
+                        )
+                        if (userCall.isSuccessful && userCall.body() != null) {
+                            finalUserId = userCall.body()!!.id
+                            orderPayload["userId"] = finalUserId
+                        }
+                    } catch (err: Exception) {
+                        // Log and proceed or show toast
+                    }
+                }
+
+                val call = api.createOrder(orderPayload)
+                if (call.isSuccessful && call.body() != null) {
+                    _eventFlow.emit(UiEvent.ShowToast("New order created successfully!"))
+                    syncDashboardData()
+                    onResult(true)
+                } else {
+                    _eventFlow.emit(UiEvent.ShowToast("Order creation failed: ${call.message()}"))
+                    onResult(false)
+                }
+                isLoading = false
+            } catch (e: Exception) {
+                isLoading = false
+                _eventFlow.emit(UiEvent.ShowToast("Network error: ${e.localizedMessage}"))
+                onResult(false)
+            }
+        }
+    }
+
     // Create Todo Call
     fun createTodo(request: CreateTodoRequest, onResult: (Boolean) -> Unit) {
         isLoading = true
