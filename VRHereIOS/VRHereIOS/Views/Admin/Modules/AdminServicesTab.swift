@@ -402,7 +402,7 @@ struct AdminServicesTab: View {
                 VStack(spacing: 6) {
                     ForEach(pageDocReqs.indices, id: \.self) { idx in
                         HStack {
-                            Image(systemName: "doc.badge.checkmark")
+                            Image(systemName: "checkmark.seal.fill")
                                 .foregroundColor(.green)
                             Text(pageDocReqs[idx])
                                 .font(.system(size: 11, weight: .medium))

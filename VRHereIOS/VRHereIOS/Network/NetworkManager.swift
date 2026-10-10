@@ -284,7 +284,7 @@ class NetworkManager {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        if let token = SessionManager.shared.getToken() {
+        if let token = SessionManager.shared.getAuthToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
@@ -312,7 +312,7 @@ class NetworkManager {
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         request.httpBody = body
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
             let errorMsg = String(data: data, encoding: .utf8) ?? "Failed to send message"
             throw NSError(domain: "NetworkManager", code: (response as? HTTPURLResponse)?.statusCode ?? 500, userInfo: [NSLocalizedDescriptionKey: errorMsg])
