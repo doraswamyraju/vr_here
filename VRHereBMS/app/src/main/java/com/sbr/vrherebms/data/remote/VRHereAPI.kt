@@ -275,10 +275,6 @@ interface VRHereAPI {
         @Body body: Map<String, String>
     ): Response<LeadResponse>
 
-    // --- ATTENDANCE SUMMARY ---
-    @GET("api/attendance/summary")
-    suspend fun getAttendanceSummary(): Response<AttendanceSummaryResponse>
-
     // --- DYNAMIC BLOGS & PROMOTIONAL OFFERS CMS ---
     @GET("api/blogs")
     suspend fun getBlogs(): Response<List<BlogResponse>>
