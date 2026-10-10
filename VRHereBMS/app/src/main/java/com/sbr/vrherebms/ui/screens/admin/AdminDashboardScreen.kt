@@ -149,9 +149,18 @@ fun AdminDashboardScreen(
                         title = "ADMIN PANEL",
                         showMenu = true,
                         onMenuClick = { scope.launch { drawerState.open() } },
-                        showBack = activeTab != "Dashboard",
-                        onBackClick = { activeTab = "Dashboard" },
-                        onLogoClick = { activeTab = "Dashboard" },
+                        showBack = activeTab != "Dashboard" || adminViewModel.selectedOrderId != null,
+                        onBackClick = {
+                            if (adminViewModel.selectedOrderId != null) {
+                                adminViewModel.selectedOrderId = null
+                            } else {
+                                activeTab = "Dashboard"
+                            }
+                        },
+                        onLogoClick = {
+                            adminViewModel.selectedOrderId = null
+                            activeTab = "Dashboard"
+                        },
                         showNotifications = true,
                         hasUnreadNotifications = adminViewModel.notifications.any { !it.isRead },
                         unreadNotificationsCount = adminViewModel.notifications.count { !it.isRead },
@@ -168,17 +177,21 @@ fun AdminDashboardScreen(
                 }
             },
             bottomBar = {
-                com.sbr.vrherebms.ui.components.BMSAppFloatingDock(
-                    activeTab = activeTab,
-                    dockItems = dockItems,
-                    onTabSelected = { activeTab = it }
-                )
+                if (adminViewModel.selectedOrderId == null) {
+                    com.sbr.vrherebms.ui.components.BMSAppFloatingDock(
+                        activeTab = activeTab,
+                        dockItems = dockItems,
+                        onTabSelected = { activeTab = it }
+                    )
+                }
             },
             floatingActionButton = {
-                com.sbr.vrherebms.ui.components.BMSQuickActionFAB(
-                    onNewOrder = { showNewOrderDialog = true },
-                    onNewTodo = { showNewTodoDialog = true }
-                )
+                if (adminViewModel.selectedOrderId == null && activeTab == "Dashboard") {
+                    com.sbr.vrherebms.ui.components.BMSQuickActionFAB(
+                        onNewOrder = { showNewOrderDialog = true },
+                        onNewTodo = { showNewTodoDialog = true }
+                    )
+                }
             }
         ) { paddingValues ->
             Box(

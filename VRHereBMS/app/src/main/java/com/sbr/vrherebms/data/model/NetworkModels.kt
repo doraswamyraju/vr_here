@@ -174,16 +174,17 @@ data class OrderChatMessage(
     val messageType: String = "client", // 'client' or 'internal'
     val message: String = "",
     val attachments: List<OrderChatAttachment>? = emptyList(),
-    val readBy: List<String>? = emptyList(),
+    val readBy: List<com.google.gson.JsonElement>? = emptyList(),
     val createdAt: String = ""
 ) {
     val safeAttachments: List<OrderChatAttachment> get() = attachments ?: emptyList()
-    val safeReadBy: List<String> get() = readBy ?: emptyList()
+    val safeReadBy: List<com.google.gson.JsonElement> get() = readBy ?: emptyList()
 }
 
 data class OrderUnreadCountResponse(
     val clientUnread: Int = 0,
     val internalUnread: Int = 0,
+    @SerializedName("unreadCount") val unreadCount: Int = 0,
     val totalUnread: Int = 0
 )
 

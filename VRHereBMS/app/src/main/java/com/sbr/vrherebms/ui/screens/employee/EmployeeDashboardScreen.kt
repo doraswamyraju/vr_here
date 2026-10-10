@@ -162,11 +162,17 @@ fun EmployeeDashboardScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
-                            onClick = { scope.launch { drawerState.open() } }
+                            onClick = {
+                                if (selectedOrderForProcessing != null) {
+                                    selectedOrderForProcessing = null
+                                } else {
+                                    scope.launch { drawerState.open() }
+                                }
+                            }
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu",
+                                imageVector = if (selectedOrderForProcessing != null) Icons.Default.ArrowBack else Icons.Default.Menu,
+                                contentDescription = if (selectedOrderForProcessing != null) "Back" else "Menu",
                                 tint = Color(0xFF1E293B)
                             )
                         }
@@ -316,58 +322,72 @@ fun EmployeeDashboardScreen(
                 }
             },
             bottomBar = {
-                // Replicate the custom dark, rounded, floating bottom navigation from React mobile view
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFFF8FAFC))
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
+                if (selectedOrderForProcessing == null) {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(64.dp)
-                            .background(Color(0xFA0F172A), RoundedCornerShape(28.dp))
-                            .border(1.dp, Color(0xFFFFFFFF).copy(alpha = 0.15f), RoundedCornerShape(28.dp))
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        val navItems = listOf(
-                            Triple("Overview", Icons.Default.Dashboard, "Me"),
-                            Triple("Queue", Icons.Default.Work, "Queue"),
-                            Triple("Attendance", Icons.Default.AccessTime, "Attendance"),
-                            Triple("HRMS", Icons.Default.People, "HRMS")
-                        )
-
-                        navItems.forEach { (tabId, icon, label) ->
-                            val isSelected = activeTab == tabId
-                            Column(
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(58.dp)
+                                .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = Color(0x60000000)),
+                            shape = RoundedCornerShape(24.dp),
+                            color = Color(0xFF0F172A),
+                            border = BorderStroke(1.dp, Color(0xFF334155))
+                        ) {
+                            Row(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .clickable { activeTab = tabId }
-                                    .padding(vertical = 6.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                                    .fillMaxSize()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = label,
-                                    tint = if (isSelected) Color(0xFF0EA5E9) else Color(0xFF94A3B8),
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .animateContentSize()
+                                val navItems = listOf(
+                                    Triple("Overview", Icons.Default.Dashboard, "Me"),
+                                    Triple("Queue", Icons.Default.Work, "Queue"),
+                                    Triple("Attendance", Icons.Default.AccessTime, "Attendance"),
+                                    Triple("HRMS", Icons.Default.People, "HRMS")
                                 )
-                                Spacer(modifier = Modifier.height(3.dp))
-                                Text(
-                                    text = label,
-                                    fontSize = 8.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (isSelected) Color.White else Color(0xFF94A3B8).copy(alpha = 0.7f),
-                                    letterSpacing = 0.5.sp
-                                )
+
+                                navItems.forEach { (tabId, icon, label) ->
+                                    val isSelected = activeTab == tabId
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .background(
+                                                if (isSelected) Color(0xFF0EA5E9) else Color.Transparent
+                                            )
+                                            .clickable { activeTab = tabId },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(vertical = 2.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = icon,
+                                                contentDescription = label,
+                                                tint = if (isSelected) Color.White else Color(0xFF94A3B8),
+                                                modifier = Modifier.size(19.dp)
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = label,
+                                                fontSize = 9.5.sp,
+                                                fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
+                                                color = if (isSelected) Color.White else Color(0xFF94A3B8),
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

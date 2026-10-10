@@ -1337,68 +1337,76 @@ fun BMSAppFloatingDock(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
-        Row(
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
-                .background(Color(0xFA0F172A), RoundedCornerShape(32.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(32.dp))
-                .shadow(16.dp, RoundedCornerShape(32.dp), spotColor = Color.Black.copy(alpha = 0.35f))
-                .padding(horizontal = 6.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+                .height(58.dp)
+                .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = Color(0x60000000)),
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF0F172A),
+            border = BorderStroke(1.dp, Color(0xFF334155))
         ) {
-            dockItems.forEach { item ->
-                val isSelected = activeTab == item.id
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(26.dp))
-                        .background(
-                            if (isSelected) PrimaryRed else Color.Transparent
-                        )
-                        .clickable { onTabSelected(item.id) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Box(contentAlignment = Alignment.TopEnd) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label,
-                                tint = if (isSelected) Color.White else Color(0xFF94A3B8),
-                                modifier = Modifier.size(20.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                dockItems.forEach { item ->
+                    val isSelected = activeTab == item.id
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(
+                                if (isSelected) Color(0xFFDC2626) else Color.Transparent
                             )
-                            if (item.badgeCount != null && item.badgeCount > 0) {
-                                Box(
-                                    modifier = Modifier
-                                        .offset(x = 8.dp, y = (-4).dp)
-                                        .background(PrimaryRed, CircleShape)
-                                        .border(1.dp, Color.White, CircleShape)
-                                        .padding(horizontal = 4.dp, vertical = 1.dp)
-                                ) {
-                                    Text(
-                                        text = if (item.badgeCount > 99) "99+" else "${item.badgeCount}",
-                                        color = Color.White,
-                                        fontSize = 7.5.sp,
-                                        fontWeight = FontWeight.Black
-                                    )
+                            .clickable { onTabSelected(item.id) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.TopEnd) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label,
+                                    tint = if (isSelected) Color.White else Color(0xFF94A3B8),
+                                    modifier = Modifier.size(19.dp)
+                                )
+                                if (item.badgeCount != null && item.badgeCount > 0) {
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(x = 8.dp, y = (-3).dp)
+                                            .background(Color(0xFFEF4444), CircleShape)
+                                            .border(1.dp, Color(0xFF0F172A), CircleShape)
+                                            .padding(horizontal = 4.dp, vertical = 0.5.dp)
+                                    ) {
+                                        Text(
+                                            text = if (item.badgeCount > 99) "99+" else "${item.badgeCount}",
+                                            color = Color.White,
+                                            fontSize = 7.5.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
                                 }
                             }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = item.label,
+                                fontSize = 9.5.sp,
+                                fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
+                                color = if (isSelected) Color.White else Color(0xFF94A3B8),
+                                maxLines = 1
+                            )
                         }
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = item.label,
-                            fontSize = 8.5.sp,
-                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold,
-                            color = if (isSelected) Color.White else Color(0xFF94A3B8)
-                        )
                     }
                 }
             }
