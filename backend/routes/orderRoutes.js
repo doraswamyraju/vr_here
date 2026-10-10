@@ -31,10 +31,18 @@ import {
     submitOrderToChecker,
     checkerAuditOrder
 } from '../controllers/orderController.js';
+import {
+    getOrderMessages,
+    sendOrderMessage
+} from '../controllers/orderMessageController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
+
+router.route('/:id/messages')
+    .get(protect, getOrderMessages)
+    .post(protect, upload.single('file'), sendOrderMessage);
 
 router.route('/')
     .post(protect, createOrder)

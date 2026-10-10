@@ -26,6 +26,7 @@ import { getOrderClientLabel, StatusBadge } from './helpers';
 import { rupees } from '../admin/orders/helpers';
 import RequirementsModule from './RequirementsModule';
 import OrderWorkflowTicketsTab, { CreateWorkflowTicketModal } from '../orders/OrderWorkflowTicketsTab';
+import OrderChatTab from '../orders/OrderChatTab';
 
 const OrderProcessingModule = ({
   orders,
@@ -467,9 +468,9 @@ const OrderProcessingModule = ({
 
   // Tabs configuration based on financial masking
   const availableTabs = useMemo(() => {
-    const baseTabs = ['Tasks', 'Requirements', 'Workflow Tickets', 'Audit & Review', 'ToDo', 'Docs', 'Activities'];
+    const baseTabs = ['Tasks', 'Requirements', 'Chat / Messages', 'Workflow Tickets', 'Audit & Review', 'ToDo', 'Docs', 'Activities'];
     if (!isFinancialsHidden) {
-      baseTabs.splice(4, 0, 'Invoices', 'Transactions');
+      baseTabs.splice(5, 0, 'Invoices', 'Transactions');
     }
     return baseTabs;
   }, [isFinancialsHidden]);
@@ -1170,6 +1171,14 @@ const OrderProcessingModule = ({
               onUpdateRequirementStatus={onUpdateRequirementStatus}
               onRaiseRequirement={onRaiseRequirement}
               isClockedIn={isClockedIn}
+            />
+          )}
+
+          {/* Chat / Messages Tab */}
+          {detailTab === 'Chat / Messages' && (
+            <OrderChatTab
+              order={selectedOrder}
+              userInfo={userInfo}
             />
           )}
 

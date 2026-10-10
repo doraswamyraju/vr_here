@@ -19,6 +19,7 @@ import OrderOverviewTab from './OrderOverviewTab';
 import OrderTasksTab from './OrderTasksTab';
 import OrderRequirementsTab from './OrderRequirementsTab';
 import OrderWorkflowTicketsTab, { CreateWorkflowTicketModal } from '../../../../components/orders/OrderWorkflowTicketsTab';
+import OrderChatTab from '../../../../components/orders/OrderChatTab';
 import GSTInvoiceTemplate from '../../../../components/admin/finance/GSTInvoiceTemplate';
 import { InvoiceAdjustments } from '../../../invoices/v1.1';
 
@@ -734,7 +735,7 @@ const OrdersModule = ({
 
           <Card>
             <div className="px-4 border-b border-slate-100 flex flex-wrap gap-2">
-              {['Overview', 'Tasks', 'Requirements', 'Workflow Tickets', 'Invoices', 'ToDo', 'Transactions', 'Activities', 'Docs'].map((tab) => (
+              {['Overview', 'Tasks', 'Requirements', 'Chat / Messages', 'Workflow Tickets', 'Invoices', 'ToDo', 'Transactions', 'Activities', 'Docs'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setOrderDetailTab(tab)}
@@ -766,6 +767,12 @@ const OrdersModule = ({
                   onUpdateRequirementStatus={(requirementId, status) => onUpdateRequirementStatus(selectedOrder._id, requirementId, status)}
                   onDeleteRequirement={(requirementId) => onDeleteRequirement(selectedOrder._id, requirementId)}
                   onResetRequirements={(type) => onResetRequirements && onResetRequirements(selectedOrder._id, type)}
+                />
+              )}
+              {orderDetailTab === 'Chat / Messages' && (
+                <OrderChatTab
+                  order={selectedOrder}
+                  userInfo={{ role: 'admin', token }}
                 />
               )}
               {orderDetailTab === 'Workflow Tickets' && (

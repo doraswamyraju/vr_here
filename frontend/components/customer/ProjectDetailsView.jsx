@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { launchRazorpayCheckout } from '../../utils/razorpayCheckout';
 import { ORDER_PHASES, getOrderStatusProgress, getPhaseStepIndex } from '../../utils/orderProgress';
+import OrderChatTab from '../orders/OrderChatTab';
 
 const PHASES = ORDER_PHASES;
 
@@ -378,6 +379,17 @@ const ProjectDetailsView = ({
                     }`}
                 >
                     <IndianRupee size={15} /> Invoices & Payments
+                </button>
+
+                <button
+                    onClick={() => setCurrentTab('chat')}
+                    className={`px-4 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
+                        currentTab === 'chat'
+                            ? 'border-red-600 text-red-600'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                >
+                    <MessageSquare size={15} /> Order Chat & Support
                 </button>
             </div>
 
@@ -907,6 +919,16 @@ const ProjectDetailsView = ({
                             <p className="text-xs text-slate-400 italic py-4 text-center">No payment transactions recorded yet.</p>
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* Tab 4: Order Chat & Support */}
+            {currentTab === 'chat' && (
+                <div className="space-y-6">
+                    <OrderChatTab
+                        order={order}
+                        userInfo={userInfo || { role: 'client' }}
+                    />
                 </div>
             )}
 
