@@ -318,7 +318,10 @@ struct OrderChatView: View {
         let text = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
         if text.isEmpty && pickedFileData == nil { return }
 
-        isSending = true
+        await MainActor.run {
+            self.errorMessage = nil
+            self.isSending = true
+        }
         do {
             let _ = try await NetworkManager.shared.sendOrderMessage(
                 orderId: orderId,
@@ -334,6 +337,7 @@ struct OrderChatView: View {
                 self.pickedFileName = nil
                 self.pickedFileMime = nil
                 self.isSending = false
+                self.errorMessage = nil
             }
             await fetchMessages(silent: true)
         } catch {

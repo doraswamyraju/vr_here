@@ -277,7 +277,8 @@ class NetworkManager {
 
     func sendOrderMessage(orderId: String, message: String, messageType: String, fileData: Data? = nil, fileName: String? = nil, mimeType: String? = nil) async throws -> OrderChatMessage {
         let boundary = "Boundary-\(UUID().uuidString)"
-        guard let url = URL(string: "\(baseURL)/api/orders/\(orderId)/messages") else {
+        let cleanBase = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
+        guard let url = URL(string: "\(cleanBase)/api/orders/\(orderId)/messages") else {
             throw URLError(.badURL)
         }
 
@@ -314,7 +315,13 @@ class NetworkManager {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-            let errorMsg = String(data: data, encoding: .utf8) ?? "Failed to send message"
+            var errorMsg = "Failed to send message (\((response as? HTTPURLResponse)?.statusCode ?? 500))"
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let msg = json["message"] as? String ?? json["error"] as? String {
+                errorMsg = msg
+            } else if let raw = String(data: data, encoding: .utf8), !raw.contains("<") {
+                errorMsg = raw
+            }
             throw NSError(domain: "NetworkManager", code: (response as? HTTPURLResponse)?.statusCode ?? 500, userInfo: [NSLocalizedDescriptionKey: errorMsg])
         }
 
