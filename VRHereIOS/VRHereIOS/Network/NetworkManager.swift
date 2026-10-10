@@ -491,6 +491,73 @@ class NetworkManager {
         )
     }
     
+    // --- ADMIN ORDER MANAGEMENT EXTENSIONS ---
+    
+    func deleteOrder(id: String) async throws -> SimpleSuccessResponse {
+        return try await performRequest(path: "api/orders/\(id)", method: "DELETE")
+    }
+    
+    func assignOrder(id: String, employeeId: String? = nil, makerId: String? = nil, checkerId: String? = nil, projectManagerId: String? = nil) async throws -> OrderResponse {
+        var payload: [String: AnyCodable] = [:]
+        if let employeeId = employeeId { payload["assignedEmployee"] = AnyCodable(employeeId) }
+        if let makerId = makerId { payload["makerId"] = AnyCodable(makerId) }
+        if let checkerId = checkerId { payload["checkerId"] = AnyCodable(checkerId) }
+        if let projectManagerId = projectManagerId { payload["projectManagerId"] = AnyCodable(projectManagerId) }
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/orders/\(id)/assign", method: "PUT", body: data)
+    }
+    
+    func updateOrderCommercials(id: String, packageName: String, price: Double, serviceName: String) async throws -> OrderResponse {
+        let payload: [String: AnyCodable] = [
+            "packageName": AnyCodable(packageName),
+            "price": AnyCodable(price),
+            "serviceName": AnyCodable(serviceName)
+        ]
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/orders/\(id)/commercials", method: "PUT", body: data)
+    }
+    
+    func addOrderTask(orderId: String, title: String, taskCode: String, description: String, ownerRole: String) async throws -> OrderResponse {
+        let payload: [String: AnyCodable] = [
+            "title": AnyCodable(title),
+            "taskCode": AnyCodable(taskCode),
+            "description": AnyCodable(description),
+            "ownerRole": AnyCodable(ownerRole)
+        ]
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/orders/\(orderId)/tasks", method: "POST", body: data)
+    }
+    
+    func assignTask(orderId: String, taskId: String, employeeId: String? = nil, freelancerId: String? = nil) async throws -> OrderResponse {
+        var payload: [String: AnyCodable] = [:]
+        if let employeeId = employeeId { payload["employeeId"] = AnyCodable(employeeId) }
+        if let freelancerId = freelancerId { payload["freelancerId"] = AnyCodable(freelancerId) }
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/orders/\(orderId)/tasks/\(taskId)/assign", method: "PUT", body: data)
+    }
+    
+    func deleteRequirement(orderId: String, requirementId: String) async throws -> OrderResponse {
+        return try await performRequest(path: "api/orders/\(orderId)/requirements/\(requirementId)", method: "DELETE")
+    }
+    
+    func addOrderInvoice(orderId: String, invoiceNumber: String, amount: Double, status: String, dueDate: String? = nil, notes: String? = nil) async throws -> OrderResponse {
+        var payload: [String: AnyCodable] = [
+            "invoiceNumber": AnyCodable(invoiceNumber),
+            "amount": AnyCodable(amount),
+            "status": AnyCodable(status)
+        ]
+        if let dueDate = dueDate { payload["dueDate"] = AnyCodable(dueDate) }
+        if let notes = notes { payload["notes"] = AnyCodable(notes) }
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/orders/\(orderId)/invoices", method: "POST", body: data)
+    }
+    
+    func updateInvoiceStatus(orderId: String, invoiceId: String, status: String) async throws -> OrderResponse {
+        let payload = ["status": status]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/orders/\(orderId)/invoices/\(invoiceId)/status", method: "PUT", body: data)
+    }
+    
     // --- DYNAMIC SERVER-DRIVEN SERVICES ---
     
     func getDynamicServices() async throws -> [MobileServiceDetail] {

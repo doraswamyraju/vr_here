@@ -274,6 +274,9 @@ struct OrderResponse: Codable, Identifiable, Equatable {
     let paymentStatus: String
     let status: String
     let assignedEmployee: EmployeeResponse?
+    let assignedMaker: EmployeeResponse?
+    let assignedChecker: EmployeeResponse?
+    let assignedProjectManager: EmployeeResponse?
     let clientDocuments: [OrderDocument]
     let adminDocuments: [OrderDocument]
     let finalCertificateUrl: String?
@@ -296,7 +299,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case clientName, email, phone, serviceName, packageName, price, paymentId
-        case razorpayOrderId, paymentStatus, status, assignedEmployee, clientDocuments
+        case razorpayOrderId, paymentStatus, status, assignedEmployee, assignedMaker, assignedChecker, assignedProjectManager, clientDocuments
         case adminDocuments, finalCertificateUrl, tasks, invoices, customerRequirements
         case checklists, consultationAdjusted, linkedTodos, activityHistory, attendance, createdAt, updatedAt
         case referralPartner, partnerCommissionAmount, freelancerPayout, broadcastStatus, category
@@ -317,6 +320,9 @@ struct OrderResponse: Codable, Identifiable, Equatable {
             self.paymentStatus = ""
             self.status = ""
             self.assignedEmployee = nil
+            self.assignedMaker = nil
+            self.assignedChecker = nil
+            self.assignedProjectManager = nil
             self.clientDocuments = []
             self.adminDocuments = []
             self.finalCertificateUrl = nil
@@ -351,6 +357,9 @@ struct OrderResponse: Codable, Identifiable, Equatable {
         paymentStatus = try container.decodeIfPresent(String.self, forKey: .paymentStatus) ?? ""
         status = try container.decodeIfPresent(String.self, forKey: .status) ?? ""
         assignedEmployee = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedEmployee)
+        assignedMaker = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedMaker)
+        assignedChecker = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedChecker)
+        assignedProjectManager = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedProjectManager)
         clientDocuments = try container.decodeIfPresent([OrderDocument].self, forKey: .clientDocuments) ?? []
         adminDocuments = try container.decodeIfPresent([OrderDocument].self, forKey: .adminDocuments) ?? []
         finalCertificateUrl = try container.decodeIfPresent(String.self, forKey: .finalCertificateUrl)
