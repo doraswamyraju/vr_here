@@ -1302,13 +1302,14 @@ struct UserResponse: Codable, Identifiable {
     let email: String
     let role: String
     let phone: String?
+    let companyName: String?
     let panCard: String?
     let commissionPercentage: Double?
     let isActive: Bool
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
-        case name, email, role, phone, panCard, commissionPercentage, isActive
+        case name, email, role, phone, companyName, panCard, commissionPercentage, isActive
     }
 }
 

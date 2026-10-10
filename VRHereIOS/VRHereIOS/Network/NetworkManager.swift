@@ -28,7 +28,7 @@ class NetworkManager {
     private init() {}
     
     // Core Request wrapper
-    private func performRequest<T: Codable>(
+    func performRequest<T: Codable>(
         path: String,
         method: String = "GET",
         body: Data? = nil,
