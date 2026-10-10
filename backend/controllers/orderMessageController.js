@@ -1,7 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/Order.js';
 import OrderMessage from '../models/OrderMessage.js';
-import { triggerNotification, notifyAdmins, notifyEmployee } from '../services/notificationService.js';
+import User from '../models/User.js';
+import { triggerNotification } from '../services/notificationService.js';
 import { uploadBufferToDrive, getCustomerDriveFolder } from '../services/googleDriveService.js';
 
 // Helper to check order access
@@ -59,9 +60,9 @@ export const getOrderMessages = asyncHandler(async (req, res) => {
         .sort({ createdAt: 1 })
         .lean();
 
-    // Mark unread messages as read asynchronously
+    // Mark unread messages as read asynchronously for current user
     const unreadMessageIds = messages
-        .filter(m => !m.readBy?.some(r => r.user?.toString() === req.user._id.toString()))
+        .filter(m => m.sender?._id?.toString() !== req.user._id.toString() && !m.readBy?.some(r => (r.user?._id || r.user)?.toString() === req.user._id.toString()))
         .map(m => m._id);
 
     if (unreadMessageIds.length > 0) {
@@ -72,6 +73,39 @@ export const getOrderMessages = asyncHandler(async (req, res) => {
     }
 
     res.json(messages);
+});
+
+// @desc    Get unread messages count for an order
+// @route   GET /api/orders/:id/messages/unread-count
+// @access  Private
+export const getOrderUnreadCount = asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+    if (!order || !canAccessOrder(req.user, order)) {
+        return res.json({ unreadCount: 0, clientUnread: 0, internalUnread: 0 });
+    }
+
+    const baseFilter = {
+        order: req.params.id,
+        sender: { $ne: req.user._id },
+        'readBy.user': { $ne: req.user._id }
+    };
+
+    if (req.user.role === 'client') {
+        baseFilter.messageType = 'client';
+        const count = await OrderMessage.countDocuments(baseFilter);
+        return res.json({ unreadCount: count, clientUnread: count, internalUnread: 0 });
+    }
+
+    const [clientCount, internalCount] = await Promise.all([
+        OrderMessage.countDocuments({ ...baseFilter, messageType: 'client' }),
+        OrderMessage.countDocuments({ ...baseFilter, messageType: 'internal' })
+    ]);
+
+    res.json({
+        unreadCount: clientCount + internalCount,
+        clientUnread: clientCount,
+        internalUnread: internalCount
+    });
 });
 
 // @desc    Post a message in an order
@@ -187,51 +221,82 @@ export const sendOrderMessage = asyncHandler(async (req, res) => {
         .populate('sender', 'name email role profilePhoto')
         .lean();
 
-    // Trigger Smart Notifications
+    // --- TRIGGER SMART NOTIFICATIONS & PUSH NOTIFICATIONS ---
     const orderTitle = order.serviceName || `Order #${order._id.toString().slice(-6)}`;
+    const senderName = req.user.name || 'Team Member';
+    const previewText = (message || (attachments.length > 0 ? `Uploaded ${attachments[0].name}` : 'Sent an attachment')).slice(0, 80);
 
     if (req.user.role === 'client') {
-        // Customer messaged -> notify admins and assigned PM
-        notifyAdmins({
-            title: `Client Message: ${orderTitle}`,
-            message: `${req.user.name}: "${(message || 'Uploaded attachment').slice(0, 80)}"`,
-            type: 'Order',
-            link: `/admin?tab=Orders&orderId=${order._id}`
-        }).catch(err => console.error('[OrderChatNotif] Admin notify error:', err.message));
+        // Customer messaged -> notify all assigned staff + active admins
+        const staffToNotify = new Set();
+        const addStaff = (field) => {
+            const sId = field?._id ? field._id.toString() : field ? field.toString() : null;
+            if (sId && sId !== req.user._id.toString()) staffToNotify.add(sId);
+        };
+        addStaff(order.assignedProjectManager);
+        addStaff(order.assignedMaker);
+        addStaff(order.assignedChecker);
+        addStaff(order.assignedEmployee);
+        addStaff(order.assignedFreelancer);
 
-        if (order.assignedProjectManager) {
-            notifyEmployee(order.assignedProjectManager, {
+        // Fetch all active admins
+        const admins = await User.find({ role: 'admin', isActive: true }).select('_id');
+        admins.forEach(a => {
+            if (a._id.toString() !== req.user._id.toString()) staffToNotify.add(a._id.toString());
+        });
+
+        for (const staffId of staffToNotify) {
+            triggerNotification({
+                userId: staffId,
                 title: `Client Message: ${orderTitle}`,
-                message: `${req.user.name}: "${(message || 'Uploaded attachment').slice(0, 80)}"`,
-                type: 'Order',
-                link: `/employee?tab=Orders&orderId=${order._id}`
-            }).catch(err => console.error('[OrderChatNotif] PM notify error:', err.message));
+                message: `${senderName}: "${previewText}"`,
+                type: 'Order'
+            }).catch(err => console.error('[OrderChatNotif] Staff notify error:', err.message));
         }
     } else if (messageType === 'client') {
-        // Staff replied to customer -> notify client
-        if (order.user) {
+        // Staff messaged the client -> notify customer
+        const customerId = order.user?._id ? order.user._id.toString() : order.user ? order.user.toString() : null;
+        if (customerId && customerId !== req.user._id.toString()) {
             triggerNotification({
-                userId: order.user,
-                title: `VR Here Support: ${orderTitle}`,
-                message: `${req.user.name} sent a message: "${(message || 'Sent an attachment').slice(0, 80)}"`,
-                type: 'Order',
-                link: `/dashboard?orderId=${order._id}`
+                userId: customerId,
+                title: `VR HERE Support: ${orderTitle}`,
+                message: `${senderName}: "${previewText}"`,
+                type: 'Order'
             }).catch(err => console.error('[OrderChatNotif] Client notify error:', err.message));
         }
     } else {
-        // Staff sent internal note -> notify mentioned team members
-        if (Array.isArray(parsedMentions) && parsedMentions.length > 0) {
-            parsedMentions.forEach(mUserId => {
-                if (mUserId.toString() !== req.user._id.toString()) {
-                    triggerNotification({
-                        userId: mUserId,
-                        title: `Mentioned in ${orderTitle} (Internal Note)`,
-                        message: `${req.user.name}: "${(message || '').slice(0, 80)}"`,
-                        type: 'System',
-                        link: `/admin?tab=Orders&orderId=${order._id}`
-                    }).catch(err => console.error('[OrderChatNotif] Mention notify error:', err.message));
-                }
+        // Staff posted an INTERNAL NOTE -> Notify ALL assigned staff & admins on this order (except sender)
+        const staffToNotify = new Set();
+        const addStaff = (field) => {
+            const sId = field?._id ? field._id.toString() : field ? field.toString() : null;
+            if (sId && sId !== req.user._id.toString()) staffToNotify.add(sId);
+        };
+        addStaff(order.assignedProjectManager);
+        addStaff(order.assignedMaker);
+        addStaff(order.assignedChecker);
+        addStaff(order.assignedEmployee);
+        addStaff(order.assignedFreelancer);
+
+        if (Array.isArray(parsedMentions)) {
+            parsedMentions.forEach(mId => {
+                const s = mId?.toString();
+                if (s && s !== req.user._id.toString()) staffToNotify.add(s);
             });
+        }
+
+        // Also notify all admins
+        const admins = await User.find({ role: 'admin', isActive: true }).select('_id');
+        admins.forEach(a => {
+            if (a._id.toString() !== req.user._id.toString()) staffToNotify.add(a._id.toString());
+        });
+
+        for (const staffId of staffToNotify) {
+            triggerNotification({
+                userId: staffId,
+                title: `[Internal Note] ${orderTitle}`,
+                message: `${senderName}: "${previewText}"`,
+                type: 'Order'
+            }).catch(err => console.error('[OrderChatNotif] Internal note notify error:', err.message));
         }
     }
 

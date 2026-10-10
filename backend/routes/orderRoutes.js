@@ -33,12 +33,16 @@ import {
 } from '../controllers/orderController.js';
 import {
     getOrderMessages,
-    sendOrderMessage
+    sendOrderMessage,
+    getOrderUnreadCount
 } from '../controllers/orderMessageController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
+
+router.route('/:id/messages/unread-count')
+    .get(protect, getOrderUnreadCount);
 
 router.route('/:id/messages')
     .get(protect, getOrderMessages)

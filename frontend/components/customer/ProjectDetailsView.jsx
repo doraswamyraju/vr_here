@@ -40,6 +40,24 @@ const ProjectDetailsView = ({
     const [drafts, setDrafts] = useState({});
     const [uploadingId, setUploadingId] = useState('');
     const [savingId, setSavingId] = useState('');
+    const [orderUnreadChatCount, setOrderUnreadChatCount] = useState(0);
+
+    useEffect(() => {
+        if (!order?._id) return;
+        const token = userInfo?.token || localStorage.getItem('token');
+        if (!token) return;
+        const fetchUnread = async () => {
+            try {
+                const res = await axios.get(`/api/orders/${order._id}/messages/unread-count`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setOrderUnreadChatCount(res.data?.unreadCount || 0);
+            } catch (err) { }
+        };
+        fetchUnread();
+        const timer = setInterval(fetchUnread, 6000);
+        return () => clearInterval(timer);
+    }, [order?._id, userInfo?.token]);
 
     const requirements = order?.customerRequirements || [];
 
@@ -382,7 +400,10 @@ const ProjectDetailsView = ({
                 </button>
 
                 <button
-                    onClick={() => setCurrentTab('chat')}
+                    onClick={() => {
+                        setCurrentTab('chat');
+                        setOrderUnreadChatCount(0);
+                    }}
                     className={`px-4 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                         currentTab === 'chat'
                             ? 'border-red-600 text-red-600'
@@ -390,6 +411,11 @@ const ProjectDetailsView = ({
                     }`}
                 >
                     <MessageSquare size={15} /> Order Chat & Support
+                    {orderUnreadChatCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-black animate-pulse">
+                            {orderUnreadChatCount}
+                        </span>
+                    )}
                 </button>
             </div>
 

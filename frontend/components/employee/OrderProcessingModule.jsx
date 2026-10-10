@@ -89,6 +89,23 @@ const OrderProcessingModule = ({
     return activeToken ? { headers: { Authorization: `Bearer ${activeToken}` } } : null;
   }, [userInfo]);
 
+  const [orderUnreadChatCount, setOrderUnreadChatCount] = useState(0);
+
+  useEffect(() => {
+    if (!selectedOrder?._id || !config) return;
+    const fetchUnread = async () => {
+      try {
+        const res = await axios.get(`/api/orders/${selectedOrder._id}/messages/unread-count`, config);
+        setOrderUnreadChatCount(res.data?.unreadCount || 0);
+      } catch (err) {
+        // silent fallback
+      }
+    };
+    fetchUnread();
+    const timer = setInterval(fetchUnread, 6000);
+    return () => clearInterval(timer);
+  }, [selectedOrder?._id, config]);
+
   const normalizeId = useCallback((value) => {
     if (!value) return '';
     if (typeof value === 'string') return value;
@@ -1073,7 +1090,10 @@ const OrderProcessingModule = ({
           {availableTabs.map((tab) => (
             <button
               key={tab}
-              onClick={() => setDetailTab(tab)}
+              onClick={() => {
+                setDetailTab(tab);
+                if (tab === 'Chat / Messages') setOrderUnreadChatCount(0);
+              }}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition flex items-center gap-1.5 ${
                 detailTab === tab 
                   ? tab === 'Workflow Tickets' ? 'border-rose-600 text-rose-700 font-bold' : 'border-indigo-600 text-indigo-700 font-bold'
@@ -1081,7 +1101,12 @@ const OrderProcessingModule = ({
               }`}
             >
               {tab === 'Workflow Tickets' && <ShieldAlert size={14} className="text-rose-600" />}
-              {tab}
+              <span>{tab}</span>
+              {tab === 'Chat / Messages' && orderUnreadChatCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs animate-pulse">
+                  {orderUnreadChatCount}
+                </span>
+              )}
             </button>
           ))}
         </div>

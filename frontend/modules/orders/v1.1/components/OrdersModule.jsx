@@ -158,6 +158,22 @@ const OrdersModule = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
   const [savingNameLoading, setSavingNameLoading] = useState(false);
+  const [orderUnreadChatCount, setOrderUnreadChatCount] = useState(0);
+
+  useEffect(() => {
+    if (!selectedOrder?._id || !config) return;
+    const fetchUnread = async () => {
+      try {
+        const res = await axios.get(`/api/orders/${selectedOrder._id}/messages/unread-count`, config);
+        setOrderUnreadChatCount(res.data?.unreadCount || 0);
+      } catch (err) {
+        // silent fallback
+      }
+    };
+    fetchUnread();
+    const timer = setInterval(fetchUnread, 6000);
+    return () => clearInterval(timer);
+  }, [selectedOrder?._id, config]);
   const [isSavingCommercials, setIsSavingCommercials] = useState(false);
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
@@ -738,10 +754,18 @@ const OrdersModule = ({
               {['Overview', 'Tasks', 'Requirements', 'Chat / Messages', 'Workflow Tickets', 'Invoices', 'ToDo', 'Transactions', 'Activities', 'Docs'].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setOrderDetailTab(tab)}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition ${orderDetailTab === tab ? 'border-indigo-600 text-indigo-700 font-bold' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
+                  onClick={() => {
+                    setOrderDetailTab(tab);
+                    if (tab === 'Chat / Messages') setOrderUnreadChatCount(0);
+                  }}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition flex items-center gap-1.5 ${orderDetailTab === tab ? 'border-indigo-600 text-indigo-700 font-bold' : 'border-transparent text-slate-500 hover:text-indigo-600'}`}
                 >
-                  {tab}
+                  <span>{tab}</span>
+                  {tab === 'Chat / Messages' && orderUnreadChatCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs animate-pulse">
+                      {orderUnreadChatCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
