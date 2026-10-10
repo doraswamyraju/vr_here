@@ -226,7 +226,7 @@ fun CustomerOrdersTab(
                 when (selectedFilter) {
                     "active" -> order.status != "Completed"
                     "completed" -> order.status == "Completed"
-                    "action" -> order.customerRequirements.any { !it.isClientCompleted }
+                    "action" -> order.safeRequirements.any { !it.isClientCompleted }
                     else -> true
                 }
             }
@@ -260,12 +260,12 @@ fun CustomerOrdersTab(
                 }
             } else {
                 items(filteredOrders) { order ->
-                    val pendingReqs = order.customerRequirements.count { !it.isClientCompleted }
+                    val pendingReqs = order.safeRequirements.count { !it.isClientCompleted }
                     val progress = getStatusProgress(order.status)
 
                     val cardPayments = viewModel.payments.filter { p -> p.order?.id == order.id || p.serviceName.equals(order.serviceName, ignoreCase = true) }
                     val cardPaid = cardPayments.filter { it.status == "Completed" || it.status == "Paid" }.sumOf { it.amount }
-                    val unpaidInvoices = order.invoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
+                    val unpaidInvoices = order.safeInvoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
                     val cardBalance = if (unpaidInvoices.isNotEmpty()) {
                         unpaidInvoices.sumOf { it.amount }
                     } else if (order.paymentStatus.equals("Paid", ignoreCase = true) || order.paymentId.isNotBlank()) {
@@ -415,7 +415,7 @@ fun CustomerOrdersTab(
     } else {
         // ==================== 1:1 ORDER DETAILS SCREEN ====================
         val order = selectedOrder
-        val requirements = order.customerRequirements
+        val requirements = order.safeRequirements
         val pendingRequirements = requirements.filter { !it.isClientCompleted }
         val completedRequirements = requirements.filter { it.isClientCompleted }
         val filteredRequirements = when (reqFilter) {
@@ -429,7 +429,7 @@ fun CustomerOrdersTab(
             p.order?.id == order.id || (p.paymentId.isNotBlank() && p.paymentId == order.paymentId)
         }
         val totalPaid = orderPayments.filter { it.status.equals("Completed", ignoreCase = true) || it.status.equals("Paid", ignoreCase = true) }.sumOf { it.amount }
-        val unpaidInvoices = order.invoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
+        val unpaidInvoices = order.safeInvoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
         val balance = if (unpaidInvoices.isNotEmpty()) {
             unpaidInvoices.sumOf { it.amount }
         } else if (order.paymentStatus.equals("Paid", ignoreCase = true) || (order.paymentId.isNotBlank() && totalPaid >= order.price)) {
@@ -761,7 +761,7 @@ fun CustomerOrdersTab(
             }
 
             // --- DELIVERABLES READY ALERT BANNER ---
-            if (order.adminDocuments.isNotEmpty() || !order.finalCertificateUrl.isNullOrEmpty()) {
+            if (order.safeAdminDocuments.isNotEmpty() || !order.finalCertificateUrl.isNullOrEmpty()) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -794,7 +794,7 @@ fun CustomerOrdersTab(
                 }
             }
 
-            // --- 3 SUB-TABS (Requirements | Vault | Financials) ---
+            // --- 4 SUB-TABS (Requirements | Messages | Vault | Financials) ---
             item {
                 Row(
                     modifier = Modifier
@@ -806,7 +806,8 @@ fun CustomerOrdersTab(
                 ) {
                     val tabs = listOf(
                         Triple("requirements", "Requirements", pendingRequirements.size),
-                        Triple("documents", "Vault", order.adminDocuments.size + order.clientDocuments.size),
+                        Triple("messages", "Messages", 0),
+                        Triple("documents", "Vault", order.safeAdminDocuments.size + order.safeClientDocuments.size),
                         Triple("financials", "Financials", 0)
                     )
 
@@ -848,6 +849,17 @@ fun CustomerOrdersTab(
                             }
                         }
                     }
+                }
+            }
+
+            // --- SUB-TAB: LIVE ORDER CHAT & MESSAGES ---
+            if (currentDetailTab == "messages") {
+                item {
+                    com.sbr.vrherebms.ui.components.OrderChatComponent(
+                        orderId = order.id,
+                        currentUserRole = "client",
+                        currentUserId = ""
+                    )
                 }
             }
 
@@ -1344,10 +1356,10 @@ fun CustomerOrdersTab(
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text("Government & Statutory Certificates", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
 
-                            if (order.adminDocuments.isEmpty()) {
+                            if (order.safeAdminDocuments.isEmpty()) {
                                 Text("Official certificates will appear here once issued.", fontSize = 12.sp, color = Color(0xFF94A3B8))
                             } else {
-                                order.adminDocuments.forEach { doc ->
+                                order.safeAdminDocuments.forEach { doc ->
                                     Surface(
                                         shape = RoundedCornerShape(12.dp),
                                         color = Color(0xFFECFDF5),
@@ -1398,10 +1410,10 @@ fun CustomerOrdersTab(
                                 )
                             }
 
-                            if (order.clientDocuments.isEmpty()) {
+                            if (order.safeClientDocuments.isEmpty()) {
                                 Text("No files attached to this order.", fontSize = 12.sp, color = Color(0xFF94A3B8))
                             } else {
-                                order.clientDocuments.forEach { doc ->
+                                order.safeClientDocuments.forEach { doc ->
                                     Surface(
                                         shape = RoundedCornerShape(12.dp),
                                         color = Color(0xFFF8FAFC),

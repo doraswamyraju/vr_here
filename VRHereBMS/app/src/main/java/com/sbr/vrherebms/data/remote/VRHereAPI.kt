@@ -176,20 +176,41 @@ interface VRHereAPI {
     @GET("api/auth/employees")
     suspend fun getEmployees(): Response<List<EmployeeResponse>>
 
-    @GET("api/users")
+    @GET("api/auth/users")
     suspend fun getAdminUsers(): Response<List<UserProfile>>
 
-    @GET("api/users/freelancers")
+    @GET("api/freelancers/admin/users")
     suspend fun getAdminFreelancers(): Response<List<FreelancerResponse>>
 
-    @POST("api/users")
+    @POST("api/auth/users")
     suspend fun createAdminUser(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<UserProfile>
 
-    @PUT("api/users/{id}")
+    @PUT("api/auth/users/{id}")
     suspend fun updateAdminUser(@Path("id") id: String, @Body body: Map<String, @JvmSuppressWildcards Any>): Response<UserProfile>
 
-    @DELETE("api/users/{id}")
+    @DELETE("api/auth/users/{id}")
     suspend fun deleteAdminUser(@Path("id") id: String): Response<GeneralApiResponse>
+
+    // --- ORDER CHAT & MESSAGES ---
+    @GET("api/orders/{id}/messages")
+    suspend fun getOrderMessages(
+        @Path("id") orderId: String,
+        @Query("messageType") messageType: String? = null
+    ): Response<List<OrderChatMessage>>
+
+    @Multipart
+    @POST("api/orders/{id}/messages")
+    suspend fun sendOrderMessage(
+        @Path("id") orderId: String,
+        @Part("message") message: okhttp3.RequestBody,
+        @Part("messageType") messageType: okhttp3.RequestBody,
+        @Part file: okhttp3.MultipartBody.Part? = null
+    ): Response<OrderChatMessage>
+
+    @GET("api/orders/{id}/messages/unread-count")
+    suspend fun getOrderUnreadCount(
+        @Path("id") orderId: String
+    ): Response<OrderUnreadCountResponse>
 
     // --- EMPLOYEE TRANSACTION Endpoints ---
     @PUT("api/todos/{id}")

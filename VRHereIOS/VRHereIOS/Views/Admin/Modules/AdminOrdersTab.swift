@@ -84,6 +84,7 @@ struct AdminOrdersTab: View {
     
     enum OrderWorkspaceTab: String, CaseIterable {
         case overview = "Overview"
+        case chat = "Chat"
         case tasks = "Tasks"
         case requirements = "Requirements"
         case workflowTickets = "Workflow Tickets"
@@ -712,6 +713,8 @@ struct AdminOrdersTab: View {
                 switch selectedTab {
                 case .overview:
                     workspaceOverviewTab(order: order)
+                case .chat:
+                    OrderChatView(orderId: order.id, currentUserRole: "admin", currentUserId: "")
                 case .tasks:
                     workspaceTasksTab(order: order)
                 case .requirements:

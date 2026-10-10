@@ -206,6 +206,16 @@ struct EmployeeQueueTab: View {
                     .background(Color.green.opacity(0.1))
                     .cornerRadius(16)
                     .padding(.horizontal, 20)
+
+                    // Order Messages & Communication Hub
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Order Messages & Client Channel")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.textDark)
+                        
+                        OrderChatView(orderId: order.id, currentUserRole: "employee", currentUserId: "")
+                    }
+                    .padding(.horizontal, 20)
                     
                     // Task Workflow Checklist
                     VStack(alignment: .leading, spacing: 12) {

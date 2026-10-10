@@ -253,7 +253,7 @@ fun EmployeeQueueTab(
 
             // Horizontal Tab Controls
             item {
-                val tabList = listOf("Overview", "Tasks", "Requirements", "Invoices", "ToDo", "Transactions", "Activities", "Docs")
+                val tabList = listOf("Overview", "Chat", "Tasks", "Requirements", "Invoices", "ToDo", "Transactions", "Activities", "Docs")
                 ScrollableTabRow(
                     selectedTabIndex = tabList.indexOf(detailTab),
                     edgePadding = 0.dp,
@@ -287,8 +287,18 @@ fun EmployeeQueueTab(
 
             // Tab contents
             when (detailTab) {
+                "Chat" -> {
+                    item {
+                        com.sbr.vrherebms.ui.components.OrderChatComponent(
+                            orderId = selectedOrder.id,
+                            currentUserRole = "employee",
+                            currentUserId = ""
+                        )
+                    }
+                }
+
                 "Tasks" -> {
-                    val assignedTasks = selectedOrder.tasks
+                    val assignedTasks = selectedOrder.safeTasks
                     val linkedTodos = todos.filter { it.orderId?.id == selectedOrder.id }
 
                     if (assignedTasks.isEmpty() && linkedTodos.isEmpty()) {
@@ -587,7 +597,7 @@ fun EmployeeQueueTab(
                 }
                 
                 "Requirements" -> {
-                    val requirements = selectedOrder.customerRequirements
+                    val requirements = selectedOrder.safeRequirements
                     
                     item {
                         // Sub Tab pills
@@ -792,7 +802,7 @@ fun EmployeeQueueTab(
                 }
 
                 "Invoices" -> {
-                    val invoices = selectedOrder.invoices
+                    val invoices = selectedOrder.safeInvoices
                     if (invoices.isEmpty()) {
                         item {
                             Text("No invoices mapped to this order.", fontSize = 12.sp, color = Color(0xFF64748B))
@@ -1009,7 +1019,7 @@ fun EmployeeQueueTab(
                 }
 
                 "Activities" -> {
-                    val logs = selectedOrder.activityHistory
+                    val logs = selectedOrder.safeActivityHistory
                     if (logs.isEmpty()) {
                         item {
                             Text("No activities recorded yet.", fontSize = 12.sp, color = Color(0xFF64748B))
@@ -1049,7 +1059,7 @@ fun EmployeeQueueTab(
                 }
 
                 "Docs" -> {
-                    val clientDocs = selectedOrder.clientDocuments
+                    val clientDocs = selectedOrder.safeClientDocuments
                     item {
                         Text("Operational Deliverables", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF64748B))
                     }

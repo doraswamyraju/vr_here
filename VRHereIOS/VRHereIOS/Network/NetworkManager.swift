@@ -265,6 +265,65 @@ class NetworkManager {
         let data = try JSONSerialization.data(withJSONObject: payload)
         return try await performRequest(path: "api/orders/\(id)/status", method: "PUT", body: data)
     }
+
+    // --- ORDER CHAT & MESSAGES ---
+    func getOrderMessages(orderId: String, messageType: String? = nil) async throws -> [OrderChatMessage] {
+        var path = "api/orders/\(orderId)/messages"
+        if let type = messageType {
+            path += "?messageType=\(type)"
+        }
+        return try await performRequest(path: path, method: "GET")
+    }
+
+    func sendOrderMessage(orderId: String, message: String, messageType: String, fileData: Data? = nil, fileName: String? = nil, mimeType: String? = nil) async throws -> OrderChatMessage {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        guard let url = URL(string: "\(baseURL)/api/orders/\(orderId)/messages") else {
+            throw URLError(.badURL)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        if let token = SessionManager.shared.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        var body = Data()
+        // Message field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"message\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(message)\r\n".data(using: .utf8)!)
+
+        // MessageType field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"messageType\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(messageType)\r\n".data(using: .utf8)!)
+
+        // Optional File Part
+        if let fileData = fileData, let fileName = fileName {
+            let mime = mimeType ?? "application/octet-stream"
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+            body.append("Content-Type: \(mime)\r\n\r\n".data(using: .utf8)!)
+            body.append(fileData)
+            body.append("\r\n".data(using: .utf8)!)
+        }
+
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            let errorMsg = String(data: data, encoding: .utf8) ?? "Failed to send message"
+            throw NSError(domain: "NetworkManager", code: (response as? HTTPURLResponse)?.statusCode ?? 500, userInfo: [NSLocalizedDescriptionKey: errorMsg])
+        }
+
+        return try JSONDecoder().decode(OrderChatMessage.self, from: data)
+    }
+
+    func getOrderUnreadCount(orderId: String) async throws -> OrderUnreadCountResponse {
+        return try await performRequest(path: "api/orders/\(orderId)/messages/unread-count", method: "GET")
+    }
     
     // --- PAYMENTS ---
     

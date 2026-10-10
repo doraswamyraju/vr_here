@@ -104,10 +104,10 @@ data class OrderResponse(
     val clientName: String = "",
     val email: String = "",
     val phone: String = "",
-    val serviceName: String,
-    val packageName: String,
-    val price: Double,
-    val paymentId: String,
+    val serviceName: String = "",
+    val packageName: String = "",
+    val price: Double = 0.0,
+    val paymentId: String = "",
     val razorpayOrderId: String = "",
     val paymentStatus: String = "Paid",
     val status: String = "Pending Documents",
@@ -116,20 +116,30 @@ data class OrderResponse(
     val assignedChecker: EmployeeResponse? = null,
     val assignedProjectManager: EmployeeResponse? = null,
     val assignedFreelancer: EmployeeResponse? = null,
-    val clientDocuments: List<OrderDocument> = emptyList(),
-    val adminDocuments: List<OrderDocument> = emptyList(),
+    val clientDocuments: List<OrderDocument>? = emptyList(),
+    val adminDocuments: List<OrderDocument>? = emptyList(),
     val finalCertificateUrl: String? = null,
-    val tasks: List<OrderTask> = emptyList(),
-    val invoices: List<OrderInvoice> = emptyList(),
-    val customerRequirements: List<CustomerRequirement> = emptyList(),
-    val checklists: List<ChecklistItem> = emptyList(),
+    val tasks: List<OrderTask>? = emptyList(),
+    val invoices: List<OrderInvoice>? = emptyList(),
+    val customerRequirements: List<CustomerRequirement>? = emptyList(),
+    val checklists: List<ChecklistItem>? = emptyList(),
     val consultationAdjusted: Boolean = false,
-    val linkedTodos: List<TodoResponse> = emptyList(),
-    val activityHistory: List<OrderHistoryResponse> = emptyList(),
-    val attendance: List<OrderAttendanceResponse> = emptyList(),
+    val linkedTodos: List<TodoResponse>? = emptyList(),
+    val activityHistory: List<OrderHistoryResponse>? = emptyList(),
+    val attendance: List<OrderAttendanceResponse>? = emptyList(),
     val createdAt: String = "",
     val updatedAt: String = ""
-)
+) {
+    val safeClientDocuments: List<OrderDocument> get() = clientDocuments ?: emptyList()
+    val safeAdminDocuments: List<OrderDocument> get() = adminDocuments ?: emptyList()
+    val safeTasks: List<OrderTask> get() = tasks ?: emptyList()
+    val safeInvoices: List<OrderInvoice> get() = invoices ?: emptyList()
+    val safeRequirements: List<CustomerRequirement> get() = customerRequirements ?: emptyList()
+    val safeChecklists: List<ChecklistItem> get() = checklists ?: emptyList()
+    val safeLinkedTodos: List<TodoResponse> get() = linkedTodos ?: emptyList()
+    val safeActivityHistory: List<OrderHistoryResponse> get() = activityHistory ?: emptyList()
+    val safeAttendance: List<OrderAttendanceResponse> get() = attendance ?: emptyList()
+}
 
 data class OrderDocument(
     @SerializedName("_id") val id: String?,
@@ -145,8 +155,36 @@ data class OrderTask(
     val status: String = "Pending", // 'Pending', 'In Progress', 'Completed'
     val ownerRole: String = "",
     val description: String = "",
-    val subtasks: List<OrderSubtask> = emptyList(),
+    val subtasks: List<OrderSubtask>? = emptyList(),
     val totalMinutes: Int = 0
+) {
+    val safeSubtasks: List<OrderSubtask> get() = subtasks ?: emptyList()
+}
+
+data class OrderChatAttachment(
+    val name: String = "",
+    val url: String = "",
+    val fileType: String = ""
+)
+
+data class OrderChatMessage(
+    @SerializedName("_id") val id: String,
+    val order: String = "",
+    val sender: UserProfile? = null,
+    val messageType: String = "client", // 'client' or 'internal'
+    val message: String = "",
+    val attachments: List<OrderChatAttachment>? = emptyList(),
+    val readBy: List<String>? = emptyList(),
+    val createdAt: String = ""
+) {
+    val safeAttachments: List<OrderChatAttachment> get() = attachments ?: emptyList()
+    val safeReadBy: List<String> get() = readBy ?: emptyList()
+}
+
+data class OrderUnreadCountResponse(
+    val clientUnread: Int = 0,
+    val internalUnread: Int = 0,
+    val totalUnread: Int = 0
 )
 
 data class OrderSubtask(

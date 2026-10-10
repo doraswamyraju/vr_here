@@ -1909,4 +1909,54 @@ struct HeaderConfigResponse: Codable {
     let capsules: [InteractiveCapsuleItem]?
 }
 
+// MARK: - ORDER CHAT MODELS
+struct OrderChatAttachment: Codable, Identifiable, Equatable {
+    var id: String { url + name }
+    let name: String
+    let url: String
+    let fileType: String?
+
+    init(name: String = "", url: String = "", fileType: String? = nil) {
+        self.name = name
+        self.url = url
+        self.fileType = fileType
+    }
+}
+
+struct OrderChatMessage: Codable, Identifiable, Equatable {
+    var id: String { idVal }
+    let idVal: String
+    let order: String?
+    let sender: UserProfile?
+    let messageType: String // "client" or "internal"
+    let message: String
+    let attachments: [OrderChatAttachment]
+    let readBy: [String]
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case order, sender, messageType, message, attachments, readBy, createdAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? UUID().uuidString
+        order = try container.decodeIfPresent(String.self, forKey: .order)
+        sender = try container.decodeIfPresent(UserProfile.self, forKey: .sender)
+        messageType = try container.decodeIfPresent(String.self, forKey: .messageType) ?? "client"
+        message = try container.decodeIfPresent(String.self, forKey: .message) ?? ""
+        attachments = try container.decodeIfPresent([OrderChatAttachment].self, forKey: .attachments) ?? []
+        readBy = try container.decodeIfPresent([String].self, forKey: .readBy) ?? []
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+    }
+}
+
+struct OrderUnreadCountResponse: Codable {
+    let clientUnread: Int
+    let internalUnread: Int
+    let totalUnread: Int
+}
+
+
 

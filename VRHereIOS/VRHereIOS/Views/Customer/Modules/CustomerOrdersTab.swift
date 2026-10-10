@@ -695,10 +695,11 @@ struct CustomerOrdersTab: View {
                     )
                 }
                 
-                // --- 3 SUB-TABS (Requirements | Vault | Financials) ---
+                // --- 4 SUB-TABS (Requirements | Messages | Vault | Financials) ---
                 HStack(spacing: 4) {
                     let subTabs = [
                         ("requirements", "Requirements", pendingRequirements.count),
+                        ("messages", "Messages", 0),
                         ("documents", "Vault", order.adminDocuments.count + order.clientDocuments.count),
                         ("financials", "Financials", 0)
                     ]
@@ -741,6 +742,8 @@ struct CustomerOrdersTab: View {
                 switch currentDetailTab {
                 case "requirements":
                     requirementsSubTabView(order: order, requirements: filteredRequirements, totalPaid: totalPaid, balance: balance, reqProgressPercentage: reqProgressPercentage, completedCount: completedRequirements.count, totalCount: requirements.count)
+                case "messages":
+                    OrderChatView(orderId: order.id, currentUserRole: "client", currentUserId: "")
                 case "documents":
                     vaultDeliverablesSubTabView(order: order)
                 case "financials":

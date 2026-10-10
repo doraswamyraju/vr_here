@@ -146,13 +146,13 @@ fun CustomerVaultTab(
         viewModel.orders.flatMap { order ->
             val orderTag = order.serviceName.ifEmpty { "Order #${order.id.takeLast(6).uppercase()}" }
             
-            val clientDocs = order.clientDocuments.map { doc ->
+            val clientDocs = order.safeClientDocuments.map { doc ->
                 Triple(doc.name, doc.url, "Client Upload • $orderTag")
             }
-            val adminDocs = order.adminDocuments.map { doc ->
+            val adminDocs = order.safeAdminDocuments.map { doc ->
                 Triple(doc.name, doc.url, "Delivered Certificate • $orderTag")
             }
-            val reqDocs = order.customerRequirements.mapNotNull { req ->
+            val reqDocs = order.safeRequirements.mapNotNull { req ->
                 val url = req.uploadedDocumentUrl.ifEmpty { req.documentUrl.ifEmpty { if (req.value.startsWith("http") || req.value.startsWith("/uploads")) req.value else null } }
                 if (!url.isNullOrEmpty()) {
                     Triple(req.uploadedDocumentName.ifEmpty { req.title }, url, "Requirement • $orderTag")

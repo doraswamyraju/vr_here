@@ -70,7 +70,7 @@ fun CustomerInvoicesTab(
 
         // 1. Add all explicit milestone invoices from orders (e.g. INV-0310260001)
         orders.forEach { order ->
-            order.invoices.forEach { inv ->
+            order.safeInvoices.forEach { inv ->
                 val isPaid = inv.status.equals("Paid", ignoreCase = true) || inv.status.equals("Completed", ignoreCase = true)
                 val canPay = !isPaid && !inv.status.equals("Cancelled", ignoreCase = true) && !inv.status.equals("Draft", ignoreCase = true)
                 val invNum = if (inv.invoiceNumber.isNotBlank()) inv.invoiceNumber else "INV-${(inv.id ?: "").takeLast(6).uppercase()}"
@@ -97,7 +97,7 @@ fun CustomerInvoicesTab(
 
         // 2. Add orders that have an unpaid balance and NO separate milestone invoices
         orders.forEach { order ->
-            val hasMilestoneInvoices = order.invoices.isNotEmpty()
+            val hasMilestoneInvoices = order.safeInvoices.isNotEmpty()
             if (!hasMilestoneInvoices) {
                 val orderPayments = payments.filter { p -> 
                     p.order?.id == order.id || (p.paymentId.isNotBlank() && p.paymentId == order.paymentId) 

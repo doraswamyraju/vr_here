@@ -272,7 +272,7 @@ private fun OrderWorkspaceView(
     var showRecurringDialog by remember { mutableStateOf(false) }
 
     val workspaceTabs = listOf(
-        "Overview", "Tasks", "Requirements", "Workflow Tickets",
+        "Overview", "Chat", "Tasks", "Requirements", "Workflow Tickets",
         "Invoices", "ToDo", "Transactions", "Activities", "Docs"
     )
 
@@ -347,7 +347,7 @@ private fun OrderWorkspaceView(
                 onSetupRecurring = { showRecurringDialog = true }
             )
 
-            // 9 Workspace Subtabs Strip
+            // Workspace Subtabs Strip
             ScrollableTabRow(
                 selectedTabIndex = workspaceTabs.indexOf(activeWorkspaceTab).coerceAtLeast(0),
                 containerColor = Color.White,
@@ -377,6 +377,11 @@ private fun OrderWorkspaceView(
             // Tab View Router
             when (activeWorkspaceTab) {
                 "Overview" -> OrderOverviewTabContent(order = order, adminViewModel = adminViewModel)
+                "Chat" -> com.sbr.vrherebms.ui.components.OrderChatComponent(
+                    orderId = order.id,
+                    currentUserRole = "admin",
+                    currentUserId = ""
+                )
                 "Tasks" -> OrderTasksTabContent(order = order)
                 "Requirements" -> OrderRequirementsTabContent(order = order)
                 "Workflow Tickets" -> OrderWorkflowTicketsTabContent(order = order, onRaise = { showRaiseTicketDialog = true })
@@ -676,10 +681,10 @@ private fun OrderOverviewTabContent(order: OrderResponse, adminViewModel: AdminD
 private fun OrderTasksTabContent(order: OrderResponse) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("ORDER TASKS & SOW", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-        if (order.tasks.isEmpty()) {
+        if (order.safeTasks.isEmpty()) {
             Text("No specific subtasks logged yet.", fontSize = 12.sp, color = Color(0xFF64748B))
         } else {
-            order.tasks.forEach { task ->
+            order.safeTasks.forEach { task ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -703,10 +708,10 @@ private fun OrderTasksTabContent(order: OrderResponse) {
 private fun OrderRequirementsTabContent(order: OrderResponse) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("CLIENT SUBMITTED REQUIREMENTS", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-        if (order.customerRequirements.isEmpty()) {
+        if (order.safeRequirements.isEmpty()) {
             Text("No custom requirement forms attached.", fontSize = 12.sp, color = Color(0xFF64748B))
         } else {
-            order.customerRequirements.forEach { req ->
+            order.safeRequirements.forEach { req ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -743,10 +748,10 @@ private fun OrderWorkflowTicketsTabContent(order: OrderResponse, onRaise: () -> 
 private fun OrderInvoicesTabContent(order: OrderResponse) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("GST TAX INVOICES", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-        if (order.invoices.isEmpty()) {
+        if (order.safeInvoices.isEmpty()) {
             Text("No tax invoices generated yet.", fontSize = 12.sp, color = Color(0xFF64748B))
         } else {
-            order.invoices.forEach { inv ->
+            order.safeInvoices.forEach { inv ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -791,10 +796,10 @@ private fun OrderTransactionsTabContent(order: OrderResponse) {
 private fun OrderActivitiesTabContent(order: OrderResponse) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("AUDIT LOGS & ACTION DIFFS", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-        if (order.activityHistory.isEmpty()) {
+        if (order.safeActivityHistory.isEmpty()) {
             Text("Order created and status logged.", fontSize = 12.sp, color = Color(0xFF64748B))
         } else {
-            order.activityHistory.forEach { act ->
+            order.safeActivityHistory.forEach { act ->
                 Text("• ${act.action} by ${act.author} (${act.timestamp})", fontSize = 11.sp, color = Color(0xFF1E293B))
             }
         }
@@ -806,10 +811,10 @@ private fun OrderDocsTabContent(order: OrderResponse) {
     val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("DELIVERABLES & DOCUMENT VAULT", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8))
-        if (order.clientDocuments.isEmpty() && order.adminDocuments.isEmpty()) {
+        if (order.safeClientDocuments.isEmpty() && order.safeAdminDocuments.isEmpty()) {
             Text("No files uploaded.", fontSize = 12.sp, color = Color(0xFF64748B))
         } else {
-            (order.clientDocuments + order.adminDocuments).forEach { doc ->
+            (order.safeClientDocuments + order.safeAdminDocuments).forEach { doc ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

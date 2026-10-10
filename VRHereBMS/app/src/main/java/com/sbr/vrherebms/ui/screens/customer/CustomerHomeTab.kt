@@ -144,8 +144,8 @@ fun CustomerHomeTab(
         if (order.status == "Completed" || order.status == "Documents Verified" || order.status == "Processing at Portal") return@filter false
         if (order.status == "Waiting for Clarification") return@filter true
         if (order.status == "Pending Documents" || order.status == "Documents Required") {
-            if (order.customerRequirements.isNotEmpty()) {
-                return@filter order.customerRequirements.any { r ->
+            if (order.safeRequirements.isNotEmpty()) {
+                return@filter order.safeRequirements.any { r ->
                     !r.isClientCompleted && r.uploadedDocumentUrl.isBlank() && r.documentUrl.isBlank() && r.clientValue.isBlank() && r.status != "Received" && r.status != "Verified"
                 }
             }
