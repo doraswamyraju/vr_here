@@ -8,25 +8,11 @@ import { uploadBufferToDrive, getCustomerDriveFolder } from '../services/googleD
 // Helper to check order access
 const canAccessOrder = (user, order) => {
     if (!user || !order) return false;
-    if (user.role === 'admin') return true;
+    // Admins, employees, and freelancers are internal staff working on orders
+    if (user.role === 'admin' || user.role === 'employee' || user.role === 'freelancer') return true;
     if (user.role === 'client') {
         const orderUserId = order.user?._id || order.user;
         return orderUserId && orderUserId.toString() === user._id.toString();
-    }
-    if (user.role === 'employee' || user.role === 'freelancer') {
-        const uId = user._id.toString();
-        const check = (f) => f && (f._id ? f._id.toString() : f.toString()) === uId;
-        if (check(order.assignedEmployee) || check(order.assignedProjectManager) ||
-            check(order.assignedMaker) || check(order.assignedChecker) ||
-            check(order.assignedFreelancer)) return true;
-        
-        if (Array.isArray(order.tasks)) {
-            const hasTask = order.tasks.some(t =>
-                check(t.assignedTo) || check(t.assignedMaker) || check(t.assignedChecker) ||
-                (Array.isArray(t.subtasks) && t.subtasks.some(st => check(st.assignedToMaker) || check(st.assignedToChecker)))
-            );
-            if (hasTask) return true;
-        }
     }
     return false;
 };

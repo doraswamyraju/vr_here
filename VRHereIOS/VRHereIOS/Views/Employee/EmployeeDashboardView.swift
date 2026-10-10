@@ -25,8 +25,16 @@ struct EmployeeDashboardView: View {
                     onMenuClick: { withAnimation { isSidebarOpen.toggle() } },
                     showLogout: true,
                     onLogoutClick: onLogout,
-                    showBack: activeTab != "Overview",
-                    onBackClick: { withAnimation { activeTab = "Overview" } },
+                    showBack: activeTab != "Overview" || selectedOrderForProcessing != nil,
+                    onBackClick: {
+                        withAnimation {
+                            if selectedOrderForProcessing != nil {
+                                selectedOrderForProcessing = nil
+                            } else {
+                                activeTab = "Overview"
+                            }
+                        }
+                    },
                     showNotifications: true,
                     hasUnreadNotifications: viewModel.notifications.contains(where: { !$0.isRead }),
                     onNotificationsClick: { isShowingNotifications = true }
@@ -64,14 +72,16 @@ struct EmployeeDashboardView: View {
                     }
                 }
                 
-                // Dock Navigation Bar at Bottom
-                let dockItems = [
-                    BMSDockItem(label: "Me", iconName: "square.grid.2x2", tabId: "Overview"),
-                    BMSDockItem(label: "Queue", iconName: "briefcase", tabId: "Queue"),
-                    BMSDockItem(label: "Attendance", iconName: "clock", tabId: "Attendance"),
-                    BMSDockItem(label: "HRMS", iconName: "person.3", tabId: "HRMS")
-                ]
-                BMSAppFloatingDock(activeTab: $activeTab, dockItems: dockItems)
+                // Dock Navigation Bar at Bottom (Hidden when viewing an order workspace)
+                if selectedOrderForProcessing == nil {
+                    let dockItems = [
+                        BMSDockItem(label: "Me", iconName: "square.grid.2x2", tabId: "Overview"),
+                        BMSDockItem(label: "Queue", iconName: "briefcase", tabId: "Queue"),
+                        BMSDockItem(label: "Attendance", iconName: "clock", tabId: "Attendance"),
+                        BMSDockItem(label: "HRMS", iconName: "person.3", tabId: "HRMS")
+                    ]
+                    BMSAppFloatingDock(activeTab: $activeTab, dockItems: dockItems)
+                }
             }
             .refreshable {
                 await viewModel.syncDashboardDataAsync()

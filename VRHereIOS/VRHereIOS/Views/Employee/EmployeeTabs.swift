@@ -102,6 +102,7 @@ struct EmployeeQueueTab: View {
     @ObservedObject var viewModel: EmployeeDashboardViewModel
     @Binding var selectedOrder: OrderResponse?
     
+    @State private var selectedDetailTab = "Overview"
     @State private var showingDocPicker = false
     @State private var inputQueryTitle = ""
     @State private var inputQueryType = "Detail"
@@ -113,34 +114,112 @@ struct EmployeeQueueTab: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 14) {
                 if let order = selectedOrder {
-                    // Detailed Processing drilldown
-                    Button(action: { selectedOrder = nil }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "chevron.backward")
-                            Text("Back to Work Queue")
+                    // Header Bar with Back Button & Order ID Badge
+                    HStack {
+                        Button(action: { selectedOrder = nil }) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "chevron.backward")
+                                    .font(.system(size: 11, weight: .bold))
+                                Text("Work Queue")
+                                    .font(.system(size: 12, weight: .bold))
+                            }
+                            .foregroundColor(.indigo)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.indigo.opacity(0.1))
+                            .cornerRadius(8)
                         }
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.blue)
+                        
+                        Spacer()
+                        
+                        Text("ORDER #\(order.id.suffix(6).uppercased())")
+                            .font(.system(size: 10, weight: .black))
+                            .foregroundColor(.textMuted)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                            .cornerRadius(6)
                     }
-                    .padding(.top, 16)
+                    .padding(.top, 14)
                     .padding(.horizontal, 20)
                     
-                    VStack(alignment: .leading, spacing: 10) {
+                    // Order Summary Card
+                    VStack(alignment: .leading, spacing: 8) {
                         Text(order.serviceName)
-                            .font(.system(size: 20, weight: .black))
+                            .font(.system(size: 17, weight: .black))
                             .foregroundColor(.textDark)
-                        Text("Client: \(order.clientName) (\(order.email))")
+                        
+                        Text("Client: \(order.clientName)")
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.textMuted)
+                            .foregroundColor(.indigo)
                         
-                        Divider().background(Color.borderLight)
-                        
-                        // Milestone status dropdown analog
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Update Milestone Status")
-                                .font(.system(size: 10, weight: .black))
+                        VStack(alignment: .leading, spacing: 4) {
+                            if !order.phone.isEmpty {
+                                Button(action: {
+                                    if let url = URL(string: "tel:\(order.phone.replacingOccurrences(of: " ", with: ""))") {
+                                        UIApplication.shared.open(url)
+                                    }
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "phone.fill")
+                                            .font(.system(size: 9))
+                                        Text("Call: \(order.phone)")
+                                            .font(.system(size: 11, weight: .semibold))
+                                    }
+                                    .foregroundColor(.indigo)
+                                }
+                            }
+                            if !order.email.isEmpty {
+                                Button(action: {
+                                    if let url = URL(string: "mailto:\(order.email)") {
+                                        UIApplication.shared.open(url)
+                                    }
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "envelope.fill")
+                                            .font(.system(size: 9))
+                                        Text(order.email)
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .lineLimit(1)
+                                    }
+                                    .foregroundColor(.indigo)
+                                }
+                            }
+                        }
+                    }
+                    .padding(14)
+                    .glassCard()
+                    .padding(.horizontal, 20)
+                    
+                    // 4-Tab Workspace Switcher
+                    HStack(spacing: 8) {
+                        ForEach(["Overview", "Chat", "Tasks", "Requirements"], id: \.self) { tab in
+                            let isSelected = selectedDetailTab == tab
+                            Button(action: { selectedDetailTab = tab }) {
+                                Text(tab)
+                                    .font(.system(size: 12, weight: .bold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                    .foregroundColor(isSelected ? .white : Color.textDark)
+                                    .background(isSelected ? Color.indigo : Color.white)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(isSelected ? Color.indigo : Color.borderLight, lineWidth: 1)
+                                    )
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Tab Content Body
+                    if selectedDetailTab == "Overview" {
+                        // Milestone status dropdown
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("UPDATE MILESTONE STATUS")
+                                .font(.system(size: 9, weight: .black))
                                 .foregroundColor(.textMuted)
                             
                             Menu {
@@ -153,175 +232,187 @@ struct EmployeeQueueTab: View {
                                 HStack {
                                     Text(order.status)
                                         .font(.system(size: 13, weight: .bold))
+                                        .foregroundColor(.textDark)
                                     Spacer()
                                     Image(systemName: "chevron.down")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.textMuted)
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
                                 .background(Color.bgInput)
                                 .cornerRadius(10)
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.borderLight, lineWidth: 1))
                             }
                         }
-                    }
-                    .padding(16)
-                    .glassCard()
-                    .padding(.horizontal, 20)
-                    
-                    // Certificate Delivery Action
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Finish & Deliver Certificate")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.green)
-                        }
+                        .padding(14)
+                        .glassCard()
+                        .padding(.horizontal, 20)
                         
-                        if let url = order.finalCertificateUrl {
-                            Text("Delivered URL: \(url)")
-                                .font(.system(size: 11))
-                                .foregroundColor(.textDark)
-                        } else {
-                            Button(action: {
-                                if !viewModel.isClockedIn {
-                                    viewModel.toastMessage = "Please clock in first."
-                                    return
+                        // Certificate Delivery Action
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .foregroundColor(.green)
+                                Text("Deliver Final Certificate")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.green)
+                            }
+                            
+                            if let url = order.finalCertificateUrl {
+                                Text("Delivered URL: \(url)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.textDark)
+                            } else {
+                                Button(action: {
+                                    if !viewModel.isClockedIn {
+                                        viewModel.toastMessage = "Please clock in first."
+                                        return
+                                    }
+                                    showingDocPicker = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.up.doc")
+                                        Text("Upload Final Certificate PDF")
+                                    }
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 42)
+                                    .background(Color.green)
+                                    .cornerRadius(10)
                                 }
-                                showingDocPicker = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.up.doc")
-                                    Text("Upload Final Certificate PDF")
-                                }
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 44)
-                                .background(Color.green)
-                                .cornerRadius(10)
                             }
                         }
-                    }
-                    .padding(16)
-                    .background(Color.green.opacity(0.1))
-                    .cornerRadius(16)
-                    .padding(.horizontal, 20)
-
-                    // Order Messages & Communication Hub
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Order Messages & Client Channel")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.textDark)
-                        
-                        OrderChatView(orderId: order.id, currentUserRole: "employee", currentUserId: "")
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    // Task Workflow Checklist
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Operational Tasks & Subtasks")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.textDark)
-                        
-                        ForEach(order.tasks) { task in
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack {
-                                    Text(task.title)
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(.textDark)
-                                    Spacer()
-                                    Text(task.status)
-                                        .font(.system(size: 9, weight: .black))
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 4)
-                                        .background(task.status == "Completed" ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
-                                        .foregroundColor(task.status == "Completed" ? .green : .orange)
-                                        .cornerRadius(4)
-                                    
-                                    // Complete trigger
-                                    if task.status != "Completed" {
+                        .padding(14)
+                        .background(Color.green.opacity(0.08))
+                        .cornerRadius(14)
+                        .padding(.horizontal, 20)
+                    } else if selectedDetailTab == "Chat" {
+                        // Order Messages & Communication Hub
+                        VStack(alignment: .leading, spacing: 8) {
+                            OrderChatView(
+                                orderId: order.id,
+                                currentUserRole: "employee",
+                                currentUserId: SessionManager.shared.getUserId() ?? ""
+                            )
+                        }
+                        .padding(.horizontal, 20)
+                    } else if selectedDetailTab == "Tasks" {
+                        // Task Workflow Checklist
+                        VStack(alignment: .leading, spacing: 10) {
+                            if order.tasks.isEmpty {
+                                Text("No operational tasks created yet.")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.textMuted)
+                                    .padding(.vertical, 20)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            } else {
+                                ForEach(order.tasks) { task in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            Text(task.title)
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(.textDark)
+                                            Spacer()
+                                            Text(task.status)
+                                                .font(.system(size: 9, weight: .black))
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 3)
+                                                .background(task.status == "Completed" ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
+                                                .foregroundColor(task.status == "Completed" ? .green : .orange)
+                                                .cornerRadius(4)
+                                            
+                                            if task.status != "Completed" {
+                                                Button(action: {
+                                                    viewModel.updateTaskStatus(orderId: order.id, taskId: task.id, status: "Completed")
+                                                }) {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .foregroundColor(.green)
+                                                        .font(.system(size: 16))
+                                                }
+                                            }
+                                        }
+                                        
+                                        // Time Logging button
                                         Button(action: {
-                                            viewModel.updateTaskStatus(orderId: order.id, taskId: task.id, status: "Completed")
+                                            targetTimeLogTaskId = task.id
+                                            logMinutesInput = ""
+                                            logNotesInput = ""
+                                            showTimeLogSheet = true
                                         }) {
-                                            Image(systemName: "checkmark.circle")
-                                                .foregroundColor(.green)
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "clock")
+                                                    .font(.system(size: 9))
+                                                Text("Log Time Minutes")
+                                                    .font(.system(size: 10, weight: .bold))
+                                            }
+                                            .foregroundColor(.indigo)
+                                        }
+                                        
+                                        // Subtasks list
+                                        ForEach(task.subtasks) { subtask in
+                                            HStack {
+                                                Image(systemName: subtask.isCompleted ? "checkmark.square.fill" : "square")
+                                                    .foregroundColor(subtask.isCompleted ? .green : .textMuted)
+                                                    .onTapGesture {
+                                                        viewModel.updateSubtaskStatus(
+                                                            orderId: order.id,
+                                                            taskId: task.id,
+                                                            subtaskId: subtask.id,
+                                                            isCompleted: !subtask.isCompleted,
+                                                            status: !subtask.isCompleted ? "Completed" : "Pending"
+                                                        )
+                                                    }
+                                                Text(subtask.title)
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.textDark)
+                                                Spacer()
+                                            }
+                                            .padding(.leading, 8)
                                         }
                                     }
-                                }
-                                
-                                // Time Logging button
-                                Button(action: {
-                                    targetTimeLogTaskId = task.id
-                                    logMinutesInput = ""
-                                    logNotesInput = ""
-                                    showTimeLogSheet = true
-                                }) {
-                                    Text("Log Time Minutes")
-                                        .font(.system(size: 9, weight: .bold))
-                                        .foregroundColor(.blue)
-                                }
-                                
-                                // Subtasks list
-                                ForEach(task.subtasks) { subtask in
-                                    HStack {
-                                        Image(systemName: subtask.isCompleted ? "checkmark.square.fill" : "square")
-                                            .foregroundColor(subtask.isCompleted ? .green : .textMuted)
-                                            .onTapGesture {
-                                                viewModel.updateSubtaskStatus(
-                                                    orderId: order.id,
-                                                    taskId: task.id,
-                                                    subtaskId: subtask.id,
-                                                    isCompleted: !subtask.isCompleted,
-                                                    status: !subtask.isCompleted ? "Completed" : "Pending"
-                                                )
-                                            }
-                                        Text(subtask.title)
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.textDark)
-                                        Spacer()
-                                    }
-                                    .padding(.leading, 12)
+                                    .padding(12)
+                                    .glassCard()
                                 }
                             }
-                            .padding(12)
-                            .glassCard()
                         }
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    // Raise new Query Form
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Raise Client Query / Document Requirement")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.textDark)
-                        
-                        CustomInputField(label: "Query Title", placeholder: "E.g. Upload PAN Card clear Scan", iconName: "questionmark.circle", text: $inputQueryTitle)
-                        
-                        Picker("Type", selection: $inputQueryType) {
-                            Text("Text Detail").tag("Detail")
-                            Text("Document upload request").tag("Document")
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        
-                        Button(action: {
-                            if !inputQueryTitle.isEmpty {
-                                viewModel.raiseRequirement(orderId: order.id, title: inputQueryTitle, type: inputQueryType)
-                                inputQueryTitle = ""
+                        .padding(.horizontal, 20)
+                    } else if selectedDetailTab == "Requirements" {
+                        // Raise new Query Form
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Raise Client Query / Document Requirement")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.textDark)
+                            
+                            CustomInputField(label: "Query Title", placeholder: "E.g. Upload PAN Card clear Scan", iconName: "questionmark.circle", text: $inputQueryTitle)
+                            
+                            Picker("Type", selection: $inputQueryType) {
+                                Text("Text Detail").tag("Detail")
+                                Text("Document upload request").tag("Document")
                             }
-                        }) {
-                            Text("RAISE QUERY")
-                                .font(.system(size: 11, weight: .black))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 40)
-                                .background(Color.red)
-                                .cornerRadius(8)
+                            .pickerStyle(SegmentedPickerStyle())
+                            
+                            Button(action: {
+                                if !inputQueryTitle.isEmpty {
+                                    viewModel.raiseRequirement(orderId: order.id, title: inputQueryTitle, type: inputQueryType)
+                                    inputQueryTitle = ""
+                                }
+                            }) {
+                                Text("RAISE QUERY")
+                                    .font(.system(size: 11, weight: .black))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 40)
+                                    .background(Color.red)
+                                    .cornerRadius(8)
+                            }
+                            .buttonStyle(ScaleOnPressButtonStyle())
                         }
-                        .buttonStyle(ScaleOnPressButtonStyle())
+                        .padding(16)
+                        .glassCard()
+                        .padding(.horizontal, 20)
                     }
-                    .padding(16)
-                    .glassCard()
-                    .padding(.horizontal, 20)
                     
                 } else {
                     // Queue List

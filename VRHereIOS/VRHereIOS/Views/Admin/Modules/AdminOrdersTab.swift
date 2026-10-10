@@ -480,18 +480,19 @@ struct AdminOrdersTab: View {
                                 .foregroundColor(.textDark)
                         }
                         
-                        HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 5) {
                             if !order.phone.isEmpty {
                                 Button(action: {
                                     if let url = URL(string: "tel:\(order.phone.replacingOccurrences(of: " ", with: ""))") {
                                         UIApplication.shared.open(url)
                                     }
                                 }) {
-                                    HStack(spacing: 3) {
+                                    HStack(spacing: 4) {
                                         Image(systemName: "phone.fill")
+                                            .font(.system(size: 9))
                                         Text("Call: \(order.phone)")
+                                            .font(.system(size: 11, weight: .semibold))
                                     }
-                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(.indigo)
                                 }
                             }
@@ -501,11 +502,13 @@ struct AdminOrdersTab: View {
                                         UIApplication.shared.open(url)
                                     }
                                 }) {
-                                    HStack(spacing: 3) {
+                                    HStack(spacing: 4) {
                                         Image(systemName: "envelope.fill")
-                                        Text("Email: \(order.email)")
+                                            .font(.system(size: 9))
+                                        Text(order.email)
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .lineLimit(1)
                                     }
-                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(.indigo)
                                 }
                             }
@@ -558,12 +561,13 @@ struct AdminOrdersTab: View {
                 
                 Divider().background(Color.borderLight)
                 
-                // 5-Column Assignment & Status Grid
+                // Clean 2-Column Assignment & Status Grid
                 VStack(spacing: 10) {
-                    HStack(spacing: 8) {
+                    // Row 1: STATUS & PROJECT MANAGER
+                    HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("STATUS")
-                                .font(.system(size: 8, weight: .black))
+                                .font(.system(size: 9, weight: .black))
                                 .foregroundColor(.textMuted)
                             Picker("Status", selection: $draftStatus) {
                                 ForEach(["Pending", "In Progress", "Pending Documents", "Documents Verified", "Completed"], id: \.self) { s in
@@ -572,7 +576,7 @@ struct AdminOrdersTab: View {
                             }
                             .pickerStyle(MenuPickerStyle())
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(6)
+                            .padding(8)
                             .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                             .cornerRadius(8)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.borderLight, lineWidth: 1))
@@ -580,7 +584,7 @@ struct AdminOrdersTab: View {
                         
                         VStack(alignment: .leading, spacing: 3) {
                             Text("PROJECT MANAGER")
-                                .font(.system(size: 8, weight: .black))
+                                .font(.system(size: 9, weight: .black))
                                 .foregroundColor(.textMuted)
                             Picker("PM", selection: $draftPMId) {
                                 Text("Unassigned").tag("")
@@ -590,17 +594,18 @@ struct AdminOrdersTab: View {
                             }
                             .pickerStyle(MenuPickerStyle())
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(6)
+                            .padding(8)
                             .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                             .cornerRadius(8)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.borderLight, lineWidth: 1))
                         }
                     }
                     
-                    HStack(spacing: 8) {
+                    // Row 2: MAKER & CHECKER
+                    HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("MAKER")
-                                .font(.system(size: 8, weight: .black))
+                                .font(.system(size: 9, weight: .black))
                                 .foregroundColor(.textMuted)
                             Picker("Maker", selection: $draftMakerId) {
                                 Text("Unassigned").tag("")
@@ -610,7 +615,7 @@ struct AdminOrdersTab: View {
                             }
                             .pickerStyle(MenuPickerStyle())
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(6)
+                            .padding(8)
                             .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                             .cornerRadius(8)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.borderLight, lineWidth: 1))
@@ -618,7 +623,7 @@ struct AdminOrdersTab: View {
                         
                         VStack(alignment: .leading, spacing: 3) {
                             Text("CHECKER")
-                                .font(.system(size: 8, weight: .black))
+                                .font(.system(size: 9, weight: .black))
                                 .foregroundColor(.textMuted)
                             Picker("Checker", selection: $draftCheckerId) {
                                 Text("Unassigned").tag("")
@@ -628,53 +633,66 @@ struct AdminOrdersTab: View {
                             }
                             .pickerStyle(MenuPickerStyle())
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(6)
+                            .padding(8)
+                            .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+                            .cornerRadius(8)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.borderLight, lineWidth: 1))
+                        }
+                    }
+                    
+                    // Row 3: PRICE (₹) and Save Package Assignment Button
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("PRICE (₹)")
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundColor(.textMuted)
+                            HStack(spacing: 4) {
+                                Text("₹")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.textMuted)
+                                TextField("Price", text: $draftPrice)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .keyboardType(.numberPad)
+                            }
+                            .padding(8)
                             .background(Color(red: 248/255, green: 250/255, blue: 252/255))
                             .cornerRadius(8)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.borderLight, lineWidth: 1))
                         }
                         
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("PRICE (₹)")
-                                .font(.system(size: 8, weight: .black))
-                                .foregroundColor(.textMuted)
-                            TextField("Price", text: $draftPrice)
-                                .font(.system(size: 12, weight: .bold))
-                                .keyboardType(.numberPad)
-                                .padding(6)
-                                .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+                            Text(" ")
+                                .font(.system(size: 9, weight: .black))
+                            Button(action: handleSaveAssignments) {
+                                HStack(spacing: 6) {
+                                    if isSavingAssignments {
+                                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Image(systemName: "checkmark.circle.fill")
+                                        Text("Save Assignment")
+                                    }
+                                }
+                                .font(.system(size: 11, weight: .black))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(Color.indigo)
                                 .cornerRadius(8)
-                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.borderLight, lineWidth: 1))
-                        }
-                    }
-                }
-                
-                HStack(spacing: 10) {
-                    Button(action: handleSaveAssignments) {
-                        HStack(spacing: 6) {
-                            if isSavingAssignments {
-                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            } else {
-                                Image(systemName: "checkmark.circle.fill")
-                                Text("Save Package Assignment")
                             }
+                            .disabled(isSavingAssignments)
                         }
-                        .font(.system(size: 11, weight: .black))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                        .background(Color.indigo)
-                        .cornerRadius(10)
                     }
-                    .disabled(isSavingAssignments)
                     
                     if !saveSuccessMessage.isEmpty {
-                        Text(saveSuccessMessage)
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.green)
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text(saveSuccessMessage)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.green)
+                            Spacer()
+                        }
                     }
-                    
-                    Spacer()
                 }
             }
             .padding(16)
@@ -714,7 +732,7 @@ struct AdminOrdersTab: View {
                 case .overview:
                     workspaceOverviewTab(order: order)
                 case .chat:
-                    OrderChatView(orderId: order.id, currentUserRole: "admin", currentUserId: "")
+                    OrderChatView(orderId: order.id, currentUserRole: "admin", currentUserId: SessionManager.shared.getUserId() ?? "")
                 case .tasks:
                     workspaceTasksTab(order: order)
                 case .requirements:

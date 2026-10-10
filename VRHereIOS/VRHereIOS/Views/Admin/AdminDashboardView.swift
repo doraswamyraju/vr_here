@@ -43,19 +43,25 @@ struct AdminDashboardView: View {
                     onMenuClick: { withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) { isSidebarOpen.toggle() } },
                     showLogout: true,
                     onLogoutClick: onLogout,
-                    showBack: activeTab != "Overview",
+                    showBack: activeTab != "Overview" || !adminViewModel.selectedOrderId.isEmpty,
                     onBackClick: {
                         withAnimation {
-                            activeTab = "Overview"
-                            adminViewModel.selectedOrderId = ""
-                            adminViewModel.selectedOrderFilter = "All"
+                            if !adminViewModel.selectedOrderId.isEmpty {
+                                adminViewModel.selectedOrderId = ""
+                            } else {
+                                activeTab = "Overview"
+                                adminViewModel.selectedOrderFilter = "All"
+                            }
                         }
                     },
                     onLogoClick: {
                         withAnimation {
-                            activeTab = "Overview"
-                            adminViewModel.selectedOrderId = ""
-                            adminViewModel.selectedOrderFilter = "All"
+                            if !adminViewModel.selectedOrderId.isEmpty {
+                                adminViewModel.selectedOrderId = ""
+                            } else {
+                                activeTab = "Overview"
+                                adminViewModel.selectedOrderFilter = "All"
+                            }
                         }
                     },
                     showNotifications: true,
@@ -120,20 +126,22 @@ struct AdminDashboardView: View {
                     }
                     .ignoresSafeArea(edges: .bottom)
                     
-                    // 1:1 Floating Quick Action Button
-                    HStack {
-                        Spacer()
-                        BMSQuickActionFAB(
-                            onNewOrder: {
-                                showCreateOrderSheet = true
-                            },
-                            onNewTodo: {
-                                showCreateTodoSheet = true
-                            }
-                        )
+                    // 1:1 Floating Quick Action Button & Bottom Dock (Hidden inside Order details workspace)
+                    if adminViewModel.selectedOrderId.isEmpty {
+                        HStack {
+                            Spacer()
+                            BMSQuickActionFAB(
+                                onNewOrder: {
+                                    showCreateOrderSheet = true
+                                },
+                                onNewTodo: {
+                                    showCreateTodoSheet = true
+                                }
+                            )
+                        }
+                        
+                        BMSAppFloatingDock(activeTab: $activeTab, dockItems: adminDockItems)
                     }
-                    
-                    BMSAppFloatingDock(activeTab: $activeTab, dockItems: adminDockItems)
                 }
             }
             .refreshable {

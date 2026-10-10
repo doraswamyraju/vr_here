@@ -743,7 +743,7 @@ struct CustomerOrdersTab: View {
                 case "requirements":
                     requirementsSubTabView(order: order, requirements: filteredRequirements, totalPaid: totalPaid, balance: balance, reqProgressPercentage: reqProgressPercentage, completedCount: completedRequirements.count, totalCount: requirements.count)
                 case "messages":
-                    OrderChatView(orderId: order.id, currentUserRole: "client", currentUserId: "")
+                    OrderChatView(orderId: order.id, currentUserRole: "client", currentUserId: SessionManager.shared.getUserId() ?? "")
                 case "documents":
                     vaultDeliverablesSubTabView(order: order)
                 case "financials":
