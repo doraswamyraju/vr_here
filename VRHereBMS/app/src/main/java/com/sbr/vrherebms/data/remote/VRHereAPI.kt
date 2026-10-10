@@ -530,6 +530,22 @@ interface VRHereAPI {
                         }
                         null
                     })
+                    .registerTypeAdapter(TodoOrderReference::class.java, com.google.gson.JsonDeserializer { json, _, _ ->
+                        if (json == null || json.isJsonNull) return@JsonDeserializer null
+                        if (json.isJsonPrimitive && json.asJsonPrimitive.isString) {
+                            return@JsonDeserializer TodoOrderReference(id = json.asString)
+                        }
+                        if (json.isJsonObject) {
+                            val obj = json.asJsonObject
+                            return@JsonDeserializer TodoOrderReference(
+                                id = obj.get("_id")?.takeIf { !it.isJsonNull }?.asString
+                                    ?: obj.get("id")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                serviceName = obj.get("serviceName")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                clientName = obj.get("clientName")?.takeIf { !it.isJsonNull }?.asString ?: ""
+                            )
+                        }
+                        null
+                    })
                     .setLenient()
                     .create()
 

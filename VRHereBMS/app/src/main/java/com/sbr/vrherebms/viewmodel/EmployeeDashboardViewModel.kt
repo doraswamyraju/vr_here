@@ -51,27 +51,43 @@ class EmployeeDashboardViewModel(application: Application) : AndroidViewModel(ap
                 }
 
                 // Fetch assigned orders/tasks
-                val ordersCall = api.getOrders()
-                if (ordersCall.isSuccessful) {
-                    assignedOrders = ordersCall.body() ?: emptyList()
+                try {
+                    val ordersCall = api.getOrders()
+                    if (ordersCall.isSuccessful) {
+                        assignedOrders = ordersCall.body() ?: emptyList()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("EmployeeDashboard", "Failed to sync orders", e)
                 }
 
                 // Fetch todos
-                val todosCall = api.getTodos()
-                if (todosCall.isSuccessful) {
-                    assignedTodos = todosCall.body() ?: emptyList()
+                try {
+                    val todosCall = api.getTodos()
+                    if (todosCall.isSuccessful) {
+                        assignedTodos = todosCall.body() ?: emptyList()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("EmployeeDashboard", "Failed to sync todos", e)
                 }
 
                 // Fetch tickets
-                val ticketsCall = api.getTickets()
-                if (ticketsCall.isSuccessful) {
-                    supportTickets = ticketsCall.body() ?: emptyList()
+                try {
+                    val ticketsCall = api.getTickets()
+                    if (ticketsCall.isSuccessful) {
+                        supportTickets = ticketsCall.body() ?: emptyList()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("EmployeeDashboard", "Failed to sync tickets", e)
                 }
 
                 // Fetch notifications
-                val notificationsCall = api.getNotifications()
-                if (notificationsCall.isSuccessful) {
-                    notifications = notificationsCall.body() ?: emptyList()
+                try {
+                    val notificationsCall = api.getNotifications()
+                    if (notificationsCall.isSuccessful) {
+                        notifications = notificationsCall.body() ?: emptyList()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("EmployeeDashboard", "Failed to sync notifications", e)
                 }
 
                 isLoading = false

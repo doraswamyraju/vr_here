@@ -82,23 +82,35 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch {
             try {
                 // 1. Fetch Orders
-                val ordersCall = api.getOrders()
-                if (ordersCall.isSuccessful) {
-                    orders = ordersCall.body() ?: emptyList()
-                } else if (!silent) {
-                    _eventFlow.emit(UiEvent.ShowToast("Failed to fetch orders: ${ordersCall.message()}"))
+                try {
+                    val ordersCall = api.getOrders()
+                    if (ordersCall.isSuccessful) {
+                        orders = ordersCall.body() ?: emptyList()
+                    } else if (!silent) {
+                        _eventFlow.emit(UiEvent.ShowToast("Failed to fetch orders: ${ordersCall.message()}"))
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("AdminDashboard", "Failed to sync orders", e)
                 }
 
                 // 2. Fetch Todos
-                val todosCall = api.getTodos()
-                if (todosCall.isSuccessful) {
-                    todos = todosCall.body() ?: emptyList()
+                try {
+                    val todosCall = api.getTodos()
+                    if (todosCall.isSuccessful) {
+                        todos = todosCall.body() ?: emptyList()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("AdminDashboard", "Failed to sync todos", e)
                 }
 
                 // 3. Fetch Employees
-                val employeesCall = api.getEmployees()
-                if (employeesCall.isSuccessful) {
-                    employees = employeesCall.body() ?: emptyList()
+                try {
+                    val employeesCall = api.getEmployees()
+                    if (employeesCall.isSuccessful) {
+                        employees = employeesCall.body() ?: emptyList()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("AdminDashboard", "Failed to sync employees", e)
                 }
 
                 // 4. Fetch Freelancers

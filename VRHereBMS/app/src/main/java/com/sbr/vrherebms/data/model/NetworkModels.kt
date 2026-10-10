@@ -441,6 +441,12 @@ data class LiveStatusResponse(
 
 // --- TODO DATA CLASSES ---
 
+data class TodoOrderReference(
+    @SerializedName("_id") val id: String = "",
+    val serviceName: String = "",
+    val clientName: String = ""
+)
+
 data class TodoResponse(
     @SerializedName("_id") val id: String,
     val title: String,
@@ -448,7 +454,7 @@ data class TodoResponse(
     val status: String = "Pending", // 'Pending', 'Completed'
     val priority: String = "Medium", // 'Low', 'Medium', 'High'
     val assignedTo: EmployeeResponse? = null,
-    val orderId: OrderResponse? = null,
+    val orderId: TodoOrderReference? = null,
     val dueDate: String? = null,
     val createdBy: UserProfile? = null,
     val createdAt: String = ""
