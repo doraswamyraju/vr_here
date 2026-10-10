@@ -1664,3 +1664,63 @@ struct Gstr3bResponseData: Codable {
     let status: String?
 }
 
+// MARK: - PARTNER ADMIN PAYOUTS & HEADER CONFIG MODELS
+
+struct PartnerAdminPayoutItem: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let partner: UserProfile?
+    let amount: Double
+    let payoutMethod: String
+    let upiId: String?
+    let bankDetails: BankDetails?
+    let status: String
+    let transactionRef: String?
+    let adminNotes: String?
+    let createdAt: String
+    
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case partner, amount, payoutMethod, upiId, bankDetails, status, transactionRef, adminNotes, createdAt
+    }
+}
+
+struct ServiceHeaderColumnItem: Codable {
+    var title: String
+    var items: [String]
+}
+
+struct ServiceHeaderOfferItem: Codable, Identifiable {
+    var id: String { idVal ?? UUID().uuidString }
+    let idVal: String?
+    var title: String
+    var imageUrl: String
+    var ctaLink: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case title, imageUrl, ctaLink
+    }
+}
+
+struct ServiceHeaderConfigItem: Codable, Identifiable {
+    var id: String
+    var title: String
+    var iconKey: String?
+    var columns: [ServiceHeaderColumnItem]?
+    var offers: [ServiceHeaderOfferItem]?
+}
+
+struct InteractiveCapsuleItem: Codable, Identifiable {
+    var id: String { text + (link ?? "") }
+    var text: String
+    var link: String?
+}
+
+struct HeaderConfigResponse: Codable {
+    let tickerMessages: [String]?
+    let services: [ServiceHeaderConfigItem]?
+    let capsules: [InteractiveCapsuleItem]?
+}
+
+

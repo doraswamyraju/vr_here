@@ -760,6 +760,31 @@ class NetworkManager {
         return try await performRequest(path: "api/auth/users/\(id)", method: "DELETE")
     }
     
+    // --- PARTNER ADMIN PAYOUTS ---
+    func getPartnerAdminPayouts() async throws -> [PartnerAdminPayoutItem] {
+        return try await performRequest(path: "api/partner/admin/payouts", method: "GET")
+    }
+    
+    func updatePartnerAdminPayout(id: String, payload: [String: AnyCodable]) async throws -> PartnerAdminPayoutItem {
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/partner/admin/payouts/\(id)", method: "PUT", body: data)
+    }
+    
+    func updateTicketStatus(id: String, status: String) async throws -> TicketResponse {
+        let payload = ["status": status]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/tickets/\(id)/status", method: "PUT", body: data)
+    }
+    
+    func getServicesHeaderConfig() async throws -> HeaderConfigResponse {
+        return try await performRequest(path: "api/services/header-config", method: "GET")
+    }
+    
+    func updateServicesHeaderConfig(payload: [String: AnyCodable]) async throws -> [String: AnyCodable] {
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/services/header-config", method: "PUT", body: data)
+    }
+    
     // --- RECURRING HUB ENDPOINTS ---
     func getRecurring() async throws -> [RecurringResponse] {
         return try await performRequest(path: "api/recurring", method: "GET")
