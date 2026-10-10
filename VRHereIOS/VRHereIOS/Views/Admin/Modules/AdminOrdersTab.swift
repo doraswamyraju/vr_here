@@ -110,7 +110,7 @@ struct AdminOrdersTab: View {
                     ordersDirectoryView
                 }
                 
-                Spacer().frame(height: 100)
+                Spacer().frame(height: (selectedOrder != nil && selectedTab == .chat) ? 320 : 100)
             }
         }
         .background(Color(red: 248/255, green: 250/255, blue: 252/255))

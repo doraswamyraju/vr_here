@@ -1941,14 +1941,14 @@ struct OrderChatMessage: Codable, Identifiable, Equatable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? UUID().uuidString
-        order = try container.decodeIfPresent(String.self, forKey: .order)
-        sender = try container.decodeIfPresent(UserProfile.self, forKey: .sender)
-        messageType = try container.decodeIfPresent(String.self, forKey: .messageType) ?? "client"
-        message = try container.decodeIfPresent(String.self, forKey: .message) ?? ""
-        attachments = try container.decodeIfPresent([OrderChatAttachment].self, forKey: .attachments) ?? []
-        readBy = try container.decodeIfPresent([String].self, forKey: .readBy) ?? []
-        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        idVal = (try? container.decodeIfPresent(String.self, forKey: .idVal)) ?? UUID().uuidString
+        order = try? container.decodeIfPresent(String.self, forKey: .order)
+        sender = try? container.decodeIfPresent(UserProfile.self, forKey: .sender)
+        messageType = (try? container.decodeIfPresent(String.self, forKey: .messageType)) ?? "client"
+        message = (try? container.decodeIfPresent(String.self, forKey: .message)) ?? ""
+        attachments = (try? container.decodeIfPresent([OrderChatAttachment].self, forKey: .attachments)) ?? []
+        readBy = []
+        createdAt = (try? container.decodeIfPresent(String.self, forKey: .createdAt)) ?? ""
     }
 }
 

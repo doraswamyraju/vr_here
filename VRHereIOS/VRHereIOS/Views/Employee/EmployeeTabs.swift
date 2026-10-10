@@ -459,7 +459,7 @@ struct EmployeeQueueTab: View {
                     }
                 }
                 
-                Spacer().frame(height: 100)
+                Spacer().frame(height: selectedDetailTab == "Chat" ? 320 : 100)
             }
         }
         .sheet(isPresented: $showingDocPicker) {

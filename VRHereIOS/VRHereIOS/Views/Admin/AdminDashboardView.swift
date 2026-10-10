@@ -124,7 +124,6 @@ struct AdminDashboardView: View {
                             Text("Unknown Tab")
                         }
                     }
-                    .ignoresSafeArea(edges: .bottom)
                     
                     // 1:1 Floating Quick Action Button & Bottom Dock (Hidden inside Order details workspace)
                     if adminViewModel.selectedOrderId.isEmpty {

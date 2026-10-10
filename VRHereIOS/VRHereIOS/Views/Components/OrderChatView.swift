@@ -177,6 +177,20 @@ struct OrderChatView: View {
                 }
                 .disabled(isSending || (messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && pickedFileData == nil))
             }
+            
+            if let err = errorMessage {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.red)
+                        .font(.system(size: 11))
+                    Text(err)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.red)
+                    Spacer()
+                }
+                .padding(.horizontal, 4)
+                .padding(.top, 2)
+            }
         }
         .padding(14)
         .background(Color.white)
