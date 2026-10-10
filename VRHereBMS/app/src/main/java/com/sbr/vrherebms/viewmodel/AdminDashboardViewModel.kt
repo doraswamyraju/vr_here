@@ -23,6 +23,9 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
     var users by mutableStateOf<List<UserProfile>>(emptyList())
     var notifications by mutableStateOf<List<NotificationResponse>>(emptyList())
     var payments by mutableStateOf<List<PaymentResponse>>(emptyList())
+    var leads by mutableStateOf<List<LeadResponse>>(emptyList())
+    var leadStats by mutableStateOf<LeadStatsResponse?>(null)
+    var attendanceItems by mutableStateOf<List<AttendanceSummaryItem>>(emptyList())
     var selectedOrderId by mutableStateOf<String?>(null)
     var activeBannerNotification by mutableStateOf<NotificationResponse?>(null)
         private set
@@ -151,6 +154,30 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
                     android.util.Log.e("AdminDashboard", "Failed to sync payments", e)
                 }
 
+                // 8. Fetch Leads & Stats
+                try {
+                    val leadsCall = api.getLeads()
+                    if (leadsCall.isSuccessful) {
+                        leads = leadsCall.body() ?: emptyList()
+                    }
+                    val statsCall = api.getLeadStats()
+                    if (statsCall.isSuccessful) {
+                        leadStats = statsCall.body()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("AdminDashboard", "Failed to sync leads", e)
+                }
+
+                // 9. Fetch Attendance Summary
+                try {
+                    val attCall = api.getAttendanceSummary()
+                    if (attCall.isSuccessful) {
+                        attendanceItems = attCall.body()?.items ?: emptyList()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("AdminDashboard", "Failed to sync attendance summary", e)
+                }
+
                 if (!silent) {
                     isLoading = false
                 }
@@ -159,6 +186,52 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
                     isLoading = false
                     _eventFlow.emit(UiEvent.ShowToast("Sync error: ${e.localizedMessage}"))
                 }
+            }
+        }
+    }
+
+    // CRM Actions
+    fun updateLeadStatus(leadId: String, status: String, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                val call = api.updateLeadStatus(leadId, mapOf("status" to status))
+                if (call.isSuccessful) {
+                    _eventFlow.emit(UiEvent.ShowToast("Lead status updated to $status!"))
+                    syncDashboardData(silent = true)
+                    onComplete?.invoke()
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(UiEvent.ShowToast("Failed to update lead: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    fun assignLead(leadId: String, employeeId: String, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                val call = api.assignLead(leadId, mapOf("assignedTo" to employeeId))
+                if (call.isSuccessful) {
+                    _eventFlow.emit(UiEvent.ShowToast("Lead assigned successfully!"))
+                    syncDashboardData(silent = true)
+                    onComplete?.invoke()
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(UiEvent.ShowToast("Failed to assign lead: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    fun addLeadNote(leadId: String, text: String, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                val call = api.addLeadNote(leadId, mapOf("text" to text))
+                if (call.isSuccessful) {
+                    _eventFlow.emit(UiEvent.ShowToast("Note added!"))
+                    syncDashboardData(silent = true)
+                    onComplete?.invoke()
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(UiEvent.ShowToast("Failed to add note: ${e.localizedMessage}"))
             }
         }
     }

@@ -250,6 +250,35 @@ interface VRHereAPI {
     @POST("api/leads/telemetry")
     suspend fun sendLeadTelemetry(@Body request: com.sbr.vrherebms.data.model.LeadTelemetryRequest): Response<Map<String, Any>>
 
+    // --- CRM LEADS ---
+    @GET("api/leads")
+    suspend fun getLeads(): Response<List<LeadResponse>>
+
+    @GET("api/leads/stats")
+    suspend fun getLeadStats(): Response<LeadStatsResponse>
+
+    @PUT("api/leads/{id}/status")
+    suspend fun updateLeadStatus(
+        @Path("id") id: String,
+        @Body body: Map<String, String>
+    ): Response<LeadResponse>
+
+    @PUT("api/leads/{id}/assign")
+    suspend fun assignLead(
+        @Path("id") id: String,
+        @Body body: Map<String, String>
+    ): Response<LeadResponse>
+
+    @POST("api/leads/{id}/notes")
+    suspend fun addLeadNote(
+        @Path("id") id: String,
+        @Body body: Map<String, String>
+    ): Response<LeadResponse>
+
+    // --- ATTENDANCE SUMMARY ---
+    @GET("api/attendance/summary")
+    suspend fun getAttendanceSummary(): Response<AttendanceSummaryResponse>
+
     // --- DYNAMIC BLOGS & PROMOTIONAL OFFERS CMS ---
     @GET("api/blogs")
     suspend fun getBlogs(): Response<List<BlogResponse>>

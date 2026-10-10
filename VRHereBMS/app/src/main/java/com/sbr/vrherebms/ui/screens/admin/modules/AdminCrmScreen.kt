@@ -1036,7 +1036,7 @@ private fun CustomerDirectoryCard(
                             color = Color(0xFF64748B)
                         )
                         if (!client.companyName.isNullOrBlank()) {
-                            Text(client.companyName, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color(0xFF6366F1))
+                            Text(client.companyName ?: "", fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color(0xFF6366F1))
                         }
                     }
                 }

@@ -73,7 +73,11 @@ data class UserProfile(
     val commissionPercentage: Double? = null,
     val isActive: Boolean = true,
     val createdAt: String? = null
-)
+) {
+    val idVal: String get() = id
+}
+
+typealias UserResponse = UserProfile
 
 // --- ORDER DATA CLASSES ---
 
@@ -84,7 +88,9 @@ data class EmployeeResponse(
     val phone: String = "",
     val profilePhoto: String? = null,
     val role: String = ""
-)
+) {
+    val idVal: String get() = id
+}
 
 data class FreelancerResponse(
     @SerializedName("_id") val id: String = "",
@@ -464,7 +470,10 @@ data class OrderHistoryResponse(
     val action: String,
     val description: String,
     val createdAt: String
-)
+) {
+    val author: String get() = user?.name ?: "System"
+    val timestamp: String get() = createdAt
+}
 
 data class OrderAttendanceResponse(
     @SerializedName("_id") val id: String?,
@@ -542,7 +551,7 @@ data class MobileServiceDetail(
     val faqs: List<MobileServiceFaq> = emptyList()
 )
 
-// --- CRM LEAD TELEMETRY DTO ---
+// --- CRM LEAD TELEMETRY & MANAGEMENT DTOs ---
 data class LeadTelemetryRequest(
     val customerId: String? = null,
     val customerName: String? = null,
@@ -556,6 +565,54 @@ data class LeadTelemetryRequest(
     val source: String = "android",
     val deviceInfo: String? = "Android App"
 )
+
+data class LeadNote(
+    @SerializedName("_id") val idVal: String? = null,
+    val text: String = "",
+    val authorName: String? = null,
+    val createdAt: String? = null
+) {
+    val id: String get() = idVal ?: ""
+}
+
+data class LeadResponse(
+    @SerializedName("_id") val id: String = "",
+    val customerName: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
+    val serviceId: String? = null,
+    val serviceName: String? = null,
+    val packageName: String? = null,
+    val price: Double? = null,
+    val category: String? = "PAGE_VIEW",
+    val priority: String? = "MEDIUM",
+    val status: String? = "NEW",
+    val source: String? = "android",
+    val deviceInfo: String? = null,
+    val assignedTo: EmployeeResponse? = null,
+    val notes: List<LeadNote> = emptyList(),
+    val createdAt: String? = null,
+    val lastActivityAt: String? = null
+) {
+    val idVal: String get() = id
+}
+
+data class LeadListResponse(
+    val leads: List<LeadResponse> = emptyList(),
+    val total: Int? = 0,
+    val page: Int? = 1,
+    val pages: Int? = 1
+)
+
+data class LeadStatsResponse(
+    val total: Int = 0,
+    val packageClicks: Int = 0,
+    val pageViews: Int = 0,
+    val conversions: Int = 0
+) {
+    val converted: Int get() = conversions
+    val conversionRate: String get() = if (total == 0) "0.0" else "%.1f".format((conversions.toDouble() / total) * 100)
+}
 
 // --- CUSTOMER REFERRAL MODELS ---
 
@@ -719,6 +776,7 @@ data class AttendanceSummaryItem(
     val clockInAt: String? = null,
     val totalMinutesToday: Int? = 0
 ) {
+    val idVal: String get() = id ?: ""
     val trackedMinutes: Int get() = totalMinutesToday ?: 0
 }
 

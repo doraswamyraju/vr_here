@@ -606,7 +606,7 @@ fun AdminHomeTab(
                                         modifier = Modifier
                                             .size(8.dp)
                                             .background(
-                                                if (todo.completed) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                                if (todo.status == "Completed") Color(0xFF10B981) else Color(0xFFF59E0B),
                                                 CircleShape
                                             )
                                     )

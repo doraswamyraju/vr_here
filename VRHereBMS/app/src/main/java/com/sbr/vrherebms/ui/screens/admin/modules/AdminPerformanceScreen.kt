@@ -227,7 +227,8 @@ fun AdminPerformanceScreen(
         }
 
         // 4. Selected Employee Deep-Dive Worksheet
-        selectedEmployee?.let { emp ->
+        if (selectedEmployee != null) {
+            val emp = selectedEmployee
             item {
                 Column(
                     modifier = Modifier
@@ -268,48 +269,50 @@ fun AdminPerformanceScreen(
                             }
                         }
                     } else {
-                        empAttendance.forEach { att ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            empAttendance.forEach { att ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                                 ) {
                                     Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(8.dp)
-                                                .background(
-                                                    if (att.isClockedIn) Color(0xFF10B981) else Color(0xFF94A3B8),
-                                                    CircleShape
-                                                )
-                                        )
-                                        Column {
-                                            Text(att.name, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                                            Text(
-                                                text = if (att.isClockedIn) "Clocked In: ${att.clockInAt ?: "Active"}" else "Offline",
-                                                fontSize = 10.sp,
-                                                color = Color(0xFF64748B)
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(8.dp)
+                                                    .background(
+                                                        if (att.isClockedIn) Color(0xFF10B981) else Color(0xFF94A3B8),
+                                                        CircleShape
+                                                    )
                                             )
+                                            Column {
+                                                Text(att.name, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                                                Text(
+                                                    text = if (att.isClockedIn) "Clocked In: ${att.clockInAt ?: "Active"}" else "Offline",
+                                                    fontSize = 10.sp,
+                                                    color = Color(0xFF64748B)
+                                                )
+                                            }
                                         }
-                                    }
 
-                                    Text(
-                                        text = "${att.trackedMinutes / 60}h ${att.trackedMinutes % 60}m",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF6366F1)
-                                    )
+                                        Text(
+                                            text = "${att.trackedMinutes / 60}h ${att.trackedMinutes % 60}m",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF6366F1)
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -234,7 +234,7 @@ fun AdminDashboardScreen(
                     AdminSupportScreen(adminViewModel = adminViewModel)
                 }
                 "Services" -> {
-                    AdminServicesScreen()
+                    AdminServicesScreen(adminViewModel = adminViewModel)
                 }
                 "Referral" -> {
                     AdminReferralScreen(adminViewModel = adminViewModel)
