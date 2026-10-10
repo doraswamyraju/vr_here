@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -1008,6 +1009,7 @@ private fun CustomerDirectoryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -1028,15 +1030,31 @@ private fun CustomerDirectoryCard(
                         )
                     }
 
-                    Column {
-                        Text(client.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = client.name,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E293B),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                         Text(
                             text = "${client.email} • ${if (clientPhone.isEmpty()) "No Phone" else clientPhone}",
                             fontSize = 11.sp,
-                            color = Color(0xFF64748B)
+                            color = Color(0xFF64748B),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         if (!client.companyName.isNullOrBlank()) {
-                            Text(client.companyName ?: "", fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color(0xFF6366F1))
+                            Text(
+                                text = client.companyName ?: "",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF6366F1),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
@@ -1048,9 +1066,9 @@ private fun CustomerDirectoryCard(
                         contentColor = Color(0xFF6366F1)
                     ),
                     shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("View Profile", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("View Profile", fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 }
             }
 

@@ -219,6 +219,11 @@ interface VRHereAPI {
         @Body body: Map<String, String>
     ): Response<TodoResponse>
 
+    @DELETE("api/todos/{id}")
+    suspend fun deleteTodo(
+        @Path("id") id: String
+    ): Response<Map<String, Any>>
+
     @PUT("api/orders/{orderId}/tasks/{taskId}")
     suspend fun updateTaskStatus(
         @Path("orderId") orderId: String,
@@ -273,7 +278,7 @@ interface VRHereAPI {
 
     // --- CRM LEADS ---
     @GET("api/leads")
-    suspend fun getLeads(): Response<List<LeadResponse>>
+    suspend fun getLeads(): Response<LeadListResponse>
 
     @GET("api/leads/stats")
     suspend fun getLeadStats(): Response<LeadStatsResponse>

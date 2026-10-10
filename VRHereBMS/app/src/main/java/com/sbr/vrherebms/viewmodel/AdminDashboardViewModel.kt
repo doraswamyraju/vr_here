@@ -74,6 +74,19 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    fun markAllNotificationsAsRead() {
+        viewModelScope.launch {
+            try {
+                val response = api.markAllNotificationsAsRead()
+                if (response.isSuccessful) {
+                    notifications = notifications.map { it.copy(isRead = true) }
+                }
+            } catch (e: Exception) {
+                // Fail silently for background notification action
+            }
+        }
+    }
+
     // Refresh Dashboard Data
     fun syncDashboardData(silent: Boolean = false) {
         if (!silent) {
@@ -170,7 +183,7 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
                 try {
                     val leadsCall = api.getLeads()
                     if (leadsCall.isSuccessful) {
-                        leads = leadsCall.body() ?: emptyList()
+                        leads = leadsCall.body()?.leads ?: emptyList()
                     }
                     val statsCall = api.getLeadStats()
                     if (statsCall.isSuccessful) {
@@ -349,6 +362,34 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
                 isLoading = false
                 _eventFlow.emit(UiEvent.ShowToast("Network error: ${e.localizedMessage}"))
                 onResult(false)
+            }
+        }
+    }
+
+    fun updateTodoStatus(todoId: String, status: String) {
+        viewModelScope.launch {
+            try {
+                val response = api.updateTodoStatus(todoId, mapOf("status" to status))
+                if (response.isSuccessful) {
+                    _eventFlow.emit(UiEvent.ShowToast("Task updated!"))
+                    syncDashboardData(silent = true)
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(UiEvent.ShowToast("Failed to update task: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    fun deleteTodo(todoId: String) {
+        viewModelScope.launch {
+            try {
+                val response = api.deleteTodo(todoId)
+                if (response.isSuccessful) {
+                    _eventFlow.emit(UiEvent.ShowToast("Task deleted!"))
+                    syncDashboardData(silent = true)
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(UiEvent.ShowToast("Failed to delete task: ${e.localizedMessage}"))
             }
         }
     }

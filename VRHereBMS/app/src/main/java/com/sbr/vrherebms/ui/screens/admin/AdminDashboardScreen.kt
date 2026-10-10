@@ -7,6 +7,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -94,10 +96,10 @@ fun AdminDashboardScreen(
         s.contains("pending") || s.contains("processing")
     }
 
-    val dockItems = remember(pendingOrdersCount) {
+    val dockItems = remember {
         listOf(
             com.sbr.vrherebms.ui.components.DockItem("Dashboard", "Overview", Icons.Default.PieChart),
-            com.sbr.vrherebms.ui.components.DockItem("Orders", "Orders", Icons.Default.Layers, badgeCount = if (pendingOrdersCount > 0) pendingOrdersCount else null),
+            com.sbr.vrherebms.ui.components.DockItem("Orders", "Orders", Icons.Default.Layers),
             com.sbr.vrherebms.ui.components.DockItem("CRM", "CRM", Icons.Default.Hub),
             com.sbr.vrherebms.ui.components.DockItem("HRMS", "HRMS", Icons.Default.Badge),
             com.sbr.vrherebms.ui.components.DockItem("Users", "Users", Icons.Default.Group)
@@ -771,129 +773,218 @@ fun AdminDashboardScreen(
         }
     }
 
-    // C. PREMIUM NOTIFICATIONS LIST DIALOG
+    // C. PREMIUM NOTIFICATIONS BOTTOM SHEET WITH NAVIGATION
     if (showNotificationsDialog) {
-        Dialog(onDismissRequest = { showNotificationsDialog = false }) {
-            Card(
+        ModalBottomSheet(
+            onDismissRequest = { showNotificationsDialog = false },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(450.dp)
-                    .padding(8.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    .fillMaxHeight(0.85f)
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = "Admin Notifications",
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Black,
                             color = textDark
                         )
-                        IconButton(onClick = { showNotificationsDialog = false }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Close", tint = textMuted)
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    val notifList = adminViewModel.notifications
-                    if (notifList.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.Notifications,
-                                    contentDescription = null,
-                                    tint = textMuted.copy(alpha = 0.3f),
-                                    modifier = Modifier.size(48.dp)
+                        val unreadCount = adminViewModel.notifications.count { !it.isRead }
+                        if (unreadCount > 0) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = primaryRed.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    text = "$unreadCount new",
+                                    color = primaryRed,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text("All caught up!", color = textMuted, fontSize = 13.sp)
                             }
                         }
-                    } else {
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            notifList.forEach { notif ->
-                                val cardBg = if (notif.isRead) Color(0xFFF8FAFC) else Color(0xFFFFECEC)
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            adminViewModel.markNotificationAsRead(notif.id)
-                                        },
-                                    colors = CardDefaults.cardColors(containerColor = cardBg),
-                                    shape = RoundedCornerShape(12.dp),
-                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(12.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(36.dp)
-                                                .background(
-                                                    if (notif.isRead) Color(0xFFE2E8F0) else Color(0xFFFFCDCD),
-                                                    CircleShape
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Notifications,
-                                                contentDescription = null,
-                                                tint = if (notif.isRead) textMuted else primaryRed,
-                                                modifier = Modifier.size(18.dp)
-                                            )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (adminViewModel.notifications.any { !it.isRead }) {
+                            TextButton(onClick = { adminViewModel.markAllNotificationsAsRead() }) {
+                                Text("Mark all read", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textDark)
+                            }
+                        }
+                        IconButton(onClick = { showNotificationsDialog = false }) {
+                            Icon(Icons.Default.Close, contentDescription = "Close", tint = textMuted)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val notifList = adminViewModel.notifications
+                if (notifList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.NotificationsNone,
+                                contentDescription = null,
+                                tint = textMuted.copy(alpha = 0.4f),
+                                modifier = Modifier.size(56.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("All caught up!", color = textDark, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text("No notifications recorded yet.", color = textMuted, fontSize = 12.sp)
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(notifList) { notif ->
+                            val cardBg = if (notif.isRead) Color.White else Color(0xFFF8FAFC)
+                            val borderColor = if (notif.isRead) Color(0xFFF1F5F9) else primaryRed.copy(alpha = 0.25f)
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        adminViewModel.markNotificationAsRead(notif.id)
+                                        showNotificationsDialog = false
+
+                                        // Navigate directly to respective place
+                                        val combined = (notif.title + " " + notif.message).lowercase()
+                                        val matchedOrder = adminViewModel.orders.find { ord ->
+                                            (ord.id.isNotBlank() && combined.contains(ord.id.takeLast(6).lowercase())) ||
+                                            (ord.serviceName.isNotBlank() && combined.contains(ord.serviceName.lowercase())) ||
+                                            (ord.clientName.isNotBlank() && combined.contains(ord.clientName.lowercase()))
                                         }
-                                        Column(modifier = Modifier.weight(1f)) {
+
+                                        if (matchedOrder != null) {
+                                            adminViewModel.selectedOrderId = matchedOrder.id
+                                            activeTab = "Orders"
+                                        } else if (notif.type.equals("Order", ignoreCase = true) || combined.contains("order") || combined.contains("broadcast") || combined.contains("claimed") || combined.contains("work")) {
+                                            adminViewModel.selectedOrderId = null
+                                            activeTab = "Orders"
+                                        } else if (notif.type.equals("Payment", ignoreCase = true) || combined.contains("payment") || combined.contains("invoice")) {
+                                            activeTab = "Finance"
+                                        } else if (notif.type.equals("Ticket", ignoreCase = true) || combined.contains("ticket") || combined.contains("support")) {
+                                            activeTab = "Support"
+                                        } else if (combined.contains("lead") || combined.contains("intent") || combined.contains("crm") || combined.contains("prospect")) {
+                                            activeTab = "CRM"
+                                        } else if (combined.contains("task") || combined.contains("todo")) {
+                                            activeTab = "Todo"
+                                        } else if (combined.contains("leave") || combined.contains("attendance") || combined.contains("hrms") || combined.contains("employee")) {
+                                            activeTab = "HRMS"
+                                        } else {
+                                            activeTab = "Orders"
+                                        }
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = cardBg),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, borderColor)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    val iconColor = when {
+                                        notif.type.equals("Order", true) || notif.title.contains("WORK", true) || notif.title.contains("Order", true) -> Color(0xFF0284C7)
+                                        notif.type.equals("Payment", true) || notif.title.contains("Payment", true) -> Color(0xFF16A34A)
+                                        notif.type.equals("Ticket", true) || notif.title.contains("Ticket", true) -> Color(0xFFD97706)
+                                        else -> primaryRed
+                                    }
+                                    val iconBg = iconColor.copy(alpha = 0.12f)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(iconBg, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = when {
+                                                notif.type.equals("Order", true) || notif.title.contains("WORK", true) || notif.title.contains("Order", true) -> Icons.Default.Work
+                                                notif.type.equals("Payment", true) || notif.title.contains("Payment", true) -> Icons.Default.Payments
+                                                notif.type.equals("Ticket", true) || notif.title.contains("Ticket", true) -> Icons.Default.ConfirmationNumber
+                                                else -> Icons.Default.Notifications
+                                            },
+                                            contentDescription = null,
+                                            tint = iconColor,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
                                             Text(
                                                 text = notif.title,
                                                 fontWeight = FontWeight.Bold,
                                                 color = textDark,
-                                                fontSize = 13.sp
+                                                fontSize = 13.sp,
+                                                modifier = Modifier.weight(1f)
                                             )
-                                            Spacer(modifier = Modifier.height(2.dp))
+                                            if (!notif.isRead) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(8.dp)
+                                                        .background(primaryRed, CircleShape)
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = notif.message,
+                                            color = textMuted,
+                                            fontSize = 12.sp,
+                                            lineHeight = 16.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
                                             Text(
-                                                text = notif.message,
-                                                color = textMuted,
-                                                fontSize = 12.sp,
-                                                lineHeight = 16.sp
+                                                text = "Tap to open details",
+                                                color = Color(0xFF6366F1),
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            Icon(
+                                                Icons.Default.ChevronRight,
+                                                contentDescription = null,
+                                                tint = Color(0xFF6366F1),
+                                                modifier = Modifier.size(12.dp)
                                             )
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Button(
-                        onClick = { showNotificationsDialog = false },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = primaryRed),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Close", fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }

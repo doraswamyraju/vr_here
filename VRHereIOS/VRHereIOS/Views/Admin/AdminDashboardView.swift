@@ -220,6 +220,34 @@ struct AdminDashboardView: View {
                 notifications: adminViewModel.notifications,
                 onMarkAsRead: { adminViewModel.markNotificationAsRead(id: $0) },
                 onMarkAllAsRead: { adminViewModel.markAllNotificationsAsRead() },
+                onNotificationClick: { notif in
+                    isShowingNotifications = false
+                    let combined = (notif.title + " " + notif.message).lowercased()
+                    let matchedOrder = adminViewModel.orders.first { ord in
+                        (!ord.id.isEmpty && combined.contains(String(ord.id.suffix(6)).lowercased())) ||
+                        (!ord.serviceName.isEmpty && combined.contains(ord.serviceName.lowercased())) ||
+                        (!ord.clientName.isEmpty && combined.contains(ord.clientName.lowercased()))
+                    }
+                    if let matched = matchedOrder {
+                        adminViewModel.selectedOrderId = matched.id
+                        activeTab = "Orders"
+                    } else if notif.type.lowercased() == "order" || combined.contains("order") || combined.contains("work") || combined.contains("claimed") {
+                        adminViewModel.selectedOrderId = ""
+                        activeTab = "Orders"
+                    } else if notif.type.lowercased() == "payment" || combined.contains("payment") || combined.contains("invoice") {
+                        activeTab = "Bookkeeping"
+                    } else if notif.type.lowercased() == "ticket" || combined.contains("ticket") || combined.contains("support") {
+                        activeTab = "Support"
+                    } else if combined.contains("lead") || combined.contains("crm") {
+                        activeTab = "CRM"
+                    } else if combined.contains("task") || combined.contains("todo") {
+                        activeTab = "Todo"
+                    } else if combined.contains("leave") || combined.contains("attendance") || combined.contains("hrms") {
+                        activeTab = "HRMS"
+                    } else {
+                        activeTab = "Orders"
+                    }
+                },
                 onClose: { isShowingNotifications = false }
             )
         }
