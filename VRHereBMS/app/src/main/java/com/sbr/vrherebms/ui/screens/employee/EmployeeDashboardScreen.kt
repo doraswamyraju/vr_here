@@ -1,6 +1,7 @@
 package com.sbr.vrherebms.ui.screens.employee
 
 import android.widget.Toast
+import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
