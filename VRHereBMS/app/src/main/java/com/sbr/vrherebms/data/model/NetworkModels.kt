@@ -952,6 +952,7 @@ data class CreatePayrollRequest(
     @SerializedName("allowances") val allowances: Double = 0.0,
     @SerializedName("pfDeduction") val pfDeduction: Double = 0.0,
     @SerializedName("tdsDeduction") val tdsDeduction: Double = 0.0,
+    @SerializedName("netSalary") val netSalary: Double = 0.0,
     @SerializedName("clientId") val clientId: String? = null
 )
 

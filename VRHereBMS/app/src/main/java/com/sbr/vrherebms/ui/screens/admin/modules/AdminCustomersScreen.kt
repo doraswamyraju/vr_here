@@ -51,19 +51,17 @@ fun AdminCustomersScreen(
         adminViewModel.users.filter { it.role.equals("client", ignoreCase = true) }
     }
 
-    // 2. Aggregate analytics for each customer from orders
     val customerAnalytics = remember(customers, adminViewModel.orders) {
         customers.associate { c ->
             val clientOrders = adminViewModel.orders.filter { o ->
-                (o.user?.idVal == c.idVal) ||
-                (o.email != null && o.email.equals(c.email, ignoreCase = true)) ||
-                (o.phone != null && c.phone != null && o.phone == c.phone)
+                (o.email.equals(c.email, ignoreCase = true)) ||
+                (c.phone != null && o.phone == c.phone)
             }
-            val totalRevenue = clientOrders.sumOf { it.price ?: 0.0 }
+            val totalRevenue = clientOrders.sumOf { it.price }
             val activeCount = clientOrders.count { !it.status.equals("Completed", ignoreCase = true) }
-            val outstandingBalance = clientOrders.flatMap { it.invoices }.filter { it.status.equals("Sent", ignoreCase = true) }.sumOf { it.amount }
+            val outstandingBalance = 0.0
 
-            c.idVal to Triple(totalRevenue, activeCount, outstandingBalance)
+            c.idVal to Triple<Double, Int, Double>(totalRevenue, activeCount, outstandingBalance)
         }
     }
 
@@ -315,11 +313,10 @@ fun AdminCustomersScreen(
     if (selectedCustomerForModal != null) {
         val cust = selectedCustomerForModal!!
         val custOrders = adminViewModel.orders.filter { o ->
-            (o.user?.idVal == cust.idVal) ||
-            (o.email != null && o.email.equals(cust.email, ignoreCase = true)) ||
-            (o.phone != null && cust.phone != null && o.phone == cust.phone)
+            (o.email.equals(cust.email, ignoreCase = true)) ||
+            (cust.phone != null && o.phone == cust.phone)
         }
-        val totalRevenue = custOrders.sumOf { it.price ?: 0.0 }
+        val totalRevenue = custOrders.sumOf { it.price }
 
         Dialog(onDismissRequest = { selectedCustomerForModal = null }) {
             Card(

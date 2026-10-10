@@ -1292,7 +1292,7 @@ fun AdminDashboardScreen(
                                 }
                                 adminViewModel.freelancers.forEach { free ->
                                     DropdownMenuItem(
-                                        text = { Text("${free.name} (Freelancer - ${free.specialization ?: "Partner"})", fontSize = 13.sp) },
+                                        text = { Text("${free.name} (Freelancer - ${free.role})", fontSize = 13.sp) },
                                         onClick = {
                                             selectedAssigneeId = free.id
                                             selectedAssigneeName = free.name

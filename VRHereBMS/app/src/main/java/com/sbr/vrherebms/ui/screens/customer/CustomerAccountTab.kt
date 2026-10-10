@@ -1,5 +1,6 @@
 package com.sbr.vrherebms.ui.screens.customer
 
+import com.sbr.vrherebms.BuildConfig
 import android.graphics.Bitmap
 import android.net.Uri
 import android.widget.Toast
@@ -256,7 +257,7 @@ fun CustomerAccountTab(
                                         Text("VERIFIED", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFF34D399), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                                     }
                                     Surface(shape = RoundedCornerShape(50), color = Color(0xFF818CF8).copy(alpha = 0.25f)) {
-                                        Text("v1.3", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFFA5B4FC), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                        Text("v${BuildConfig.VERSION_NAME}", fontSize = 8.sp, fontWeight = FontWeight.Black, color = Color(0xFFA5B4FC), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                                     }
                                 }
                                 Text(
@@ -532,7 +533,7 @@ fun CustomerAccountTab(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "VR HERE BMS Android • Version 1.3 (Build 4)",
+                                    text = "VR HERE BMS Android • Version ${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF94A3B8)

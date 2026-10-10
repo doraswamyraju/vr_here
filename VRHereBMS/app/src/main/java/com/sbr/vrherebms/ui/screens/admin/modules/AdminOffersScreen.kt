@@ -55,7 +55,7 @@ fun AdminOffersScreen(
         scope.launch {
             isLoading = true
             try {
-                val res = api.getOffers()
+                val res = api.getAdminOffers()
                 if (res.isSuccessful && res.body() != null) {
                     offers = res.body()!!
                 } else {

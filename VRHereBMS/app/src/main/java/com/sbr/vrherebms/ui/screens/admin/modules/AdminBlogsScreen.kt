@@ -53,7 +53,7 @@ fun AdminBlogsScreen(
         scope.launch {
             isLoading = true
             try {
-                val res = api.getBlogs()
+                val res = api.getAdminBlogs()
                 if (res.isSuccessful && res.body() != null) {
                     blogs = res.body()!!
                 } else {

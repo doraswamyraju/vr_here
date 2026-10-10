@@ -459,7 +459,7 @@ interface VRHereAPI {
 
     // --- BLOGS & INSIGHTS ---
     @GET("api/blogs")
-    suspend fun getBlogs(): Response<List<BlogItem>>
+    suspend fun getAdminBlogs(): Response<List<BlogItem>>
 
     @POST("api/blogs")
     suspend fun createBlog(@Body blog: BlogItem): Response<BlogItem>
@@ -469,7 +469,7 @@ interface VRHereAPI {
 
     // --- OFFERS & SCHEMES ---
     @GET("api/offers")
-    suspend fun getOffers(): Response<List<OfferItem>>
+    suspend fun getAdminOffers(): Response<List<OfferItem>>
 
     @POST("api/offers")
     suspend fun createOffer(@Body offer: OfferItem): Response<OfferItem>
