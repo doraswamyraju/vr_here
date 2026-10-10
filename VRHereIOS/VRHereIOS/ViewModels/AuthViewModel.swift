@@ -46,8 +46,10 @@ class AuthViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.logout()
-            self?.toastMessage = "Session expired. Please sign in again."
+            Task { @MainActor in
+                self?.logout()
+                self?.toastMessage = "Session expired. Please sign in again."
+            }
         }
     }
     

@@ -685,7 +685,7 @@ struct AdminOverviewTab: View {
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.textDark)
                     .lineLimit(1)
-                Text(item.clientName)
+                Text(item.clientName ?? item.user?.name ?? "Client")
                     .font(.system(size: 9))
                     .foregroundColor(.textMuted)
             }
