@@ -63,8 +63,8 @@ import AdminBlogsView from './components/admin/AdminBlogsView';
 import AdminOffersView from './components/admin/AdminOffersView';
 import { Flame, Sparkles, Tag } from 'lucide-react';
 
-const Card = ({ children, className = '' }) => (
-  <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
+const Card = ({ children, className = '', ...props }) => (
+  <div className={`rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`} {...props}>
     {children}
   </div>
 );
