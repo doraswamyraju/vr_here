@@ -439,6 +439,15 @@ class NetworkManager {
         return try await performRequest(path: "api/todos/\(id)", method: "PUT", body: data)
     }
     
+    func updateTodo(id: String, fields: [String: AnyCodable]) async throws -> TodoResponse {
+        let data = try JSONEncoder().encode(fields)
+        return try await performRequest(path: "api/todos/\(id)", method: "PUT", body: data)
+    }
+    
+    func deleteTodo(id: String) async throws -> SimpleSuccessResponse {
+        return try await performRequest(path: "api/todos/\(id)", method: "DELETE")
+    }
+    
     func updateTaskStatus(orderId: String, taskId: String, status: String) async throws -> OrderResponse {
         let payload = ["status": status]
         let data = try JSONSerialization.data(withJSONObject: payload)
@@ -556,6 +565,30 @@ class NetworkManager {
         let payload = ["status": status]
         let data = try JSONSerialization.data(withJSONObject: payload)
         return try await performRequest(path: "api/orders/\(orderId)/invoices/\(invoiceId)/status", method: "PUT", body: data)
+    }
+    
+    // --- LEADS & TELEMETRY CRM ENDPOINTS ---
+    
+    func getLeads(params: [String: String] = [:]) async throws -> LeadListResponse {
+        var path = "api/leads"
+        if !params.isEmpty {
+            let query = params.compactMap { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }.joined(separator: "&")
+            path += "?\(query)"
+        }
+        return try await performRequest(path: path, method: "GET")
+    }
+    
+    func getLeadStats() async throws -> LeadStatsResponse {
+        return try await performRequest(path: "api/leads/stats", method: "GET")
+    }
+    
+    func updateLead(id: String, fields: [String: AnyCodable]) async throws -> LeadResponse {
+        let data = try JSONEncoder().encode(fields)
+        return try await performRequest(path: "api/leads/\(id)", method: "PUT", body: data)
+    }
+    
+    func deleteLead(id: String) async throws -> SimpleSuccessResponse {
+        return try await performRequest(path: "api/leads/\(id)", method: "DELETE")
     }
     
     // --- DYNAMIC SERVER-DRIVEN SERVICES ---

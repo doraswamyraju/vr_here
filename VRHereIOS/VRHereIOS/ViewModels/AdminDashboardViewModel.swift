@@ -18,6 +18,8 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var users: [UserResponse] = []
     @Published var tickets: [TicketResponse] = []
     @Published var recurring: [RecurringResponse] = []
+    @Published var leads: [LeadResponse] = []
+    @Published var leadStats: LeadStatsResponse? = nil
     @Published var selectedOrderFilter: String = "All"
     @Published var selectedOrderId: String = ""
     @Published var isLoading = false
@@ -203,6 +205,15 @@ class AdminDashboardViewModel: ObservableObject {
                 recurring = try await NetworkManager.shared.getRecurring()
             } catch {
                 print("RECURRING DECODING ERROR: \(error)")
+            }
+            
+            // 13. Fetch Leads & Stats
+            do {
+                let leadRes = try await NetworkManager.shared.getLeads()
+                leads = leadRes.leads
+                leadStats = try await NetworkManager.shared.getLeadStats()
+            } catch {
+                print("LEADS DECODING ERROR: \(error)")
             }
             
             isLoading = false
@@ -568,6 +579,117 @@ class AdminDashboardViewModel: ObservableObject {
                 syncDashboardData()
             } catch {
                 toastMessage = "Failed: \(error.localizedDescription)"
+            }
+            isLoading = false
+        }
+    }
+    
+    // --- LEADS & INTENT CRM ACTIONS ---
+    
+    func updateLeadStatus(leadId: String, status: String, completion: ((Bool) -> Void)? = nil) {
+        isLoading = true
+        Task {
+            do {
+                let payload: [String: AnyCodable] = ["status": AnyCodable(status)]
+                _ = try await NetworkManager.shared.updateLead(id: leadId, fields: payload)
+                toastMessage = "Lead status updated to \(status)"
+                syncDashboardData()
+                completion?(true)
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+                completion?(false)
+            }
+            isLoading = false
+        }
+    }
+    
+    func assignLead(leadId: String, employeeId: String, completion: ((Bool) -> Void)? = nil) {
+        isLoading = true
+        Task {
+            do {
+                let payload: [String: AnyCodable] = ["assignedTo": AnyCodable(employeeId)]
+                _ = try await NetworkManager.shared.updateLead(id: leadId, fields: payload)
+                toastMessage = "Employee assigned to lead"
+                syncDashboardData()
+                completion?(true)
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+                completion?(false)
+            }
+            isLoading = false
+        }
+    }
+    
+    func addLeadNote(leadId: String, text: String, completion: ((Bool) -> Void)? = nil) {
+        isLoading = true
+        Task {
+            do {
+                let payload: [String: AnyCodable] = ["note": AnyCodable(text)]
+                _ = try await NetworkManager.shared.updateLead(id: leadId, fields: payload)
+                toastMessage = "Note logged successfully"
+                syncDashboardData()
+                completion?(true)
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+                completion?(false)
+            }
+            isLoading = false
+        }
+    }
+    
+    func deleteLead(leadId: String, completion: ((Bool) -> Void)? = nil) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.deleteLead(id: leadId)
+                toastMessage = "Lead removed"
+                syncDashboardData()
+                completion?(true)
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+                completion?(false)
+            }
+            isLoading = false
+        }
+    }
+    
+    // --- TO-DO / TASK ACTIONS ---
+    
+    func updateTodo(id: String, title: String, description: String?, priority: String, status: String, assignedTo: String?, dueDate: String?, completion: ((Bool) -> Void)? = nil) {
+        isLoading = true
+        Task {
+            do {
+                let payload: [String: AnyCodable] = [
+                    "title": AnyCodable(title),
+                    "description": AnyCodable(description ?? ""),
+                    "priority": AnyCodable(priority),
+                    "status": AnyCodable(status),
+                    "assignedTo": AnyCodable(assignedTo ?? ""),
+                    "dueDate": AnyCodable(dueDate ?? "")
+                ]
+                _ = try await NetworkManager.shared.updateTodo(id: id, fields: payload)
+                toastMessage = "To-Do updated successfully!"
+                syncDashboardData()
+                completion?(true)
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+                completion?(false)
+            }
+            isLoading = false
+        }
+    }
+    
+    func deleteTodo(id: String, completion: ((Bool) -> Void)? = nil) {
+        isLoading = true
+        Task {
+            do {
+                _ = try await NetworkManager.shared.deleteTodo(id: id)
+                toastMessage = "Task deleted"
+                syncDashboardData()
+                completion?(true)
+            } catch {
+                toastMessage = "Failed: \(error.localizedDescription)"
+                completion?(false)
             }
             isLoading = false
         }

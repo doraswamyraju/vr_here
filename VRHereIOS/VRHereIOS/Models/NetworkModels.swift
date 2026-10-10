@@ -1031,6 +1031,85 @@ struct CreateTodoRequest: Codable {
     let dueDate: String?
 }
 
+// --- LEADS & TELEMETRY CRM MODELS ---
+
+struct LeadNote: Codable, Identifiable {
+    var id: String { idVal ?? UUID().uuidString }
+    let idVal: String?
+    let text: String
+    let authorName: String?
+    let createdAt: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case text, authorName, createdAt
+    }
+}
+
+struct LeadResponse: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let customerName: String?
+    let email: String?
+    let phone: String?
+    let serviceId: String?
+    let serviceName: String?
+    let packageName: String?
+    let price: Double?
+    let category: String? // 'PAGE_VIEW' or 'PACKAGE_CLICK'
+    let priority: String? // 'LOW', 'MEDIUM', 'HIGH'
+    let status: String? // 'NEW', 'CONTACTED', 'IN_PROGRESS', 'CONVERTED', 'LOST'
+    let source: String? // 'ios', 'android', 'web'
+    let deviceInfo: String?
+    let assignedTo: EmployeeResponse?
+    let notes: [LeadNote]
+    let createdAt: String?
+    let lastActivityAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case customerName, email, phone, serviceId, serviceName, packageName, price
+        case category, priority, status, source, deviceInfo, assignedTo, notes, createdAt, lastActivityAt
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idVal = try container.decodeIfPresent(String.self, forKey: .idVal) ?? UUID().uuidString
+        customerName = try container.decodeIfPresent(String.self, forKey: .customerName)
+        email = try container.decodeIfPresent(String.self, forKey: .email)
+        phone = try container.decodeIfPresent(String.self, forKey: .phone)
+        serviceId = try container.decodeIfPresent(String.self, forKey: .serviceId)
+        serviceName = try container.decodeIfPresent(String.self, forKey: .serviceName)
+        packageName = try container.decodeIfPresent(String.self, forKey: .packageName)
+        price = try container.decodeIfPresent(Double.self, forKey: .price)
+        category = try container.decodeIfPresent(String.self, forKey: .category)
+        priority = try container.decodeIfPresent(String.self, forKey: .priority)
+        status = try container.decodeIfPresent(String.self, forKey: .status)
+        source = try container.decodeIfPresent(String.self, forKey: .source)
+        deviceInfo = try container.decodeIfPresent(String.self, forKey: .deviceInfo)
+        assignedTo = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedTo)
+        notes = try container.decodeIfPresent([LeadNote].self, forKey: .notes) ?? []
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt)
+        lastActivityAt = try container.decodeIfPresent(String.self, forKey: .lastActivityAt)
+    }
+}
+
+struct LeadListResponse: Codable {
+    let leads: [LeadResponse]
+    let total: Int?
+    let page: Int?
+    let pages: Int?
+}
+
+struct LeadStatsResponse: Codable {
+    let total: Int
+    let packageClicks: Int
+    let pageViews: Int
+    let converted: Int
+    let conversionRate: String
+    let today: Int
+}
+
 struct OrderHistoryResponse: Codable, Identifiable {
     var id: String { idVal }
     let idVal: String
