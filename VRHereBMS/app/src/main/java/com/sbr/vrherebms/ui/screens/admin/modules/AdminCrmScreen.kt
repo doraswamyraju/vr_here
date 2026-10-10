@@ -988,7 +988,7 @@ private fun CustomerDirectoryCard(
     val activeOrders = clientOrders.count { it.status != "Completed" }
     var unpaidBalance = 0.0
     clientOrders.forEach { ord ->
-        ord.invoices.filter { it.status == "Sent" }.forEach { inv ->
+        ord.safeInvoices.filter { it.status == "Sent" }.forEach { inv ->
             unpaidBalance += inv.amount
         }
     }

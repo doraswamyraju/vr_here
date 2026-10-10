@@ -402,10 +402,10 @@ fun EmployeeQueueTab(
                                         }
 
                                         // Subtasks list
-                                        if (task.subtasks.isNotEmpty()) {
+                                        if (task.safeSubtasks.isNotEmpty()) {
                                             Divider(color = Color(0xFFF1F5F9))
                                             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                task.subtasks.forEach { subtask ->
+                                                task.safeSubtasks.forEach { subtask ->
                                                     Row(
                                                         modifier = Modifier
                                                             .fillMaxWidth()

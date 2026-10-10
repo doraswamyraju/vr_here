@@ -189,7 +189,7 @@ fun CustomerOrdersTab(
                     // Category Filter Pills
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val activeCount = ordersList.count { it.status != "Completed" }
-                        val actionCount = ordersList.count { o -> o.customerRequirements.any { !it.isClientCompleted } }
+                        val actionCount = ordersList.count { o -> o.safeRequirements.any { !it.isClientCompleted } }
                         val completedCount = ordersList.count { it.status == "Completed" }
 
                         val filters = listOf(
@@ -1863,7 +1863,7 @@ fun CustomerOrdersTab(
             p.order?.id == selectedOrder.id || (p.paymentId.isNotBlank() && p.paymentId == selectedOrder.paymentId)
         }
         val totalPaid = orderPayments.filter { it.status.equals("Completed", ignoreCase = true) || it.status.equals("Paid", ignoreCase = true) }.sumOf { it.amount }
-        val unpaidInvoices = selectedOrder.invoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
+        val unpaidInvoices = selectedOrder.safeInvoices.filter { it.status.equals("Sent", ignoreCase = true) || it.status.equals("Overdue", ignoreCase = true) }
         val balance = if (unpaidInvoices.isNotEmpty()) {
             unpaidInvoices.sumOf { it.amount }
         } else {
