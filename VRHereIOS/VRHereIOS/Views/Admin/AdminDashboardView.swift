@@ -42,17 +42,30 @@ struct AdminDashboardView: View {
                 VRHeader(
                     title: "ADMIN PANEL",
                     showMenu: true,
-                    onMenuClick: { withAnimation { isSidebarOpen.toggle() } },
+                    onMenuClick: { withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) { isSidebarOpen.toggle() } },
                     showLogout: true,
                     onLogoutClick: onLogout,
                     showBack: activeTab != "Overview",
-                    onBackClick: { withAnimation { activeTab = "Overview" } },
+                    onBackClick: {
+                        withAnimation {
+                            activeTab = "Overview"
+                            adminViewModel.selectedOrderId = ""
+                            adminViewModel.selectedOrderFilter = "All"
+                        }
+                    },
+                    onLogoClick: {
+                        withAnimation {
+                            activeTab = "Overview"
+                            adminViewModel.selectedOrderId = ""
+                            adminViewModel.selectedOrderFilter = "All"
+                        }
+                    },
                     showNotifications: true,
                     hasUnreadNotifications: adminViewModel.notifications.contains(where: { !$0.isRead }),
                     onNotificationsClick: { isShowingNotifications = true }
                 )
                 
-                // Active tabs switcher with floating dock
+                // Active tabs switcher with floating dock and Quick Action FAB
                 ZStack(alignment: .bottom) {
                     Color.bgLight.ignoresSafeArea()
                     
@@ -72,8 +85,6 @@ struct AdminDashboardView: View {
                             AdminUsersTab(viewModel: adminViewModel)
                         case "Todo":
                             AdminTodoTab(viewModel: adminViewModel)
-                        case "Finance":
-                            AdminFinanceTab(viewModel: adminViewModel)
                         case "Compliance":
                             AdminComplianceTab(viewModel: adminViewModel)
                         case "Performance":
@@ -103,6 +114,25 @@ struct AdminDashboardView: View {
                         }
                     }
                     .ignoresSafeArea(edges: .bottom)
+                    
+                    // 1:1 Floating Quick Action Button
+                    HStack {
+                        Spacer()
+                        BMSQuickActionFAB(
+                            onNewOrder: {
+                                withAnimation {
+                                    adminViewModel.selectedOrderId = ""
+                                    adminViewModel.selectedOrderFilter = "All"
+                                    activeTab = "Orders"
+                                }
+                            },
+                            onNewTodo: {
+                                withAnimation {
+                                    activeTab = "Todo"
+                                }
+                            }
+                        )
+                    }
                     
                     BMSAppFloatingDock(activeTab: $activeTab, dockItems: adminDockItems)
                 }

@@ -1251,9 +1251,28 @@ struct BMSAppSidebar: View {
             .joined()
             
         VStack(alignment: .leading, spacing: 0) {
-            // Close Button header
-            HStack {
+            // Header with Brand Logo & Close Button (1:1 Web Header)
+            HStack(alignment: .center) {
+                HStack(spacing: 8) {
+                    Image("logo")
+                        .renderingMode(.original)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 28)
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("VR Here")
+                            .font(.system(size: 15, weight: .black))
+                            .foregroundColor(.white)
+                        Text("ADMIN STUDIO")
+                            .font(.system(size: 8, weight: .black))
+                            .foregroundColor(.cyan)
+                            .tracking(1)
+                    }
+                }
+                
                 Spacer()
+                
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.system(size: 13, weight: .bold))
@@ -1264,86 +1283,115 @@ struct BMSAppSidebar: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
             .padding(.top, 55)
-            .padding(.bottom, 12)
+            .padding(.bottom, 16)
             
-            // 2. Profile Details Section (Integrated Glass bubble)
-            HStack(spacing: 14) {
+            // Profile Card (Integrated Glass Bubble)
+            HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(LinearGradient(gradient: Gradient(colors: [Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 139/255, green: 92/255, blue: 246/255)]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 46, height: 46)
-                        .overlay(Circle().stroke(Color.white.opacity(0.35), lineWidth: 1.5))
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.indigo, Color.blue],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 42, height: 42)
+                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1.5))
                     
                     Text(initials.isEmpty ? userName.prefix(1).uppercased() : initials)
-                        .font(.system(size: 15, weight: .black))
+                        .font(.system(size: 14, weight: .black))
                         .foregroundColor(.white)
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(userName)
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                         .lineLimit(1)
                     Text(roleName)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(Color(red: 180/255, green: 190/255, blue: 210/255))
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(Color(red: 160/255, green: 175/255, blue: 200/255))
                 }
                 Spacer()
             }
-            .padding(16)
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(18)
-            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.08), lineWidth: 1))
-            .padding(.horizontal, 20)
-            .padding(.bottom, 20)
+            .padding(14)
+            .background(Color.white.opacity(0.06))
+            .cornerRadius(16)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .padding(.horizontal, 18)
+            .padding(.bottom, 14)
             
             Divider().background(Color.white.opacity(0.08))
             
-            // 3. Navigation List
+            // Navigation List (Fast Instant Touch Feedback)
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     ForEach(menuItems) { item in
                         let isSelected = activeTab == item.tabId
                         Button(action: {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
                                 activeTab = item.tabId
                             }
                             onClose()
                         }) {
-                            HStack(spacing: 16) {
+                            HStack(spacing: 14) {
                                 Image(systemName: safeSystemIconName(baseName: item.iconName, isSelected: isSelected))
-                                    .font(.system(size: 16))
+                                    .font(.system(size: 16, weight: isSelected ? .bold : .medium))
                                     .foregroundColor(isSelected ? .white : Color(red: 160/255, green: 175/255, blue: 195/255))
-                                    .frame(width: 24)
+                                    .frame(width: 22)
+                                
                                 Text(item.label)
-                                    .font(.system(size: 13, weight: isSelected ? .bold : .medium))
-                                    .foregroundColor(isSelected ? .white : Color(red: 180/255, green: 190/255, blue: 210/255))
+                                    .font(.system(size: 13, weight: isSelected ? .black : .medium))
+                                    .foregroundColor(isSelected ? .white : Color(red: 200/255, green: 210/255, blue: 225/255))
+                                
+                                Spacer()
+                                
+                                if isSelected {
+                                    Circle()
+                                        .fill(Color.cyan)
+                                        .frame(width: 5, height: 5)
+                                }
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, 14)
                             .frame(height: 44)
-                            .background(isSelected ? Color(red: 220/255, green: 38/255, blue: 38/255) : Color.clear)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                Group {
+                                    if isSelected {
+                                        LinearGradient(
+                                            colors: [Color.indigo, Color.blue],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                        .shadow(color: Color.indigo.opacity(0.35), radius: 6, x: 0, y: 2)
+                                    } else {
+                                        Color.clear
+                                    }
+                                }
+                            )
                             .cornerRadius(12)
+                            .contentShape(Rectangle()) // Ensures entire row is instantly tappable
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
             
             Divider().background(Color.white.opacity(0.08))
             
-            // 4. Logout Action Footer
+            // Logout Action Footer
             Button(action: {
                 onClose()
                 onLogout()
             }) {
-                HStack(spacing: 16) {
+                HStack(spacing: 14) {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
-                        .font(.system(size: 18))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(Color(red: 255/255, green: 100/255, blue: 100/255))
                     Text("Sign Out")
                         .font(.system(size: 13, weight: .bold))
@@ -1351,25 +1399,127 @@ struct BMSAppSidebar: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color.red.opacity(0.10))
+                .padding(.vertical, 12)
+                .background(Color.red.opacity(0.12))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.red.opacity(0.20), lineWidth: 1)
+                        .stroke(Color.red.opacity(0.25), lineWidth: 1)
                 )
+                .contentShape(Rectangle())
             }
             .buttonStyle(PlainButtonStyle())
-            .padding(.horizontal, 20)
-            .padding(.bottom, 40)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .padding(.bottom, 24)
         }
         .frame(width: 290)
         .background(
-            Color(red: 2/255, green: 6/255, blue: 23/255)
+            Color(red: 6/255, green: 10/255, blue: 24/255)
         )
         .clipShape(RightRoundedSidebarShape())
-        .shadow(color: Color.black.opacity(0.35), radius: 25, x: 10, y: 0)
+        .shadow(color: Color.black.opacity(0.4), radius: 30, x: 12, y: 0)
         .edgesIgnoringSafeArea(.all)
+    }
+}
+
+// 1:1 Floating Action Button (FAB) matching Web QuickActionFAB
+struct BMSQuickActionFAB: View {
+    let onNewOrder: () -> Void
+    let onNewTodo: () -> Void
+    
+    @State private var isOpen: Bool = false
+    
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 14) {
+            if isOpen {
+                VStack(alignment: .trailing, spacing: 12) {
+                    // New Order Action
+                    Button(action: {
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                            isOpen = false
+                        }
+                        onNewOrder()
+                    }) {
+                        HStack(spacing: 10) {
+                            Text("New Order")
+                                .font(.system(size: 11, weight: .black))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.8))
+                                .cornerRadius(8)
+                                .shadow(color: Color.black.opacity(0.15), radius: 4)
+                            
+                            ZStack {
+                                Circle()
+                                    .fill(Color(red: 0.06, green: 0.72, blue: 0.51))
+                                    .frame(width: 44, height: 44)
+                                    .shadow(color: Color.green.opacity(0.35), radius: 6, x: 0, y: 3)
+                                Image(systemName: "bag.badge.plus")
+                                    .font(.system(size: 17, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    
+                    // New Task Action
+                    Button(action: {
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                            isOpen = false
+                        }
+                        onNewTodo()
+                    }) {
+                        HStack(spacing: 10) {
+                            Text("New Task")
+                                .font(.system(size: 11, weight: .black))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.8))
+                                .cornerRadius(8)
+                                .shadow(color: Color.black.opacity(0.15), radius: 4)
+                            
+                            ZStack {
+                                Circle()
+                                    .fill(Color(red: 0.23, green: 0.51, blue: 0.96))
+                                    .frame(width: 44, height: 44)
+                                    .shadow(color: Color.blue.opacity(0.35), radius: 6, x: 0, y: 3)
+                                Image(systemName: "checkmark.square.fill")
+                                    .font(.system(size: 17, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            
+            // Main Toggle Button
+            Button(action: {
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
+                    isOpen.toggle()
+                }
+            }) {
+                ZStack {
+                    Circle()
+                        .fill(isOpen ? Color(red: 0.15, green: 0.20, blue: 0.30) : Color.indigo)
+                        .frame(width: 56, height: 56)
+                        .shadow(color: Color.indigo.opacity(0.4), radius: 10, x: 0, y: 4)
+                    
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundColor(.white)
+                        .rotationEffect(.degrees(isOpen ? 45 : 0))
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.trailing, 20)
+        .padding(.bottom, 80)
     }
 }
 
