@@ -2,13 +2,12 @@ import SwiftUI
 
 struct AdminOrdersTab: View {
     @ObservedObject var viewModel: AdminDashboardViewModel
-    @State private var selectedOrderId = ""
     @State private var searchQuery = ""
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if selectedOrderId.isEmpty {
+                if viewModel.selectedOrderId.isEmpty {
                     // Header console card
                     VStack(alignment: .leading, spacing: 8) {
                         Text("ALL SYSTEM ORDERS")
@@ -47,12 +46,54 @@ struct AdminOrdersTab: View {
                     )
                     .padding(.horizontal, 20)
                     
+                    // Filter Chips Bar
+                    let filterOptions = ["All", "Pending", "Completed", "Pending Documents", "Documents Verified", "In Progress"]
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(filterOptions, id: \.self) { opt in
+                                let isSelected = viewModel.selectedOrderFilter.lowercased() == opt.lowercased()
+                                Button(action: {
+                                    withAnimation {
+                                        viewModel.selectedOrderFilter = opt
+                                    }
+                                }) {
+                                    Text(opt)
+                                        .font(.system(size: 11, weight: .bold))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .foregroundColor(isSelected ? .white : .textDark)
+                                        .background(isSelected ? Color.primaryRed : Color.white)
+                                        .cornerRadius(20)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(isSelected ? Color.primaryRed : Color.borderLight, lineWidth: 1)
+                                        )
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    
                     // Orders list
                     VStack(spacing: 12) {
-                        let filtered = viewModel.orders.filter {
-                            searchQuery.isEmpty ||
-                            $0.serviceName.localizedCaseInsensitiveContains(searchQuery) ||
-                            $0.clientName.localizedCaseInsensitiveContains(searchQuery)
+                        let filtered = viewModel.orders.filter { order in
+                            let matchesSearch = searchQuery.isEmpty ||
+                                order.serviceName.localizedCaseInsensitiveContains(searchQuery) ||
+                                order.clientName.localizedCaseInsensitiveContains(searchQuery)
+                            
+                            let matchesStatus: Bool
+                            let f = viewModel.selectedOrderFilter.lowercased()
+                            if f == "all" {
+                                matchesStatus = true
+                            } else if f == "pending" {
+                                matchesStatus = order.status.lowercased() != "completed"
+                            } else if f == "completed" {
+                                matchesStatus = order.status.lowercased() == "completed"
+                            } else {
+                                matchesStatus = order.status.localizedCaseInsensitiveContains(viewModel.selectedOrderFilter)
+                            }
+                            
+                            return matchesSearch && matchesStatus
                         }
                         
                         if filtered.isEmpty {
@@ -62,7 +103,7 @@ struct AdminOrdersTab: View {
                                 .padding(.vertical, 30)
                         } else {
                             ForEach(filtered) { order in
-                                Button(action: { selectedOrderId = order.id }) {
+                                Button(action: { viewModel.selectedOrderId = order.id }) {
                                     HStack(spacing: 14) {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text(order.serviceName)
@@ -99,10 +140,10 @@ struct AdminOrdersTab: View {
                     }
                     .padding(.horizontal, 20)
                     
-                } else if let order = viewModel.orders.first(where: { $0.id == selectedOrderId }) {
+                } else if let order = viewModel.orders.first(where: { $0.id == viewModel.selectedOrderId }) {
                     // Detail Screen
                     VStack(alignment: .leading, spacing: 20) {
-                        Button(action: { selectedOrderId = "" }) {
+                        Button(action: { viewModel.selectedOrderId = "" }) {
                             HStack(spacing: 6) {
                                 Image(systemName: "chevron.backward")
                                 Text("Back to Orders")

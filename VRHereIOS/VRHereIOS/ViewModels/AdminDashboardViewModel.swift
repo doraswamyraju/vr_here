@@ -16,6 +16,8 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var users: [UserResponse] = []
     @Published var tickets: [TicketResponse] = []
     @Published var recurring: [RecurringResponse] = []
+    @Published var selectedOrderFilter: String = "All"
+    @Published var selectedOrderId: String = ""
     @Published var isLoading = false
     @Published var toastMessage: String? = nil
     

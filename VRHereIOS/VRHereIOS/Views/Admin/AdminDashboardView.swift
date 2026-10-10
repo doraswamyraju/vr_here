@@ -127,7 +127,6 @@ struct AdminDashboardView: View {
                         BMSSidebarItem(label: "HRMS Portal", iconName: "person.3", tabId: "HRMS"),
                         BMSSidebarItem(label: "Users Matrix", iconName: "person.badge.shield.checkmark", tabId: "Users"),
                         BMSSidebarItem(label: "Tasks Board", iconName: "checkmark.circle", tabId: "Todo"),
-                        BMSSidebarItem(label: "Finance Ledger", iconName: "banknote", tabId: "Finance"),
                         BMSSidebarItem(label: "Compliance Panel", iconName: "checkmark.seal", tabId: "Compliance"),
                         BMSSidebarItem(label: "Performance Metrics", iconName: "chart.bar.fill", tabId: "Performance"),
                         BMSSidebarItem(label: "Business Reports", iconName: "chart.bar", tabId: "Reports"),
