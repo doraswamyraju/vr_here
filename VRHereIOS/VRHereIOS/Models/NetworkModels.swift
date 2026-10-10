@@ -277,6 +277,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
     let assignedMaker: EmployeeResponse?
     let assignedChecker: EmployeeResponse?
     let assignedProjectManager: EmployeeResponse?
+    let assignedFreelancer: EmployeeResponse?
     let clientDocuments: [OrderDocument]
     let adminDocuments: [OrderDocument]
     let finalCertificateUrl: String?
@@ -299,7 +300,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
         case clientName, email, phone, serviceName, packageName, price, paymentId
-        case razorpayOrderId, paymentStatus, status, assignedEmployee, assignedMaker, assignedChecker, assignedProjectManager, clientDocuments
+        case razorpayOrderId, paymentStatus, status, assignedEmployee, assignedMaker, assignedChecker, assignedProjectManager, assignedFreelancer, clientDocuments
         case adminDocuments, finalCertificateUrl, tasks, invoices, customerRequirements
         case checklists, consultationAdjusted, linkedTodos, activityHistory, attendance, createdAt, updatedAt
         case referralPartner, partnerCommissionAmount, freelancerPayout, broadcastStatus, category
@@ -323,6 +324,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
             self.assignedMaker = nil
             self.assignedChecker = nil
             self.assignedProjectManager = nil
+            self.assignedFreelancer = nil
             self.clientDocuments = []
             self.adminDocuments = []
             self.finalCertificateUrl = nil
@@ -360,6 +362,7 @@ struct OrderResponse: Codable, Identifiable, Equatable {
         assignedMaker = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedMaker)
         assignedChecker = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedChecker)
         assignedProjectManager = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedProjectManager)
+        assignedFreelancer = try container.decodeIfPresent(EmployeeResponse.self, forKey: .assignedFreelancer)
         clientDocuments = try container.decodeIfPresent([OrderDocument].self, forKey: .clientDocuments) ?? []
         adminDocuments = try container.decodeIfPresent([OrderDocument].self, forKey: .adminDocuments) ?? []
         finalCertificateUrl = try container.decodeIfPresent(String.self, forKey: .finalCertificateUrl)
@@ -770,6 +773,47 @@ struct FreelancerClockResponse: Codable {
     let message: String
 }
 
+struct FreelancerApplicant: Codable, Identifiable {
+    var id: String { idVal ?? UUID().uuidString }
+    let idVal: String?
+    var name: String
+    var email: String
+    var phone: String?
+    var skills: [String]?
+    var yearsOfExperience: Int?
+    var panCard: String?
+    var resumeUrl: String?
+    var bankDetails: BankDetails?
+    var verificationStatus: String?
+    var isActive: Bool?
+    var createdAt: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case name, email, phone, skills, yearsOfExperience, panCard, resumeUrl, bankDetails, verificationStatus, isActive, createdAt
+    }
+}
+
+struct FreelancerPayoutItem: Codable, Identifiable {
+    var id: String { idVal ?? UUID().uuidString }
+    let idVal: String?
+    let orderId: String?
+    let orderTitle: String?
+    let freelancerName: String?
+    let freelancerEmail: String?
+    let amount: Double
+    let status: String
+    let paymentMethod: String?
+    let transactionRef: String?
+    let notes: String?
+    let createdAt: String?
+    let settledAt: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case orderId, orderTitle, freelancerName, freelancerEmail, amount, status, paymentMethod, transactionRef, notes, createdAt, settledAt
+    }
+}
 
 struct ClockInRequest: Codable {
     let notes: String
@@ -1295,6 +1339,18 @@ struct FinanceTotals: Codable {
     let igst: Double?
 }
 
+struct PartnerMinRef: Codable {
+    let id: String?
+    let name: String?
+    let phone: String?
+    let email: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case name, phone, email
+    }
+}
+
 struct UserResponse: Codable, Identifiable {
     var id: String { idVal }
     let idVal: String
@@ -1303,15 +1359,130 @@ struct UserResponse: Codable, Identifiable {
     let role: String
     let phone: String?
     let companyName: String?
+    let businessType: String?
+    let gstin: String?
     let panCard: String?
+    let panNumber: String?
+    let address: String?
+    let profilePhoto: String?
+    let companyLogo: String?
+    let authProvider: String?
+    let canManageCompliance: Bool?
+    let assignedTicketCategories: [String]?
+    let referredByPartner: PartnerMinRef?
     let commissionPercentage: Double?
     let isActive: Bool
+    let createdAt: String?
 
     enum CodingKeys: String, CodingKey {
         case idVal = "_id"
-        case name, email, role, phone, companyName, panCard, commissionPercentage, isActive
+        case name, email, role, phone, companyName, businessType, gstin, panCard, panNumber, address
+        case profilePhoto, companyLogo, authProvider, canManageCompliance, assignedTicketCategories
+        case referredByPartner, commissionPercentage, isActive, createdAt
     }
 }
+
+struct PasswordLinkResponse: Codable {
+    let success: Bool?
+    let resetUrl: String?
+    let message: String?
+    let emailError: String?
+}
+
+struct WorkflowTicketResponse: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let ticketId: String?
+    let title: String
+    let description: String?
+    let category: String?
+    let priority: String?
+    let status: String?
+    let orderId: String?
+    let assignedTo: EmployeeMinRef?
+    let createdBy: EmployeeMinRef?
+    let createdAt: String?
+    let comments: [WorkflowCommentResponse]?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case ticketId, title, description, category, priority, status, orderId, assignedTo, createdBy, createdAt, comments
+    }
+}
+
+struct WorkflowCommentResponse: Codable, Identifiable {
+    var id: String { idVal ?? UUID().uuidString }
+    let idVal: String?
+    let user: EmployeeMinRef?
+    let text: String
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case user, text, createdAt
+    }
+}
+
+struct MilestoneHistoryResponse: Codable, Identifiable {
+    var id: String { idVal ?? UUID().uuidString }
+    let idVal: String?
+    let action: String?
+    let description: String?
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case action, description, createdAt
+    }
+}
+
+struct WebmailAccount: Codable, Identifiable {
+    var id: String { idVal ?? email }
+    let idVal: String?
+    let email: String
+    let name: String?
+    let quotaMb: Int?
+    let isActive: Bool?
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case email, name, quotaMb, isActive, createdAt
+    }
+}
+
+struct AttendanceSummaryItem: Codable, Identifiable {
+    var id: String { idVal ?? name }
+    let idVal: String?
+    let name: String
+    let role: String?
+    let isClockedIn: Bool
+    let clockInAt: String?
+    let totalMinutesToday: Int?
+    var trackedMinutes: Int { totalMinutesToday ?? 0 }
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case name, role, isClockedIn, clockInAt, totalMinutesToday
+    }
+}
+
+struct AttendanceSummaryResponse: Codable {
+    let items: [AttendanceSummaryItem]?
+}
+
+struct EmployeeMinRef: Codable {
+    let id: String?
+    let name: String?
+    let email: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case name, email
+    }
+}
+
+
 
 struct UserMinResponse: Codable {
     let name: String
@@ -1712,9 +1883,24 @@ struct ServiceHeaderConfigItem: Codable, Identifiable {
 }
 
 struct InteractiveCapsuleItem: Codable, Identifiable {
-    var id: String { text + (link ?? "") }
+    var id: String { text + link }
     var text: String
-    var link: String?
+    var link: String
+    
+    init(text: String = "", link: String = "") {
+        self.text = text
+        self.link = link
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.text = (try? container.decode(String.self, forKey: .text)) ?? ""
+        self.link = (try? container.decode(String.self, forKey: .link)) ?? ""
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case text, link
+    }
 }
 
 struct HeaderConfigResponse: Codable {

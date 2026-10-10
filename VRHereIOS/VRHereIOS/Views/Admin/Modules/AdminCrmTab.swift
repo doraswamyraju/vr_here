@@ -116,6 +116,14 @@ struct AdminCrmTab: View {
         return Array(map.values).sorted { $0.lastActivityAt > $1.lastActivityAt }
     }
 
+    @State private var subTab: CrmSubTab = .leads
+    @State private var selectedCustomerForModal: UserResponse? = nil
+    
+    enum CrmSubTab: String, CaseIterable {
+        case leads = "Leads Pipeline"
+        case customers = "Customer Directory"
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -130,29 +138,32 @@ struct AdminCrmTab: View {
                                     .foregroundColor(.cyan)
                                     .tracking(1.5)
                             }
-                            Text("Leads & Intent Engine")
+                            Text(subTab == .leads ? "Leads & Intent Engine" : "Customer Directory")
                                 .font(.system(size: 24, weight: .black))
                                 .foregroundColor(.white)
                         }
                         Spacer()
-                        Button(action: {
-                            if expandedClients.count == groupedClients.count {
-                                expandedClients.removeAll()
-                            } else {
-                                expandedClients = Set(groupedClients.map { $0.id })
+                        
+                        if subTab == .leads {
+                            Button(action: {
+                                if expandedClients.count == groupedClients.count {
+                                    expandedClients.removeAll()
+                                } else {
+                                    expandedClients = Set(groupedClients.map { $0.id })
+                                }
+                            }) {
+                                Text(expandedClients.count == groupedClients.count ? "Collapse All" : "Expand All")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.white.opacity(0.15))
+                                    .cornerRadius(10)
                             }
-                        }) {
-                            Text(expandedClients.count == groupedClients.count ? "Collapse All" : "Expand All")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.white.opacity(0.15))
-                                .cornerRadius(10)
                         }
                     }
                     
-                    Text("All mobile and web interactions are aggregated by client profile. Review journey, package clicks, and unified notes.")
+                    Text(subTab == .leads ? "All mobile and web interactions are aggregated by client profile. Review journey, package clicks, and unified notes." : "Track client profiles, lifetime project revenue, active engagements, and outstanding unpaid balances.")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.75))
                 }
@@ -164,43 +175,83 @@ struct AdminCrmTab: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 
-                // Metrics Cards Bar
-                metricsCardsBar
-                
-                // Search Bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.textMuted)
-                    TextField("Search by client, service, phone, or email...", text: $searchQuery)
-                        .font(.system(size: 13))
-                }
-                .padding(12)
-                .background(Color.white)
-                .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.borderLight, lineWidth: 1))
-                .padding(.horizontal, 20)
-                
-                // Category Filter Chips
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        filterChip(title: "All Leads", key: "ALL", current: activeCategoryTab) { activeCategoryTab = "ALL" }
-                        filterChip(title: "🔥 Hot Intent (Package Clicks)", key: "PACKAGE_CLICK", current: activeCategoryTab) { activeCategoryTab = "PACKAGE_CLICK" }
-                        filterChip(title: "👀 Browsing Views", key: "PAGE_VIEW", current: activeCategoryTab) { activeCategoryTab = "PAGE_VIEW" }
-                        filterChip(title: "✅ Converted", key: "CONVERTED", current: activeCategoryTab) { activeCategoryTab = "CONVERTED" }
-                    }
-                    .padding(.horizontal, 20)
-                }
-                
-                // Status Filter Chips
-                let statuses = ["ALL", "NEW", "CONTACTED", "IN_PROGRESS", "CONVERTED", "LOST"]
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(statuses, id: \.self) { st in
-                            filterChip(title: st, key: st, current: statusFilter) { statusFilter = st }
+                // Sub-Tab Switcher
+                HStack(spacing: 12) {
+                    ForEach(CrmSubTab.allCases, id: \.self) { tab in
+                        let isSelected = subTab == tab
+                        Button(action: { subTab = tab }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: tab == .leads ? "person.crop.circle.badge.checkmark" : "building.2.fill")
+                                Text(tab.rawValue)
+                            }
+                            .font(.system(size: 12, weight: .bold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .foregroundColor(isSelected ? .white : Color(red: 60/255, green: 75/255, blue: 95/255))
+                            .background(isSelected ? Color.indigo : Color.white)
+                            .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(isSelected ? Color.indigo : Color.borderLight, lineWidth: 1))
+                            .shadow(color: isSelected ? Color.indigo.opacity(0.25) : Color.clear, radius: 4, y: 2)
                         }
                     }
-                    .padding(.horizontal, 20)
                 }
+                .padding(.horizontal, 20)
+                
+                if subTab == .leads {
+                    leadsPipelineView
+                } else {
+                    customerDirectoryView
+                }
+                
+                Spacer().frame(height: 100)
+            }
+        }
+        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+        .sheet(item: $selectedCustomerForModal) { client in
+            customerDetailModalSheet(client: client)
+        }
+    }
+    
+    // MARK: - SubTab 1: Leads Pipeline View
+    private var leadsPipelineView: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            // Metrics Cards Bar
+            metricsCardsBar
+            
+            // Search Bar
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.textMuted)
+                TextField("Search by client, service, phone, or email...", text: $searchQuery)
+                    .font(.system(size: 13))
+            }
+            .padding(12)
+            .background(Color.white)
+            .cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.borderLight, lineWidth: 1))
+            .padding(.horizontal, 20)
+            
+            // Category Filter Chips
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    filterChip(title: "All Leads", key: "ALL", current: activeCategoryTab) { activeCategoryTab = "ALL" }
+                    filterChip(title: "🔥 Hot Intent (Package Clicks)", key: "PACKAGE_CLICK", current: activeCategoryTab) { activeCategoryTab = "PACKAGE_CLICK" }
+                    filterChip(title: "👀 Browsing Views", key: "PAGE_VIEW", current: activeCategoryTab) { activeCategoryTab = "PAGE_VIEW" }
+                    filterChip(title: "✅ Converted", key: "CONVERTED", current: activeCategoryTab) { activeCategoryTab = "CONVERTED" }
+                }
+                .padding(.horizontal, 20)
+            }
+            
+            // Status Filter Chips
+            let statuses = ["ALL", "NEW", "CONTACTED", "IN_PROGRESS", "CONVERTED", "LOST"]
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(statuses, id: \.self) { st in
+                        filterChip(title: st, key: st, current: statusFilter) { statusFilter = st }
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
                 
                 // Filtered Clients List
                 let filtered = groupedClients.filter { client in
@@ -249,12 +300,8 @@ struct AdminCrmTab: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                
-                Spacer().frame(height: 100)
             }
         }
-        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
-    }
 
     // MARK: - Metrics Cards Bar
     private var metricsCardsBar: some View {
@@ -626,6 +673,285 @@ struct AdminCrmTab: View {
         .cornerRadius(18)
         .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.borderLight, lineWidth: 1))
+    }
+
+    // MARK: - SubTab 2: Customer Directory View
+    private var customerDirectoryView: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            let clientUsers = viewModel.users.filter { $0.role.lowercased() == "client" }
+            
+            HStack {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.textMuted)
+                    TextField("Search client accounts...", text: $searchQuery)
+                        .font(.system(size: 13))
+                }
+                .padding(12)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.borderLight, lineWidth: 1))
+            }
+            .padding(.horizontal, 20)
+            
+            let filteredClients = clientUsers.filter { c in
+                let q = searchQuery.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                if q.isEmpty { return true }
+                return "\(c.name) \(c.email) \(c.phone ?? "") \(c.companyName ?? "") \(c.gstin ?? "")".lowercased().contains(q)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("CLIENT ACCOUNTS (\(filteredClients.count))")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(.textMuted)
+                    .padding(.horizontal, 20)
+                
+                if filteredClients.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "person.crop.circle.badge.exclamationmark")
+                            .font(.system(size: 30))
+                            .foregroundColor(.textMuted)
+                        Text("No client accounts match search criteria.")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.textMuted)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(30)
+                    .background(Color.white)
+                    .cornerRadius(16)
+                    .padding(.horizontal, 20)
+                } else {
+                    ForEach(filteredClients) { client in
+                        customerDirectoryCard(client: client)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func customerDirectoryCard(client: UserResponse) -> some View {
+        let clientPhone = client.phone ?? ""
+        let clientOrders = viewModel.orders.filter {
+            $0.email.lowercased() == client.email.lowercased() ||
+            (!clientPhone.isEmpty && $0.phone == clientPhone) ||
+            $0.clientName.lowercased() == client.name.lowercased()
+        }
+        let totalRevenue = clientOrders.reduce(0.0) { $0 + $1.price }
+        let activeOrders = clientOrders.filter { $0.status != "Completed" }.count
+        var unpaidBalance: Double = 0.0
+        for ord in clientOrders {
+            for inv in ord.invoices where inv.status == "Sent" {
+                unpaidBalance += inv.amount
+            }
+        }
+        
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(
+                        LinearGradient(colors: [Color.indigo, Color.purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                    .frame(width: 44, height: 44)
+                    .overlay(
+                        Text(String(client.name.prefix(1)).uppercased())
+                            .font(.system(size: 16, weight: .black))
+                            .foregroundColor(.white)
+                    )
+                
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(client.name)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.textDark)
+                    Text("\(client.email) • \(clientPhone.isEmpty ? "No Phone" : clientPhone)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.textMuted)
+                    if let comp = client.companyName, !comp.isEmpty {
+                        Text(comp)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.indigo)
+                    }
+                }
+                Spacer()
+                
+                Button(action: { selectedCustomerForModal = client }) {
+                    Text("View Profile")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.indigo)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.indigo.opacity(0.1))
+                        .cornerRadius(8)
+                }
+            }
+            
+            Divider().background(Color.borderLight)
+            
+            // Financial & Project Metrics Row
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("LIFETIME VALUE")
+                        .font(.system(size: 8, weight: .black))
+                        .foregroundColor(.textMuted)
+                    Text("₹\(Int(totalRevenue))")
+                        .font(.system(size: 13, weight: .black))
+                        .foregroundColor(.green)
+                }
+                Spacer()
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("ACTIVE ENGAGEMENTS")
+                        .font(.system(size: 8, weight: .black))
+                        .foregroundColor(.textMuted)
+                    Text("\(activeOrders) Active")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.blue)
+                }
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("UNPAID INVOICES")
+                        .font(.system(size: 8, weight: .black))
+                        .foregroundColor(.textMuted)
+                    Text("₹\(Int(unpaidBalance))")
+                        .font(.system(size: 13, weight: .black))
+                        .foregroundColor(unpaidBalance > 0 ? .red : .textMuted)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.borderLight, lineWidth: 1))
+        .padding(.horizontal, 20)
+    }
+    
+    // MARK: - Customer Profile Detail Modal Sheet
+    private func customerDetailModalSheet(client: UserResponse) -> some View {
+        let clientPhone = client.phone ?? ""
+        let clientOrders = viewModel.orders.filter {
+            $0.email.lowercased() == client.email.lowercased() ||
+            (!clientPhone.isEmpty && $0.phone == clientPhone) ||
+            $0.clientName.lowercased() == client.name.lowercased()
+        }
+        let totalRevenue = clientOrders.reduce(0.0) { $0 + $1.price }
+        
+        return NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Header Card
+                    HStack(spacing: 14) {
+                        Circle()
+                            .fill(LinearGradient(colors: [Color.indigo, Color.purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 50, height: 50)
+                            .overlay(
+                                Text(String(client.name.prefix(1)).uppercased())
+                                    .font(.system(size: 20, weight: .black))
+                                    .foregroundColor(.white)
+                            )
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(client.name)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.textDark)
+                            Text(client.email)
+                                .font(.system(size: 12))
+                                .foregroundColor(.textMuted)
+                            if !clientPhone.isEmpty {
+                                Text(clientPhone)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.textMuted)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(16)
+                    
+                    // Lifetime Metrics Grid
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Total Revenue")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("₹\(Int(totalRevenue))")
+                                .font(.title3.bold())
+                                .foregroundColor(.green)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Projects Count")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("\(clientOrders.count) Orders")
+                                .font(.title3.bold())
+                                .foregroundColor(.indigo)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.white)
+                        .cornerRadius(12)
+                    }
+                    
+                    // Projects History List
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("PROJECTS & ENGAGEMENTS")
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundColor(.textMuted)
+                        
+                        if clientOrders.isEmpty {
+                            Text("No orders recorded for this client yet.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding()
+                        } else {
+                            ForEach(clientOrders) { ord in
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(ord.serviceName)
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(.textDark)
+                                        Text("₹\(Int(ord.price)) • Package: \(ord.packageName)")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.textMuted)
+                                    }
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        selectedCustomerForModal = nil
+                                        viewModel.selectedOrderId = ord.id
+                                    }) {
+                                        Text("Open Workspace")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
+                                            .background(Color.blue)
+                                            .cornerRadius(6)
+                                    }
+                                }
+                                .padding(12)
+                                .background(Color.white)
+                                .cornerRadius(12)
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+            .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+            .navigationTitle("Customer Details")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Close") { selectedCustomerForModal = nil }
+                }
+            }
+        }
     }
 
     private func filterChip(title: String, key: String, current: String, action: @escaping () -> Void) -> some View {

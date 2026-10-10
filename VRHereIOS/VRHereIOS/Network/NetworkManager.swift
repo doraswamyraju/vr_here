@@ -780,6 +780,11 @@ class NetworkManager {
         return try await performRequest(path: "api/services/header-config", method: "GET")
     }
     
+    func saveServicesHeaderConfig(config: HeaderConfigResponse) async throws -> HeaderConfigResponse {
+        let data = try JSONEncoder().encode(config)
+        return try await performRequest(path: "api/services/header-config", method: "PUT", body: data)
+    }
+    
     func updateServicesHeaderConfig(payload: [String: AnyCodable]) async throws -> [String: AnyCodable] {
         let data = try JSONEncoder().encode(payload)
         return try await performRequest(path: "api/services/header-config", method: "PUT", body: data)
@@ -1028,7 +1033,139 @@ class NetworkManager {
         let body = try JSONEncoder().encode(request)
         return try await performRequest(path: "api/accounting/bank-statements/\(statementId)/tag", method: "POST", body: body)
     }
+
+    // MARK: - Admin Users Extended API
+    func sendUserPasswordLink(userId: String) async throws -> PasswordLinkResponse {
+        return try await performRequest(path: "api/auth/users/\(userId)/send-password-link", method: "POST")
+    }
+
+    func toggleUserComplianceAccess(userId: String, canManage: Bool) async throws -> UserResponse {
+        let payload = ["canManageCompliance": canManage]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/auth/users/\(userId)", method: "PUT", body: body)
+    }
+
+    func updateUserAssignedPartner(userId: String, partnerId: String?) async throws -> UserResponse {
+        var payload: [String: Any] = [:]
+        if let pid = partnerId, !pid.isEmpty {
+            payload["referredByPartner"] = pid
+        } else {
+            payload["referredByPartner"] = NSNull()
+        }
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/auth/users/\(userId)", method: "PUT", body: body)
+    }
+
+    func getAttendanceSummary() async throws -> AttendanceSummaryResponse {
+        return try await performRequest(path: "api/attendance/admin/summary")
+    }
+
+    // MARK: - Order Details Extended API
+    func updateOrderServiceName(orderId: String, serviceName: String) async throws -> OrderResponse {
+        let payload = ["serviceName": serviceName]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/orders/\(orderId)/commercials", method: "PUT", body: body)
+    }
+
+    func getOrderPayments(orderId: String) async throws -> [PaymentResponse] {
+        return try await performRequest(path: "api/payments?orderId=\(orderId)")
+    }
+
+    func getOrderMilestones(orderId: String) async throws -> [MilestoneHistoryResponse] {
+        return try await performRequest(path: "api/orders/\(orderId)/history")
+    }
+
+    func getOrderTodos(orderId: String) async throws -> [TodoResponse] {
+        return try await performRequest(path: "api/todos?orderId=\(orderId)")
+    }
+
+    func createOrderTodo(orderId: String, title: String) async throws -> TodoResponse {
+        let payload = ["orderId": orderId, "title": title, "priority": "Medium"]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/todos", method: "POST", body: body)
+    }
+
+    func toggleOrderTodo(todoId: String, newStatus: String) async throws -> TodoResponse {
+        let payload = ["status": newStatus]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/todos/\(todoId)", method: "PUT", body: body)
+    }
+
+    func broadcastFreelancerOrder(orderId: String, payout: Double) async throws -> GeneralResponse {
+        let payload = ["payoutAmount": payout]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/freelancer/admin/broadcast/\(orderId)", method: "PUT", body: body)
+    }
+
+    func assignFreelancerOrder(orderId: String, freelancerId: String?, payout: Double? = nil) async throws -> GeneralResponse {
+        if let p = payout, p > 0 {
+            let bPayload = ["payoutAmount": p]
+            let bBody = try JSONSerialization.data(withJSONObject: bPayload)
+            let _: GeneralResponse? = try? await performRequest(path: "api/freelancer/admin/broadcast/\(orderId)", method: "PUT", body: bBody)
+        }
+        var payload: [String: Any] = [:]
+        if let fid = freelancerId, !fid.isEmpty {
+            payload["freelancerId"] = fid
+        } else {
+            payload["freelancerId"] = NSNull()
+        }
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/freelancer/admin/reassign/\(orderId)", method: "POST", body: body)
+    }
+
+    func approveFreelancerPayout(orderId: String) async throws -> GeneralResponse {
+        return try await performRequest(path: "api/freelancer/admin/approve-payout/\(orderId)", method: "POST")
+    }
+
+    func getFreelancerApplicants() async throws -> [FreelancerApplicant] {
+        return try await performRequest(path: "api/freelancer/admin/users", method: "GET")
+    }
+
+    func updateFreelancerApplicantStatus(id: String, status: String) async throws -> GeneralResponse {
+        let payload = ["verificationStatus": status]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/freelancer/admin/users/\(id)/status", method: "PUT", body: body)
+    }
+
+    func getAdminFreelancerPayouts() async throws -> [FreelancerPayoutItem] {
+        return try await performRequest(path: "api/freelancer/admin/payouts", method: "GET")
+    }
+
+    func settleFreelancerPayout(id: String, method: String, transactionRef: String, notes: String) async throws -> GeneralResponse {
+        let payload = [
+            "method": method,
+            "transactionRef": transactionRef,
+            "notes": notes
+        ]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/freelancer/admin/payouts/\(id)/settle", method: "PUT", body: body)
+    }
+
+    func raiseAdjustedInvoice(orderId: String, payload: [String: Any]) async throws -> GeneralResponse {
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/orders/\(orderId)/invoices/adjusted", method: "POST", body: body)
+    }
+
+    func getWorkflowTickets(orderId: String) async throws -> [WorkflowTicketResponse] {
+        return try await performRequest(path: "api/workflow-tickets?orderId=\(orderId)")
+    }
+
+    func createWorkflowTicket(orderId: String, title: String, description: String, category: String, priority: String, assignedTo: String?) async throws -> WorkflowTicketResponse {
+        var payload: [String: Any] = [
+            "orderId": orderId,
+            "title": title,
+            "description": description,
+            "category": category,
+            "priority": priority
+        ]
+        if let a = assignedTo, !a.isEmpty {
+            payload["assignedTo"] = a
+        }
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/workflow-tickets", method: "POST", body: body)
+    }
 }
+
 
 // AnyCodable helper struct to encode/decode dynamic types in Swift
 struct AnyCodable: Codable {
@@ -1081,6 +1218,7 @@ struct AnyCodable: Codable {
 
 struct FreelancerResponse: Codable, Identifiable {
     let id: String
+    var idVal: String { id }
     let name: String
     let email: String
     let role: String
