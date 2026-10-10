@@ -19,8 +19,11 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
     var orders by mutableStateOf<List<OrderResponse>>(emptyList())
     var todos by mutableStateOf<List<TodoResponse>>(emptyList())
     var employees by mutableStateOf<List<EmployeeResponse>>(emptyList())
+    var freelancers by mutableStateOf<List<FreelancerResponse>>(emptyList())
+    var users by mutableStateOf<List<UserProfile>>(emptyList())
     var notifications by mutableStateOf<List<NotificationResponse>>(emptyList())
     var payments by mutableStateOf<List<PaymentResponse>>(emptyList())
+    var selectedOrderId by mutableStateOf<String?>(null)
     var activeBannerNotification by mutableStateOf<NotificationResponse?>(null)
         private set
     var isLoading by mutableStateOf(false)
@@ -87,8 +90,6 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
                 val todosCall = api.getTodos()
                 if (todosCall.isSuccessful) {
                     todos = todosCall.body() ?: emptyList()
-                } else if (!silent) {
-                    _eventFlow.emit(UiEvent.ShowToast("Failed to fetch tasks: ${todosCall.message()}"))
                 }
 
                 // 3. Fetch Employees
@@ -97,7 +98,23 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
                     employees = employeesCall.body() ?: emptyList()
                 }
 
-                // 4. Fetch Notifications (Non-blocking catch to prevent deployment delay crash)
+                // 4. Fetch Freelancers
+                try {
+                    val freelancersCall = api.getAdminFreelancers()
+                    if (freelancersCall.isSuccessful) {
+                        freelancers = freelancersCall.body() ?: emptyList()
+                    }
+                } catch (e: Exception) { }
+
+                // 5. Fetch Users
+                try {
+                    val usersCall = api.getAdminUsers()
+                    if (usersCall.isSuccessful) {
+                        users = usersCall.body() ?: emptyList()
+                    }
+                } catch (e: Exception) { }
+
+                // 6. Fetch Notifications
                 try {
                     val notificationsCall = api.getNotifications()
                     if (notificationsCall.isSuccessful) {
@@ -124,7 +141,7 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
                     android.util.Log.e("AdminDashboard", "Failed to sync notifications", e)
                 }
 
-                // 5. Fetch Payments
+                // 7. Fetch Payments
                 try {
                     val paymentsCall = api.getPayments()
                     if (paymentsCall.isSuccessful) {
@@ -142,6 +159,65 @@ class AdminDashboardViewModel(application: Application) : AndroidViewModel(appli
                     isLoading = false
                     _eventFlow.emit(UiEvent.ShowToast("Sync error: ${e.localizedMessage}"))
                 }
+            }
+        }
+    }
+
+    // Update Order Status
+    fun updateOrderStatus(orderId: String, status: String) {
+        viewModelScope.launch {
+            try {
+                val call = api.updateOrderStatus(orderId, mapOf("status" to status))
+                if (call.isSuccessful) {
+                    _eventFlow.emit(UiEvent.ShowToast("Status updated to $status!"))
+                    syncDashboardData(silent = true)
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(UiEvent.ShowToast("Failed to update status: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    // Update Order Client Name
+    fun updateOrderClientName(orderId: String, clientName: String) {
+        viewModelScope.launch {
+            try {
+                val call = api.updateOrderStatus(orderId, mapOf("clientName" to clientName))
+                if (call.isSuccessful) {
+                    _eventFlow.emit(UiEvent.ShowToast("Client name updated!"))
+                    syncDashboardData(silent = true)
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(UiEvent.ShowToast("Failed to update name: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    // Update 5-column Assignments
+    fun updateAssignments(
+        orderId: String,
+        employeeId: String?,
+        makerId: String?,
+        checkerId: String?,
+        pmId: String?,
+        freelancerId: String?
+    ) {
+        viewModelScope.launch {
+            try {
+                val map = mutableMapOf<String, String?>()
+                if (employeeId != null) map["assignedEmployee"] = employeeId
+                if (makerId != null) map["assignedMaker"] = makerId
+                if (checkerId != null) map["assignedChecker"] = checkerId
+                if (pmId != null) map["assignedProjectManager"] = pmId
+                if (freelancerId != null) map["assignedFreelancer"] = freelancerId
+
+                val call = api.updateOrderAssignments(orderId, map)
+                if (call.isSuccessful) {
+                    _eventFlow.emit(UiEvent.ShowToast("Specialist assignments updated!"))
+                    syncDashboardData(silent = true)
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(UiEvent.ShowToast("Assignment update failed: ${e.localizedMessage}"))
             }
         }
     }

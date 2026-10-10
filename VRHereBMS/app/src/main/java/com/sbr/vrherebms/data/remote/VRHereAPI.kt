@@ -176,6 +176,21 @@ interface VRHereAPI {
     @GET("api/auth/employees")
     suspend fun getEmployees(): Response<List<EmployeeResponse>>
 
+    @GET("api/users")
+    suspend fun getAdminUsers(): Response<List<UserProfile>>
+
+    @GET("api/users/freelancers")
+    suspend fun getAdminFreelancers(): Response<List<FreelancerResponse>>
+
+    @POST("api/users")
+    suspend fun createAdminUser(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<UserProfile>
+
+    @PUT("api/users/{id}")
+    suspend fun updateAdminUser(@Path("id") id: String, @Body body: Map<String, @JvmSuppressWildcards Any>): Response<UserProfile>
+
+    @DELETE("api/users/{id}")
+    suspend fun deleteAdminUser(@Path("id") id: String): Response<GeneralApiResponse>
+
     // --- EMPLOYEE TRANSACTION Endpoints ---
     @PUT("api/todos/{id}")
     suspend fun updateTodoStatus(
@@ -331,8 +346,64 @@ interface VRHereAPI {
         @Body request: TagBankTransactionRequest
     ): Response<GeneralApiResponse>
 
+    // --- FREELANCERS & APPLICANTS ---
+    @GET("api/freelancers/applicants")
+    suspend fun getFreelancerApplicants(): Response<List<FreelancerApplicant>>
 
+    @PATCH("api/freelancers/applicants/{id}/status")
+    suspend fun updateFreelancerApplicantStatus(
+        @Path("id") id: String,
+        @Body request: UpdateApplicantStatusRequest
+    ): Response<FreelancerApplicant>
 
+    @GET("api/freelancers/admin/payouts")
+    suspend fun getFreelancerPayouts(): Response<FreelancerPayoutsResponse>
+
+    @POST("api/freelancers/admin/payouts/{id}/settle")
+    suspend fun settleFreelancerPayout(
+        @Path("id") id: String,
+        @Body request: SettlePayoutRequest
+    ): Response<GeneralApiResponse>
+
+    @POST("api/freelancers/broadcast-order")
+    suspend fun broadcastFreelancerOrder(
+        @Body request: BroadcastOrderRequest
+    ): Response<GeneralApiResponse>
+
+    // --- LIVE ATTENDANCE SUMMARY ---
+    @GET("api/attendance/summary")
+    suspend fun getAttendanceSummary(): Response<AttendanceSummaryResponse>
+
+    // --- SERVICES HEADER CONFIG ---
+    @PUT("api/services/header-config")
+    suspend fun saveServicesHeaderConfig(
+        @Body request: ServicesHeaderConfigRequest
+    ): Response<GeneralApiResponse>
+
+    // --- PASSWORD RESET LINK GENERATION ---
+    @POST("api/auth/generate-reset-link")
+    suspend fun generatePasswordResetLink(
+        @Body body: Map<String, String>
+    ): Response<PasswordLinkResponse>
+
+    // --- WORKFLOW TICKETS & ORDER ACTIONS ---
+    @POST("api/orders/{id}/workflow-tickets")
+    suspend fun createOrderWorkflowTicket(
+        @Path("id") id: String,
+        @Body request: TicketWorkflowCreateRequest
+    ): Response<WorkflowTicketResponse>
+
+    @POST("api/orders/{id}/recurring")
+    suspend fun setupOrderRecurringSchedule(
+        @Path("id") id: String,
+        @Body request: RecurringScheduleRequest
+    ): Response<OrderResponse>
+
+    @PATCH("api/orders/{id}/assignments")
+    suspend fun updateOrderAssignments(
+        @Path("id") id: String,
+        @Body body: Map<String, String?>
+    ): Response<OrderResponse>
 
     companion object {
         // base URL pointing directly to the live website database

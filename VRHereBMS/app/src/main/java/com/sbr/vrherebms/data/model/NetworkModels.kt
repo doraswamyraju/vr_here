@@ -47,6 +47,13 @@ data class AuthResponse(
     val token: String
 )
 
+data class PartnerMinRef(
+    @SerializedName("_id") val id: String? = null,
+    val name: String? = null,
+    val email: String? = null,
+    val code: String? = null
+)
+
 data class UserProfile(
     @SerializedName("_id") val id: String,
     val name: String = "",
@@ -60,7 +67,12 @@ data class UserProfile(
     val gstin: String? = null,
     val panNumber: String? = null,
     val address: String? = null,
-    val isActive: Boolean = true
+    val canManageCompliance: Boolean? = false,
+    val assignedTicketCategories: List<String>? = emptyList(),
+    val referredByPartner: PartnerMinRef? = null,
+    val commissionPercentage: Double? = null,
+    val isActive: Boolean = true,
+    val createdAt: String? = null
 )
 
 // --- ORDER DATA CLASSES ---
@@ -72,6 +84,13 @@ data class EmployeeResponse(
     val phone: String = "",
     val profilePhoto: String? = null,
     val role: String = ""
+)
+
+data class FreelancerResponse(
+    @SerializedName("_id") val id: String = "",
+    val name: String = "",
+    val email: String = "",
+    val role: String = "freelancer"
 )
 
 data class OrderResponse(
@@ -87,6 +106,10 @@ data class OrderResponse(
     val paymentStatus: String = "Paid",
     val status: String = "Pending Documents",
     val assignedEmployee: EmployeeResponse? = null,
+    val assignedMaker: EmployeeResponse? = null,
+    val assignedChecker: EmployeeResponse? = null,
+    val assignedProjectManager: EmployeeResponse? = null,
+    val assignedFreelancer: EmployeeResponse? = null,
     val clientDocuments: List<OrderDocument> = emptyList(),
     val adminDocuments: List<OrderDocument> = emptyList(),
     val finalCertificateUrl: String? = null,
@@ -632,6 +655,130 @@ data class OfferResponse(
     val isActive: Boolean = true,
     val priority: Int = 0
 )
+
+// --- FREELANCER APPLICANT & PAYOUT MODELS ---
+
+data class FreelancerApplicant(
+    @SerializedName("_id") val id: String = "",
+    val name: String = "",
+    val email: String = "",
+    val phone: String? = null,
+    val skills: List<String>? = emptyList(),
+    val yearsOfExperience: Int? = 0,
+    val panCard: String? = null,
+    val resumeUrl: String? = null,
+    val bankDetails: BankDetails? = null,
+    val verificationStatus: String? = "Pending",
+    val isActive: Boolean? = true,
+    val createdAt: String? = null
+)
+
+data class FreelancerPayoutItem(
+    @SerializedName("_id") val id: String = "",
+    val orderId: String? = null,
+    val orderTitle: String? = null,
+    val freelancerName: String? = null,
+    val freelancerEmail: String? = null,
+    val amount: Double = 0.0,
+    val status: String = "Pending",
+    val paymentMethod: String? = null,
+    val transactionRef: String? = null,
+    val notes: String? = null,
+    val createdAt: String? = null,
+    val settledAt: String? = null
+)
+
+data class FreelancerPayoutsResponse(
+    val success: Boolean? = true,
+    val count: Int? = 0,
+    val payouts: List<FreelancerPayoutItem> = emptyList()
+)
+
+data class SettlePayoutRequest(
+    val paymentMethod: String,
+    val transactionRef: String,
+    val notes: String? = null
+)
+
+data class BroadcastOrderRequest(
+    val orderId: String,
+    val payoutAmount: Double? = null
+)
+
+data class UpdateApplicantStatusRequest(
+    val status: String
+)
+
+// --- ATTENDANCE SUMMARY MODELS ---
+
+data class AttendanceSummaryItem(
+    @SerializedName("_id") val id: String? = null,
+    val name: String = "",
+    val role: String? = null,
+    val isClockedIn: Boolean = false,
+    val clockInAt: String? = null,
+    val totalMinutesToday: Int? = 0
+) {
+    val trackedMinutes: Int get() = totalMinutesToday ?: 0
+}
+
+data class AttendanceSummaryResponse(
+    val items: List<AttendanceSummaryItem>? = emptyList()
+)
+
+// --- SERVICES HEADER CONFIG & CAPSULES ---
+
+data class InteractiveCapsuleItem(
+    val id: String = "",
+    val text: String = "",
+    val bg: String = "#EFF6FF",
+    val color: String = "#2563EB",
+    val icon: String = "✨"
+)
+
+data class ServicesHeaderConfigRequest(
+    val showTicker: Boolean = false,
+    val tickerMessage: String = "",
+    val tickerGradient: String = "from-indigo-600 to-purple-600",
+    val capsules: List<InteractiveCapsuleItem> = emptyList()
+)
+
+// --- PASSWORD LINK & WORKFLOW TICKETS ---
+
+data class PasswordLinkResponse(
+    val success: Boolean? = true,
+    val link: String = "",
+    val expiresAt: String? = null
+)
+
+data class WorkflowTicketResponse(
+    @SerializedName("_id") val id: String = "",
+    val ticketNumber: String = "",
+    val orderId: String? = null,
+    val clientName: String = "",
+    val serviceName: String = "",
+    val subject: String = "",
+    val category: String = "Technical",
+    val priority: String = "Normal",
+    val status: String = "Open",
+    val createdAt: String? = null
+)
+
+data class TicketWorkflowCreateRequest(
+    val subject: String,
+    val category: String = "Technical",
+    val priority: String = "Normal",
+    val description: String = ""
+)
+
+data class RecurringScheduleRequest(
+    val frequency: String = "Monthly",
+    val intervalMonths: Int = 1,
+    val startDate: String = "",
+    val nextBillingDate: String = "",
+    val autoInvoice: Boolean = true
+)
+
 
 
 

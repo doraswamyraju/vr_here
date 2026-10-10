@@ -76,6 +76,13 @@ fun AdminDashboardScreen(
         }
     }
 
+    // Auto-switch to Orders tab when a project/order is selected
+    LaunchedEffect(adminViewModel.selectedOrderId) {
+        if (adminViewModel.selectedOrderId != null) {
+            activeTab = "Orders"
+        }
+    }
+
     // Colors matching React Web view exactly
     val primaryRed = Color(0xFFC82323)
     val textDark = Color(0xFF1E293B)
