@@ -882,6 +882,190 @@ data class RecurringScheduleRequest(
     val autoInvoice: Boolean = true
 )
 
+// --- BOOKKEEPING / FILINGS MATRIX MODELS ---
+
+data class FilingsMatrixSummary(
+    @SerializedName("totalClients") val totalClients: Int? = 0,
+    @SerializedName("gstr1FiledCount") val gstr1FiledCount: Int? = 0,
+    @SerializedName("gstr1FiledPercentage") val gstr1FiledPercentage: Double? = 0.0,
+    @SerializedName("gstr3bFiledCount") val gstr3bFiledCount: Int? = 0,
+    @SerializedName("gstr3bFiledPercentage") val gstr3bFiledPercentage: Double? = 0.0,
+    @SerializedName("fullyReconciledBankCount") val fullyReconciledBankCount: Int? = 0
+)
+
+data class FilingsMatrixMetrics(
+    @SerializedName("salesCount") val salesCount: Int = 0,
+    @SerializedName("purchaseCount") val purchaseCount: Int = 0,
+    @SerializedName("totalSalesAmount") val totalSalesAmount: Double = 0.0,
+    @SerializedName("totalBankTxCount") val totalBankTxCount: Int = 0,
+    @SerializedName("taggedBankTxCount") val taggedBankTxCount: Int = 0,
+    @SerializedName("bankReconPercentage") val bankReconPercentage: Double = 0.0
+)
+
+data class FilingsMatrixFiling(
+    @SerializedName("gstr1Status") val gstr1Status: String? = "Pending",
+    @SerializedName("gstr1Arn") val gstr1Arn: String? = null,
+    @SerializedName("gstr3bStatus") val gstr3bStatus: String? = "Pending",
+    @SerializedName("bookkeepingStatus") val bookkeepingStatus: String? = "In Progress"
+)
+
+data class FilingsMatrixClientUser(
+    @SerializedName("_id") val idVal: String = "",
+    @SerializedName("name") val name: String = "",
+    @SerializedName("email") val email: String? = null,
+    @SerializedName("phone") val phone: String? = null,
+    @SerializedName("companyName") val companyName: String? = null,
+    @SerializedName("gstin") val gstin: String? = null
+)
+
+data class FilingsMatrixClientItem(
+    @SerializedName("client") val client: FilingsMatrixClientUser = FilingsMatrixClientUser(),
+    @SerializedName("metrics") val metrics: FilingsMatrixMetrics = FilingsMatrixMetrics(),
+    @SerializedName("filing") val filing: FilingsMatrixFiling = FilingsMatrixFiling()
+)
+
+data class FilingsMatrixResponse(
+    @SerializedName("summary") val summary: FilingsMatrixSummary? = null,
+    @SerializedName("clients") val clients: List<FilingsMatrixClientItem>? = emptyList()
+)
+
+data class AccountingPayrollRecord(
+    @SerializedName("_id") val idVal: String = "",
+    @SerializedName("employeeName") val employeeName: String = "",
+    @SerializedName("designation") val designation: String? = null,
+    @SerializedName("month") val month: String? = null,
+    @SerializedName("basicSalary") val basicSalary: Double? = 0.0,
+    @SerializedName("hra") val hra: Double? = 0.0,
+    @SerializedName("allowances") val allowances: Double? = 0.0,
+    @SerializedName("pfDeduction") val pfDeduction: Double? = 0.0,
+    @SerializedName("tdsDeduction") val tdsDeduction: Double? = 0.0,
+    @SerializedName("netSalary") val netSalary: Double? = 0.0,
+    @SerializedName("status") val status: String? = "Processed"
+)
+
+data class CreatePayrollRequest(
+    @SerializedName("employeeName") val employeeName: String,
+    @SerializedName("designation") val designation: String? = null,
+    @SerializedName("month") val month: String,
+    @SerializedName("basicSalary") val basicSalary: Double = 0.0,
+    @SerializedName("hra") val hra: Double = 0.0,
+    @SerializedName("allowances") val allowances: Double = 0.0,
+    @SerializedName("pfDeduction") val pfDeduction: Double = 0.0,
+    @SerializedName("tdsDeduction") val tdsDeduction: Double = 0.0,
+    @SerializedName("clientId") val clientId: String? = null
+)
+
+data class Gstr3bResponseData(
+    @SerializedName("taxableOutward") val taxableOutward: Double? = 0.0,
+    @SerializedName("igstOutward") val igstOutward: Double? = 0.0,
+    @SerializedName("cgstOutward") val cgstOutward: Double? = 0.0,
+    @SerializedName("sgstOutward") val sgstOutward: Double? = 0.0,
+    @SerializedName("itcEligible") val itcEligible: Double? = 0.0,
+    @SerializedName("netTaxPayable") val netTaxPayable: Double? = 0.0,
+    @SerializedName("status") val status: String? = "Computed"
+)
+
+// --- PARTNER ADMIN PAYOUTS ---
+
+data class PartnerAdminPayoutItem(
+    @SerializedName("_id") val idVal: String = "",
+    @SerializedName("partner") val partner: UserProfile? = null,
+    @SerializedName("amount") val amount: Double = 0.0,
+    @SerializedName("payoutMethod") val payoutMethod: String = "Bank Transfer",
+    @SerializedName("upiId") val upiId: String? = null,
+    @SerializedName("bankDetails") val bankDetails: BankAccountDetailsDto? = null,
+    @SerializedName("status") val status: String = "Processing",
+    @SerializedName("transactionRef") val transactionRef: String? = null,
+    @SerializedName("adminNotes") val adminNotes: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null
+)
+
+data class UpdatePartnerPayoutRequest(
+    @SerializedName("status") val status: String,
+    @SerializedName("transactionRef") val transactionRef: String? = null,
+    @SerializedName("adminNotes") val adminNotes: String? = null
+)
+
+// --- RECURRING SUBSCRIPTIONS ---
+
+data class RecurringSubscriptionItem(
+    @SerializedName("_id") val idVal: String = "",
+    @SerializedName("clientUser") val clientUser: UserProfile? = null,
+    @SerializedName("orderId") val orderId: String? = null,
+    @SerializedName("serviceName") val serviceName: String? = "Subscription Service",
+    @SerializedName("billingCycle") val billingCycle: String? = "Monthly",
+    @SerializedName("amount") val amount: Double? = 0.0,
+    @SerializedName("nextBillingDate") val nextBillingDate: String? = null,
+    @SerializedName("isActive") val isActive: Boolean = true,
+    @SerializedName("createdAt") val createdAt: String? = null
+)
+
+data class UpdateRecurringStatusRequest(
+    @SerializedName("isActive") val isActive: Boolean
+)
+
+data class CreateRecurringSubscriptionRequest(
+    @SerializedName("clientId") val clientId: String,
+    @SerializedName("serviceName") val serviceName: String,
+    @SerializedName("billingCycle") val billingCycle: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("nextBillingDate") val nextBillingDate: String
+)
+
+// --- RENEWALS ---
+
+data class RenewalItem(
+    @SerializedName("_id") val idVal: String = "",
+    @SerializedName("clientName") val clientName: String? = "Valued Client",
+    @SerializedName("serviceName") val serviceName: String? = "Certification Renewal",
+    @SerializedName("expiryDate") val expiryDate: String? = null,
+    @SerializedName("daysRemaining") val daysRemaining: Int? = 30,
+    @SerializedName("status") val status: String? = "Pending Renewal",
+    @SerializedName("price") val price: Double? = 0.0,
+    @SerializedName("phone") val phone: String? = null,
+    @SerializedName("email") val email: String? = null
+)
+
+data class RenewalsPendingResponse(
+    @SerializedName("data") val data: List<RenewalItem>? = emptyList()
+)
+
+// --- BLOGS & INSIGHTS ---
+
+data class BlogItem(
+    @SerializedName("_id") val idVal: String = "",
+    @SerializedName("title") val title: String = "",
+    @SerializedName("slug") val slug: String? = null,
+    @SerializedName("summary") val summary: String = "",
+    @SerializedName("category") val category: String = "Corporate & Legal",
+    @SerializedName("categoryColor") val categoryColor: String? = "#3B82F6",
+    @SerializedName("readTime") val readTime: String? = "4 min read",
+    @SerializedName("coverImageUrl") val coverImageUrl: String? = null,
+    @SerializedName("keyTakeaways") val keyTakeaways: List<String>? = emptyList(),
+    @SerializedName("fullArticle") val fullArticle: String? = null,
+    @SerializedName("isPublished") val isPublished: Boolean = true,
+    @SerializedName("author") val author: String? = "VR HERE Editorial Board",
+    @SerializedName("createdAt") val createdAt: String? = null
+)
+
+// --- OFFERS & SCHEMES ---
+
+data class OfferItem(
+    @SerializedName("_id") val idVal: String = "",
+    @SerializedName("title") val title: String = "",
+    @SerializedName("subtitle") val subtitle: String? = null,
+    @SerializedName("badgeTag") val badgeTag: String? = "LIMITED TIME",
+    @SerializedName("badgeColor") val badgeColor: String? = "#DC2626",
+    @SerializedName("bannerImageUrl") val bannerImageUrl: String? = null,
+    @SerializedName("discountAmount") val discountAmount: Double? = 0.0,
+    @SerializedName("originalPrice") val originalPrice: Double? = 0.0,
+    @SerializedName("discountedPrice") val discountedPrice: Double? = 0.0,
+    @SerializedName("eligibilityText") val eligibilityText: String? = null,
+    @SerializedName("ctaText") val ctaText: String? = "Register Today →",
+    @SerializedName("isActive") val isActive: Boolean = true,
+    @SerializedName("createdAt") val createdAt: String? = null
+)
+
 
 
 

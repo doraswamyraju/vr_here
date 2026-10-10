@@ -100,7 +100,7 @@ fun AdminDashboardScreen(
         listOf(
             com.sbr.vrherebms.ui.components.DockItem("Dashboard", "Overview", Icons.Default.PieChart),
             com.sbr.vrherebms.ui.components.DockItem("Orders", "Orders", Icons.Default.Layers),
-            com.sbr.vrherebms.ui.components.DockItem("CRM", "CRM", Icons.Default.Hub),
+            com.sbr.vrherebms.ui.components.DockItem("Leads", "Leads", Icons.Default.LocalFireDepartment),
             com.sbr.vrherebms.ui.components.DockItem("HRMS", "HRMS", Icons.Default.Badge),
             com.sbr.vrherebms.ui.components.DockItem("Users", "Users", Icons.Default.Group)
         )
@@ -108,25 +108,28 @@ fun AdminDashboardScreen(
 
     val sidebarItems = remember {
         listOf(
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Dashboard", "Dashboard Summary", Icons.Default.PieChart),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Orders", "Manage Orders", Icons.Default.Layers),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("CRM", "Customer CRM", Icons.Default.Hub),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("HRMS", "HRMS Portal", Icons.Default.Badge),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Dashboard", "Dashboard", Icons.Default.PieChart),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Leads", "Leads CRM", Icons.Default.LocalFireDepartment),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Orders", "Orders", Icons.Default.Layers),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Blogs", "Blogs & Insights", Icons.Default.MenuBook),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Offers", "Offers & Schemes", Icons.Default.AutoAwesome),
             com.sbr.vrherebms.ui.components.BMSSidebarItem("Users", "Users", Icons.Default.Group),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Todo", "Tasks Board", Icons.Default.CheckCircle),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Compliance", "Compliance Panel", Icons.Default.AssignmentTurnedIn),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Bookkeeping", "Bookkeeping Desk", Icons.Default.MenuBook),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Performance", "Performance Metrics", Icons.Default.TrendingUp),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Reports", "Business Reports", Icons.Default.Assessment),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Notifications", "Admin Notifications", Icons.Default.Notifications),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("KB", "KB Hub", Icons.Default.Book),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Support", "Client Support", Icons.Default.Email),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Services", "Services Master", Icons.Default.Settings),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Referral", "Referral Ledger", Icons.Default.Share),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Recurring", "Recurring Hub", Icons.Default.Loop),
             com.sbr.vrherebms.ui.components.BMSSidebarItem("Freelancers", "Freelancer Hub", Icons.Default.PeopleOutline),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("ToDo", "To Do", Icons.Default.CheckCircle),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Compliance", "Compliance", Icons.Default.AssignmentTurnedIn),
             com.sbr.vrherebms.ui.components.BMSSidebarItem("ITChecklist", "IT Checklist", Icons.Default.Description),
-            com.sbr.vrherebms.ui.components.BMSSidebarItem("Settings", "Global Settings", Icons.Default.SettingsApplications)
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Performance", "Performance", Icons.Default.TrendingUp),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("HRMS", "HRMS Portal", Icons.Default.Badge),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Reports", "Reports", Icons.Default.Assessment),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Customers", "Customers", Icons.Default.PersonSearch),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Knowledge", "Knowledge Base", Icons.Default.Book),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Support", "Support Inbox", Icons.Default.Email),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Services", "Services Master", Icons.Default.Settings),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Referrals", "Referral Partners", Icons.Default.Share),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Renewals", "Renewals Hub", Icons.Default.MilitaryTech),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Recurring", "Recurring Hub", Icons.Default.Loop),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Bookkeeping", "Bookkeeping Audits", Icons.Default.AccountBalance),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Settings", "Settings", Icons.Default.SettingsApplications)
         )
     }
 
@@ -212,20 +215,32 @@ fun AdminDashboardScreen(
                         onNavigate = { activeTab = it }
                     )
                 }
+                "Leads", "CRM" -> {
+                    AdminCrmScreen(adminViewModel = adminViewModel)
+                }
                 "Orders" -> {
                     AdminOrdersScreen(adminViewModel = adminViewModel)
+                }
+                "Blogs" -> {
+                    AdminBlogsScreen(adminViewModel = adminViewModel)
+                }
+                "Offers" -> {
+                    AdminOffersScreen(adminViewModel = adminViewModel)
                 }
                 "Users" -> {
                     AdminUsersScreen(adminViewModel = adminViewModel)
                 }
-                "Todo" -> {
-                    AdminTodoScreen(adminViewModel = adminViewModel)
+                "Freelancers" -> {
+                    AdminFreelancersScreen(adminViewModel = adminViewModel)
                 }
-                "Finance" -> {
-                    AdminFinanceScreen(adminViewModel = adminViewModel)
+                "ToDo", "Todo" -> {
+                    AdminTodoScreen(adminViewModel = adminViewModel)
                 }
                 "Compliance" -> {
                     AdminComplianceScreen(adminViewModel = adminViewModel)
+                }
+                "ITChecklist" -> {
+                    AdminITChecklistScreen(adminViewModel = adminViewModel)
                 }
                 "Performance" -> {
                     AdminPerformanceScreen(adminViewModel = adminViewModel)
@@ -236,13 +251,10 @@ fun AdminDashboardScreen(
                 "Reports" -> {
                     AdminReportsScreen(adminViewModel = adminViewModel)
                 }
-                "Notifications" -> {
-                    AdminNotificationsScreen(adminViewModel = adminViewModel)
+                "Customers" -> {
+                    AdminCustomersScreen(adminViewModel = adminViewModel)
                 }
-                "CRM" -> {
-                    AdminCrmScreen(adminViewModel = adminViewModel)
-                }
-                "KB" -> {
+                "Knowledge", "KB" -> {
                     AdminKbScreen()
                 }
                 "Support" -> {
@@ -251,20 +263,32 @@ fun AdminDashboardScreen(
                 "Services" -> {
                     AdminServicesScreen(adminViewModel = adminViewModel)
                 }
-                "Referral" -> {
+                "Referrals", "Referral" -> {
                     AdminReferralScreen(adminViewModel = adminViewModel)
+                }
+                "Renewals" -> {
+                    AdminRenewalsScreen(adminViewModel = adminViewModel)
                 }
                 "Recurring" -> {
                     AdminRecurringScreen(adminViewModel = adminViewModel)
                 }
-                "Freelancers" -> {
-                    AdminFreelancersScreen(adminViewModel = adminViewModel)
+                "Bookkeeping", "Finance" -> {
+                    AdminBookkeepingScreen(adminViewModel = adminViewModel)
                 }
-                "ITChecklist" -> {
-                    AdminITChecklistScreen(adminViewModel = adminViewModel)
+                "Notifications" -> {
+                    AdminNotificationsScreen(adminViewModel = adminViewModel)
                 }
                 "Settings" -> {
                     AdminSettingsScreen()
+                }
+                else -> {
+                    AdminHomeTab(
+                        adminViewModel = adminViewModel,
+                        userName = userName,
+                        onOpenNewOrder = { showNewOrderDialog = true },
+                        onOpenNewTodo = { showNewTodoDialog = true },
+                        onNavigate = { activeTab = it }
+                    )
                 }
             }
 

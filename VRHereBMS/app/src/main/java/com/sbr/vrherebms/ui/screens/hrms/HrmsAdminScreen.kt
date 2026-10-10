@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sbr.vrherebms.viewmodel.HrmsViewModel
 
@@ -59,17 +60,22 @@ fun HrmsAdminScreen(
             Tab(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
-                text = { Text("Live Tracker", fontWeight = FontWeight.Bold) }
+                text = { Text("Timesheets & Shifts", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
             )
             Tab(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 },
-                text = { Text("Leave approvals", fontWeight = FontWeight.Bold) }
+                text = { Text("Live Tracker", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
             )
             Tab(
                 selected = selectedTab == 2,
                 onClick = { selectedTab = 2 },
-                text = { Text("Bulletins Manager", fontWeight = FontWeight.Bold) }
+                text = { Text("Leave approvals", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+            )
+            Tab(
+                selected = selectedTab == 3,
+                onClick = { selectedTab = 3 },
+                text = { Text("Bulletins Manager", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
             )
         }
 
@@ -81,9 +87,10 @@ fun HrmsAdminScreen(
                 )
             } else {
                 when (selectedTab) {
-                    0 -> LiveTrackerTab(viewModel)
-                    1 -> AdminLeavesTab(viewModel)
-                    2 -> BulletinsManagerTab(viewModel)
+                    0 -> TimesheetsAdminTab(viewModel)
+                    1 -> LiveTrackerTab(viewModel)
+                    2 -> AdminLeavesTab(viewModel)
+                    3 -> BulletinsManagerTab(viewModel)
                 }
             }
         }

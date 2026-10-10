@@ -93,6 +93,12 @@ interface VRHereAPI {
         @Body request: AddMessageRequest
     ): Response<TicketResponse>
 
+    @PUT("api/tickets/{id}/status")
+    suspend fun updateTicketStatus(
+        @Path("id") ticketId: String,
+        @Body request: Map<String, String>
+    ): Response<TicketResponse>
+
     // --- NOTIFICATIONS ---
     @GET("api/notifications")
     suspend fun getNotifications(): Response<List<NotificationResponse>>
@@ -396,6 +402,84 @@ interface VRHereAPI {
         @Path("id") id: String,
         @Body request: TagBankTransactionRequest
     ): Response<GeneralApiResponse>
+
+    // --- BOOKKEEPING / FILINGS MATRIX & CLIENT AUDIT ---
+    @GET("api/accounting/filings/matrix")
+    suspend fun getFilingsMatrix(@Query("month") month: String): Response<FilingsMatrixResponse>
+
+    @GET("api/accounting/transactions")
+    suspend fun getClientAccountingTransactions(
+        @Query("clientId") clientId: String
+    ): Response<List<TransactionDto>>
+
+    @GET("api/accounting/payroll")
+    suspend fun getClientPayroll(
+        @Query("clientId") clientId: String
+    ): Response<List<AccountingPayrollRecord>>
+
+    @POST("api/accounting/payroll")
+    suspend fun createPayrollRecord(
+        @Body request: CreatePayrollRequest
+    ): Response<AccountingPayrollRecord>
+
+    @GET("api/accounting/export/gstr3b")
+    suspend fun getGstr3bExport(
+        @Query("clientId") clientId: String
+    ): Response<Gstr3bResponseData>
+
+    // --- PARTNER ADMIN PAYOUTS ---
+    @GET("api/partner/admin/payouts")
+    suspend fun getPartnerPayouts(): Response<List<PartnerAdminPayoutItem>>
+
+    @PUT("api/partner/admin/payouts/{id}")
+    suspend fun updatePartnerPayoutStatus(
+        @Path("id") id: String,
+        @Body request: UpdatePartnerPayoutRequest
+    ): Response<PartnerAdminPayoutItem>
+
+    // --- RECURRING SERVICES HUB ---
+    @GET("api/recurring")
+    suspend fun getRecurringSubscriptions(): Response<List<RecurringSubscriptionItem>>
+
+    @PUT("api/recurring/{id}")
+    suspend fun updateRecurringSubscriptionStatus(
+        @Path("id") id: String,
+        @Body request: UpdateRecurringStatusRequest
+    ): Response<RecurringSubscriptionItem>
+
+    @DELETE("api/recurring/{id}")
+    suspend fun deleteRecurringSubscription(
+        @Path("id") id: String
+    ): Response<GeneralApiResponse>
+
+    @POST("api/recurring")
+    suspend fun createRecurringSubscription(
+        @Body request: CreateRecurringSubscriptionRequest
+    ): Response<RecurringSubscriptionItem>
+
+    // --- BLOGS & INSIGHTS ---
+    @GET("api/blogs")
+    suspend fun getBlogs(): Response<List<BlogItem>>
+
+    @POST("api/blogs")
+    suspend fun createBlog(@Body blog: BlogItem): Response<BlogItem>
+
+    @DELETE("api/blogs/{id}")
+    suspend fun deleteBlog(@Path("id") id: String): Response<GeneralApiResponse>
+
+    // --- OFFERS & SCHEMES ---
+    @GET("api/offers")
+    suspend fun getOffers(): Response<List<OfferItem>>
+
+    @POST("api/offers")
+    suspend fun createOffer(@Body offer: OfferItem): Response<OfferItem>
+
+    @DELETE("api/offers/{id}")
+    suspend fun deleteOffer(@Path("id") id: String): Response<GeneralApiResponse>
+
+    // --- RENEWALS HUB ---
+    @GET("api/renewals/pending")
+    suspend fun getPendingRenewals(): Response<RenewalsPendingResponse>
 
     // --- FREELANCERS & APPLICANTS ---
     @GET("api/freelancers/applicants")
