@@ -182,6 +182,7 @@ struct AdminDashboardView: View {
             NotificationsSheet(
                 notifications: adminViewModel.notifications,
                 onMarkAsRead: { adminViewModel.markNotificationAsRead(id: $0) },
+                onMarkAllAsRead: { adminViewModel.markAllNotificationsAsRead() },
                 onClose: { isShowingNotifications = false }
             )
         }

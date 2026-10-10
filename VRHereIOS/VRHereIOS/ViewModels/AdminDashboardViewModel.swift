@@ -1,5 +1,7 @@
 import Foundation
 import Combine
+import UIKit
+import UserNotifications
 
 @MainActor
 class AdminDashboardViewModel: ObservableObject {
@@ -46,6 +48,15 @@ class AdminDashboardViewModel: ObservableObject {
         activeBannerNotification = nil
     }
     
+    func updateAppBadge() {
+        let unread = notifications.filter { !$0.isRead }.count
+        if #available(iOS 16.0, *) {
+            UNUserNotificationCenter.current().setBadgeCount(unread) { _ in }
+        } else {
+            UIApplication.shared.applicationIconBadgeNumber = unread
+        }
+    }
+    
     func markNotificationAsRead(id: String) {
         Task {
             do {
@@ -61,9 +72,29 @@ class AdminDashboardViewModel: ObservableObject {
                         createdAt: n.createdAt
                     )
                 }
+                updateAppBadge()
             } catch {
                 print("Failed notification read update")
             }
+        }
+    }
+    
+    func markAllNotificationsAsRead() {
+        Task {
+            for n in notifications where !n.isRead {
+                _ = try? await NetworkManager.shared.markNotificationAsRead(id: n.id)
+            }
+            notifications = notifications.map { n in
+                NotificationResponse(
+                    idVal: n.idVal,
+                    title: n.title,
+                    message: n.message,
+                    type: n.type,
+                    isRead: true,
+                    createdAt: n.createdAt
+                )
+            }
+            updateAppBadge()
         }
     }
     
@@ -113,6 +144,7 @@ class AdminDashboardViewModel: ObservableObject {
                     }
                 }
                 notifications = newNotifications
+                updateAppBadge()
             } catch {
                 print("Admin notification fetch failed: \(error)")
             }

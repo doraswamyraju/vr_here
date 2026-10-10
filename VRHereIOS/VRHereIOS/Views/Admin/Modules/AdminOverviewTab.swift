@@ -84,27 +84,46 @@ struct AdminOverviewTab: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 
-                // MARK: 2. Quick Action Grid (4 buttons 1:1)
+                // MARK: 2. Quick Action Grid (4 Buttons 1:1 Vertical Web Design)
                 HStack(spacing: 10) {
-                    QuickActionCard(title: "NEW ORDER", icon: "plus.circle.fill", color: .green) {
+                    quickActionVerticalButton(
+                        title: "NEW ORDER",
+                        icon: "plus",
+                        bgColor: Color(red: 0.06, green: 0.72, blue: 0.51) // Emerald
+                    ) {
                         viewModel.selectedOrderId = ""
                         onNavigate("Orders")
                     }
-                    QuickActionCard(title: "ADD TO-DO", icon: "checkmark.circle.fill", color: .orange) {
+                    
+                    quickActionVerticalButton(
+                        title: "ADD TO-DO",
+                        icon: "checkmark.square.fill",
+                        bgColor: Color(red: 0.96, green: 0.62, blue: 0.08) // Amber
+                    ) {
                         onNavigate("Todo")
                     }
-                    QuickActionCard(title: "ORDERS", icon: "square.stack.fill", color: .indigo) {
+                    
+                    quickActionVerticalButton(
+                        title: "ORDERS",
+                        icon: "square.stack.3d.up.fill",
+                        bgColor: Color(red: 0.39, green: 0.40, blue: 0.95) // Indigo
+                    ) {
                         viewModel.selectedOrderFilter = "All"
                         viewModel.selectedOrderId = ""
                         onNavigate("Orders")
                     }
-                    QuickActionCard(title: "REFRESH", icon: "arrow.clockwise.circle.fill", color: .gray) {
+                    
+                    quickActionVerticalButton(
+                        title: "REFRESH",
+                        icon: "arrow.clockwise",
+                        bgColor: Color(red: 0.25, green: 0.30, blue: 0.38) // Slate
+                    ) {
                         viewModel.syncDashboardData()
                     }
                 }
                 .padding(.horizontal, 20)
                 
-                // MARK: 3. Interactive KPI Metric Cards (Filter on Click 1:1)
+                // MARK: 3. Interactive KPI Metric Cards (1:1 with Web Filter on Click)
                 let totalOrders = viewModel.orders.count
                 let pendingCount = viewModel.orders.filter { $0.status != "Completed" }.count
                 let completedCount = viewModel.orders.filter { $0.status == "Completed" }.count
@@ -161,7 +180,7 @@ struct AdminOverviewTab: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // MARK: 4. Latest Work Updates & Order Pipeline
+                // MARK: 4. Latest Work Updates
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
                         Text("LATEST WORK UPDATES")
@@ -442,7 +461,271 @@ struct AdminOverviewTab: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // MARK: 9. Pending Documents Card
+                // MARK: 9. New Users (Community Matrix 1:1)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        Text("NEW USERS")
+                            .font(.system(size: 12, weight: .black))
+                            .foregroundColor(.textDark)
+                        Spacer()
+                        Button(action: { onNavigate("Users") }) {
+                            Text("View All")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.primaryRed)
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 14) {
+                        let userList = viewModel.users
+                        let totalMembers = userList.count
+                        
+                        // Avatars stack
+                        HStack(spacing: -10) {
+                            ForEach(Array(userList.prefix(6))) { u in
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.indigo, Color.blue],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 38, height: 38)
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 2.5))
+                                    Text(String(u.name.prefix(1)).uppercased())
+                                        .font(.system(size: 13, weight: .black))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            
+                            if totalMembers > 6 {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(red: 0.94, green: 0.95, blue: 0.98))
+                                        .frame(width: 38, height: 38)
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 2.5))
+                                    Text("+\(totalMembers - 6)")
+                                        .font(.system(size: 11, weight: .black))
+                                        .foregroundColor(.textDark)
+                                }
+                            }
+                        }
+                        
+                        // Total community counter banner
+                        Button(action: { onNavigate("Users") }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("TOTAL COMMUNITY")
+                                        .font(.system(size: 8.5, weight: .black))
+                                        .foregroundColor(.textMuted)
+                                    HStack(spacing: 4) {
+                                        Text("\(totalMembers)")
+                                            .font(.system(size: 18, weight: .black))
+                                            .foregroundColor(.textDark)
+                                        Text("Members")
+                                            .font(.system(size: 11, weight: .black))
+                                            .foregroundColor(.green)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.textMuted)
+                            }
+                            .padding(12)
+                            .background(Color(red: 0.96, green: 0.97, blue: 1.0))
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .padding(16)
+                    .background(Color.white)
+                    .cornerRadius(18)
+                    .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.borderLight, lineWidth: 1))
+                }
+                .padding(.horizontal, 20)
+                
+                // MARK: 10. Top Referrals (1:1 with Web)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        Text("TOP REFERRALS")
+                            .font(.system(size: 12, weight: .black))
+                            .foregroundColor(.textDark)
+                        Spacer()
+                        Button(action: { onNavigate("Referral") }) {
+                            Text("Manage")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.primaryRed)
+                        }
+                    }
+                    
+                    let refList = [
+                        (name: "Pavan", value: 3998),
+                        (name: "Vydehi", value: 2),
+                        (name: "V R Here", value: 0)
+                    ]
+                    
+                    VStack(spacing: 8) {
+                        ForEach(refList, id: \.name) { ref in
+                            Button(action: { onNavigate("Referral") }) {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.red.opacity(0.1))
+                                            .frame(width: 32, height: 32)
+                                        Text(String(ref.name.prefix(1)))
+                                            .font(.system(size: 13, weight: .black))
+                                            .foregroundColor(.red)
+                                    }
+                                    
+                                    Text(ref.name)
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(.textDark)
+                                    
+                                    Spacer()
+                                    
+                                    Text("Rs. \(ref.value.formatted())")
+                                        .font(.system(size: 12, weight: .black))
+                                        .foregroundColor(.textDark)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            if ref.name != refList.last?.name {
+                                Divider().background(Color.borderLight)
+                            }
+                        }
+                    }
+                    .padding(16)
+                    .background(Color.white)
+                    .cornerRadius(18)
+                    .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.borderLight, lineWidth: 1))
+                }
+                .padding(.horizontal, 20)
+                
+                // MARK: 11. Revenue Trend & Service Mix (Charts 1:1)
+                VStack(alignment: .leading, spacing: 14) {
+                    // Revenue Trend Card
+                    Button(action: { onNavigate("Reports") }) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("REVENUE TREND")
+                                        .font(.system(size: 12, weight: .black))
+                                        .foregroundColor(.textDark)
+                                    Text("MONTHLY BILLING VOLUME")
+                                        .font(.system(size: 8.5, weight: .bold))
+                                        .foregroundColor(.textMuted)
+                                }
+                                Spacer()
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.up.right")
+                                        .font(.system(size: 9, weight: .bold))
+                                    Text("+12.5%")
+                                        .font(.system(size: 10, weight: .black))
+                                }
+                                .foregroundColor(.green)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.green.opacity(0.12))
+                                .cornerRadius(8)
+                            }
+                            
+                            // Visual bar chart
+                            let monthlyData: [(month: String, val: CGFloat)] = [
+                                ("May", 0.4), ("Jun", 0.65), ("Jul", 0.85), ("Aug", 0.55), ("Sep", 0.95), ("Oct", 0.75)
+                            ]
+                            HStack(alignment: .bottom, spacing: 12) {
+                                ForEach(monthlyData, id: \.month) { m in
+                                    VStack(spacing: 6) {
+                                        ZStack(alignment: .bottom) {
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .fill(Color(red: 0.92, green: 0.94, blue: 0.98))
+                                                .frame(height: 70)
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [Color.indigo, Color.blue],
+                                                        startPoint: .top,
+                                                        endPoint: .bottom
+                                                    )
+                                                )
+                                                .frame(height: 70 * m.val)
+                                        }
+                                        Text(m.month)
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundColor(.textMuted)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .padding(.top, 6)
+                        }
+                        .padding(18)
+                        .background(Color.white)
+                        .cornerRadius(18)
+                        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.borderLight, lineWidth: 1))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // Service Mix Card
+                    Button(action: { onNavigate("Services") }) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("SERVICE MIX")
+                                    .font(.system(size: 12, weight: .black))
+                                    .foregroundColor(.textDark)
+                                Text("TOP PERFORMING OFFERINGS")
+                                    .font(.system(size: 8.5, weight: .bold))
+                                    .foregroundColor(.textMuted)
+                            }
+                            
+                            let mixItems: [(title: String, pct: CGFloat, color: Color)] = [
+                                ("Tally & Accounting", 0.45, .blue),
+                                ("Income Tax Filing", 0.30, .indigo),
+                                ("Company Incorporation", 0.15, .green),
+                                ("Compliance Audits", 0.10, .orange)
+                            ]
+                            
+                            VStack(spacing: 10) {
+                                ForEach(mixItems, id: \.title) { item in
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack {
+                                            Text(item.title)
+                                                .font(.system(size: 11, weight: .bold))
+                                                .foregroundColor(.textDark)
+                                            Spacer()
+                                            Text("\(Int(item.pct * 100))%")
+                                                .font(.system(size: 10, weight: .black))
+                                                .foregroundColor(item.color)
+                                        }
+                                        GeometryReader { geo in
+                                            ZStack(alignment: .leading) {
+                                                Capsule().fill(Color.borderLight).frame(height: 6)
+                                                Capsule().fill(item.color).frame(width: geo.size.width * item.pct, height: 6)
+                                            }
+                                        }
+                                        .frame(height: 6)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(18)
+                        .background(Color.white)
+                        .cornerRadius(18)
+                        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.borderLight, lineWidth: 1))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding(.horizontal, 20)
+                
+                // MARK: 12. Pending Documents Card
                 let pendingDocs = viewModel.orders.filter { $0.status.lowercased().contains("pending doc") }
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
@@ -526,7 +809,7 @@ struct AdminOverviewTab: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // MARK: 10. Financial Health Breakdown (1:1 with Web)
+                // MARK: 13. Financial Health Breakdown
                 let total = viewModel.orders.reduce(0.0) { $0 + $1.price }
                 let paid = viewModel.orders.filter { $0.paymentStatus.lowercased() == "paid" }.reduce(0.0) { $0 + $1.price }
                 let pending = total - paid
@@ -592,7 +875,73 @@ struct AdminOverviewTab: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // MARK: 11. Upcoming Renewals (30 Days Projection 1:1)
+                // MARK: 14. Team Workload / Active Specialists (1:1 with Web)
+                Button(action: { onNavigate("Performance") }) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack(spacing: 10) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color.white.opacity(0.12))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "person.3.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.cyan)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("TEAM WORKLOAD")
+                                    .font(.system(size: 12, weight: .black))
+                                    .foregroundColor(.white)
+                                Text("ACTIVE SPECIALISTS")
+                                    .font(.system(size: 8.5, weight: .black))
+                                    .foregroundColor(.cyan)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        
+                        let empList = viewModel.employees
+                        if empList.isEmpty {
+                            Text("No specialist workload data")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.7))
+                        } else {
+                            VStack(spacing: 8) {
+                                ForEach(Array(empList.prefix(4))) { emp in
+                                    HStack {
+                                        Text(emp.name)
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.white)
+                                        Spacer()
+                                        Text(emp.role.uppercased())
+                                            .font(.system(size: 8.5, weight: .black))
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.white.opacity(0.15))
+                                            .foregroundColor(.cyan)
+                                            .cornerRadius(4)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(18)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.08, green: 0.12, blue: 0.22), Color(red: 0.12, green: 0.18, blue: 0.32)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .cornerRadius(18)
+                    .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal, 20)
+                
+                // MARK: 15. Upcoming Renewals (30 Days Projection 1:1)
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
                         Text("UPCOMING RENEWALS")
@@ -632,6 +981,39 @@ struct AdminOverviewTab: View {
                 Spacer().frame(height: 100)
             }
         }
+    }
+    
+    // 1:1 Vertical Quick Action Button
+    private func quickActionVerticalButton(title: String, icon: String, bgColor: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(bgColor)
+                        .frame(width: 40, height: 40)
+                        .shadow(color: bgColor.opacity(0.3), radius: 4, x: 0, y: 2)
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .black))
+                        .foregroundColor(.white)
+                }
+                
+                Text(title)
+                    .font(.system(size: 8.5, weight: .black))
+                    .foregroundColor(Color(red: 0.35, green: 0.40, blue: 0.50))
+                    .tracking(0.5)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color.white)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.borderLight, lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
     }
     
     // Interactive KPI Stat Card
