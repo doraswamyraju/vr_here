@@ -1556,3 +1556,111 @@ struct OfferResponse: Codable, Identifiable, Equatable {
         self.priority = priority
     }
 }
+
+// MARK: - ACCOUNTING & BOOKKEEPING MODELS
+
+struct FilingsMatrixSummary: Codable {
+    let totalClients: Int?
+    let gstr1FiledCount: Int?
+    let gstr1FiledPercentage: Double?
+    let gstr3bFiledCount: Int?
+    let gstr3bFiledPercentage: Double?
+    let fullyReconciledBankCount: Int?
+}
+
+struct FilingsMatrixMetrics: Codable {
+    let salesCount: Int
+    let purchaseCount: Int
+    let totalSalesAmount: Double
+    let totalBankTxCount: Int
+    let taggedBankTxCount: Int
+    let bankReconPercentage: Double
+}
+
+struct FilingsMatrixFiling: Codable {
+    let gstr1Status: String?
+    let gstr1Arn: String?
+    let gstr3bStatus: String?
+    let bookkeepingStatus: String?
+}
+
+struct FilingsMatrixClientUser: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let name: String
+    let email: String?
+    let phone: String?
+    let companyName: String?
+    let gstin: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case name, email, phone, companyName, gstin
+    }
+}
+
+struct FilingsMatrixClientItem: Codable, Identifiable {
+    var id: String { client.id }
+    let client: FilingsMatrixClientUser
+    let metrics: FilingsMatrixMetrics
+    let filing: FilingsMatrixFiling
+}
+
+struct FilingsMatrixResponse: Codable {
+    let summary: FilingsMatrixSummary?
+    let clients: [FilingsMatrixClientItem]?
+}
+
+struct AccountingTransaction: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let type: String?
+    let docNumber: String?
+    let docDate: String?
+    let partyName: String?
+    let partyGstin: String?
+    let taxableAmount: Double?
+    let totalAmount: Double?
+    let cgst: Double?
+    let sgst: Double?
+    let igst: Double?
+    let status: String?
+    let notes: String?
+    let invoiceUrl: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case type, docNumber, docDate, partyName, partyGstin, taxableAmount, totalAmount, cgst, sgst, igst, status, notes, invoiceUrl
+    }
+}
+
+struct AccountingPayrollRecord: Codable, Identifiable {
+    var id: String { idVal }
+    let idVal: String
+    let employeeName: String
+    let designation: String?
+    let month: String?
+    let basicSalary: Double?
+    let hra: Double?
+    let allowances: Double?
+    let pfDeduction: Double?
+    let tdsDeduction: Double?
+    let netSalary: Double?
+    let status: String?
+
+    enum CodingKeys: String, CodingKey {
+        case idVal = "_id"
+        case employeeName, designation, month, basicSalary, hra, allowances, pfDeduction, tdsDeduction, netSalary, status
+    }
+}
+
+struct Gstr3bResponseData: Codable {
+    let taxableOutward: Double?
+    let igstOutward: Double?
+    let cgstOutward: Double?
+    let sgstOutward: Double?
+    let itcEligible: Double?
+    let netTaxPayable: Double?
+    let status: String?
+}
+

@@ -2,93 +2,152 @@ import SwiftUI
 
 struct AdminITChecklistTab: View {
     @ObservedObject var viewModel: AdminDashboardViewModel
-    @State private var selectedItem: ITAssessmentResponse? = nil
-    @State private var notesText = ""
-    @State private var selectedStatus = "Approved"
+    
+    @State private var searchQuery: String = ""
+    @State private var selectedAssessment: ITAssessmentResponse? = nil
+    @State private var selectedStatus: String = "Pending"
+    @State private var statusNotes: String = ""
+    @State private var isSubmitting: Bool = false
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                if selectedItem == nil {
-                    // Header card
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("TAX AUDIT & REGULATORY ASSESSMENTS")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.cyan)
-                            .tracking(1)
-                        Text("Income Tax Panel")
-                            .font(.system(size: 24, weight: .black))
-                            .foregroundColor(.white)
-                        Text("Audit client PAN submissions, IT assessments, and filing verifications.")
+            VStack(alignment: .leading, spacing: 18) {
+                if selectedAssessment == nil {
+                    // Header Console
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("TAX AUDIT & CHECKLIST VERIFICATIONS • v1.1")
+                                    .font(.system(size: 9, weight: .black))
+                                    .foregroundColor(.cyan)
+                                    .tracking(1.5)
+                                Text("ITR Checklist Hub")
+                                    .font(.system(size: 24, weight: .black))
+                                    .foregroundColor(.white)
+                            }
+                            Spacer()
+                            Button(action: {
+                                viewModel.syncDashboardData()
+                            }) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(10)
+                                    .background(Color.white.opacity(0.15))
+                                    .cornerRadius(10)
+                            }
+                        }
+                        
+                        Text("Review digital checklist replies (1 to 51), verify attachment proofs, and track filing audit approvals client-wise.")
                             .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(.white.opacity(0.75))
                     }
                     .padding(20)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
-                        LinearGradient(colors: [Color.darkSlate, Color(red: 45/255, green: 20/255, blue: 15/255)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        LinearGradient(colors: [Color.darkSlate, Color(red: 25/255, green: 20/255, blue: 45/255)], startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
-                    .cornerRadius(20)
+                    .cornerRadius(24)
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
                     
-                    // Assessment lists
+                    // Search Bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.textMuted)
+                        TextField("Search by client name or PAN...", text: $searchQuery)
+                            .font(.system(size: 13))
+                        if !searchQuery.isEmpty {
+                            Button(action: { searchQuery = "" }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.textMuted)
+                            }
+                        }
+                    }
+                    .padding(12)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.borderLight, lineWidth: 1))
+                    .padding(.horizontal, 20)
+                    
+                    // Assessments List
                     VStack(spacing: 12) {
-                        if viewModel.assessments.isEmpty {
-                            Text("No tax assessments submitted")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(.textMuted)
-                                .padding(.vertical, 30)
-                                .frame(maxWidth: .infinity, alignment: .center)
+                        let filtered = viewModel.assessments.filter {
+                            searchQuery.isEmpty ||
+                            $0.clientName.localizedCaseInsensitiveContains(searchQuery) ||
+                            $0.pan.localizedCaseInsensitiveContains(searchQuery)
+                        }
+                        
+                        if filtered.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.textMuted)
+                                Text("No ITR assessment submissions found")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.textMuted)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(40)
+                            .background(Color.white)
+                            .cornerRadius(16)
+                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.borderLight, lineWidth: 1))
                         } else {
-                            ForEach(viewModel.assessments) { item in
+                            ForEach(filtered) { item in
                                 Button(action: {
-                                    selectedItem = item
-                                    notesText = ""
+                                    selectedAssessment = item
                                     selectedStatus = item.status
+                                    statusNotes = item.notes ?? ""
                                 }) {
                                     VStack(alignment: .leading, spacing: 10) {
                                         HStack {
-                                            VStack(alignment: .leading, spacing: 3) {
+                                            Circle()
+                                                .fill(Color.indigoCustom.opacity(0.12))
+                                                .frame(width: 36, height: 36)
+                                                .overlay(
+                                                    Text(String(item.clientName.prefix(1)).uppercased())
+                                                        .font(.system(size: 14, weight: .black))
+                                                        .foregroundColor(.indigoCustom)
+                                                )
+                                            
+                                            VStack(alignment: .leading, spacing: 2) {
                                                 Text(item.clientName)
                                                     .font(.system(size: 13, weight: .bold))
                                                     .foregroundColor(.textDark)
-                                                Text("PAN: \(item.pan) • AY: \(item.assessmentYear)")
-                                                    .font(.system(size: 10))
+                                                Text("PAN: \(item.pan)")
+                                                    .font(.system(size: 10, weight: .bold))
                                                     .foregroundColor(.textMuted)
                                             }
+                                            
                                             Spacer()
                                             
-                                            // Status pill
                                             Text(item.status.uppercased())
-                                                .font(.system(size: 8, weight: .bold))
+                                                .font(.system(size: 8, weight: .black))
                                                 .padding(.horizontal, 8)
                                                 .padding(.vertical, 4)
-                                                .foregroundColor(statusColor(item.status))
-                                                .background(statusColor(item.status).opacity(0.12))
+                                                .foregroundColor(statusTextColor(item.status))
+                                                .background(statusTextColor(item.status).opacity(0.12))
                                                 .cornerRadius(6)
                                         }
                                         
                                         Divider().background(Color.borderLight)
                                         
                                         HStack {
-                                            Text("FY: \(item.financialYear)")
-                                                .font(.system(size: 10, weight: .bold))
+                                            Text("FY \(item.financialYear) • AY \(item.assessmentYear)")
+                                                .font(.system(size: 11, weight: .bold))
                                                 .foregroundColor(.textDark)
                                             Spacer()
-                                            Text("Review Details")
-                                                .font(.system(size: 10, weight: .bold))
-                                                .foregroundColor(.primaryRed)
+                                            HStack(spacing: 4) {
+                                                Text("Inspect Checklist")
+                                                Image(systemName: "chevron.right")
+                                            }
+                                            .font(.system(size: 11, weight: .black))
+                                            .foregroundColor(.indigoCustom)
                                         }
                                     }
                                     .padding(14)
                                     .background(Color.white)
                                     .cornerRadius(16)
-                                    .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(Color.borderLight, lineWidth: 1)
-                                    )
+                                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.borderLight, lineWidth: 1))
                                 }
                                 .buttonStyle(PlainButtonStyle())
                             }
@@ -96,88 +155,118 @@ struct AdminITChecklistTab: View {
                     }
                     .padding(.horizontal, 20)
                     
-                } else if let item = selectedItem {
-                    // Review Sub-View details
-                    VStack(alignment: .leading, spacing: 20) {
-                        Button(action: { selectedItem = nil }) {
+                } else if let item = selectedAssessment {
+                    // MARK: - Inspect Detail View
+                    VStack(alignment: .leading, spacing: 16) {
+                        Button(action: { selectedAssessment = nil }) {
                             HStack(spacing: 6) {
-                                Image(systemName: "chevron.backward")
-                                Text("Back to Audits")
+                                Image(systemName: "arrow.backward")
+                                Text("Back to All Submissions")
                             }
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.primaryRed)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.indigoCustom)
                         }
                         .padding(.top, 16)
                         
-                        Text("Audit: \(item.clientName)")
-                            .font(.system(size: 22, weight: .black))
-                            .foregroundColor(.textDark)
+                        // Client Detail Header Card
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(item.clientName)
+                                .font(.system(size: 20, weight: .black))
+                                .foregroundColor(.white)
+                            HStack(spacing: 12) {
+                                Text("PAN: \(item.pan)")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.cyan)
+                                Text("FY \(item.financialYear) • AY \(item.assessmentYear)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                        }
+                        .padding(18)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.darkSlate)
+                        .cornerRadius(18)
                         
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Filing Verification Details")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.textDark)
-                            
-                            detailRow(title: "PAN Number:", value: item.pan)
-                            detailRow(title: "Financial Year:", value: item.financialYear)
-                            detailRow(title: "Assessment Year:", value: item.assessmentYear)
-                            detailRow(title: "Current Status:", value: item.status)
-                            
-                            Divider().background(Color.borderLight)
-                            
-                            Text("AUDIT UPDATE ACTIONS")
-                                .font(.system(size: 9, weight: .bold))
+                        // Status & Remarks Update Manager
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("AUDIT DECISION & INTERNAL CA NOTES")
+                                .font(.system(size: 10, weight: .black))
                                 .foregroundColor(.textMuted)
                             
-                            // Selectable status segment
                             HStack(spacing: 8) {
-                                ForEach(["Approved", "Rejected", "Pending"], id: \.self) { status in
-                                    Button(action: { selectedStatus = status }) {
-                                        Text(status.uppercased())
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundColor(selectedStatus == status ? .white : .textDark)
-                                            .frame(maxWidth: .infinity)
-                                            .frame(height: 32)
-                                            .background(selectedStatus == status ? statusColor(status) : Color.bgInput)
-                                            .cornerRadius(6)
+                                ForEach(["Pending", "In Progress", "Approved", "Rejected"], id: \.self) { st in
+                                    let isSel = selectedStatus.lowercased() == st.lowercased()
+                                    Button(action: { selectedStatus = st }) {
+                                        Text(st)
+                                            .font(.system(size: 10, weight: .black))
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
+                                            .foregroundColor(isSel ? .white : .textDark)
+                                            .background(isSel ? statusTextColor(st) : Color.bgInput)
+                                            .cornerRadius(8)
                                     }
                                 }
                             }
                             
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Audit Notes:")
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.textMuted)
-                                
-                                TextField("Add assessment details/notes...", text: $notesText)
-                                    .padding(10)
-                                    .background(Color.bgInput)
-                                    .cornerRadius(8)
-                            }
+                            TextField("Add CA notes, verification remarks, or filing notes...", text: $statusNotes)
+                                .font(.system(size: 12))
+                                .padding(10)
+                                .background(Color.bgInput)
+                                .cornerRadius(8)
                             
-                            // Commit updates
                             Button(action: {
-                                viewModel.updateAssessmentStatus(id: item.id, status: selectedStatus, notes: notesText)
-                                selectedItem = nil
+                                isSubmitting = true
+                                Task {
+                                    do {
+                                        _ = try await NetworkManager.shared.updateIncomeTaxAssessmentStatus(id: item.id, status: selectedStatus, notes: statusNotes)
+                                        viewModel.toastMessage = "Assessment status updated successfully"
+                                        viewModel.syncDashboardData()
+                                        selectedAssessment = nil
+                                    } catch {
+                                        viewModel.toastMessage = "Failed: \(error.localizedDescription)"
+                                    }
+                                    isSubmitting = false
+                                }
                             }) {
-                                Text("COMMIT AUDIT DECISION")
-                                    .font(.system(size: 12, weight: .black))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 44)
-                                    .background(Color.primaryRed)
-                                    .cornerRadius(10)
+                                HStack {
+                                    Spacer()
+                                    if isSubmitting {
+                                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Text("COMMIT AUDIT DECISION")
+                                            .font(.system(size: 12, weight: .black))
+                                    }
+                                    Spacer()
+                                }
+                                .frame(height: 40)
+                                .foregroundColor(.white)
+                                .background(Color.indigoCustom)
+                                .cornerRadius(10)
                             }
-                            .buttonStyle(ScaleOnPressButtonStyle())
+                            .disabled(isSubmitting)
                         }
-                        .padding(18)
+                        .padding(14)
                         .background(Color.white)
-                        .cornerRadius(18)
-                        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18)
-                                .stroke(Color.borderLight, lineWidth: 1)
-                        )
+                        .cornerRadius(16)
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.borderLight, lineWidth: 1))
+                        
+                        // Responses Checklist (1 to 51)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("ITR CHECKLIST QUESTIONNAIRE RESPONSES")
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundColor(.textMuted)
+                            
+                            if let responses = item.responses, !responses.isEmpty {
+                                ForEach(responses) { resp in
+                                    ITRResponseCardView(response: resp)
+                                }
+                            } else {
+                                Text("No detailed question responses submitted for this assessment.")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.textMuted)
+                                    .padding(.vertical, 20)
+                            }
+                        }
                     }
                     .padding(.horizontal, 20)
                 }
@@ -185,28 +274,86 @@ struct AdminITChecklistTab: View {
                 Spacer().frame(height: 100)
             }
         }
+        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
     }
     
-    private func detailRow(title: String, value: String) -> some View {
-        HStack {
-            Text(title)
-                .font(.system(size: 12))
-                .foregroundColor(.textMuted)
-            Spacer()
-            Text(value)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.textDark)
+    private func statusTextColor(_ status: String) -> Color {
+        switch status.lowercased() {
+        case "approved": return .green
+        case "in progress": return .orange
+        case "rejected": return .red
+        default: return Color.indigoCustom
         }
     }
+}
+
+// MARK: - ITR Response Card Subview
+struct ITRResponseCardView: View {
+    let response: ITAssessmentResponseItem
     
-    private func statusColor(_ status: String) -> Color {
-        switch status.lowercased() {
-        case "approved", "completed":
-            return .green
-        case "pending", "submitted":
-            return .orange
-        default:
-            return .red
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(response.section.uppercased())
+                    .font(.system(size: 8, weight: .black))
+                    .foregroundColor(.textMuted)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.bgInput)
+                    .cornerRadius(4)
+                
+                Spacer()
+                
+                Text(response.value.uppercased())
+                    .font(.system(size: 8, weight: .black))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .foregroundColor(valueColor(response.value))
+                    .background(valueColor(response.value).opacity(0.12))
+                    .cornerRadius(6)
+            }
+            
+            Text(response.description)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.textDark)
+            
+            if let remarks = response.remarks, !remarks.isEmpty {
+                Text("Client Remarks: \(remarks)")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.textMuted)
+                    .padding(6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.bgLight)
+                    .cornerRadius(6)
+            }
+            
+            if let proofUrl = response.documentUrl, let url = URL(string: proofUrl) {
+                Link(destination: url) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "doc.text.fill")
+                        Text("View Uploaded Proof")
+                        Image(systemName: "arrow.up.right")
+                    }
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(.indigoCustom)
+                    .padding(.top, 2)
+                }
+            }
+        }
+        .padding(12)
+        .background(Color.white)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(response.value.lowercased() == "yes" ? Color.indigoCustom.opacity(0.3) : Color.borderLight, lineWidth: 1)
+        )
+    }
+    
+    private func valueColor(_ val: String) -> Color {
+        switch val.lowercased() {
+        case "yes": return .green
+        case "no": return .red
+        default: return .gray
         }
     }
 }

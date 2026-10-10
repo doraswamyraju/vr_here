@@ -678,6 +678,49 @@ class NetworkManager {
         return try await performRequest(path: "api/compliance/\(id)", method: "PUT", body: data)
     }
     
+    func createComplianceTask(payload: [String: AnyCodable]) async throws -> ComplianceResponse {
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/compliance", method: "POST", body: data)
+    }
+    
+    func updateComplianceTask(id: String, payload: [String: AnyCodable]) async throws -> ComplianceResponse {
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/compliance/\(id)", method: "PUT", body: data)
+    }
+    
+    func deleteComplianceTask(id: String) async throws -> SimpleSuccessResponse {
+        return try await performRequest(path: "api/compliance/\(id)", method: "DELETE")
+    }
+    
+    // --- ADMIN BOOKKEEPING & FILINGS MATRIX ENDPOINTS ---
+    func getAdminFilingsMatrix(month: String) async throws -> FilingsMatrixResponse {
+        let encoded = month.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? month
+        return try await performRequest(path: "api/accounting/filings/matrix?month=\(encoded)", method: "GET")
+    }
+    
+    func getClientAccountingTransactions(clientId: String) async throws -> [AccountingTransaction] {
+        return try await performRequest(path: "api/accounting/transactions?clientId=\(clientId)", method: "GET")
+    }
+    
+    func updateAccountingTransactionStatus(id: String, status: String) async throws -> [String: AnyCodable] {
+        let payload = ["status": status]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        return try await performRequest(path: "api/accounting/transactions/\(id)", method: "PUT", body: data)
+    }
+    
+    func getClientPayrollRecords(clientId: String) async throws -> [AccountingPayrollRecord] {
+        return try await performRequest(path: "api/accounting/payroll?clientId=\(clientId)", method: "GET")
+    }
+    
+    func createClientPayrollRecord(payload: [String: AnyCodable]) async throws -> AccountingPayrollRecord {
+        let data = try JSONEncoder().encode(payload)
+        return try await performRequest(path: "api/accounting/payroll", method: "POST", body: data)
+    }
+    
+    func getGstr3bExport(clientId: String) async throws -> Gstr3bResponseData {
+        return try await performRequest(path: "api/accounting/export/gstr3b?clientId=\(clientId)", method: "GET")
+    }
+    
     // --- FINANCE ENDPOINTS ---
     func getFinanceRecords(type: String) async throws -> [FinanceRecordResponse] {
         return try await performRequest(path: "api/finance?type=\(type)", method: "GET")
@@ -1023,6 +1066,16 @@ struct FreelancerResponse: Codable, Identifiable {
     }
 }
 
+struct ITAssessmentResponseItem: Codable, Identifiable {
+    var id: String { "\(itemId)" }
+    let itemId: AnyCodable
+    let section: String
+    let description: String
+    let remarks: String?
+    let value: String
+    let documentUrl: String?
+}
+
 struct ITAssessmentResponse: Codable, Identifiable {
     let id: String
     let clientName: String
@@ -1030,10 +1083,13 @@ struct ITAssessmentResponse: Codable, Identifiable {
     let financialYear: String
     let assessmentYear: String
     let status: String
+    let notes: String?
+    let createdAt: String?
+    let responses: [ITAssessmentResponseItem]?
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case clientName, pan, financialYear, assessmentYear, status
+        case clientName, pan, financialYear, assessmentYear, status, notes, createdAt, responses
     }
 }
 

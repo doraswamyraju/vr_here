@@ -107,6 +107,8 @@ struct AdminDashboardView: View {
                             AdminSettingsTab(viewModel: adminViewModel)
                         case "ITChecklist":
                             AdminITChecklistTab(viewModel: adminViewModel)
+                        case "Bookkeeping":
+                            AdminBookkeepingTab(viewModel: adminViewModel)
                         case "Freelancers":
                             AdminFreelancersTab(viewModel: adminViewModel)
                         default:
@@ -158,6 +160,7 @@ struct AdminDashboardView: View {
                         BMSSidebarItem(label: "Users Matrix", iconName: "person.badge.shield.checkmark", tabId: "Users"),
                         BMSSidebarItem(label: "Tasks Board", iconName: "checkmark.circle", tabId: "Todo"),
                         BMSSidebarItem(label: "Compliance Panel", iconName: "checkmark.seal", tabId: "Compliance"),
+                        BMSSidebarItem(label: "Bookkeeping Desk", iconName: "book.closed", tabId: "Bookkeeping"),
                         BMSSidebarItem(label: "Performance Metrics", iconName: "chart.bar.fill", tabId: "Performance"),
                         BMSSidebarItem(label: "Business Reports", iconName: "chart.bar", tabId: "Reports"),
                         BMSSidebarItem(label: "Admin Notifications", iconName: "bell", tabId: "Notifications"),
