@@ -76,8 +76,10 @@ function AdminApp() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const tabFromUrl = urlParams.get('tab');
-      if (tabFromUrl) return tabFromUrl;
-      return localStorage.getItem('admin_active_tab') || 'Dashboard';
+      if (tabFromUrl && tabFromUrl !== 'Finance') return tabFromUrl;
+      const stored = localStorage.getItem('admin_active_tab');
+      if (stored && stored !== 'Finance') return stored;
+      return 'Dashboard';
     } catch (e) {
       return 'Dashboard';
     }
@@ -463,7 +465,7 @@ function AdminApp() {
            {[
              { l: 'New Order', i: Plus, c: 'bg-emerald-500', a: () => setIsNewOrderModalOpen(true) },
              { l: 'Add To-Do', i: CheckSquare, c: 'bg-amber-500', a: () => setIsNewTodoModalOpen(true) },
-             { l: 'Finance', i: DollarSign, c: 'bg-indigo-500', a: () => setActiveTab('Finance') },
+             { l: 'Orders', i: Layers, c: 'bg-indigo-500', a: () => { setActiveTab('Orders'); setSelectedOrderId(null); setOrderFilter('All'); } },
              { l: 'Refresh', i: RefreshCcw, c: 'bg-slate-700', a: handleRefresh }
            ].map((action, idx) => (
              <button key={idx} onClick={action.a} className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 group active:scale-95">
@@ -480,7 +482,7 @@ function AdminApp() {
             { l: 'Total Orders', v: !dataLoaded && orders.length === 0 ? '...' : orders.length, key: 'Orders', f: 'All', i: Layers, c: 'text-blue-600', bg: 'bg-blue-50' },
             { l: 'Pending', v: !dataLoaded && orders.length === 0 ? '...' : orders.filter((o) => o.status !== 'Completed').length, key: 'Orders', f: 'Pending', i: Clock3, c: 'text-amber-600', bg: 'bg-amber-50' },
             { l: 'Completed', v: !dataLoaded && orders.length === 0 ? '...' : orders.filter((o) => o.status === 'Completed').length, key: 'Orders', f: 'Completed', i: ShieldCheck, c: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { l: 'Order Value', v: !dataLoaded && orders.length === 0 ? '...' : `Rs. ${orders.reduce((s, o) => s + Number(o.price || 0), 0).toLocaleString()}`, key: 'Finance', f: 'All', i: DollarSign, c: 'text-indigo-600', bg: 'bg-indigo-50' }
+            { l: 'Order Value', v: !dataLoaded && orders.length === 0 ? '...' : `Rs. ${orders.reduce((s, o) => s + Number(o.price || 0), 0).toLocaleString()}`, key: 'Orders', f: 'All', i: DollarSign, c: 'text-indigo-600', bg: 'bg-indigo-50' }
           ].map((item) => (
             <Card 
               key={item.l} 
@@ -664,7 +666,7 @@ function AdminApp() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-           <Card className="p-6 cursor-pointer hover:border-indigo-200 transition-all" onClick={() => setActiveTab('Finance')}>
+           <Card className="p-6 cursor-pointer hover:border-indigo-200 transition-all" onClick={() => { setActiveTab('Orders'); setSelectedOrderId(null); setOrderFilter('All'); }}>
               <div className="flex items-center justify-between mb-6">
                  <div>
                     <h3 className="font-black text-slate-900 uppercase tracking-tight">Revenue Trend</h3>
@@ -729,17 +731,17 @@ function AdminApp() {
               <Card className="p-6">
                  <div className="flex items-center justify-between mb-4">
                     <h3 className="font-black text-slate-900 uppercase tracking-tight">Financial Health</h3>
-                    <button onClick={() => setActiveTab('Finance')} className="text-xs font-bold text-indigo-600 hover:underline">Ledger</button>
+                    {/* Financial Summary */}
                  </div>
                  <div className="space-y-4">
-                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 cursor-pointer hover:bg-emerald-100/60 transition-colors" onClick={() => setActiveTab('Finance')}>
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
                        <div className="flex items-center justify-between mb-1">
                           <span className="text-[10px] font-black text-emerald-700 uppercase">Paid Inflow</span>
                           <CreditCard size={14} className="text-emerald-600" />
                        </div>
                        <p className="text-xl font-black text-emerald-900">Rs. {financialSummary.paid.toLocaleString()}</p>
                     </div>
-                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 cursor-pointer hover:bg-rose-100/60 transition-colors" onClick={() => setActiveTab('Finance')}>
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-100">
                        <div className="flex items-center justify-between mb-1">
                           <span className="text-[10px] font-black text-rose-700 uppercase">Outstanding</span>
                           <AlertCircle size={14} className="text-rose-600" />
@@ -828,7 +830,6 @@ function AdminApp() {
     { key: 'Users', label: 'Users', icon: UsersIcon },
     { key: 'Freelancers', label: 'Freelancer Hub', icon: UsersIcon },
     { key: 'ToDo', label: 'To Do', icon: CheckSquare },
-    { key: 'Finance', label: 'Finance', icon: DollarSign },
     { key: 'Compliance', label: 'Compliance', icon: CalendarCheck },
     { key: 'ITChecklist', label: 'IT Checklist', icon: FileText },
     { key: 'Performance', label: 'Performance', icon: BarChart3 },
@@ -1075,7 +1076,12 @@ function AdminApp() {
                   onClick={() => { 
                     setActiveTab(item.key); 
                     setMobileSidebarOpen(false); 
-                    if (item.key !== 'Orders') setSelectedOrderId(null); 
+                    if (item.key === 'Orders') {
+                      setSelectedOrderId(null);
+                      setOrderFilter('All');
+                    } else {
+                      setSelectedOrderId(null);
+                    }
                   }} 
                   title={sidebarCollapsed ? item.label : undefined}
                   className={`w-full px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 transition ${
