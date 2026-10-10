@@ -58,13 +58,18 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onBackToDashboard, o
         amountInWords: ''
     };
 
-    // Bank Details
+    // Bank Details & Payment Collection
     const bankDetails = company?.bankDetails || {};
     const bankName = bankDetails.bankName || 'HDFC Bank';
     const bankAccount = bankDetails.accountNumber || '50200012345678';
     const bankIfsc = bankDetails.ifscCode || 'HDFC0001234';
     const bankBranch = bankDetails.accountName ? `${bankDetails.accountName} A/c` : 'Main Branch';
-    const upiId = company?.upiId || '';
+    const upiId = company?.upiId || selectedInvoice?.upiId || '';
+    
+    // QR Code & Signature
+    const rawQr = company?.qrCode || selectedInvoice?.qrCode || selectedInvoice?.company?.qrCode || '';
+    const qrCode = rawQr || (upiId && isSales ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${upiId}&pn=${encodeURIComponent(supplierName)}&am=${summary.totalAmount}&cu=INR`)}` : '');
+    const signature = company?.signature || selectedInvoice?.signature || selectedInvoice?.company?.signature || '';
 
     // Terms
     const defaultTerms = [
@@ -263,17 +268,26 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onBackToDashboard, o
 
                     {/* Voucher Summary & Amount in Words */}
                     <div className="grid grid-cols-12 border border-slate-900 rounded-xl overflow-hidden">
-                        <div className="col-span-7 p-3 border-r border-slate-300 bg-slate-50/30 flex flex-col justify-between space-y-2">
-                            <div>
-                                <span className="font-bold text-slate-600 uppercase tracking-wider text-[10px]">Amount in Words:</span>
-                                <p className="font-black text-slate-900 italic text-xs mt-0.5 capitalize">
-                                    {summary.amountInWords || 'Rupees Zero Only'}
-                                </p>
+                        <div className="col-span-7 p-3 border-r border-slate-300 bg-slate-50/30 flex justify-between gap-2">
+                            <div className="flex flex-col justify-between space-y-2 flex-1">
+                                <div>
+                                    <span className="font-bold text-slate-600 uppercase tracking-wider text-[10px]">Amount in Words:</span>
+                                    <p className="font-black text-slate-900 italic text-xs mt-0.5 capitalize">
+                                        {summary.amountInWords || 'Rupees Zero Only'}
+                                    </p>
+                                </div>
+                                <div className="border-t border-slate-200 pt-2 text-[10px] text-slate-600">
+                                    <span className="font-bold text-slate-700">Bank / Payment Account: </span>
+                                    {bankName} (A/c: {bankAccount})
+                                    {upiId && <span className="block font-bold text-indigo-700">UPI: {upiId}</span>}
+                                </div>
                             </div>
-                            <div className="border-t border-slate-200 pt-2 text-[10px] text-slate-600">
-                                <span className="font-bold text-slate-700">Bank / Payment Account: </span>
-                                {bankName} (A/c: {bankAccount})
-                            </div>
+                            {qrCode && (
+                                <div className="flex flex-col items-center justify-center p-1 bg-white border border-slate-200 rounded-lg shrink-0 self-center">
+                                    <img src={qrCode} alt="Payment QR" className="w-14 h-14 object-contain rounded" />
+                                    <span className="text-[7px] font-black text-slate-600 uppercase tracking-tight mt-0.5">Scan to Pay</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="col-span-5 p-3 space-y-1.5 text-xs bg-slate-50/60">
@@ -515,18 +529,26 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onBackToDashboard, o
 
                     {/* Footer: Bank Details, Terms & Conditions, Declaration, Authorized Signatory */}
                     <div className="grid grid-cols-12 border-x-2 border-b-2 border-slate-900 rounded-b-xl">
-                        {/* Bank Details */}
-                        <div className="col-span-5 p-3 border-r border-slate-300 space-y-1.5 bg-white">
-                            <div className="font-black text-slate-900 uppercase tracking-wider text-[10.5px] border-b border-slate-200 pb-1">
-                                BANK DETAILS
+                        {/* Bank Details & QR Code */}
+                        <div className="col-span-5 p-3 border-r border-slate-300 bg-white flex justify-between items-start gap-2">
+                            <div className="space-y-1 flex-1">
+                                 <div className="font-black text-slate-900 uppercase tracking-wider text-[10.5px] border-b border-slate-200 pb-1">
+                                     BANK DETAILS
+                                 </div>
+                                 <div className="space-y-0.5 text-[10px]">
+                                     <p><span className="font-bold text-slate-700">Bank Name:</span> {bankName}</p>
+                                     <p><span className="font-bold text-slate-700">Account No.:</span> <span className="font-mono font-bold">{bankAccount}</span></p>
+                                     <p><span className="font-bold text-slate-700">IFSC Code:</span> <span className="font-mono font-bold">{bankIfsc}</span></p>
+                                     <p><span className="font-bold text-slate-700">Branch:</span> {bankBranch}</p>
+                                     {upiId && <p><span className="font-bold text-slate-700">UPI ID:</span> <span className="font-mono font-bold text-indigo-700">{upiId}</span></p>}
+                                 </div>
                             </div>
-                            <div className="space-y-0.5 text-[10px]">
-                                <p><span className="font-bold text-slate-700">Bank Name:</span> {bankName}</p>
-                                <p><span className="font-bold text-slate-700">Account No.:</span> <span className="font-mono font-bold">{bankAccount}</span></p>
-                                <p><span className="font-bold text-slate-700">IFSC Code:</span> <span className="font-mono font-bold">{bankIfsc}</span></p>
-                                <p><span className="font-bold text-slate-700">Branch:</span> {bankBranch}</p>
-                                {upiId && <p><span className="font-bold text-slate-700">UPI ID:</span> <span className="font-mono font-bold text-indigo-700">{upiId}</span></p>}
-                            </div>
+                            {qrCode && (
+                                <div className="flex flex-col items-center justify-center p-1.5 bg-slate-50 border border-slate-300 rounded-xl shrink-0 self-center">
+                                    <img src={qrCode} alt="Payment QR" className="w-16 h-16 object-contain rounded" />
+                                    <span className="text-[7.5px] font-black text-slate-700 mt-0.5 uppercase tracking-tight">Scan to Pay</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Terms and Conditions */}
@@ -551,8 +573,8 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onBackToDashboard, o
                                 </p>
                             </div>
                             <div className="col-span-4 text-center space-y-2 flex flex-col justify-end items-center">
-                                {company?.signature ? (
-                                    <img src={company.signature} alt="Signature" className="h-10 object-contain mx-auto" />
+                                {signature ? (
+                                    <img src={signature} alt="Signature" className="h-10 object-contain mx-auto" />
                                 ) : (
                                     <div className="h-10"></div>
                                 )}

@@ -125,19 +125,28 @@ const GSTInvoiceTemplate = ({ data }) => {
 
             {/* Footer / Bank Details */}
             <div className="grid grid-cols-2 gap-12 pt-8 border-t border-slate-100">
-                <div>
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Bank Details:</h4>
-                    <div className="text-[10px] space-y-1 text-slate-600 font-bold">
-                        <p>Bank: HDFC BANK LTD</p>
-                        <p>A/c Name: VR HERE BUSINESS MANAGEMENT SOLUTIONS PVT LTD</p>
-                        <p>A/c No: 50200085306060</p>
-                        <p>IFSC: HDFC0000240</p>
-                        <p>Branch: TIRUPATI</p>
+                <div className="flex justify-between items-start gap-4">
+                    <div>
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Bank Details:</h4>
+                        <div className="text-[10px] space-y-1 text-slate-600 font-bold">
+                            <p>Bank: {data.bankName || 'HDFC BANK LTD'}</p>
+                            <p>A/c Name: {data.accountName || 'VR HERE BUSINESS MANAGEMENT SOLUTIONS PVT LTD'}</p>
+                            <p>A/c No: {data.accountNumber || '50200085306060'}</p>
+                            <p>IFSC: {data.ifsc || 'HDFC0000240'}</p>
+                            <p>Branch: {data.branch || 'TIRUPATI'}</p>
+                            {data.upiId && <p>UPI ID: {data.upiId}</p>}
+                        </div>
+                        {notes && (
+                            <div className="mt-6">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes:</h4>
+                                <p className="text-[10px] text-slate-500 font-medium leading-relaxed">{notes}</p>
+                            </div>
+                        )}
                     </div>
-                    {notes && (
-                        <div className="mt-6">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes:</h4>
-                            <p className="text-[10px] text-slate-500 font-medium leading-relaxed">{notes}</p>
+                    {data.qrCode && (
+                        <div className="flex flex-col items-center justify-center p-2 bg-slate-50 border border-slate-200 rounded-xl shrink-0">
+                            <img src={data.qrCode} alt="Payment QR" className="w-20 h-20 object-contain rounded" />
+                            <span className="text-[8px] font-bold text-slate-500 uppercase mt-1">Scan & Pay</span>
                         </div>
                     )}
                 </div>
