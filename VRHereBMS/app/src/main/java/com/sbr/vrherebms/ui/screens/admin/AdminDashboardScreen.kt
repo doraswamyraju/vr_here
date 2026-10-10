@@ -89,361 +89,104 @@ fun AdminDashboardScreen(
     val textMuted = Color(0xFF64748B)
     val boardBackground = Color(0xFFF1F5F9) // Sleek slate backdrop
 
+    val pendingOrdersCount = adminViewModel.orders.count {
+        val s = it.status.lowercase()
+        s.contains("pending") || s.contains("processing")
+    }
+
+    val dockItems = remember(pendingOrdersCount) {
+        listOf(
+            com.sbr.vrherebms.ui.components.DockItem("Dashboard", "Overview", Icons.Default.PieChart),
+            com.sbr.vrherebms.ui.components.DockItem("Orders", "Orders", Icons.Default.Layers, badgeCount = if (pendingOrdersCount > 0) pendingOrdersCount else null),
+            com.sbr.vrherebms.ui.components.DockItem("CRM", "CRM", Icons.Default.Hub),
+            com.sbr.vrherebms.ui.components.DockItem("HRMS", "HRMS", Icons.Default.Badge),
+            com.sbr.vrherebms.ui.components.DockItem("Users", "Users", Icons.Default.Group)
+        )
+    }
+
+    val sidebarItems = remember {
+        listOf(
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Dashboard", "Dashboard Summary", Icons.Default.PieChart),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Orders", "Manage Orders", Icons.Default.Layers),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("CRM", "Customer CRM", Icons.Default.Hub),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("HRMS", "HRMS Portal", Icons.Default.Badge),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Users", "Users", Icons.Default.Group),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Todo", "Tasks Board", Icons.Default.CheckCircle),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Compliance", "Compliance Panel", Icons.Default.AssignmentTurnedIn),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Bookkeeping", "Bookkeeping Desk", Icons.Default.MenuBook),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Performance", "Performance Metrics", Icons.Default.TrendingUp),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Reports", "Business Reports", Icons.Default.Assessment),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Notifications", "Admin Notifications", Icons.Default.Notifications),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("KB", "KB Hub", Icons.Default.Book),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Support", "Client Support", Icons.Default.Email),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Services", "Services Master", Icons.Default.Settings),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Referral", "Referral Ledger", Icons.Default.Share),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Recurring", "Recurring Hub", Icons.Default.Loop),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Freelancers", "Freelancer Hub", Icons.Default.PeopleOutline),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("ITChecklist", "IT Checklist", Icons.Default.Description),
+            com.sbr.vrherebms.ui.components.BMSSidebarItem("Settings", "Global Settings", Icons.Default.SettingsApplications)
+        )
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = Color(0xFF0F172A),
-                drawerShape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
-                modifier = Modifier.width(300.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp)
-                ) {
-                    // Header
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .background(Color(0xFF3B82F6), RoundedCornerShape(8.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("VR", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
-                        }
-                        Column {
-                            Text(
-                                text = "VR HERE",
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 0.5.sp
-                            )
-                            Text(
-                                text = "Admin Operations Center",
-                                color = Color(0xFF94A3B8),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Divider(color = Color.White.copy(alpha = 0.1f))
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Menu items
-                    val menuItems = listOf(
-                        Triple("Dashboard", Icons.Default.Dashboard, "Studio Overview"),
-                        Triple("Orders", Icons.Default.Layers, "Project Pipeline"),
-                        Triple("Users", Icons.Default.Group, "User Directory"),
-                        Triple("Todo", Icons.Default.CheckCircle, "Tasks Board"),
-                        Triple("Finance", Icons.Default.AttachMoney, "Finance Ledger"),
-                        Triple("Compliance", Icons.Default.Assignment, "Compliance Panel"),
-                        Triple("Performance", Icons.Default.TrendingUp, "Performance Metrics"),
-                        Triple("HRMS", Icons.Default.Badge, "HRMS Portal"),
-                        Triple("Reports", Icons.Default.Assessment, "Business Reports"),
-                        Triple("Notifications", Icons.Default.Notifications, "Admin Notifications"),
-                        Triple("CRM", Icons.Default.Hub, "CRM Dashboard"),
-                        Triple("KB", Icons.Default.Book, "KB Hub"),
-                        Triple("Support", Icons.Default.Email, "Client Support"),
-                        Triple("Services", Icons.Default.Settings, "Services Master"),
-                        Triple("Referral", Icons.Default.Share, "Referral Ledger"),
-                        Triple("Recurring", Icons.Default.Loop, "Recurring Hub"),
-                        Triple("Freelancers", Icons.Default.People, "Freelancer Hub"),
-                        Triple("ITChecklist", Icons.Default.Description, "IT Checklist"),
-                        Triple("Settings", Icons.Default.SettingsApplications, "Global Settings")
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        menuItems.forEach { (tabId, icon, label) ->
-                            val isSelected = activeTab == tabId
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        if (isSelected) Color(0xFF1E293B) else Color.Transparent,
-                                        RoundedCornerShape(12.dp)
-                                    )
-                                    .clickable {
-                                        activeTab = tabId
-                                        scope.launch { drawerState.close() }
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = label,
-                                    tint = if (isSelected) Color(0xFF3B82F6) else Color(0xFF94A3B8),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = label,
-                                    color = if (isSelected) Color.White else Color(0xFFCBD5E1),
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-
-                    // Logout option
-                    Divider(color = Color.White.copy(alpha = 0.1f))
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                scope.launch { drawerState.close() }
-                                onLogout()
-                            }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Logout",
-                            tint = Color(0xFFEF4444),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = "Sign Out",
-                            color = Color(0xFFEF4444),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
+            com.sbr.vrherebms.ui.components.BMSAppSidebar(
+                userName = userName,
+                roleName = "System Administrator",
+                menuItems = sidebarItems,
+                activeTab = activeTab,
+                onTabSelected = { activeTab = it },
+                onLogout = onLogout,
+                onClose = { scope.launch { drawerState.close() } }
+            )
         }
     ) {
         Scaffold(
-        topBar = {
-            Surface(
-                color = Color.White,
-                tonalElevation = 2.dp,
-                border = BorderStroke(1.dp, Color(0xFFEEF2F6))
-            ) {
+            topBar = {
                 Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .statusBarsPadding()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // 1. Hamburger menu in rounded box
-                        Card(
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize().clickable {
-                                    scope.launch {
-                                        drawerState.open()
-                                    }
-                                },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.Menu, contentDescription = "Menu", tint = textDark, modifier = Modifier.size(20.dp))
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        // 2. Title header text
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { activeTab = "Dashboard" }
-                        ) {
-                            Text(
-                                text = "VR Here Admin Panel",
-                                fontSize = 11.sp,
-                                color = textMuted,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = activeTab,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = textDark
-                            )
-                        }
-
-                        // 3. Notification box with Badge
-                        val unreadCount = adminViewModel.notifications.count { !it.isRead }
-                        Card(
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize().clickable {
-                                    showNotificationsDialog = true
-                                },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = textDark, modifier = Modifier.size(20.dp))
-                                // Red notification badge showing count
-                                if (unreadCount > 0) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(2.dp)
-                                            .size(16.dp)
-                                            .background(primaryRed, CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = unreadCount.toString(),
-                                            color = Color.White,
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // 4. Refresh button in rounded box
-                        Card(
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize().clickable {
-                                    adminViewModel.syncDashboardData()
-                                },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = textDark, modifier = Modifier.size(20.dp))
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // 5. Blue avatar box (User profile/Logout trigger)
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFF3B82F6), CircleShape)
-                                .clickable {
-                                    onLogout()
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = userName.take(1).uppercase(),
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
-                            )
-                        }
-                    }
-
-                    // Dynamic Loading Bar
+                    com.sbr.vrherebms.ui.components.VRHeader(
+                        title = "ADMIN PANEL",
+                        showMenu = true,
+                        onMenuClick = { scope.launch { drawerState.open() } },
+                        showBack = activeTab != "Dashboard",
+                        onBackClick = { activeTab = "Dashboard" },
+                        onLogoClick = { activeTab = "Dashboard" },
+                        showNotifications = true,
+                        hasUnreadNotifications = adminViewModel.notifications.any { !it.isRead },
+                        unreadNotificationsCount = adminViewModel.notifications.count { !it.isRead },
+                        onNotificationsClick = { showNotificationsDialog = true },
+                        showLogout = true,
+                        onLogoutClick = onLogout
+                    )
                     if (adminViewModel.isLoading) {
                         LinearProgressIndicator(
                             color = Color(0xFF6366F1),
-                            modifier = Modifier.fillMaxWidth().height(3.dp)
+                            modifier = Modifier.fillMaxWidth().height(2.5.dp)
                         )
                     }
                 }
+            },
+            bottomBar = {
+                com.sbr.vrherebms.ui.components.BMSAppFloatingDock(
+                    activeTab = activeTab,
+                    dockItems = dockItems,
+                    onTabSelected = { activeTab = it }
+                )
+            },
+            floatingActionButton = {
+                com.sbr.vrherebms.ui.components.BMSQuickActionFAB(
+                    onNewOrder = { showNewOrderDialog = true },
+                    onNewTodo = { showNewTodoDialog = true }
+                )
             }
-        },
-        bottomBar = {
+        ) { paddingValues ->
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF1F5F9))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(boardBackground)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                        .background(Color(0xFA0F172A), RoundedCornerShape(28.dp))
-                        .border(1.dp, Color(0xFFFFFFFF).copy(alpha = 0.15f), RoundedCornerShape(28.dp))
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val navItems = listOf(
-                        Triple("Dashboard", Icons.Default.Dashboard, "Studio"),
-                        Triple("HRMS", Icons.Default.People, "HRMS")
-                    )
-
-                    navItems.forEach { (tabId, icon, label) ->
-                        val isSelected = activeTab == tabId
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { activeTab = tabId }
-                                .padding(vertical = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = label,
-                                tint = if (isSelected) Color(0xFF3B82F6) else Color(0xFF94A3B8),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text(
-                                text = label,
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color.White else Color(0xFF94A3B8).copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        floatingActionButton = {
-            if (activeTab == "Dashboard") {
-                FloatingActionButton(
-                    onClick = {
-                        showNewOrderDialog = true
-                    },
-                    containerColor = Color(0xFF4F46E5),
-                    contentColor = Color.White,
-                    shape = CircleShape
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add New", modifier = Modifier.size(28.dp))
-                }
-            }
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(boardBackground)
-        ) {
             when (activeTab) {
                 "Dashboard" -> {
                     AdminHomeTab(

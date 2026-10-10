@@ -3,6 +3,8 @@ import SwiftUI
 struct AdminOverviewTab: View {
     @ObservedObject var viewModel: AdminDashboardViewModel
     let userName: String
+    var onOpenNewOrder: (() -> Void)? = nil
+    var onOpenNewTodo: (() -> Void)? = nil
     let onNavigate: (String) -> Void
     
     // Status color helper matching web palette
@@ -91,8 +93,12 @@ struct AdminOverviewTab: View {
                         icon: "plus",
                         bgColor: Color(red: 0.06, green: 0.72, blue: 0.51) // Emerald
                     ) {
-                        viewModel.selectedOrderId = ""
-                        onNavigate("Orders")
+                        if let onOpenNewOrder = onOpenNewOrder {
+                            onOpenNewOrder()
+                        } else {
+                            viewModel.selectedOrderId = ""
+                            onNavigate("Orders")
+                        }
                     }
                     
                     quickActionVerticalButton(
@@ -100,7 +106,11 @@ struct AdminOverviewTab: View {
                         icon: "checkmark.square.fill",
                         bgColor: Color(red: 0.96, green: 0.62, blue: 0.08) // Amber
                     ) {
-                        onNavigate("Todo")
+                        if let onOpenNewTodo = onOpenNewTodo {
+                            onOpenNewTodo()
+                        } else {
+                            onNavigate("Todo")
+                        }
                     }
                     
                     quickActionVerticalButton(

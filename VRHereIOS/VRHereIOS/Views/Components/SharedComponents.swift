@@ -14,6 +14,10 @@ extension Color {
     static let slate400 = Color(red: 148/255, green: 163/255, blue: 184/255)
     static let emerald500 = Color(red: 16/255, green: 185/255, blue: 129/255)
     static let emerald400 = Color(red: 52/255, green: 211/255, blue: 153/255)
+    static let emeraldGreen = Color(red: 16/255, green: 185/255, blue: 129/255)
+    static let textPrimary = Color(red: 30/255, green: 41/255, blue: 59/255)
+    static let slateLight = Color(red: 241/255, green: 245/255, blue: 249/255)
+    static let slateDark = Color(red: 71/255, green: 85/255, blue: 105/255)
     static let indigo500 = Color(red: 99/255, green: 102/255, blue: 241/255)
     static let indigo400 = Color(red: 129/255, green: 140/255, blue: 248/255)
     

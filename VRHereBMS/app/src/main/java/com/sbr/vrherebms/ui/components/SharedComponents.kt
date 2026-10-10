@@ -1,5 +1,6 @@
 package com.sbr.vrherebms.ui.components
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
@@ -1319,5 +1320,406 @@ fun GlassCard(
                 .padding(16.dp),
             content = content
         )
+    }
+}
+
+/**
+ * 1:1 Floating Dark Pill Navigation Bar matching iOS & Web
+ */
+@Composable
+fun BMSAppFloatingDock(
+    activeTab: String,
+    dockItems: List<DockItem>,
+    onTabSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .background(Color(0xFA0F172A), RoundedCornerShape(32.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(32.dp))
+                .shadow(16.dp, RoundedCornerShape(32.dp), spotColor = Color.Black.copy(alpha = 0.35f))
+                .padding(horizontal = 6.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            dockItems.forEach { item ->
+                val isSelected = activeTab == item.id
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(26.dp))
+                        .background(
+                            if (isSelected) PrimaryRed else Color.Transparent
+                        )
+                        .clickable { onTabSelected(item.id) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(contentAlignment = Alignment.TopEnd) {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.label,
+                                tint = if (isSelected) Color.White else Color(0xFF94A3B8),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            if (item.badgeCount != null && item.badgeCount > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .offset(x = 8.dp, y = (-4).dp)
+                                        .background(PrimaryRed, CircleShape)
+                                        .border(1.dp, Color.White, CircleShape)
+                                        .padding(horizontal = 4.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = if (item.badgeCount > 99) "99+" else "${item.badgeCount}",
+                                        color = Color.White,
+                                        fontSize = 7.5.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = item.label,
+                            fontSize = 8.5.sp,
+                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold,
+                            color = if (isSelected) Color.White else Color(0xFF94A3B8)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 1:1 Speed-dial Floating Action Button matching Web & iOS QuickActionFAB
+ */
+@Composable
+fun BMSQuickActionFAB(
+    onNewOrder: () -> Unit,
+    onNewTodo: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isOpen by remember { mutableStateOf(false) }
+    val rotation by animateFloatAsState(
+        targetValue = if (isOpen) 45f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "FABRotation"
+    )
+
+    Column(
+        modifier = modifier.padding(end = 16.dp, bottom = 80.dp),
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        AnimatedVisibility(
+            visible = isOpen,
+            enter = fadeIn() + slideInVertically { it / 2 },
+            exit = fadeOut() + slideOutVertically { it / 2 }
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // 1. New Order Action
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.clickable {
+                        isOpen = false
+                        onNewOrder()
+                    }
+                ) {
+                    Surface(
+                        color = Color(0xCC000000),
+                        shape = RoundedCornerShape(8.dp),
+                        shadowElevation = 4.dp
+                    ) {
+                        Text(
+                            text = "New Order",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(Color(0xFF10B981), CircleShape)
+                            .shadow(6.dp, CircleShape, spotColor = Color(0xFF10B981)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AddShoppingCart,
+                            contentDescription = "New Order",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                // 2. New Task Action
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.clickable {
+                        isOpen = false
+                        onNewTodo()
+                    }
+                ) {
+                    Surface(
+                        color = Color(0xCC000000),
+                        shape = RoundedCornerShape(8.dp),
+                        shadowElevation = 4.dp
+                    ) {
+                        Text(
+                            text = "New Task",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(Color(0xFF3B82F6), CircleShape)
+                            .shadow(6.dp, CircleShape, spotColor = Color(0xFF3B82F6)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "New Task",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Main Toggle FAB
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(
+                    if (isOpen) Color(0xFF1E293B) else Color(0xFF4F46E5),
+                    CircleShape
+                )
+                .shadow(10.dp, CircleShape, spotColor = Color(0xFF4F46E5))
+                .clickable { isOpen = !isOpen },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Actions",
+                tint = Color.White,
+                modifier = Modifier
+                    .size(26.dp)
+                    .graphicsLayer { rotationZ = rotation }
+            )
+        }
+    }
+}
+
+/**
+ * 1:1 BMSSidebarItem and BMSAppSidebar matching iOS & Web
+ */
+data class BMSSidebarItem(
+    val id: String,
+    val label: String,
+    val icon: ImageVector,
+    val category: String? = null
+)
+
+@Composable
+fun BMSAppSidebar(
+    userName: String,
+    roleName: String = "System Administrator",
+    menuItems: List<BMSSidebarItem>,
+    activeTab: String,
+    onTabSelected: (String) -> Unit,
+    onLogout: () -> Unit,
+    onClose: () -> Unit
+) {
+    ModalDrawerSheet(
+        drawerContainerColor = Color(0xFF060A18),
+        drawerShape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+        modifier = Modifier.width(300.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(vertical = 16.dp)
+        ) {
+            // User Header Card
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .background(Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(
+                            Brush.linearGradient(listOf(Color(0xFF6366F1), Color(0xFF3B82F6))),
+                            CircleShape
+                        )
+                        .border(1.5.dp, Color.White.copy(alpha = 0.3f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = userName.take(1).uppercase().ifEmpty { "A" },
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = userName.ifEmpty { "Administrator" },
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = roleName,
+                        color = Color(0xFFA0AFC8),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color(0xFF94A3B8),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+
+            // Navigation List
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                menuItems.forEach { item ->
+                    val isSelected = activeTab == item.id
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSelected) {
+                                    Brush.horizontalGradient(listOf(Color(0xFF4F46E5), Color(0xFF2563EB)))
+                                } else {
+                                    Brush.horizontalGradient(listOf(Color.Transparent, Color.Transparent))
+                                }
+                            )
+                            .clickable {
+                                onTabSelected(item.id)
+                                onClose()
+                            }
+                            .padding(horizontal = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label,
+                            tint = if (isSelected) Color.White else Color(0xFFA0AFCD),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = item.label,
+                            color = if (isSelected) Color.White else Color(0xFFCBD5E1),
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (isSelected) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(Color(0xFF38BDF8), CircleShape)
+                            )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Sign Out Button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .background(Color(0x22EF4444), RoundedCornerShape(12.dp))
+                    .border(1.dp, Color(0x44EF4444), RoundedCornerShape(12.dp))
+                    .clickable {
+                        onClose()
+                        onLogout()
+                    }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Sign Out",
+                    tint = Color(0xFFFF6464),
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = "Sign Out",
+                    color = Color(0xFFFF6464),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }

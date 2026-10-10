@@ -452,6 +452,59 @@ interface VRHereAPI {
                         }
                         null
                     })
+                    .registerTypeAdapter(EmployeeResponse::class.java, com.google.gson.JsonDeserializer { json, _, _ ->
+                        if (json == null || json.isJsonNull) return@JsonDeserializer null
+                        if (json.isJsonPrimitive && json.asJsonPrimitive.isString) {
+                            return@JsonDeserializer EmployeeResponse(id = json.asString, name = "")
+                        }
+                        if (json.isJsonObject) {
+                            val obj = json.asJsonObject
+                            return@JsonDeserializer EmployeeResponse(
+                                id = obj.get("_id")?.takeIf { !it.isJsonNull }?.asString
+                                    ?: obj.get("id")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                name = obj.get("name")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                email = obj.get("email")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                phone = obj.get("phone")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                profilePhoto = obj.get("profilePhoto")?.takeIf { !it.isJsonNull }?.asString,
+                                role = obj.get("role")?.takeIf { !it.isJsonNull }?.asString ?: ""
+                            )
+                        }
+                        null
+                    })
+                    .registerTypeAdapter(PartnerMinRef::class.java, com.google.gson.JsonDeserializer { json, _, _ ->
+                        if (json == null || json.isJsonNull) return@JsonDeserializer null
+                        if (json.isJsonPrimitive && json.asJsonPrimitive.isString) {
+                            return@JsonDeserializer PartnerMinRef(id = json.asString)
+                        }
+                        if (json.isJsonObject) {
+                            val obj = json.asJsonObject
+                            return@JsonDeserializer PartnerMinRef(
+                                id = obj.get("_id")?.takeIf { !it.isJsonNull }?.asString
+                                    ?: obj.get("id")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                name = obj.get("name")?.takeIf { !it.isJsonNull }?.asString,
+                                email = obj.get("email")?.takeIf { !it.isJsonNull }?.asString,
+                                code = obj.get("code")?.takeIf { !it.isJsonNull }?.asString
+                            )
+                        }
+                        null
+                    })
+                    .registerTypeAdapter(PaymentOrderReference::class.java, com.google.gson.JsonDeserializer { json, _, _ ->
+                        if (json == null || json.isJsonNull) return@JsonDeserializer null
+                        if (json.isJsonPrimitive && json.asJsonPrimitive.isString) {
+                            return@JsonDeserializer PaymentOrderReference(id = json.asString)
+                        }
+                        if (json.isJsonObject) {
+                            val obj = json.asJsonObject
+                            return@JsonDeserializer PaymentOrderReference(
+                                id = obj.get("_id")?.takeIf { !it.isJsonNull }?.asString
+                                    ?: obj.get("id")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                serviceName = obj.get("serviceName")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                packageName = obj.get("packageName")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                status = obj.get("status")?.takeIf { !it.isJsonNull }?.asString ?: ""
+                            )
+                        }
+                        null
+                    })
                     .setLenient()
                     .create()
 

@@ -11,14 +11,12 @@ struct AdminDashboardView: View {
     @State private var showingToast = false
     @State private var toastMsg = ""
     @State private var isShowingNotifications = false
+    @State private var showCreateOrderSheet = false
+    @State private var showCreateTodoSheet = false
     @StateObject private var hrmsViewModel = HrmsViewModel()
     
     private var pendingOrdersCount: Int {
         adminViewModel.orders.filter { $0.status.lowercased() == "pending" || $0.status.lowercased() == "processing" }.count
-    }
-    
-    private var unreadTicketsCount: Int {
-        adminViewModel.tickets.filter { $0.status.lowercased() != "resolved" && $0.status.lowercased() != "closed" }.count
     }
     
     private var pendingLeavesCount: Int {
@@ -29,7 +27,7 @@ struct AdminDashboardView: View {
         [
             BMSDockItem(label: "Overview", iconName: "chart.pie", tabId: "Overview"),
             BMSDockItem(label: "Orders", iconName: "bag.badge.plus", tabId: "Orders", badgeCount: pendingOrdersCount),
-            BMSDockItem(label: "CRM", iconName: "ticket", tabId: "CRM", badgeCount: unreadTicketsCount),
+            BMSDockItem(label: "CRM", iconName: "person.crop.circle.badge.checkmark", tabId: "CRM"),
             BMSDockItem(label: "HRMS", iconName: "person.3", tabId: "HRMS", badgeCount: pendingLeavesCount),
             BMSDockItem(label: "Users", iconName: "person.badge.shield.checkmark", tabId: "Users")
         ]
@@ -72,7 +70,12 @@ struct AdminDashboardView: View {
                     Group {
                         switch activeTab {
                         case "Overview":
-                            AdminOverviewTab(viewModel: adminViewModel, userName: userName) { tab in
+                            AdminOverviewTab(
+                                viewModel: adminViewModel,
+                                userName: userName,
+                                onOpenNewOrder: { showCreateOrderSheet = true },
+                                onOpenNewTodo: { showCreateTodoSheet = true }
+                            ) { tab in
                                 activeTab = tab
                             }
                         case "Orders":
@@ -122,16 +125,10 @@ struct AdminDashboardView: View {
                         Spacer()
                         BMSQuickActionFAB(
                             onNewOrder: {
-                                withAnimation {
-                                    adminViewModel.selectedOrderId = ""
-                                    adminViewModel.selectedOrderFilter = "All"
-                                    activeTab = "Orders"
-                                }
+                                showCreateOrderSheet = true
                             },
                             onNewTodo: {
-                                withAnimation {
-                                    activeTab = "Todo"
-                                }
+                                showCreateTodoSheet = true
                             }
                         )
                     }
@@ -155,7 +152,7 @@ struct AdminDashboardView: View {
                     let sidebarItems = [
                         BMSSidebarItem(label: "Dashboard Summary", iconName: "chart.pie", tabId: "Overview"),
                         BMSSidebarItem(label: "Manage Orders", iconName: "bag", tabId: "Orders"),
-                        BMSSidebarItem(label: "Customer CRM", iconName: "ticket", tabId: "CRM"),
+                        BMSSidebarItem(label: "Customer CRM", iconName: "person.crop.circle.badge.checkmark", tabId: "CRM"),
                         BMSSidebarItem(label: "HRMS Portal", iconName: "person.3", tabId: "HRMS"),
                         BMSSidebarItem(label: "Users", iconName: "person.2.fill", tabId: "Users"),
                         BMSSidebarItem(label: "Tasks Board", iconName: "checkmark.circle", tabId: "Todo"),
@@ -217,6 +214,18 @@ struct AdminDashboardView: View {
                 onMarkAsRead: { adminViewModel.markNotificationAsRead(id: $0) },
                 onMarkAllAsRead: { adminViewModel.markAllNotificationsAsRead() },
                 onClose: { isShowingNotifications = false }
+            )
+        }
+        .sheet(isPresented: $showCreateOrderSheet) {
+            AdminCreateOrderSheet(
+                viewModel: adminViewModel,
+                onDismiss: { showCreateOrderSheet = false }
+            )
+        }
+        .sheet(isPresented: $showCreateTodoSheet) {
+            AdminCreateTodoSheet(
+                viewModel: adminViewModel,
+                onDismiss: { showCreateTodoSheet = false }
             )
         }
     }
