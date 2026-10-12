@@ -110,6 +110,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import customerReferralRoutes from './routes/customerReferralRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
 import offerRoutes from './routes/offerRoutes.js';
+import razorpayOAuthRoutes from './routes/razorpayOAuthRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 
 // Routes
@@ -118,7 +119,9 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/razorpay', razorpayOAuthRoutes);
 app.use('/api/notifications', notificationRoutes);
+
 app.use('/api/services', serviceMenuRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/timesheets', timesheetRoutes);
