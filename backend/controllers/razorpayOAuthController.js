@@ -73,9 +73,9 @@ export const handleOAuthCallback = async (req, res) => {
             client_secret: clientSecret,
             grant_type: 'authorization_code',
             redirect_uri: redirectUri,
-            code: code,
-            mode: mode
+            code: code
         });
+
 
         // Exchange authorization code for tokens
         const tokenResponse = await fetch('https://auth.razorpay.com/token', {
