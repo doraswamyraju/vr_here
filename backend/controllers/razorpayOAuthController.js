@@ -68,21 +68,24 @@ export const handleOAuthCallback = async (req, res) => {
             : 'http://localhost:5002/api/razorpay/callback';
         const mode = isProd ? 'live' : 'test';
 
+        const params = new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: 'authorization_code',
+            redirect_uri: redirectUri,
+            code: code,
+            mode: mode
+        });
+
         // Exchange authorization code for tokens
-        const tokenResponse = await fetch('https://api.razorpay.com/v1/oauth/token', {
+        const tokenResponse = await fetch('https://auth.razorpay.com/token', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: JSON.stringify({
-                client_id: clientId,
-                client_secret: clientSecret,
-                grant_type: 'authorization_code',
-                redirect_uri: redirectUri,
-                code: code,
-                mode: mode
-            })
+            body: params
         });
+
 
         const tokenData = await tokenResponse.json();
 
