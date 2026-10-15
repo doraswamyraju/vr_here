@@ -3,13 +3,15 @@ import {
     getUserDocuments,
     uploadUserDocument,
     deleteUserDocument,
-    verifyUserDocument
+    verifyUserDocument,
+    downloadDocumentFile
 } from '../controllers/documentController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
+router.get('/download', downloadDocumentFile);
 router.get('/', protect, getUserDocuments);
 router.post('/upload', protect, upload.single('document'), uploadUserDocument);
 router.delete('/:id', protect, deleteUserDocument);

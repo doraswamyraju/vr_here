@@ -147,8 +147,18 @@ app.use('/api/offers', offerRoutes);
 // Serve Frontend in Production
 
 
-// Ensure uploads folder is accessible
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Ensure uploads folder is accessible with CORS and direct download support
+app.use('/uploads', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+    if (req.query.download === '1' || req.query.download === 'true') {
+        const filename = req.query.name || path.basename(req.path);
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    }
+    next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../dist')));

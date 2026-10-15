@@ -1,8 +1,14 @@
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import asyncHandler from 'express-async-handler';
 import UserDocument from '../models/UserDocument.js';
 import User from '../models/User.js';
 import { uploadBufferToDrive, getCustomerDriveFolder } from '../services/googleDriveService.js';
 import { triggerNotification } from '../services/notificationService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // @desc    Get user's profile document vault records
 // @route   GET /api/documents
@@ -132,4 +138,38 @@ export const verifyUserDocument = asyncHandler(async (req, res) => {
         message: `Document status updated to ${status}`,
         data: documentRecord
     });
+});
+
+// @desc    Download document file with forced Content-Disposition attachment header
+// @route   GET /api/documents/download
+// @access  Public / Authenticated
+export const downloadDocumentFile = asyncHandler(async (req, res) => {
+    const { url, name } = req.query;
+    if (!url) {
+        return res.status(400).json({ message: 'Document URL is required' });
+    }
+
+    const filename = name || 'document';
+
+    // 1. Local /uploads/ files
+    if (url.startsWith('/uploads/')) {
+        const cleanPath = url.replace('/uploads/', '').split('?')[0];
+        const uploadsDir = path.resolve(__dirname, '../uploads');
+        const filePath = path.join(uploadsDir, cleanPath);
+        if (fs.existsSync(filePath)) {
+            return res.download(filePath, filename);
+        }
+        return res.status(404).json({ message: 'File not found on server' });
+    }
+
+    // 2. Google Drive files: redirect to export=download
+    if (url.includes('drive.google.com/file/d/')) {
+        const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+            return res.redirect(`https://drive.google.com/uc?export=download&id=${match[1]}`);
+        }
+    }
+
+    // 3. Fallback: redirect to original URL
+    res.redirect(url);
 });

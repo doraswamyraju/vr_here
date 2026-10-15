@@ -390,19 +390,80 @@ const OrdersModule = ({
     }
   };
 
-  const handleDownloadAllDocs = () => {
-    if (!selectedOrder) return;
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+
+  const downloadSingleFile = async (url, name) => {
+    if (!url) return;
+    let filename = (name || 'document').trim();
+
+    // 1. Resolve proper extension if missing
+    if (!filename.includes('.')) {
+      try {
+        const cleanPath = url.split('?')[0].split('#')[0];
+        const lastDot = cleanPath.lastIndexOf('.');
+        if (lastDot !== -1) {
+          const ext = cleanPath.substring(lastDot);
+          if (ext && ext.length <= 6 && ext.startsWith('.')) {
+            filename += ext;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. Google Drive links conversion
+    let directUrl = url;
+    if (url.includes('drive.google.com/file/d/')) {
+      const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        directUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+      }
+    } else if (url.startsWith('/uploads/')) {
+      directUrl = `/api/documents/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`;
+    }
+
+    // 3. Attempt blob fetch (guarantees direct file download without opening tabs)
+    try {
+      const response = await fetch(directUrl);
+      if (response.ok) {
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
+        return;
+      }
+    } catch (err) {
+      console.warn(`[Download] Direct blob fetch failed for ${filename}, falling back:`, err);
+    }
+
+    // 4. Fallback: anchor without target="_blank"
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = directUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleDownloadAllDocs = async () => {
+    if (!selectedOrder || isDownloadingAll) return;
     const urls = [];
     
     if (selectedOrder.finalCertificateUrl) {
-      urls.push({ name: 'Final_Certificate', url: selectedOrder.finalCertificateUrl });
+      urls.push({ name: 'Final_Certificate.pdf', url: selectedOrder.finalCertificateUrl });
     }
     
     (selectedOrder.customerRequirements || []).forEach(r => {
       if (r.documents && r.documents.length > 0) {
         r.documents.forEach((doc, idx) => {
           if (doc.url) {
-            urls.push({ name: `${r.title || 'Requirement'}_${idx + 1}`, url: doc.url });
+            urls.push({ name: doc.name || `${r.title || 'Requirement'}_${idx + 1}`, url: doc.url });
           }
         });
       } else if (r.uploadedDocumentUrl) {
@@ -439,11 +500,11 @@ const OrdersModule = ({
         if (r.documents && r.documents.length > 0) {
           r.documents.forEach((doc, dIdx) => {
             if (doc.documentUrl) {
-              urls.push({ name: `${r.description}_${dIdx + 1}`, url: doc.documentUrl });
+              urls.push({ name: doc.originalFileName || `${r.description}_${dIdx + 1}`, url: doc.documentUrl });
             }
           });
         } else if (r.documentUrl) {
-          urls.push({ name: r.description, url: r.documentUrl });
+          urls.push({ name: r.originalFileName || r.description, url: r.documentUrl });
         }
       });
     }
@@ -453,18 +514,19 @@ const OrdersModule = ({
       return;
     }
 
-    // Trigger download for each URL with a short delay to bypass browser blocking
-    urls.forEach((item, index) => {
-      setTimeout(() => {
-        const a = document.createElement('a');
-        a.href = item.url;
-        a.target = '_blank';
-        a.download = item.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }, index * 400);
-    });
+    setIsDownloadingAll(true);
+    try {
+      for (let i = 0; i < urls.length; i++) {
+        await downloadSingleFile(urls[i].url, urls[i].name);
+        if (i < urls.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 350));
+        }
+      }
+    } catch (err) {
+      console.error('Batch download failed:', err);
+    } finally {
+      setIsDownloadingAll(false);
+    }
   };
 
   useEffect(() => {
@@ -913,9 +975,11 @@ const OrdersModule = ({
                     </h4>
                     <button
                       onClick={handleDownloadAllDocs}
-                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+                      disabled={isDownloadingAll}
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
                     >
-                      <Download size={14} /> Download All
+                      <Download size={14} className={isDownloadingAll ? 'animate-bounce' : ''} />
+                      {isDownloadingAll ? 'Downloading...' : 'Download All'}
                     </button>
                   </div>
                   
@@ -926,9 +990,18 @@ const OrdersModule = ({
                           <p className="text-xs font-black text-slate-900">Final Incorporation Certificate</p>
                           <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Deliverable</p>
                         </div>
-                        <a href={selectedOrder.finalCertificateUrl} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
-                          <Eye size={16} />
-                        </a>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => downloadSingleFile(selectedOrder.finalCertificateUrl, 'Final_Certificate.pdf')}
+                            title="Direct Download"
+                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition shadow-sm"
+                          >
+                            <Download size={16} />
+                          </button>
+                          <a href={selectedOrder.finalCertificateUrl} target="_blank" rel="noreferrer" title="View in Browser" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                            <Eye size={16} />
+                          </a>
+                        </div>
                       </div>
                     )}
                     {(selectedOrder.customerRequirements || []).flatMap((item) => {
@@ -954,9 +1027,18 @@ const OrdersModule = ({
                           <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.title}</p>
                           <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{doc.type}</p>
                         </div>
-                        <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
-                          <Eye size={16} />
-                        </a>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => downloadSingleFile(doc.url, doc.title)}
+                            title="Direct Download"
+                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition shadow-sm"
+                          >
+                            <Download size={16} />
+                          </button>
+                          <a href={doc.url} target="_blank" rel="noreferrer" title="View in Browser" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                            <Eye size={16} />
+                          </a>
+                        </div>
                       </div>
                     ))}
                     {(() => {
@@ -979,9 +1061,18 @@ const OrdersModule = ({
                               <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
                               <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Client Uploaded Doc</p>
                             </div>
-                            <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
-                              <Eye size={16} />
-                            </a>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => downloadSingleFile(doc.url, doc.name)}
+                                title="Direct Download"
+                                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition shadow-sm"
+                              >
+                                <Download size={16} />
+                              </button>
+                              <a href={doc.url} target="_blank" rel="noreferrer" title="View in Browser" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                                <Eye size={16} />
+                              </a>
+                            </div>
                           </div>
                         ));
                     })()}
@@ -1002,9 +1093,18 @@ const OrdersModule = ({
                             <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
                             <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">ITR Checklist Upload</p>
                           </div>
-                          <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
-                            <Eye size={16} />
-                          </a>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => downloadSingleFile(doc.url, doc.name)}
+                              title="Direct Download"
+                              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition shadow-sm"
+                            >
+                              <Download size={16} />
+                            </button>
+                            <a href={doc.url} target="_blank" rel="noreferrer" title="View in Browser" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                              <Eye size={16} />
+                            </a>
+                          </div>
                         </div>
                       ));
                     })}
@@ -1015,9 +1115,18 @@ const OrdersModule = ({
                           <p className="text-xs font-black text-slate-900 truncate max-w-[200px]">{doc.name}</p>
                           <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Staff Uploaded Doc</p>
                         </div>
-                        <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
-                          <Eye size={16} />
-                        </a>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => downloadSingleFile(doc.url, doc.name)}
+                            title="Direct Download"
+                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition shadow-sm"
+                          >
+                            <Download size={16} />
+                          </button>
+                          <a href={doc.url} target="_blank" rel="noreferrer" title="View in Browser" className="p-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-600 transition shadow-sm">
+                            <Eye size={16} />
+                          </a>
+                        </div>
                       </div>
                     ))}
                     {!selectedOrder.finalCertificateUrl && 
