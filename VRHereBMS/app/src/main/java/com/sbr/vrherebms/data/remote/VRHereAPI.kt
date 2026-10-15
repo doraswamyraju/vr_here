@@ -3,12 +3,15 @@ package com.sbr.vrherebms.data.remote
 import android.content.Context
 import com.sbr.vrherebms.data.local.SessionManager
 import com.sbr.vrherebms.data.model.*
+import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
+import java.net.InetAddress
+import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 interface VRHereAPI {
@@ -540,6 +543,22 @@ interface VRHereAPI {
         @Body body: Map<String, String?>
     ): Response<OrderResponse>
 
+    class ResilientDns : Dns {
+        override fun lookup(hostname: String): List<InetAddress> {
+            try {
+                return Dns.SYSTEM.lookup(hostname)
+            } catch (e: UnknownHostException) {
+                // If local router / ISP DNS times out or fails, resolve vrhere.in directly to the server IP
+                if (hostname.equals("vrhere.in", ignoreCase = true) || hostname.equals("www.vrhere.in", ignoreCase = true)) {
+                    try {
+                        return listOf(InetAddress.getByName("147.93.107.21"))
+                    } catch (_: Exception) {}
+                }
+                throw e
+            }
+        }
+    }
+
     companion object {
         // base URL pointing directly to the live website database
         var BASE_URL = "https://vrhere.in/"
@@ -554,6 +573,7 @@ interface VRHereAPI {
                 }
 
                 val okHttpClient = OkHttpClient.Builder()
+                    .dns(ResilientDns())
                     .addInterceptor(AuthInterceptor(sessionManager))
                     .addInterceptor(loggingInterceptor)
                     .connectTimeout(30, TimeUnit.SECONDS)

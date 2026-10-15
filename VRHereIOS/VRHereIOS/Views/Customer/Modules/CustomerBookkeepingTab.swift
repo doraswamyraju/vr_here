@@ -305,6 +305,10 @@ struct CustomerBookkeepingTab: View {
                     },
                     onSubmit: { payload in
                         saveTransaction(payload, type: type)
+                    },
+                    onPartyCreated: { newParty in
+                        self.parties.removeAll { $0._id == newParty._id && newParty._id != nil }
+                        self.parties.insert(newParty, at: 0)
                     }
                 )
             }

@@ -22,10 +22,14 @@ public struct PartyFormBottomSheet: View {
 
     public init(
         existingParty: PartyDto? = nil,
+        initialName: String = "",
+        initialPartyType: String = "Customer",
         onDismiss: @escaping () -> Void,
         onSubmit: @escaping (PartyDto) -> Void
     ) {
         self.existingParty = existingParty
+        self._partyType = State(initialValue: existingParty?.partyType ?? initialPartyType)
+        self._name = State(initialValue: existingParty?.name ?? initialName)
         self.onDismiss = onDismiss
         self.onSubmit = onSubmit
     }
@@ -231,14 +235,13 @@ public struct PartyFormBottomSheet: View {
                 }
             }
         }
-        .sheet(isPresented: $showContactPicker) {
-            CNContactPickerBridge { pickedName, pickedPhone, pickedEmail in
+        .background(
+            ContactPickerPresenter(isPresented: $showContactPicker) { pickedName, pickedPhone, pickedEmail in
                 if !pickedName.isEmpty { name = pickedName }
                 if !pickedPhone.isEmpty { phone = pickedPhone }
                 if !pickedEmail.isEmpty { email = pickedEmail }
-                showContactPicker = false
             }
-        }
+        )
         .onAppear {
             if let existing = existingParty {
                 partyType = existing.partyType
@@ -283,26 +286,53 @@ public struct PartyFormBottomSheet: View {
     }
 }
 
-// MARK: - Native Contact Picker Bridge
+// MARK: - Native Contact Picker Presenter (Safe Modal Presentation)
 
-struct CNContactPickerBridge: UIViewControllerRepresentable {
+struct ContactPickerPresenter: UIViewControllerRepresentable {
+    @Binding var isPresented: Bool
     var onSelect: (String, String, String) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
-    func makeUIViewController(context: Context) -> CNContactPickerViewController {
-        let picker = CNContactPickerViewController()
-        picker.delegate = context.coordinator
-        return picker
+    func makeUIViewController(context: Context) -> UIViewController {
+        let vc = UIViewController()
+        vc.view.backgroundColor = .clear
+        return vc
     }
 
-    func updateUIViewController(_ uiViewController: CNContactPickerViewController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        if isPresented {
+            guard uiViewController.presentedViewController == nil else { return }
+            let picker = CNContactPickerViewController()
+            picker.delegate = context.coordinator
+
+            DispatchQueue.main.async {
+                if uiViewController.view.window != nil {
+                    uiViewController.present(picker, animated: true)
+                } else if let window = UIApplication.shared.connectedScenes
+                    .compactMap({ $0 as? UIWindowScene })
+                    .flatMap({ $0.windows })
+                    .first(where: { $0.isKeyWindow }),
+                    let root = window.rootViewController {
+                    var presenter = root
+                    while let next = presenter.presentedViewController {
+                        presenter = next
+                    }
+                    presenter.present(picker, animated: true)
+                }
+            }
+        } else {
+            if let presented = uiViewController.presentedViewController as? CNContactPickerViewController {
+                presented.dismiss(animated: true)
+            }
+        }
+    }
 
     class Coordinator: NSObject, CNContactPickerDelegate {
-        var parent: CNContactPickerBridge
-        init(_ parent: CNContactPickerBridge) { self.parent = parent }
+        var parent: ContactPickerPresenter
+        init(_ parent: ContactPickerPresenter) { self.parent = parent }
 
         func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
             let fullName = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
@@ -310,6 +340,13 @@ struct CNContactPickerBridge: UIViewControllerRepresentable {
             let email = (contact.emailAddresses.first?.value as String?) ?? ""
             DispatchQueue.main.async {
                 self.parent.onSelect(fullName, phone, email)
+                self.parent.isPresented = false
+            }
+        }
+
+        func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
+            DispatchQueue.main.async {
+                self.parent.isPresented = false
             }
         }
     }

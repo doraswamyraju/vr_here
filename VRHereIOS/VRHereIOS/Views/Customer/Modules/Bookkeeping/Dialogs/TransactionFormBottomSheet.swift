@@ -6,6 +6,12 @@ public struct TransactionFormBottomSheet: View {
     public let parties: [PartyDto]
     public let onDismiss: () -> Void
     public let onSubmit: (TransactionDto) -> Void
+    public let onPartyCreated: ((PartyDto) -> Void)?
+
+    @State private var localParties: [PartyDto] = []
+    @State private var showPartySuggestions: Bool = false
+    @State private var showAddPartySheet: Bool = false
+    @State private var isSavingParty: Bool = false
 
     @State private var docNumber: String = ""
     @State private var docDate: String = ""
@@ -31,13 +37,16 @@ public struct TransactionFormBottomSheet: View {
         existingTransaction: TransactionDto? = nil,
         parties: [PartyDto] = [],
         onDismiss: @escaping () -> Void,
-        onSubmit: @escaping (TransactionDto) -> Void
+        onSubmit: @escaping (TransactionDto) -> Void,
+        onPartyCreated: ((PartyDto) -> Void)? = nil
     ) {
         self.transactionType = transactionType
         self.existingTransaction = existingTransaction
         self.parties = parties
+        self._localParties = State(initialValue: parties)
         self.onDismiss = onDismiss
         self.onSubmit = onSubmit
+        self.onPartyCreated = onPartyCreated
     }
 
     private let paymentModes = ["Bank Transfer", "UPI", "Cash", "Cheque", "Credit"]
@@ -73,6 +82,61 @@ public struct TransactionFormBottomSheet: View {
     private var grandTotalRounded: Double { round(rawGrandTotal) }
     private var roundOff: Double { grandTotalRounded - rawGrandTotal }
 
+    private var matchingParties: [PartyDto] {
+        let q = partyName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if q.isEmpty {
+            return localParties
+        }
+        return localParties.filter { p in
+            p.name.lowercased().contains(q) ||
+            (p.tradeName?.lowercased().contains(q) ?? false) ||
+            (p.phone?.contains(q) ?? false) ||
+            (p.gstin?.lowercased().contains(q) ?? false)
+        }
+    }
+
+    private func selectParty(_ p: PartyDto) {
+        partyName = p.name
+        partyGstin = p.gstin ?? ""
+        partyPan = p.pan ?? ""
+        partyAddress = p.billingAddress ?? ""
+        partyPhone = p.phone ?? ""
+        if let st = p.state, !st.isEmpty {
+            placeOfSupply = st.contains("-") ? st : "37-\(st)"
+            if !st.localizedCaseInsensitiveContains("Andhra Pradesh") {
+                isInterstate = true
+            } else {
+                isInterstate = false
+            }
+        }
+        showPartySuggestions = false
+    }
+
+    private func saveNewPartyInline(_ party: PartyDto) {
+        isSavingParty = true
+        Task {
+            do {
+                let saved = try await NetworkManager.shared.createAccountingParty(party: party)
+                await MainActor.run {
+                    self.localParties.removeAll { $0._id == saved._id && saved._id != nil }
+                    self.localParties.insert(saved, at: 0)
+                    self.selectParty(saved)
+                    self.isSavingParty = false
+                    self.showAddPartySheet = false
+                    self.onPartyCreated?(saved)
+                }
+            } catch {
+                await MainActor.run {
+                    self.localParties.insert(party, at: 0)
+                    self.selectParty(party)
+                    self.isSavingParty = false
+                    self.showAddPartySheet = false
+                    self.onPartyCreated?(party)
+                }
+            }
+        }
+    }
+
     public var body: some View {
         NavigationView {
             ScrollView(showsIndicators: false) {
@@ -96,36 +160,199 @@ public struct TransactionFormBottomSheet: View {
                         }
                     }
 
-                    // 2. Party Name & Quick Presets
+                    // 2. Party Name & Search / Suggest
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(transactionType == "Sales" ? "Customer Name *" : "Vendor / Payee Name *")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
-                        TextField("e.g. Sri Krishna Enterprises", text: $partyName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        HStack {
+                            Text(transactionType == "Sales" ? "Customer Name *" : "Vendor / Payee Name *")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                            Spacer()
+                            Button(action: {
+                                showPartySuggestions = false
+                                showAddPartySheet = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.system(size: 11))
+                                    Text("+ Add New")
+                                        .font(.system(size: 11, weight: .bold))
+                                }
+                                .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
+                            }
+                        }
 
-                        if !parties.isEmpty {
+                        // Search Input Field
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 13))
+                                .foregroundColor(.secondary)
+
+                            TextField(transactionType == "Sales" ? "Search customer or type new..." : "Search vendor or type new...", text: $partyName)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .font(.system(size: 13))
+                                .onChange(of: partyName) { _ in
+                                    showPartySuggestions = true
+                                }
+                                .onTapGesture {
+                                    showPartySuggestions = true
+                                }
+
+                            if !partyName.isEmpty {
+                                Button(action: {
+                                    partyName = ""
+                                    partyGstin = ""
+                                    partyPan = ""
+                                    partyAddress = ""
+                                    partyPhone = ""
+                                    showPartySuggestions = false
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                        .font(.system(size: 13))
+                                }
+                            }
+                        }
+                        .padding(10)
+                        .background(Color(red: 248/255, green: 250/255, blue: 252/255))
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(showPartySuggestions ? Color(red: 79/255, green: 70/255, blue: 229/255) : Color(red: 226/255, green: 232/255, blue: 240/255), lineWidth: 1)
+                        )
+
+                        // Quick Horizontal Pills (when suggestions closed or empty)
+                        if !localParties.isEmpty && !showPartySuggestions {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 6) {
-                                    ForEach(parties.prefix(4)) { p in
+                                    ForEach(localParties.prefix(4)) { p in
                                         Button(action: {
-                                            partyName = p.name
-                                            partyGstin = p.gstin ?? ""
-                                            partyPan = p.pan ?? ""
-                                            partyAddress = p.billingAddress ?? ""
-                                            partyPhone = p.phone ?? ""
+                                            selectParty(p)
                                         }) {
-                                            Text(p.name)
-                                                .font(.system(size: 10.5, weight: .bold))
-                                                .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .background(Color(red: 238/255, green: 242/255, blue: 255/255))
-                                                .cornerRadius(6)
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "building.2")
+                                                    .font(.system(size: 9))
+                                                Text(p.name)
+                                                    .font(.system(size: 10.5, weight: .bold))
+                                            }
+                                            .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color(red: 238/255, green: 242/255, blue: 255/255))
+                                            .cornerRadius(6)
                                         }
                                     }
                                 }
                             }
+                        }
+
+                        // Suggestions Dropdown Panel
+                        if showPartySuggestions {
+                            VStack(alignment: .leading, spacing: 0) {
+                                HStack {
+                                    Text("Suggested Directory Parties (\(matchingParties.count))")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                                    Spacer()
+                                    Button("Done") {
+                                        showPartySuggestions = false
+                                    }
+                                    .font(.system(size: 10.5, weight: .bold))
+                                    .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+
+                                if matchingParties.isEmpty {
+                                    VStack(spacing: 6) {
+                                        Text("No existing parties found for \"\(partyName)\"")
+                                            .font(.system(size: 11.5))
+                                            .foregroundColor(.secondary)
+                                            .padding(.vertical, 8)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                } else {
+                                    ForEach(matchingParties.prefix(5)) { p in
+                                        Button(action: {
+                                            selectParty(p)
+                                        }) {
+                                            HStack(spacing: 10) {
+                                                Image(systemName: "person.crop.square.fill")
+                                                    .font(.system(size: 16))
+                                                    .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
+
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    HStack {
+                                                        Text(p.name)
+                                                            .font(.system(size: 12, weight: .bold))
+                                                            .foregroundColor(Color(red: 15/255, green: 23/255, blue: 42/255))
+                                                        if let tName = p.tradeName, !tName.isEmpty && tName != p.name {
+                                                            Text("(\(tName))")
+                                                                .font(.system(size: 10.5))
+                                                                .foregroundColor(.secondary)
+                                                        }
+                                                    }
+                                                    HStack(spacing: 6) {
+                                                        if let g = p.gstin, !g.isEmpty {
+                                                            Text("GST: \(g)")
+                                                                .font(.system(size: 9.5, weight: .medium))
+                                                                .foregroundColor(Color(red: 100/255, green: 116/255, blue: 139/255))
+                                                        }
+                                                        if let ph = p.phone, !ph.isEmpty {
+                                                            Text("• \(ph)")
+                                                                .font(.system(size: 9.5))
+                                                                .foregroundColor(.secondary)
+                                                        }
+                                                    }
+                                                }
+                                                Spacer()
+                                                Image(systemName: "arrow.up.left")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 8)
+                                        }
+                                        Divider()
+                                    }
+                                }
+
+                                // "+ Add New Party" Action inside the suggestions panel
+                                Button(action: {
+                                    showPartySuggestions = false
+                                    showAddPartySheet = true
+                                }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
+                                        VStack(alignment: .leading, spacing: 1) {
+                                            Text(!partyName.trimmingCharacters(in: .whitespaces).isEmpty
+                                                ? "Add \"\(partyName.trimmingCharacters(in: .whitespaces))\" as New Party"
+                                                : "Add New \(transactionType == "Sales" ? "Customer" : "Party")")
+                                                .font(.system(size: 11.5, weight: .bold))
+                                                .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
+                                            Text("Not in directory? Tap here to create and auto-select")
+                                                .font(.system(size: 9.5))
+                                                .foregroundColor(.secondary)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(Color(red: 79/255, green: 70/255, blue: 229/255))
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 10)
+                                    .background(Color(red: 238/255, green: 242/255, blue: 255/255))
+                                }
+                            }
+                            .background(Color.white)
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(red: 203/255, green: 213/255, blue: 225/255), lineWidth: 1)
+                            )
+                            .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
                         }
                     }
 
@@ -456,7 +683,20 @@ public struct TransactionFormBottomSheet: View {
                 }
             }
         }
+        .sheet(isPresented: $showAddPartySheet) {
+            PartyFormBottomSheet(
+                initialName: partyName,
+                initialPartyType: transactionType == "Sales" ? "Customer" : (transactionType == "Purchase" ? "Vendor" : "Both"),
+                onDismiss: { showAddPartySheet = false },
+                onSubmit: { newParty in
+                    saveNewPartyInline(newParty)
+                }
+            )
+        }
         .onAppear {
+            if localParties.isEmpty {
+                localParties = parties
+            }
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"
             let today = formatter.string(from: Date())
