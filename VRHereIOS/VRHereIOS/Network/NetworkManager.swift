@@ -1054,8 +1054,25 @@ class NetworkManager {
         return try await performRequest(path: "api/accounting/transactions/\(id)/payment", method: "POST", body: body)
     }
     
-    func getCompanyDetails() async throws -> CompanyDetailsDto {
-        return try await performRequest(path: "api/accounting/company")
+    func getCompanyDetails() async throws -> CompanyDetailsDto? {
+        guard let url = URL(string: baseURL + "api/accounting/company") else {
+            throw NetworkError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token = SessionManager.shared.getAuthToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            return nil
+        }
+        let trimmed = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if trimmed.isEmpty || trimmed == "null" {
+            return nil
+        }
+        return try? JSONDecoder().decode(CompanyDetailsDto.self, from: data)
     }
     
     func updateCompanyDetails(details: CompanyDetailsDto) async throws -> CompanyDetailsDto {

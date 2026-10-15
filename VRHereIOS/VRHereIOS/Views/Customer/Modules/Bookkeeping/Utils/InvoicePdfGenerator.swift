@@ -27,8 +27,84 @@ public struct InvoicePdfGenerator {
         return pdfData as Data
     }
 
+    // Image URI cache to avoid re-downloading across calls
+    private static var imageCache: [String: String] = [:]
+
+    public static func convertUrlToBase64DataUri(_ urlString: String?, timeout: TimeInterval = 4.0) -> String? {
+        guard let str = urlString?.trimmingCharacters(in: .whitespacesAndNewlines), !str.isEmpty else {
+            return nil
+        }
+        if str.hasPrefix("data:image/") {
+            return str
+        }
+        if let cached = imageCache[str] {
+            return cached
+        }
+        guard let url = URL(string: str), let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else {
+            return nil
+        }
+
+        var resultDataUri: String? = nil
+        let semaphore = DispatchSemaphore(value: 0)
+        var request = URLRequest(url: url)
+        request.timeoutInterval = timeout
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            defer { semaphore.signal() }
+            guard let data = data, error == nil, !data.isEmpty else { return }
+            let mimeType: String
+            if let httpResponse = response as? HTTPURLResponse, let mime = httpResponse.mimeType, !mime.isEmpty {
+                mimeType = mime
+            } else if str.lowercased().hasSuffix(".png") {
+                mimeType = "image/png"
+            } else if str.lowercased().hasSuffix(".svg") {
+                mimeType = "image/svg+xml"
+            } else {
+                mimeType = "image/jpeg"
+            }
+            let uri = "data:\(mimeType);base64,\(data.base64EncodedString())"
+            resultDataUri = uri
+            DispatchQueue.global(qos: .utility).async {
+                imageCache[str] = uri
+            }
+        }.resume()
+
+        _ = semaphore.wait(timeout: .now() + timeout)
+        return resultDataUri
+    }
+
+    public static func prepareResolvedCompany(company: CompanyDetailsDto?) -> CompanyDetailsDto? {
+        let effective = company ?? CompanyDetailsManager.cachedCompanyDetails
+        guard var comp = effective else { return nil }
+
+        if let logo = comp.logo, !logo.isEmpty, !logo.hasPrefix("data:") {
+            if let base64Logo = convertUrlToBase64DataUri(logo) {
+                comp.logo = base64Logo
+            }
+        }
+        if let sig = comp.signature, !sig.isEmpty, !sig.hasPrefix("data:") {
+            if let base64Sig = convertUrlToBase64DataUri(sig) {
+                comp.signature = base64Sig
+            }
+        }
+        if let qr = comp.qrCode, !qr.isEmpty, !qr.hasPrefix("data:") {
+            if let base64Qr = convertUrlToBase64DataUri(qr) {
+                comp.qrCode = base64Qr
+            }
+        }
+        return comp
+    }
+
     public static func savePdfToTempFile(transaction: TransactionDto, company: CompanyDetailsDto?) -> URL? {
-        let html = InvoiceHtmlBuilder.buildHtml(transaction: transaction, company: company)
+        let resolvedCompany = prepareResolvedCompany(company: company)
+        var resolvedTx = transaction
+        if let att = transaction.attachmentUrl, !att.isEmpty, !att.hasPrefix("data:") {
+            if let base64Att = convertUrlToBase64DataUri(att) {
+                resolvedTx.attachmentUrl = base64Att
+            }
+        }
+
+        let html = InvoiceHtmlBuilder.buildHtml(transaction: resolvedTx, company: resolvedCompany)
         guard let data = generatePdfData(html: html) else { return nil }
 
         let fileName = "\(transaction.docNumber.isEmpty ? "Invoice" : transaction.docNumber).pdf"
@@ -104,7 +180,8 @@ public struct InvoicePdfGenerator {
     }
 
     public static func printPdf(transaction: TransactionDto, company: CompanyDetailsDto?) {
-        let html = InvoiceHtmlBuilder.buildHtml(transaction: transaction, company: company)
+        let resolvedCompany = prepareResolvedCompany(company: company)
+        let html = InvoiceHtmlBuilder.buildHtml(transaction: transaction, company: resolvedCompany)
 
         DispatchQueue.main.async {
             let printController = UIPrintInteractionController.shared

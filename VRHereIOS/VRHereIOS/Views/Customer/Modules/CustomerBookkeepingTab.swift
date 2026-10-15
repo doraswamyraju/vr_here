@@ -29,7 +29,7 @@ struct CustomerBookkeepingTab: View {
     @State private var transactions: [TransactionDto] = []
     @State private var parties: [PartyDto] = []
     @State private var bankStatements: [BankStatementDto] = []
-    @State private var companyDetails: CompanyDetailsDto? = nil
+    @State private var companyDetails: CompanyDetailsDto? = CompanyDetailsManager.cachedCompanyDetails
     @State private var isLoading: Bool = false
     @State private var toastMessage: String? = nil
 
@@ -420,28 +420,25 @@ struct CustomerBookkeepingTab: View {
     private func reloadAccountingData(silent: Bool = false) {
         if !silent { isLoading = true }
         Task {
-            do {
-                async let fetchedTx = NetworkManager.shared.getAccountingTransactions()
-                async let fetchedParties = NetworkManager.shared.getAccountingParties()
-                async let fetchedBank = NetworkManager.shared.getBankStatements()
-                async let fetchedComp = NetworkManager.shared.getCompanyDetails()
+            async let fetchedTx = try? NetworkManager.shared.getAccountingTransactions()
+            async let fetchedParties = try? NetworkManager.shared.getAccountingParties()
+            async let fetchedBank = try? NetworkManager.shared.getBankStatements()
+            async let fetchedComp = try? NetworkManager.shared.getCompanyDetails()
 
-                let (tx, p, b, c) = try await (fetchedTx, fetchedParties, fetchedBank, fetchedComp)
+            let tx = await fetchedTx ?? self.transactions
+            let p = await fetchedParties ?? self.parties
+            let b = await fetchedBank ?? self.bankStatements
+            let c = await fetchedComp ?? CompanyDetailsManager.cachedCompanyDetails
 
-                await MainActor.run {
-                    self.transactions = tx
-                    self.parties = p
-                    self.bankStatements = b
+            await MainActor.run {
+                self.transactions = tx
+                self.parties = p
+                self.bankStatements = b
+                if let c = c {
                     self.companyDetails = c
-                    self.isLoading = false
+                    CompanyDetailsManager.cachedCompanyDetails = c
                 }
-            } catch {
-                await MainActor.run {
-                    self.isLoading = false
-                    if !silent {
-                        showToast("Sync error: \(error.localizedDescription)")
-                    }
-                }
+                self.isLoading = false
             }
         }
     }
@@ -538,6 +535,7 @@ struct CustomerBookkeepingTab: View {
                 await MainActor.run {
                     showToast("Company settings updated!")
                     self.companyDetails = res
+                    CompanyDetailsManager.cachedCompanyDetails = res
                     showCompanySettingsDialog = false
                 }
             } catch {

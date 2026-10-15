@@ -384,6 +384,32 @@ export const getCompanyDetails = asyncHandler(async (req, res) => {
 
     const company = await CompanyDetails.findOne({ user: targetUserId });
     if (!company) {
+        const u = await User.findById(targetUserId);
+        if (u) {
+            return res.json({
+                user: u._id,
+                companyName: u.companyName || u.name || 'Rajugari Ventures',
+                tradeName: '',
+                gstin: u.gstin || '',
+                address: u.address || '',
+                state: 'Andhra Pradesh',
+                phone: u.phone || '',
+                email: u.email || '',
+                businessType: u.businessType || 'Service',
+                businessCategory: '',
+                pincode: '517501',
+                logo: u.companyLogo || '',
+                signature: '',
+                upiId: '',
+                qrCode: '',
+                bankDetails: {
+                    accountName: u.companyName || u.name || '',
+                    accountNumber: '',
+                    ifscCode: '',
+                    bankName: ''
+                }
+            });
+        }
         return res.status(200).json(null);
     }
     res.json(company);

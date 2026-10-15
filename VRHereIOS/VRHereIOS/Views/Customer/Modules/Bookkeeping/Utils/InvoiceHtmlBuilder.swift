@@ -22,6 +22,8 @@ public struct InvoiceHtmlBuilder {
     }
 
     public static func buildHtml(transaction: TransactionDto, company: CompanyDetailsDto?) -> String {
+        let effectiveCompany = company ?? CompanyDetailsManager.cachedCompanyDetails
+
         let isSales = transaction.transactionType.caseInsensitiveCompare("Sales") == .orderedSame
         let isPurchase = transaction.transactionType.caseInsensitiveCompare("Purchase") == .orderedSame
         let isIncome = transaction.transactionType.caseInsensitiveCompare("Income") == .orderedSame
@@ -43,7 +45,7 @@ public struct InvoiceHtmlBuilder {
         let docDate = rawDate.count >= 10 ? String(rawDate.prefix(10)) : (rawDate.isEmpty ? "30/09/2026" : rawDate)
         let dueDate = (transaction.dueDate != nil && !transaction.dueDate!.isEmpty) ? String(transaction.dueDate!.prefix(10)) : docDate
         let paymentMode = transaction.paymentMode.isEmpty ? "Bank Transfer" : transaction.paymentMode
-        let placeOfSupply = (transaction.placeOfSupply?.isEmpty ?? true) ? (company?.state ?? "37-Andhra Pradesh") : transaction.placeOfSupply!
+        let placeOfSupply = (transaction.placeOfSupply?.isEmpty ?? true) ? (effectiveCompany?.state ?? "37-Andhra Pradesh") : transaction.placeOfSupply!
 
         let docTitle: String
         if isIncome { docTitle = "RECEIPT VOUCHER" }
@@ -52,49 +54,108 @@ public struct InvoiceHtmlBuilder {
         else { docTitle = "TAX INVOICE" }
 
         // Supplier info
+        let userCompany = SessionManager.shared.getCompanyName().trimmingCharacters(in: .whitespacesAndNewlines)
+        let userName = SessionManager.shared.getUserName().trimmingCharacters(in: .whitespacesAndNewlines)
         let supplierName: String
         if isSales || isVoucher {
-            supplierName = (company?.companyName?.isEmpty ?? true) ? "Rajugari Ventures" : company!.companyName!
+            if let cName = effectiveCompany?.companyName?.trimmingCharacters(in: .whitespacesAndNewlines), !cName.isEmpty {
+                supplierName = cName
+            } else if !userCompany.isEmpty {
+                supplierName = userCompany
+            } else if !userName.isEmpty {
+                supplierName = userName
+            } else {
+                supplierName = "Rajugari Ventures"
+            }
         } else {
             supplierName = transaction.partyName.isEmpty ? "Vendor Name" : transaction.partyName
         }
 
-        let supplierTrade = (isSales || isVoucher) ? (company?.tradeName ?? "") : ""
+        let supplierTrade = (isSales || isVoucher) ? (effectiveCompany?.tradeName ?? "") : ""
+        let userAddress = SessionManager.shared.getAddress().trimmingCharacters(in: .whitespacesAndNewlines)
         let supplierAddress: String
         if isSales || isVoucher {
-            supplierAddress = (company?.address?.isEmpty ?? true) ? "#38, 1st Floor, TUDA Complex, Bairagipatteda, Tirupati" : company!.address!
+            var parts: [String] = []
+            let street = (effectiveCompany?.address?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? effectiveCompany?.address : userAddress)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if !street.isEmpty {
+                parts.append(street)
+            }
+            if let st = effectiveCompany?.state?.trimmingCharacters(in: .whitespacesAndNewlines), !st.isEmpty {
+                if !parts.joined(separator: " ").localizedCaseInsensitiveContains(st) {
+                    parts.append(st)
+                }
+            }
+            if let pin = effectiveCompany?.pincode?.trimmingCharacters(in: .whitespacesAndNewlines), !pin.isEmpty {
+                if !parts.joined(separator: " ").contains(pin) {
+                    parts.append(pin)
+                }
+            }
+            if parts.isEmpty {
+                supplierAddress = "#38, 1st Floor, TUDA Complex, Bairagipatteda, Tirupati, Andhra Pradesh - 517501"
+            } else {
+                supplierAddress = parts.joined(separator: ", ")
+            }
         } else {
             supplierAddress = transaction.partyAddress ?? ""
         }
 
-        let supplierGstin = (isSales || isVoucher) ? (company?.gstin ?? "") : (transaction.partyGstin ?? "")
-        let supplierState = (isSales || isVoucher) ? (company?.state ?? "Andhra Pradesh") : placeOfSupply
-        let supplierPhone = (isSales || isVoucher) ? (company?.phone ?? "") : (transaction.partyPhone ?? "")
-        let supplierEmail = (isSales || isVoucher) ? (company?.email ?? "") : (transaction.partyEmail ?? "")
-        let supplierLogo = company?.logo
+        let userGstin = SessionManager.shared.getGstin().trimmingCharacters(in: .whitespacesAndNewlines)
+        let supplierGstin: String
+        if isSales || isVoucher {
+            if let g = effectiveCompany?.gstin?.trimmingCharacters(in: .whitespacesAndNewlines), !g.isEmpty {
+                supplierGstin = g
+            } else if !userGstin.isEmpty {
+                supplierGstin = userGstin
+            } else {
+                supplierGstin = "37ABCDE1234F1Z5"
+            }
+        } else {
+            supplierGstin = transaction.partyGstin ?? ""
+        }
+
+        let supplierState = (isSales || isVoucher) ? (effectiveCompany?.state ?? "Andhra Pradesh") : placeOfSupply
+        let userPhone = SessionManager.shared.getPhone().trimmingCharacters(in: .whitespacesAndNewlines)
+        let userEmail = SessionManager.shared.getUserEmail().trimmingCharacters(in: .whitespacesAndNewlines)
+        let supplierPhone = (isSales || isVoucher) ? ((effectiveCompany?.phone?.isEmpty == false ? effectiveCompany?.phone : userPhone) ?? "") : (transaction.partyPhone ?? "")
+        let supplierEmail = (isSales || isVoucher) ? ((effectiveCompany?.email?.isEmpty == false ? effectiveCompany?.email : userEmail) ?? "") : (transaction.partyEmail ?? "")
+
+        let userLogo = SessionManager.shared.getCompanyLogo().trimmingCharacters(in: .whitespacesAndNewlines)
+        let rawLogo = (effectiveCompany?.logo?.isEmpty == false ? effectiveCompany?.logo : (userLogo.isEmpty ? nil : userLogo))
+        let supplierLogo: String?
+        if let l = rawLogo, !l.isEmpty {
+            if l.hasPrefix("data:") {
+                supplierLogo = l
+            } else if let base64 = InvoicePdfGenerator.convertUrlToBase64DataUri(l, timeout: 2.0) {
+                supplierLogo = base64
+            } else {
+                supplierLogo = l
+            }
+        } else {
+            supplierLogo = nil
+        }
 
         // Bill To
         let billToName: String
         if isSales {
-            billToName = transaction.partyName.isEmpty ? "Rajugari Ventures" : transaction.partyName
+            billToName = transaction.partyName.isEmpty ? "Customer Name" : transaction.partyName
         } else if isVoucher {
             billToName = transaction.partyName.isEmpty ? "General" : transaction.partyName
         } else {
-            billToName = company?.companyName ?? "Rajugari Ventures"
+            billToName = supplierName
         }
 
         let billToAddress: String
         if isSales {
-            billToAddress = (transaction.partyAddress?.isEmpty ?? true) ? "#38, 1st Floor, TUDA Complex, Bairagipatteda" : transaction.partyAddress!
+            billToAddress = (transaction.partyAddress?.isEmpty ?? true) ? "N/A" : transaction.partyAddress!
         } else {
-            billToAddress = company?.address ?? "#38, 1st Floor, TUDA Complex"
+            billToAddress = supplierAddress
         }
 
-        let billToGstin = isSales ? ((transaction.partyGstin?.isEmpty ?? true) ? "URP / N/A" : transaction.partyGstin!) : (company?.gstin ?? "N/A")
+        let billToGstin = isSales ? ((transaction.partyGstin?.isEmpty ?? true) ? "URP / N/A" : transaction.partyGstin!) : (effectiveCompany?.gstin ?? "N/A")
         let billToPan = isSales ? ((transaction.partyPan?.isEmpty ?? true) ? "N/A" : transaction.partyPan!) : "N/A"
-        let billToState = isSales ? ((transaction.partyState?.isEmpty ?? true) ? placeOfSupply : transaction.partyState!) : (company?.state ?? "Andhra Pradesh")
-        let billToPhone = isSales ? ((transaction.partyPhone?.isEmpty ?? true) ? "N/A" : transaction.partyPhone!) : (company?.phone ?? "N/A")
-        let billToEmail = isSales ? ((transaction.partyEmail?.isEmpty ?? true) ? "N/A" : transaction.partyEmail!) : (company?.email ?? "N/A")
+        let billToState = isSales ? ((transaction.partyState?.isEmpty ?? true) ? placeOfSupply : transaction.partyState!) : (effectiveCompany?.state ?? "Andhra Pradesh")
+        let billToPhone = isSales ? ((transaction.partyPhone?.isEmpty ?? true) ? "N/A" : transaction.partyPhone!) : (effectiveCompany?.phone ?? "N/A")
+        let billToEmail = isSales ? ((transaction.partyEmail?.isEmpty ?? true) ? "N/A" : transaction.partyEmail!) : (effectiveCompany?.email ?? "N/A")
 
         // Ship To
         let shipToSame = transaction.shipToSameAsBilling ?? true
@@ -107,12 +168,12 @@ public struct InvoiceHtmlBuilder {
         let shipToEmail = shipToSame ? billToEmail : ((transaction.shipToEmail?.isEmpty ?? true) ? billToEmail : transaction.shipToEmail!)
 
         // Bank Details
-        let bankInfo = company?.bankDetails
+        let bankInfo = effectiveCompany?.bankDetails
         let bankName = (bankInfo?.bankName?.isEmpty ?? true) ? "HDFC Bank" : bankInfo!.bankName!
         let bankAccount = (bankInfo?.accountNumber?.isEmpty ?? true) ? "50200012345678" : bankInfo!.accountNumber!
         let bankIfsc = (bankInfo?.ifscCode?.isEmpty ?? true) ? "HDFC0001234" : bankInfo!.ifscCode!
         let bankBranch = (bankInfo?.accountName?.isEmpty ?? true) ? "Main Branch" : bankInfo!.accountName!
-        let upiId = company?.upiId ?? ""
+        let upiId = effectiveCompany?.upiId ?? ""
 
         let itemsList: [TransactionItemDto]
         if !transaction.items.isEmpty {
@@ -137,23 +198,43 @@ public struct InvoiceHtmlBuilder {
         let amountInWords = (summary.amountInWords?.isEmpty ?? true) ? IndianCurrencyFormatter.numberToWords(totalAmount) : summary.amountInWords!
 
         // QR Code & Signature computation
-        let rawQr = (company?.qrCode?.isEmpty == false) ? company!.qrCode! : ""
+        let rawQr = (effectiveCompany?.qrCode?.isEmpty == false) ? effectiveCompany!.qrCode! : ""
         let qrCode: String
         if !rawQr.isEmpty {
-            qrCode = rawQr
-        } else if !upiId.isEmpty && isSales {
-            let upiString = "upi://pay?pa=\(upiId)&pn=\(supplierName)&am=\(String(format: "%.2f", totalAmount))&cu=INR"
-            if let localQr = generateQrCodeBase64(from: upiString) {
-                qrCode = localQr
+            if rawQr.hasPrefix("data:") {
+                qrCode = rawQr
+            } else if let base64 = InvoicePdfGenerator.convertUrlToBase64DataUri(rawQr, timeout: 2.0) {
+                qrCode = base64
             } else {
-                let encodedUpi = upiString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? upiString
-                qrCode = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=\(encodedUpi)"
+                qrCode = rawQr
             }
         } else {
-            qrCode = ""
+            let effectiveUpi: String
+            if let upi = effectiveCompany?.upiId?.trimmingCharacters(in: .whitespacesAndNewlines), !upi.isEmpty {
+                effectiveUpi = upi
+            } else if !supplierPhone.isEmpty && supplierPhone.count >= 10 {
+                let digits = supplierPhone.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+                effectiveUpi = digits.count == 10 ? "\(digits)@upi" : "business@upi"
+            } else {
+                effectiveUpi = "business@upi"
+            }
+            let upiString = "upi://pay?pa=\(effectiveUpi)&pn=\(supplierName)&am=\(String(format: "%.2f", totalAmount))&cu=INR"
+            qrCode = generateQrCodeBase64(from: upiString) ?? ""
         }
 
-        let signature = (company?.signature?.isEmpty == false ? company?.signature : transaction.attachmentUrl) ?? ""
+        let rawSig = (effectiveCompany?.signature?.isEmpty == false ? effectiveCompany?.signature : transaction.attachmentUrl) ?? ""
+        let signature: String
+        if !rawSig.isEmpty {
+            if rawSig.hasPrefix("data:") {
+                signature = rawSig
+            } else if let base64 = InvoicePdfGenerator.convertUrlToBase64DataUri(rawSig, timeout: 2.0) {
+                signature = base64
+            } else {
+                signature = rawSig
+            }
+        } else {
+            signature = ""
+        }
 
         let qrCodeHtml: String
         if !qrCode.isEmpty {

@@ -551,6 +551,76 @@ public struct CompanyDetailsDto: Codable, Identifiable, Equatable {
         case qrCode
         case bankDetails
     }
+
+    public init(from decoder: Decoder) throws {
+        let container = try? decoder.container(keyedBy: CodingKeys.self)
+        self._id = try? container?.decodeIfPresent(String.self, forKey: ._id)
+        self.companyName = try? container?.decodeIfPresent(String.self, forKey: .companyName)
+        self.tradeName = try? container?.decodeIfPresent(String.self, forKey: .tradeName)
+        self.gstin = try? container?.decodeIfPresent(String.self, forKey: .gstin)
+        self.address = try? container?.decodeIfPresent(String.self, forKey: .address)
+        self.state = try? container?.decodeIfPresent(String.self, forKey: .state)
+        self.phone = try? container?.decodeIfPresent(String.self, forKey: .phone)
+        self.email = try? container?.decodeIfPresent(String.self, forKey: .email)
+        self.businessType = try? container?.decodeIfPresent(String.self, forKey: .businessType)
+        self.companyType = try? container?.decodeIfPresent(String.self, forKey: .companyType)
+        self.businessCategory = try? container?.decodeIfPresent(String.self, forKey: .businessCategory)
+        self.companyCategory = try? container?.decodeIfPresent(String.self, forKey: .companyCategory)
+        self.pincode = try? container?.decodeIfPresent(String.self, forKey: .pincode)
+        self.invoicePrefix = try? container?.decodeIfPresent(String.self, forKey: .invoicePrefix)
+        self.logo = try? container?.decodeIfPresent(String.self, forKey: .logo)
+        self.signature = try? container?.decodeIfPresent(String.self, forKey: .signature)
+        self.upiId = try? container?.decodeIfPresent(String.self, forKey: .upiId)
+        self.qrCode = try? container?.decodeIfPresent(String.self, forKey: .qrCode)
+        self.bankDetails = try? container?.decodeIfPresent(BankAccountDetailsDto.self, forKey: .bankDetails)
+    }
+}
+
+// MARK: - Company Details Local Persistence Manager
+
+public struct CompanyDetailsManager {
+    private static let key = "vrhere_cached_company_details"
+
+    public static var cachedCompanyDetails: CompanyDetailsDto? {
+        get {
+            if let data = UserDefaults.standard.data(forKey: key),
+               let comp = try? JSONDecoder().decode(CompanyDetailsDto.self, from: data) {
+                return comp
+            }
+            return sessionFallbackCompany
+        }
+        set {
+            if let val = newValue, let data = try? JSONEncoder().encode(val) {
+                UserDefaults.standard.set(data, forKey: key)
+            }
+        }
+    }
+
+    public static var sessionFallbackCompany: CompanyDetailsDto? {
+        let name = SessionManager.shared.getCompanyName().trimmingCharacters(in: .whitespacesAndNewlines)
+        let addr = SessionManager.shared.getAddress().trimmingCharacters(in: .whitespacesAndNewlines)
+        let gstin = SessionManager.shared.getGstin().trimmingCharacters(in: .whitespacesAndNewlines)
+        let phone = SessionManager.shared.getPhone().trimmingCharacters(in: .whitespacesAndNewlines)
+        let email = SessionManager.shared.getUserEmail().trimmingCharacters(in: .whitespacesAndNewlines)
+        let logo = SessionManager.shared.getCompanyLogo().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !name.isEmpty || !addr.isEmpty || !gstin.isEmpty else {
+            return nil
+        }
+
+        return CompanyDetailsDto(
+            companyName: name.isEmpty ? "Rajugari Ventures" : name,
+            tradeName: "",
+            gstin: gstin.isEmpty ? "37ABCDE1234F1Z5" : gstin,
+            address: addr.isEmpty ? "#38, 1st Floor, TUDA Complex, Bairagipatteda, Tirupati" : addr,
+            state: "Andhra Pradesh",
+            phone: phone,
+            email: email,
+            businessType: SessionManager.shared.getBusinessType(),
+            pincode: "517501",
+            logo: logo.isEmpty ? nil : logo
+        )
+    }
 }
 
 // MARK: - Requests

@@ -408,6 +408,12 @@ public struct CompanySettingsBottomSheet: View {
                                 bankName: bankName.trimmingCharacters(in: .whitespaces)
                             )
                         )
+                        CompanyDetailsManager.cachedCompanyDetails = updated
+                        if let cn = updated.companyName, !cn.isEmpty { SessionManager.shared.saveCompanyName(cn) }
+                        if let ad = updated.address, !ad.isEmpty { SessionManager.shared.saveAddress(ad) }
+                        if let gst = updated.gstin, !gst.isEmpty { SessionManager.shared.saveGstin(gst) }
+                        if let ph = updated.phone, !ph.isEmpty { SessionManager.shared.savePhone(ph) }
+                        if let lg = updated.logo, !lg.isEmpty { SessionManager.shared.saveCompanyLogo(lg) }
                         onSubmit(updated)
                     }) {
                         HStack(spacing: 8) {
@@ -436,29 +442,35 @@ public struct CompanySettingsBottomSheet: View {
             }
         }
         .onAppear {
-            if let details = currentDetails {
-                companyName = details.companyName ?? ""
-                tradeName = details.tradeName ?? ""
-                gstin = details.gstin ?? ""
-                address = details.address ?? ""
-                state = details.state ?? "Andhra Pradesh"
-                phone = details.phone ?? ""
-                email = details.email ?? ""
-                businessType = details.businessType ?? "Service"
-                businessCategory = details.businessCategory ?? ""
-                pincode = details.pincode ?? ""
-                invoicePrefix = details.invoicePrefix ?? "INV-"
-                upiId = details.upiId ?? ""
-                logoUrl = details.logo ?? ""
-                signatureUrl = details.signature ?? ""
-                qrCodeUrl = details.qrCode ?? ""
+            let details = currentDetails ?? CompanyDetailsManager.cachedCompanyDetails
+            let compName = details?.companyName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            companyName = !compName.isEmpty ? compName : SessionManager.shared.getCompanyName()
+            tradeName = details?.tradeName ?? ""
+            let g = details?.gstin?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            gstin = !g.isEmpty ? g : SessionManager.shared.getGstin()
+            let addr = details?.address?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            address = !addr.isEmpty ? addr : SessionManager.shared.getAddress()
+            state = (details?.state?.isEmpty == false ? details?.state : "Andhra Pradesh") ?? "Andhra Pradesh"
+            let p = details?.phone?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            phone = !p.isEmpty ? p : SessionManager.shared.getPhone()
+            let em = details?.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            email = !em.isEmpty ? em : SessionManager.shared.getUserEmail()
+            let bType = details?.businessType?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            businessType = !bType.isEmpty ? bType : (SessionManager.shared.getBusinessType().isEmpty ? "Service" : SessionManager.shared.getBusinessType())
+            businessCategory = details?.businessCategory ?? ""
+            pincode = (details?.pincode?.isEmpty == false ? details?.pincode : "517501") ?? "517501"
+            invoicePrefix = details?.invoicePrefix ?? "INV-"
+            upiId = details?.upiId ?? ""
+            let lUrl = details?.logo?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            logoUrl = !lUrl.isEmpty ? lUrl : SessionManager.shared.getCompanyLogo()
+            signatureUrl = details?.signature ?? ""
+            qrCodeUrl = details?.qrCode ?? ""
 
-                if let bank = details.bankDetails {
-                    bankName = bank.bankName ?? ""
-                    accountName = bank.accountName ?? ""
-                    accountNumber = bank.accountNumber ?? ""
-                    ifscCode = bank.ifscCode ?? ""
-                }
+            if let bank = details?.bankDetails {
+                bankName = bank.bankName ?? ""
+                accountName = bank.accountName ?? ""
+                accountNumber = bank.accountNumber ?? ""
+                ifscCode = bank.ifscCode ?? ""
             }
         }
         .onChange(of: selectedLogoItem) { newItem in

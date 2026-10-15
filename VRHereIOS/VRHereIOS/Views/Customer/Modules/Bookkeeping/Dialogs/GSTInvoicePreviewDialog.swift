@@ -21,7 +21,7 @@ public struct GSTInvoicePreviewDialog: View {
     }
 
     private var effectiveCompany: CompanyDetailsDto? {
-        localCompanyDetails ?? companyDetails
+        localCompanyDetails ?? companyDetails ?? CompanyDetailsManager.cachedCompanyDetails
     }
 
     private var htmlContent: String {
@@ -148,12 +148,14 @@ public struct GSTInvoicePreviewDialog: View {
                 }
             }
             .onAppear {
-                if effectiveCompany == nil {
-                    Task {
-                        if let comp = try? await NetworkManager.shared.getCompanyDetails() {
-                            await MainActor.run {
-                                self.localCompanyDetails = comp
-                            }
+                if localCompanyDetails == nil {
+                    self.localCompanyDetails = companyDetails ?? CompanyDetailsManager.cachedCompanyDetails
+                }
+                Task {
+                    if let comp = try? await NetworkManager.shared.getCompanyDetails() {
+                        await MainActor.run {
+                            self.localCompanyDetails = comp
+                            CompanyDetailsManager.cachedCompanyDetails = comp
                         }
                     }
                 }
