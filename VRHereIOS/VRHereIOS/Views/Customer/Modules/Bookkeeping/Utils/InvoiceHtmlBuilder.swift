@@ -1,6 +1,25 @@
 import Foundation
+import UIKit
+import CoreImage
 
 public struct InvoiceHtmlBuilder {
+
+    public static func generateQrCodeBase64(from string: String) -> String? {
+        guard let data = string.data(using: .utf8),
+              let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
+        filter.setValue(data, forKey: "inputMessage")
+        filter.setValue("M", forKey: "inputCorrectionLevel")
+        guard let outputImage = filter.outputImage else { return nil }
+
+        let transform = CGAffineTransform(scaleX: 5.0, y: 5.0)
+        let scaledImage = outputImage.transformed(by: transform)
+
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else { return nil }
+        let uiImage = UIImage(cgImage: cgImage)
+        guard let pngData = uiImage.pngData() else { return nil }
+        return "data:image/png;base64," + pngData.base64EncodedString()
+    }
 
     public static func buildHtml(transaction: TransactionDto, company: CompanyDetailsDto?) -> String {
         let isSales = transaction.transactionType.caseInsensitiveCompare("Sales") == .orderedSame
@@ -116,6 +135,48 @@ public struct InvoiceHtmlBuilder {
         let summary = transaction.summary
         let totalAmount = summary.totalAmount > 0 ? summary.totalAmount : itemsList.reduce(0) { $0 + $1.total }
         let amountInWords = (summary.amountInWords?.isEmpty ?? true) ? IndianCurrencyFormatter.numberToWords(totalAmount) : summary.amountInWords!
+
+        // QR Code & Signature computation
+        let rawQr = (company?.qrCode?.isEmpty == false) ? company!.qrCode! : ""
+        let qrCode: String
+        if !rawQr.isEmpty {
+            qrCode = rawQr
+        } else if !upiId.isEmpty && isSales {
+            let upiString = "upi://pay?pa=\(upiId)&pn=\(supplierName)&am=\(String(format: "%.2f", totalAmount))&cu=INR"
+            if let localQr = generateQrCodeBase64(from: upiString) {
+                qrCode = localQr
+            } else {
+                let encodedUpi = upiString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? upiString
+                qrCode = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=\(encodedUpi)"
+            }
+        } else {
+            qrCode = ""
+        }
+
+        let signature = (company?.signature?.isEmpty == false ? company?.signature : transaction.attachmentUrl) ?? ""
+
+        let qrCodeHtml: String
+        if !qrCode.isEmpty {
+            qrCodeHtml = """
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; flex-shrink: 0; align-self: center;">
+                <img src="\(qrCode)" alt="Payment QR" style="width: 64px; height: 64px; object-fit: contain; border-radius: 4px;" />
+                <span style="font-size: 7.5px; font-weight: 900; color: #334155; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">SCAN TO PAY</span>
+            </div>
+            """
+        } else {
+            qrCodeHtml = ""
+        }
+
+        let signatureHtml: String
+        if !signature.isEmpty {
+            signatureHtml = """
+            <div style="height: 42px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 4px;">
+                <img src="\(signature)" alt="Signature" style="max-height: 40px; max-width: 140px; object-fit: contain;" />
+            </div>
+            """
+        } else {
+            signatureHtml = "<div style=\"height: 42px;\"></div>"
+        }
 
         let defaultTerms = [
             "1. Payment: Payment must be made as per the terms and due date mentioned in the invoice.",
@@ -505,13 +566,16 @@ public struct InvoiceHtmlBuilder {
 
                     <!-- 5. Footer: Bank Details & Terms -->
                     <div class="footer-section">
-                        <div class="footer-box bank">
-                            <div class="party-title" style="color: #0f172a;">BANK DETAILS</div>
-                            <p style="margin: 3px 0;"><strong style="color: #334155;">Bank Name:</strong> \(bankName)</p>
-                            <p style="margin: 3px 0;"><strong style="color: #334155;">Account No.:</strong> <span style="font-family: monospace; font-weight: 700; color: #0f172a;">\(bankAccount)</span></p>
-                            <p style="margin: 3px 0;"><strong style="color: #334155;">IFSC Code:</strong> <span style="font-family: monospace; font-weight: 700; color: #0f172a;">\(bankIfsc)</span></p>
-                            <p style="margin: 3px 0;"><strong style="color: #334155;">Branch:</strong> \(bankBranch)</p>
-                            \(upiHtml)
+                        <div class="footer-box bank" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                            <div style="flex: 1;">
+                                <div class="party-title" style="color: #0f172a;">BANK DETAILS</div>
+                                <p style="margin: 3px 0;"><strong style="color: #334155;">Bank Name:</strong> \(bankName)</p>
+                                <p style="margin: 3px 0;"><strong style="color: #334155;">Account No.:</strong> <span style="font-family: monospace; font-weight: 700; color: #0f172a;">\(bankAccount)</span></p>
+                                <p style="margin: 3px 0;"><strong style="color: #334155;">IFSC Code:</strong> <span style="font-family: monospace; font-weight: 700; color: #0f172a;">\(bankIfsc)</span></p>
+                                <p style="margin: 3px 0;"><strong style="color: #334155;">Branch:</strong> \(bankBranch)</p>
+                                \(upiHtml)
+                            </div>
+                            \(qrCodeHtml)
                         </div>
 
                         <div class="footer-box terms">
@@ -527,8 +591,8 @@ public struct InvoiceHtmlBuilder {
                         <div style="flex: 1.3; color: #64748b; font-style: italic; font-size: 10px; padding-right: 16px;">
                             <strong style="font-style: normal; color: #334155;">Declaration:</strong> We declare that this invoice shows the actual price of the goods/services described and that all particulars are true and correct.
                         </div>
-                        <div style="flex: 0.9; text-align: center;">
-                            <div style="height: 28px;"></div>
+                        <div style="flex: 0.9; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
+                            \(signatureHtml)
                             <div style="border-top: 1px solid #94a3b8; width: 150px; margin: 0 auto; padding-top: 4px;">
                                 <p style="font-weight: 900; font-size: 10.5px; color: #0f172a;">Authorized Signatory</p>
                                 <p style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase;">\(supplierName.uppercased())</p>

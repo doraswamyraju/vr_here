@@ -75,6 +75,9 @@ public struct InvoicePdfGenerator {
         let total = transaction.summary.totalAmount > 0 ? transaction.summary.totalAmount : transaction.items.reduce(0) { $0 + $1.total }
         let msg = "Hello, here is the Tax Invoice \(transaction.docNumber) for \(transaction.partyName) amounting to \(IndianCurrencyFormatter.format(total))."
 
+        // Copy invoice summary text to clipboard for convenient pasting in chat
+        UIPasteboard.general.string = msg
+
         DispatchQueue.main.async {
             guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                   let rootVC = windowScene.windows.first(where: { $0.isKeyWindow })?.rootViewController else {
@@ -86,31 +89,11 @@ public struct InvoicePdfGenerator {
                 topVC = presented
             }
 
-            if targetWhatsApp {
-                let rawPhone = transaction.partyPhone?.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression) ?? ""
-                let cleanPhone = rawPhone.count == 10 ? "91\(rawPhone)" : rawPhone
+            // CRITICAL: Passing ONLY [fileUrl] ensures WhatsApp and other messaging apps treat this as a document
+            // and attach the actual .pdf file instead of discarding it for plain text.
+            let activityVC = UIActivityViewController(activityItems: [fileUrl], applicationActivities: nil)
+            activityVC.setValue("Tax Invoice - \(transaction.docNumber)", forKey: "subject")
 
-                let whatsappUrlString = !cleanPhone.isEmpty
-                    ? "https://wa.me/\(cleanPhone)?text=\(msg.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-                    : "whatsapp://send?text=\(msg.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-
-                if let whatsappUrl = URL(string: whatsappUrlString), UIApplication.shared.canOpenURL(whatsappUrl) {
-                    UIApplication.shared.open(whatsappUrl) { _ in
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            let activityVC = UIActivityViewController(activityItems: [fileUrl], applicationActivities: nil)
-                            if let popover = activityVC.popoverPresentationController {
-                                popover.sourceView = topVC.view
-                                popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
-                                popover.permittedArrowDirections = []
-                            }
-                            topVC.present(activityVC, animated: true)
-                        }
-                    }
-                    return
-                }
-            }
-
-            let activityVC = UIActivityViewController(activityItems: [fileUrl, msg], applicationActivities: nil)
             if let popover = activityVC.popoverPresentationController {
                 popover.sourceView = topVC.view
                 popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)

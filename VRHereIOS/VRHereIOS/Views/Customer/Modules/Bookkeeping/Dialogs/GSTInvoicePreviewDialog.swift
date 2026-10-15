@@ -6,6 +6,9 @@ public struct GSTInvoicePreviewDialog: View {
     public let companyDetails: CompanyDetailsDto?
     public let onDismiss: () -> Void
 
+    @State private var localCompanyDetails: CompanyDetailsDto? = nil
+    @State private var toastMessage: String? = nil
+
     public init(
         transaction: TransactionDto,
         companyDetails: CompanyDetailsDto?,
@@ -14,95 +17,121 @@ public struct GSTInvoicePreviewDialog: View {
         self.transaction = transaction
         self.companyDetails = companyDetails
         self.onDismiss = onDismiss
+        self._localCompanyDetails = State(initialValue: companyDetails)
+    }
+
+    private var effectiveCompany: CompanyDetailsDto? {
+        localCompanyDetails ?? companyDetails
     }
 
     private var htmlContent: String {
-        InvoiceHtmlBuilder.buildHtml(transaction: transaction, company: companyDetails)
+        InvoiceHtmlBuilder.buildHtml(transaction: transaction, company: effectiveCompany)
     }
 
     public var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Top Action Bar
-                HStack(spacing: 8) {
-                    // WhatsApp Button
-                    Button(action: {
-                        InvoicePdfGenerator.sharePdf(transaction: transaction, company: companyDetails, targetWhatsApp: true)
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "message.fill")
-                                .font(.system(size: 11))
-                            Text("WhatsApp")
-                                .font(.system(size: 11.5, weight: .bold))
+            ZStack {
+                VStack(spacing: 0) {
+                    // Top Action Bar
+                    HStack(spacing: 8) {
+                        // WhatsApp Button
+                        Button(action: {
+                            showToast("PDF Invoice attached. Select WhatsApp to send.")
+                            InvoicePdfGenerator.sharePdf(transaction: transaction, company: effectiveCompany, targetWhatsApp: true)
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "message.fill")
+                                    .font(.system(size: 11))
+                                Text("WhatsApp")
+                                    .font(.system(size: 11.5, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(Color(red: 5/255, green: 150/255, blue: 105/255))
+                            .cornerRadius(8)
                         }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(Color(red: 5/255, green: 150/255, blue: 105/255))
-                        .cornerRadius(8)
-                    }
 
-                    // Download PDF Button
-                    Button(action: {
-                        InvoicePdfGenerator.downloadPdf(transaction: transaction, company: companyDetails)
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.down.circle.fill")
-                                .font(.system(size: 11))
-                            Text("Download PDF")
-                                .font(.system(size: 11.5, weight: .bold))
+                        // Download PDF Button
+                        Button(action: {
+                            InvoicePdfGenerator.downloadPdf(transaction: transaction, company: effectiveCompany)
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.system(size: 11))
+                                Text("Download PDF")
+                                    .font(.system(size: 11.5, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(Color(red: 79/255, green: 70/255, blue: 229/255))
+                            .cornerRadius(8)
                         }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(Color(red: 79/255, green: 70/255, blue: 229/255))
-                        .cornerRadius(8)
-                    }
 
-                    // Share PDF Button
-                    Button(action: {
-                        InvoicePdfGenerator.sharePdf(transaction: transaction, company: companyDetails, targetWhatsApp: false)
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 11))
-                            Text("Share")
-                                .font(.system(size: 11.5, weight: .bold))
-                        }
-                        .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(Color(red: 241/255, green: 245/255, blue: 249/255))
-                        .cornerRadius(8)
-                    }
-
-                    Spacer()
-
-                    // Print Button
-                    Button(action: {
-                        InvoicePdfGenerator.printPdf(transaction: transaction, company: companyDetails)
-                    }) {
-                        Image(systemName: "printer.fill")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
-                            .padding(8)
+                        // Share PDF Button
+                        Button(action: {
+                            InvoicePdfGenerator.sharePdf(transaction: transaction, company: effectiveCompany, targetWhatsApp: false)
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 11))
+                                Text("Share")
+                                    .font(.system(size: 11.5, weight: .bold))
+                            }
+                            .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
                             .background(Color(red: 241/255, green: 245/255, blue: 249/255))
                             .cornerRadius(8)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(Color.white)
-                .overlay(
-                    Rectangle()
-                        .frame(height: 1)
-                        .foregroundColor(Color(red: 226/255, green: 232/255, blue: 240/255)),
-                    alignment: .bottom
-                )
+                        }
 
-                // Web View rendering the GST Invoice
-                InvoiceWebView(html: htmlContent)
-                    .edgesIgnoringSafeArea(.bottom)
+                        Spacer()
+
+                        // Print Button
+                        Button(action: {
+                            InvoicePdfGenerator.printPdf(transaction: transaction, company: effectiveCompany)
+                        }) {
+                            Image(systemName: "printer.fill")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                                .padding(8)
+                                .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                                .cornerRadius(8)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(Color(red: 226/255, green: 232/255, blue: 240/255)),
+                        alignment: .bottom
+                    )
+
+                    // Web View rendering the GST Invoice
+                    InvoiceWebView(html: htmlContent)
+                        .edgesIgnoringSafeArea(.bottom)
+                }
+
+                // Toast Notice Overlay
+                if let toast = toastMessage {
+                    VStack {
+                        Spacer()
+                        Text(toast)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color(red: 15/255, green: 23/255, blue: 42/255).opacity(0.92))
+                            .cornerRadius(20)
+                            .shadow(radius: 6)
+                            .padding(.bottom, 24)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.spring(), value: toastMessage)
+                }
             }
             .navigationTitle(transaction.docNumber.isEmpty ? "GST Invoice Preview" : transaction.docNumber)
             .navigationBarTitleDisplayMode(.inline)
@@ -117,6 +146,26 @@ public struct GSTInvoicePreviewDialog: View {
                         .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
                     }
                 }
+            }
+            .onAppear {
+                if effectiveCompany == nil {
+                    Task {
+                        if let comp = try? await NetworkManager.shared.getCompanyDetails() {
+                            await MainActor.run {
+                                self.localCompanyDetails = comp
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func showToast(_ msg: String) {
+        toastMessage = msg
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            if toastMessage == msg {
+                toastMessage = nil
             }
         }
     }
