@@ -1538,7 +1538,7 @@ struct PayoutResponse: Codable, Identifiable {
 }
 
 struct GeneralResponse: Codable {
-    let success: Bool?
+    let success: Bool
     let message: String?
 
     enum CodingKeys: String, CodingKey {
@@ -1552,7 +1552,7 @@ struct GeneralResponse: Codable {
         self.message = try? container?.decodeIfPresent(String.self, forKey: .message)
     }
 
-    init(success: Bool? = true, message: String? = nil) {
+    init(success: Bool = true, message: String? = nil) {
         self.success = success
         self.message = message
     }

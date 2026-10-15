@@ -115,7 +115,11 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                 setTransactions(transactions.map(t => (t._id === editId ? data : t)));
                 setShowFormModal(false);
                 setEditingTransaction(null);
-                alert(`${formData.transactionType} updated successfully!`);
+                if (formData.transactionType === 'Sales') {
+                    setSelectedInvoice(data);
+                } else {
+                    alert(`${formData.transactionType} updated successfully!`);
+                }
             } else {
                 const { data } = await axios.post('/api/accounting/transactions', formData, config);
                 setTransactions([data, ...transactions]);
@@ -154,7 +158,11 @@ const BookkeepingView = ({ token, userInfo, activeSubTab: propSubTab, onSubTabCh
                         setParties([...parties, partyRes.data]);
                     } catch(e) {}
                 }
-                alert(`${formData.transactionType} recorded successfully!`);
+                if (formData.transactionType === 'Sales') {
+                    setSelectedInvoice(data);
+                } else {
+                    alert(`${formData.transactionType} recorded successfully!`);
+                }
             }
         } catch (error) {
             alert('Failed to save voucher: ' + (error.response?.data?.message || error.message));

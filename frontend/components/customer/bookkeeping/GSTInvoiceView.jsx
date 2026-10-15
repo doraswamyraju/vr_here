@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Share2, ArrowLeft, Download, MessageCircle, FileCheck, CheckCircle2, LayoutDashboard } from 'lucide-react';
+import { Printer, Share2, ArrowLeft, Download, MessageCircle, Mail, FileCheck, CheckCircle2, LayoutDashboard } from 'lucide-react';
 
 const GSTInvoiceView = ({ selectedInvoice, company, onBack, onBackToDashboard, onCopyShareLink }) => {
     if (!selectedInvoice) return null;
@@ -85,9 +85,36 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onBackToDashboard, o
     const handleWhatsAppShare = () => {
         const docTitle = isIncome ? 'Receipt Voucher' : isExpense ? 'Payment Voucher' : isPurchase ? 'Purchase Bill' : 'Tax Invoice';
         const text = `*${docTitle} from ${supplierName}*%0AVoucher/Invoice No: ${docNumber}%0ADate: ${docDate}%0ATotal Amount: ₹${summary.totalAmount.toLocaleString('en-IN')}%0APlease let us know if you have any questions!`;
-        const phone = selectedInvoice.partyPhone ? selectedInvoice.partyPhone.replace(/[^0-9]/g, '') : '';
-        const url = phone ? `https://wa.me/91${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+        const rawPhone = selectedInvoice.partyPhone ? selectedInvoice.partyPhone.replace(/[^0-9]/g, '') : '';
+        const cleanPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+        const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${text}` : `https://wa.me/?text=${text}`;
         window.open(url, '_blank');
+    };
+
+    const handleEmailShare = () => {
+        const docTitle = isIncome ? 'Receipt Voucher' : isExpense ? 'Payment Voucher' : isPurchase ? 'Purchase Bill' : 'Tax Invoice';
+        const subject = `${docTitle} #${docNumber} from ${supplierName}`;
+        const itemsList = items.map((it, idx) => `• ${it.description || 'Item'} (Qty: ${it.qty || 1}, Rate: Rs. ${Number(it.rate || 0).toLocaleString('en-IN')}, GST: ${it.gstRate || 0}%)`).join('\n');
+        const body = `Dear ${billToName},\n\nPlease find the details for your ${docTitle} #${docNumber}:\n\n` +
+            `Invoice No: ${docNumber}\n` +
+            `Date: ${docDate}\n` +
+            `Due Date: ${dueDate}\n` +
+            `Total Amount: Rs. ${summary.totalAmount.toLocaleString('en-IN')}\n\n` +
+            `Line Items:\n${itemsList}\n\n` +
+            `Payment Settlement Details:\n` +
+            `Bank: ${bankName}\n` +
+            `Account Number: ${bankAccount}\n` +
+            `IFSC Code: ${bankIfsc}\n` +
+            (upiId ? `UPI ID: ${upiId}\n\n` : '\n') +
+            `Thank you for your business!\n\n` +
+            `Best Regards,\n` +
+            `${supplierName}\n` +
+            (supplierPhone ? `Phone: ${supplierPhone}\n` : '') +
+            (supplierEmail ? `Email: ${supplierEmail}\n` : '');
+
+        const toEmail = selectedInvoice.partyEmail && selectedInvoice.partyEmail !== 'N/A' ? selectedInvoice.partyEmail : '';
+        const mailto = `mailto:${encodeURIComponent(toEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailto;
     };
 
     return (
@@ -145,23 +172,49 @@ const GSTInvoiceView = ({ selectedInvoice, company, onBack, onBackToDashboard, o
                     )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                    {/* WhatsApp */}
                     <button 
                         onClick={handleWhatsAppShare}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 transition shadow-sm"
+                        title="Share Invoice on WhatsApp"
                     >
                         <MessageCircle size={15} /> WhatsApp
                     </button>
+
+                    {/* Email / Mail */}
                     <button 
-                        onClick={onCopyShareLink}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 transition"
+                        onClick={handleEmailShare}
+                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 transition shadow-sm"
+                        title="Share Invoice via Email"
                     >
-                        <Share2 size={15} /> Share Link
+                        <Mail size={15} /> Email / Mail
                     </button>
+
+                    {/* Download / Print PDF */}
                     <button 
                         onClick={() => window.print()} 
                         className="bg-indigo-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center gap-1.5 shadow-md shadow-indigo-200"
+                        title="Download or Print PDF"
                     >
-                        <Printer size={15} /> Print / Save PDF
+                        <Download size={15} /> Download PDF
+                    </button>
+
+                    {/* Share Link */}
+                    <button 
+                        onClick={onCopyShareLink}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 transition"
+                        title="Copy direct link"
+                    >
+                        <Share2 size={15} /> Share Link
+                    </button>
+
+                    {/* Print */}
+                    <button 
+                        onClick={() => window.print()} 
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-xl font-bold transition"
+                        title="Print"
+                    >
+                        <Printer size={15} />
                     </button>
                 </div>
             </div>
