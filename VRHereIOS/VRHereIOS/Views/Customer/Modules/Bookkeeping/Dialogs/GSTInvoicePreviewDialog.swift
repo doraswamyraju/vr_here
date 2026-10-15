@@ -8,6 +8,7 @@ public struct GSTInvoicePreviewDialog: View {
 
     @State private var localCompanyDetails: CompanyDetailsDto? = nil
     @State private var toastMessage: String? = nil
+    @State private var webView: WKWebView? = nil
 
     public init(
         transaction: TransactionDto,
@@ -36,8 +37,8 @@ public struct GSTInvoicePreviewDialog: View {
                     HStack(spacing: 8) {
                         // WhatsApp Button
                         Button(action: {
-                            showToast("PDF Invoice attached. Select WhatsApp to send.")
-                            InvoicePdfGenerator.sharePdf(transaction: transaction, company: effectiveCompany, targetWhatsApp: true)
+                            showToast("PDF Invoice ready. Select WhatsApp to send.")
+                            InvoicePdfGenerator.sharePdf(transaction: transaction, company: effectiveCompany, webView: webView, targetWhatsApp: true)
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "message.fill")
@@ -54,7 +55,8 @@ public struct GSTInvoicePreviewDialog: View {
 
                         // Download PDF Button
                         Button(action: {
-                            InvoicePdfGenerator.downloadPdf(transaction: transaction, company: effectiveCompany)
+                            showToast("Preparing PDF download...")
+                            InvoicePdfGenerator.downloadPdf(transaction: transaction, company: effectiveCompany, webView: webView)
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "arrow.down.circle.fill")
@@ -71,7 +73,8 @@ public struct GSTInvoicePreviewDialog: View {
 
                         // Share PDF Button
                         Button(action: {
-                            InvoicePdfGenerator.sharePdf(transaction: transaction, company: effectiveCompany, targetWhatsApp: false)
+                            showToast("Preparing PDF share...")
+                            InvoicePdfGenerator.sharePdf(transaction: transaction, company: effectiveCompany, webView: webView, targetWhatsApp: false)
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "square.and.arrow.up")
@@ -90,7 +93,7 @@ public struct GSTInvoicePreviewDialog: View {
 
                         // Print Button
                         Button(action: {
-                            InvoicePdfGenerator.printPdf(transaction: transaction, company: effectiveCompany)
+                            InvoicePdfGenerator.printPdf(transaction: transaction, company: effectiveCompany, webView: webView)
                         }) {
                             Image(systemName: "printer.fill")
                                 .font(.system(size: 13))
@@ -111,7 +114,7 @@ public struct GSTInvoicePreviewDialog: View {
                     )
 
                     // Web View rendering the GST Invoice
-                    InvoiceWebView(html: htmlContent)
+                    InvoiceWebView(html: htmlContent, webView: $webView)
                         .edgesIgnoringSafeArea(.bottom)
                 }
 
@@ -177,18 +180,27 @@ public struct GSTInvoicePreviewDialog: View {
 
 struct InvoiceWebView: UIViewRepresentable {
     let html: String
+    @Binding var webView: WKWebView?
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.isOpaque = false
-        webView.backgroundColor = UIColor(red: 241/255, green: 245/255, blue: 249/255, alpha: 1.0)
-        webView.scrollView.isScrollEnabled = true
-        webView.scrollView.bounces = true
-        return webView
+        let wv = WKWebView(frame: .zero, configuration: config)
+        wv.isOpaque = false
+        wv.backgroundColor = UIColor(red: 241/255, green: 245/255, blue: 249/255, alpha: 1.0)
+        wv.scrollView.isScrollEnabled = true
+        wv.scrollView.bounces = true
+        DispatchQueue.main.async {
+            self.webView = wv
+        }
+        return wv
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
+        DispatchQueue.main.async {
+            if self.webView !== uiView {
+                self.webView = uiView
+            }
+        }
         uiView.loadHTMLString(html, baseURL: URL(string: "https://vrhere.in/"))
     }
 }

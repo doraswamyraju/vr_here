@@ -240,7 +240,7 @@ public struct InvoiceHtmlBuilder {
         if !qrCode.isEmpty {
             qrCodeHtml = """
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; flex-shrink: 0; align-self: center;">
-                <img src="\(qrCode)" alt="Payment QR" style="width: 64px; height: 64px; object-fit: contain; border-radius: 4px;" />
+                <img src="\(qrCode)" width="64" height="64" alt="Payment QR" style="width: 64px; height: 64px; max-width: 64px; max-height: 64px; object-fit: contain; border-radius: 4px; display: block;" />
                 <span style="font-size: 7.5px; font-weight: 900; color: #334155; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">SCAN TO PAY</span>
             </div>
             """
@@ -252,7 +252,7 @@ public struct InvoiceHtmlBuilder {
         if !signature.isEmpty {
             signatureHtml = """
             <div style="height: 42px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 4px;">
-                <img src="\(signature)" alt="Signature" style="max-height: 40px; max-width: 140px; object-fit: contain;" />
+                <img src="\(signature)" height="40" alt="Signature" style="max-height: 40px; max-width: 140px; object-fit: contain; display: block;" />
             </div>
             """
         } else {
@@ -291,7 +291,7 @@ public struct InvoiceHtmlBuilder {
 
         let logoHtml: String
         if let logo = supplierLogo, !logo.isEmpty {
-            logoHtml = "<img src=\"\(logo)\" alt=\"Logo\" style=\"width: 56px; height: 56px; object-fit: contain; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; padding: 4px; flex-shrink: 0;\" />"
+            logoHtml = "<img src=\"\(logo)\" width=\"56\" height=\"56\" alt=\"Logo\" style=\"width: 56px; height: 56px; max-width: 56px; max-height: 56px; object-fit: contain; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; padding: 4px; flex-shrink: 0; display: block;\" />"
         } else {
             let initials = String(supplierName.prefix(2)).uppercased()
             logoHtml = "<div style=\"width: 56px; height: 56px; border-radius: 8px; background: #EEF2FF; border: 1px solid #C7D2FE; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; color: #4F46E5; flex-shrink: 0;\">\(initials)</div>"
