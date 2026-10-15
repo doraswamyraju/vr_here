@@ -449,16 +449,22 @@ struct CustomerBookkeepingTab: View {
     private func saveTransaction(_ payload: TransactionDto, type: String) {
         Task {
             do {
+                let saved: TransactionDto
                 if let existing = editingTransaction, let id = existing._id, !id.isEmpty {
-                    _ = try await NetworkManager.shared.updateAccountingTransaction(id: id, transaction: payload)
+                    saved = try await NetworkManager.shared.updateAccountingTransaction(id: id, transaction: payload)
                 } else {
-                    _ = try await NetworkManager.shared.createAccountingTransaction(transaction: payload)
+                    saved = try await NetworkManager.shared.createAccountingTransaction(transaction: payload)
                 }
                 await MainActor.run {
                     showToast("\(type) recorded successfully!")
                     transactionFormType = nil
                     editingTransaction = nil
                     reloadAccountingData(silent: true)
+                    if type.caseInsensitiveCompare("Sales") == .orderedSame {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            self.previewInvoice = saved
+                        }
+                    }
                 }
             } catch {
                 await MainActor.run {
@@ -469,10 +475,11 @@ struct CustomerBookkeepingTab: View {
     }
 
     private func deleteTransaction(_ tx: TransactionDto) {
-        guard let id = tx._id, !id.isEmpty else { return }
+        let targetId = (tx._id?.isEmpty == false ? tx._id : (tx.id.isEmpty ? nil : tx.id)) ?? ""
+        guard !targetId.isEmpty else { return }
         Task {
             do {
-                _ = try await NetworkManager.shared.deleteAccountingTransaction(id: id)
+                _ = try await NetworkManager.shared.deleteAccountingTransaction(id: targetId)
                 await MainActor.run {
                     showToast("Transaction deleted")
                     reloadAccountingData(silent: true)

@@ -1538,8 +1538,24 @@ struct PayoutResponse: Codable, Identifiable {
 }
 
 struct GeneralResponse: Codable {
-    let success: Bool
+    let success: Bool?
     let message: String?
+
+    enum CodingKeys: String, CodingKey {
+        case success
+        case message
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try? decoder.container(keyedBy: CodingKeys.self)
+        self.success = (try? container?.decodeIfPresent(Bool.self, forKey: .success)) ?? true
+        self.message = try? container?.decodeIfPresent(String.self, forKey: .message)
+    }
+
+    init(success: Bool? = true, message: String? = nil) {
+        self.success = success
+        self.message = message
+    }
 }
 
 // --- CUSTOMER REFERRAL MODELS ---

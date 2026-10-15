@@ -113,7 +113,7 @@ fun GSTInvoicePreviewDialog(
                                 Text("Share PDF", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
                             }
 
-                            // Print / Save PDF Button
+                            // Download PDF Button
                             Button(
                                 onClick = {
                                     InvoicePdfGenerator.downloadAndOpenPdf(context, transaction, companyDetails)
@@ -125,7 +125,7 @@ fun GSTInvoicePreviewDialog(
                             ) {
                                 Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(13.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Print / Save PDF", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text("Download PDF", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }

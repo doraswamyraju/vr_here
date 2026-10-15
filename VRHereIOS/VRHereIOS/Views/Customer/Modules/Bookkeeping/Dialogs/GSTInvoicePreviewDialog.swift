@@ -42,6 +42,23 @@ public struct GSTInvoicePreviewDialog: View {
                         .cornerRadius(8)
                     }
 
+                    // Download PDF Button
+                    Button(action: {
+                        InvoicePdfGenerator.downloadPdf(transaction: transaction, company: companyDetails)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 11))
+                            Text("Download PDF")
+                                .font(.system(size: 11.5, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(Color(red: 79/255, green: 70/255, blue: 229/255))
+                        .cornerRadius(8)
+                    }
+
                     // Share PDF Button
                     Button(action: {
                         InvoicePdfGenerator.sharePdf(transaction: transaction, company: companyDetails, targetWhatsApp: false)
@@ -49,7 +66,7 @@ public struct GSTInvoicePreviewDialog: View {
                         HStack(spacing: 4) {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.system(size: 11))
-                            Text("Share PDF")
+                            Text("Share")
                                 .font(.system(size: 11.5, weight: .bold))
                         }
                         .foregroundColor(Color(red: 51/255, green: 65/255, blue: 85/255))
@@ -61,21 +78,16 @@ public struct GSTInvoicePreviewDialog: View {
 
                     Spacer()
 
-                    // Print / Save PDF Button
+                    // Print Button
                     Button(action: {
                         InvoicePdfGenerator.printPdf(transaction: transaction, company: companyDetails)
                     }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "printer.fill")
-                                .font(.system(size: 11))
-                            Text("Print / Save")
-                                .font(.system(size: 11.5, weight: .bold))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(Color(red: 79/255, green: 70/255, blue: 229/255))
-                        .cornerRadius(8)
+                        Image(systemName: "printer.fill")
+                            .font(.system(size: 13))
+                            .foregroundColor(Color(red: 71/255, green: 85/255, blue: 105/255))
+                            .padding(8)
+                            .background(Color(red: 241/255, green: 245/255, blue: 249/255))
+                            .cornerRadius(8)
                     }
                 }
                 .padding(.horizontal, 16)

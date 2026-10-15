@@ -465,9 +465,13 @@ fun BookkeepingHostScreen(viewModel: CustomerDashboardViewModel) {
 
                         if (res.isSuccessful) {
                             Toast.makeText(context, "$formType recorded successfully!", Toast.LENGTH_SHORT).show()
+                            val savedTx = res.body() ?: payload
                             transactionFormType = null
                             editingTransaction = null
                             reloadAccountingData(silent = true)
+                            if (formType.equals("Sales", ignoreCase = true)) {
+                                previewInvoice = savedTx
+                            }
                         } else {
                             Toast.makeText(context, "Failed to save $formType: ${res.message()}", Toast.LENGTH_LONG).show()
                         }

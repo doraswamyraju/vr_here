@@ -368,7 +368,7 @@ export const deleteTransaction = asyncHandler(async (req, res) => {
     }
 
     await transaction.deleteOne();
-    res.json({ message: 'Transaction removed successfully' });
+    res.json({ success: true, message: 'Transaction removed successfully' });
 });
 
 // ==================== COMPANY SETTINGS ====================
@@ -522,7 +522,7 @@ export const deleteParty = asyncHandler(async (req, res) => {
         throw new Error('Party not found');
     }
     await party.deleteOne();
-    res.json({ message: 'Party removed' });
+    res.json({ success: true, message: 'Party removed' });
 });
 
 // ==================== BANK STATEMENTS & MANUAL TAGGING ====================
