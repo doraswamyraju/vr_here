@@ -128,4 +128,7 @@ router.route('/:id/requirements/:requirementId')
     .put(protect, updateRequirement)
     .delete(protect, admin, deleteRequirement);
 
+router.route('/:id/requirements/:requirementId/status')
+    .put(protect, updateRequirement);
+
 export default router;

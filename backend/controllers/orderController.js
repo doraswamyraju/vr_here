@@ -337,9 +337,9 @@ const syncOrderStatusOnClientSubmission = (order) => {
     const allCompleted = order.customerRequirements.every(req => {
         if (!req.required && req.required !== undefined) return true;
         if (req.type === 'Document') {
-            return req.isClientCompleted || (req.documents && req.documents.length > 0) || Boolean(req.uploadedDocumentUrl) || req.status === 'Received' || req.status === 'Verified';
+            return req.isClientCompleted || (req.documents && req.documents.length > 0) || Boolean(req.uploadedDocumentUrl) || req.status === 'Received' || req.status === 'Verified' || req.status === 'Submitted';
         }
-        return req.isClientCompleted || Boolean(req.clientValue) || Boolean(req.value) || req.status === 'Received' || req.status === 'Verified';
+        return req.isClientCompleted || Boolean(req.clientValue) || Boolean(req.value) || req.status === 'Received' || req.status === 'Verified' || req.status === 'Submitted';
     });
 
     if (allCompleted && (order.status === 'Pending Documents' || order.status === 'Waiting for Clarification')) {
@@ -1680,7 +1680,14 @@ const updateRequirement = asyncHandler(async (req, res) => {
         }
 
         if (status !== undefined) {
-            requirement.status = status;
+            const rawStatus = String(status).trim();
+            if (rawStatus.toLowerCase() === 'submitted' || rawStatus.toLowerCase() === 'received') {
+                requirement.status = 'Received';
+            } else if (['Pending', 'Received', 'Verified', 'Submitted', 'Under Review'].includes(rawStatus)) {
+                requirement.status = rawStatus;
+            } else {
+                requirement.status = 'Received';
+            }
         } else if (requirement.isClientCompleted) {
             requirement.status = 'Received';
         }
@@ -1689,7 +1696,14 @@ const updateRequirement = asyncHandler(async (req, res) => {
         // Auto-transition to Documents Verified if all items submitted
         syncOrderStatusOnClientSubmission(order);
     } else {
-        if (status !== undefined) requirement.status = status;
+        if (status !== undefined) {
+            const rawStatus = String(status).trim();
+            if (rawStatus.toLowerCase() === 'submitted') {
+                requirement.status = 'Received';
+            } else {
+                requirement.status = rawStatus;
+            }
+        }
         if (value !== undefined || clientValue !== undefined) {
             const val = value !== undefined ? value : clientValue;
             requirement.value = val;
@@ -1707,62 +1721,66 @@ const updateRequirement = asyncHandler(async (req, res) => {
 
     await order.save();
 
-    await logOrderActivity(
-        order._id,
-        req.user._id,
-        'REQUIREMENT_UPDATE',
-        `Requirement "${requirement.title}" updated (Status: "${requirement.status}")`,
-        { requirementId: requirement._id, title: requirement.title, status: requirement.status }
-    );
+    try {
+        await logOrderActivity(
+            order._id,
+            req.user._id,
+            'REQUIREMENT_UPDATE',
+            `Requirement "${requirement.title}" updated (Status: "${requirement.status}")`,
+            { requirementId: requirement._id, title: requirement.title, status: requirement.status }
+        );
 
-    // Trigger Notifications after save
-    if (req.user.role === 'client' || req.user.role === 'customer') {
-        if ((requirement.isClientCompleted && !oldClientCompleted) || requirement.status === 'Received') {
-            const message = `Client ${order.clientName} has submitted details/documents for requirement "${requirement.title}" under project ${order.serviceName}.`;
-            if (order.assignedEmployee) {
-                const employee = await User.findById(order.assignedEmployee);
-                if (employee) {
-                    const staffEmailHtml = getClientSubmissionTemplate({
-                        staffName: employee.name,
-                        clientName: order.clientName,
-                        serviceName: order.serviceName
-                    });
+        // Trigger Notifications after save
+        if (req.user.role === 'client' || req.user.role === 'customer') {
+            if ((requirement.isClientCompleted && !oldClientCompleted) || requirement.status === 'Received') {
+                const message = `Client ${order.clientName} has submitted details/documents for requirement "${requirement.title}" under project ${order.serviceName}.`;
+                if (order.assignedEmployee) {
+                    const employee = await User.findById(order.assignedEmployee);
+                    if (employee) {
+                        const staffEmailHtml = getClientSubmissionTemplate({
+                            staffName: employee.name,
+                            clientName: order.clientName,
+                            serviceName: order.serviceName
+                        });
+                        await triggerNotification({
+                            userId: order.assignedEmployee,
+                            title: 'Client Submission Logged',
+                            message,
+                            type: 'Order',
+                            emailOpts: {
+                                send: true,
+                                subject: `Action Required: Client Submitted details - ${order.serviceName}`,
+                                html: staffEmailHtml
+                            }
+                        });
+                    }
+                }
+                await notifyAdmins({
+                    title: 'Client Submission Logged',
+                    message,
+                    type: 'Order',
+                    email: false
+                });
+            }
+        } else {
+            // Staff/Admin updated requirement status
+            if (status && oldStatus !== status) {
+                if (order.user) {
                     await triggerNotification({
-                        userId: order.assignedEmployee,
-                        title: 'Client Submission Logged',
-                        message,
+                        userId: order.user,
+                        title: `Requirement Verified: ${requirement.title}`,
+                        message: `Your submission for requirement "${requirement.title}" in project "${order.serviceName}" has been updated to status "${status}".`,
                         type: 'Order',
                         emailOpts: {
                             send: true,
-                            subject: `Action Required: Client Submitted details - ${order.serviceName}`,
-                            html: staffEmailHtml
+                            subject: `Requirement Status Update: ${requirement.title} is ${status}`
                         }
                     });
                 }
             }
-            await notifyAdmins({
-                title: 'Client Submission Logged',
-                message,
-                type: 'Order',
-                email: false
-            });
         }
-    } else {
-        // Staff/Admin updated requirement status
-        if (status && oldStatus !== status) {
-            if (order.user) {
-                await triggerNotification({
-                    userId: order.user,
-                    title: `Requirement Verified: ${requirement.title}`,
-                    message: `Your submission for requirement "${requirement.title}" in project "${order.serviceName}" has been updated to status "${status}".`,
-                    type: 'Order',
-                    emailOpts: {
-                        send: true,
-                        subject: `Requirement Status Update: ${requirement.title} is ${status}`
-                    }
-                });
-            }
-        }
+    } catch (notifErr) {
+        console.error('[RequirementUpdate] Notification/Log warning:', notifErr.message);
     }
 
     res.json(order);
