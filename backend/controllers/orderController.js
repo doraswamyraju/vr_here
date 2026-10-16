@@ -330,6 +330,25 @@ const canAccessOrder = (user, order) => {
     return false;
 };
 
+const syncOrderStatusOnClientSubmission = (order) => {
+    if (!order.customerRequirements || order.customerRequirements.length === 0) {
+        return false;
+    }
+    const allCompleted = order.customerRequirements.every(req => {
+        if (!req.required && req.required !== undefined) return true;
+        if (req.type === 'Document') {
+            return req.isClientCompleted || (req.documents && req.documents.length > 0) || Boolean(req.uploadedDocumentUrl) || req.status === 'Received' || req.status === 'Verified';
+        }
+        return req.isClientCompleted || Boolean(req.clientValue) || Boolean(req.value) || req.status === 'Received' || req.status === 'Verified';
+    });
+
+    if (allCompleted && (order.status === 'Pending Documents' || order.status === 'Waiting for Clarification')) {
+        order.status = 'Documents Verified';
+        return true;
+    }
+    return false;
+};
+
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
@@ -992,25 +1011,6 @@ const uploadDocument = asyncHandler(async (req, res) => {
         console.error('[OrderUpload] Fallback due to Google Drive upload error:', driveErr.message);
     }
 
-const syncOrderStatusOnClientSubmission = (order) => {
-    if (!order.customerRequirements || order.customerRequirements.length === 0) {
-        return false;
-    }
-    const allCompleted = order.customerRequirements.every(req => {
-        if (!req.required && req.required !== undefined) return true;
-        if (req.type === 'Document') {
-            return req.isClientCompleted || (req.documents && req.documents.length > 0) || Boolean(req.uploadedDocumentUrl) || req.status === 'Received' || req.status === 'Verified';
-        }
-        return req.isClientCompleted || Boolean(req.clientValue) || Boolean(req.value) || req.status === 'Received' || req.status === 'Verified';
-    });
-
-    if (allCompleted && (order.status === 'Pending Documents' || order.status === 'Waiting for Clarification')) {
-        order.status = 'Documents Verified';
-        return true;
-    }
-    return false;
-};
-
     if (req.user.role === 'client' || req.user.role === 'customer') {
         const docName = req.body.name || req.file.originalname;
         if (!order.clientDocuments) {
@@ -1618,11 +1618,13 @@ const updateRequirement = asyncHandler(async (req, res) => {
         value,
         clientValue,
         clientNotes,
+        notes,
         documentUrl,
         uploadedDocumentUrl,
         uploadedDocumentName,
         description,
-        isClientCompleted
+        isClientCompleted,
+        isSubmitted
     } = req.body;
 
     const order = await Order.findById(req.params.id);
@@ -1637,7 +1639,12 @@ const updateRequirement = asyncHandler(async (req, res) => {
         throw new Error('Not authorized to update this requirement');
     }
 
-    const requirement = order.customerRequirements.id(req.params.requirementId);
+    const requirement = (order.customerRequirements && typeof order.customerRequirements.id === 'function')
+        ? order.customerRequirements.id(req.params.requirementId)
+        : (Array.isArray(order.customerRequirements)
+            ? order.customerRequirements.find(r => String(r._id) === String(req.params.requirementId))
+            : null);
+
     if (!requirement) {
         res.status(404);
         throw new Error('Requirement not found');
@@ -1646,36 +1653,56 @@ const updateRequirement = asyncHandler(async (req, res) => {
     const oldStatus = requirement.status;
     const oldClientCompleted = requirement.isClientCompleted;
 
-    if (req.user.role === 'client') {
-        if (value !== undefined || clientValue !== undefined) {
-            const resolvedValue = clientValue !== undefined ? clientValue : value;
+    const resolvedValue = clientValue !== undefined ? clientValue : value;
+    const resolvedNotes = clientNotes !== undefined ? clientNotes : (notes !== undefined ? notes : undefined);
+    const resolvedCompleted = isClientCompleted !== undefined 
+        ? Boolean(isClientCompleted) 
+        : (isSubmitted !== undefined ? Boolean(isSubmitted) : undefined);
+
+    if (req.user.role === 'client' || req.user.role === 'customer') {
+        if (resolvedValue !== undefined) {
             requirement.clientValue = resolvedValue;
             requirement.value = resolvedValue;
         }
-        if (clientNotes !== undefined) requirement.clientNotes = clientNotes;
+        if (resolvedNotes !== undefined) {
+            requirement.clientNotes = resolvedNotes;
+        }
         if (uploadedDocumentUrl !== undefined) {
             requirement.uploadedDocumentUrl = uploadedDocumentUrl;
             requirement.documentUrl = uploadedDocumentUrl;
         }
         if (uploadedDocumentName !== undefined) requirement.uploadedDocumentName = uploadedDocumentName;
-        if (isClientCompleted !== undefined) requirement.isClientCompleted = Boolean(isClientCompleted);
-        requirement.status = requirement.isClientCompleted ? 'Received' : requirement.status;
+        
+        if (resolvedCompleted !== undefined) {
+            requirement.isClientCompleted = resolvedCompleted;
+        } else if (requirement.clientValue || requirement.uploadedDocumentUrl) {
+            requirement.isClientCompleted = true;
+        }
+
+        if (status !== undefined) {
+            requirement.status = status;
+        } else if (requirement.isClientCompleted) {
+            requirement.status = 'Received';
+        }
+
         requirement.lastSavedAt = new Date();
         // Auto-transition to Documents Verified if all items submitted
         syncOrderStatusOnClientSubmission(order);
     } else {
         if (status !== undefined) requirement.status = status;
-        if (value !== undefined) {
-            requirement.value = value;
-            requirement.clientValue = value;
+        if (value !== undefined || clientValue !== undefined) {
+            const val = value !== undefined ? value : clientValue;
+            requirement.value = val;
+            requirement.clientValue = val;
         }
-        if (documentUrl !== undefined) {
-            requirement.documentUrl = documentUrl;
-            requirement.uploadedDocumentUrl = documentUrl;
+        if (documentUrl !== undefined || uploadedDocumentUrl !== undefined) {
+            const doc = documentUrl !== undefined ? documentUrl : uploadedDocumentUrl;
+            requirement.documentUrl = doc;
+            requirement.uploadedDocumentUrl = doc;
         }
         if (description !== undefined) requirement.description = description;
-        if (isClientCompleted !== undefined) requirement.isClientCompleted = Boolean(isClientCompleted);
-        if (clientNotes !== undefined) requirement.clientNotes = clientNotes;
+        if (resolvedCompleted !== undefined) requirement.isClientCompleted = resolvedCompleted;
+        if (resolvedNotes !== undefined) requirement.clientNotes = resolvedNotes;
     }
 
     await order.save();
@@ -1689,7 +1716,7 @@ const updateRequirement = asyncHandler(async (req, res) => {
     );
 
     // Trigger Notifications after save
-    if (req.user.role === 'client') {
+    if (req.user.role === 'client' || req.user.role === 'customer') {
         if ((requirement.isClientCompleted && !oldClientCompleted) || requirement.status === 'Received') {
             const message = `Client ${order.clientName} has submitted details/documents for requirement "${requirement.title}" under project ${order.serviceName}.`;
             if (order.assignedEmployee) {
